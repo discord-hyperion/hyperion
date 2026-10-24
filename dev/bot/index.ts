@@ -1,5 +1,4 @@
 import { HyperionClient } from "@hyperion";
-import { Events } from "discord.js";
 
 const token = process.env.DISCORD_TOKEN;
 const applicationId = process.env.DISCORD_APPLICATION_ID;
@@ -24,10 +23,6 @@ const bot = await HyperionClient.create({
         token,
         guildIds: [guildId],
     },
-});
-
-bot.once(Events.ClientReady, client => {
-    console.info(`${bot.name} is ready as ${client.user.username}.`);
 });
 
 await bot.login(token);

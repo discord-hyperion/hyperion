@@ -4,6 +4,7 @@ import {
     type Interaction,
     MessageFlags,
 } from "discord.js";
+import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
 
 export class InteractionDispatcher {
@@ -18,25 +19,51 @@ export class InteractionDispatcher {
     public async dispatch(interaction: Interaction): Promise<void> {
         if (!interaction.isChatInputCommand()) return;
 
+        const logger = this.client.logger.child({
+            component: "execution",
+            command: interaction.commandName,
+            interactionId: interaction.id,
+            guildId: interaction.guildId,
+            userId: interaction.user?.id,
+        });
         const command = this.client.commands.get(interaction.commandName);
         if (!command) {
+            logger.warn(
+                { event: "command.unavailable" },
+                "No handler found for command",
+            );
             await this.respondWithError(
                 interaction,
                 "This command is no longer available. Please try again later.",
+                logger,
             );
             return;
         }
 
+        const started = performance.now();
+        logger.debug({ event: "command.started" }, "Running command");
         try {
-            await command.run({ client: this.client, interaction });
-        } catch (error) {
-            console.error(
-                `Command "${interaction.commandName}" failed (interaction ${interaction.id}).`,
-                error,
+            await command.run({ client: this.client, interaction, logger });
+            logger.info(
+                {
+                    event: "command.completed",
+                    durationMs: Math.round(performance.now() - started),
+                },
+                "Command completed",
+            );
+        } catch (err) {
+            logger.error(
+                {
+                    event: "command.failed",
+                    durationMs: Math.round(performance.now() - started),
+                    err,
+                },
+                "Command execution failed",
             );
             await this.respondWithError(
                 interaction,
                 "Something went wrong while running this command.",
+                logger,
             );
         }
     }
@@ -44,6 +71,7 @@ export class InteractionDispatcher {
     private async respondWithError(
         interaction: ChatInputCommandInteraction,
         content: string,
+        logger: Logger,
     ): Promise<void> {
         try {
             if (interaction.replied) {
@@ -59,10 +87,10 @@ export class InteractionDispatcher {
                     flags: MessageFlags.Ephemeral,
                 });
             }
-        } catch (error) {
-            console.error(
-                `Failed to send an error response for command "${interaction.commandName}" (interaction ${interaction.id}).`,
-                error,
+        } catch (err) {
+            logger.error(
+                { event: "command.error-response.failed", err },
+                "Failed to send command error response",
             );
         }
     }

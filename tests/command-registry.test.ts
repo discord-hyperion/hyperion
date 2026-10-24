@@ -13,7 +13,7 @@ const commandModule = new URL("../src/commands/command.ts", import.meta.url)
 
 const buildersModule = import.meta.resolve("@discordjs/builders");
 
-function commandSource(name: string) {
+const commandSource = (name: string) => {
     return `
         import { Command } from ${JSON.stringify(commandModule)};
         import { ChatInputCommandBuilder } from ${JSON.stringify(buildersModule)};
@@ -32,7 +32,7 @@ function commandSource(name: string) {
             async run() {}
         }
     `;
-}
+};
 
 test("discovers nested commands and skips non-command files", async t => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-commands-"));
@@ -114,6 +114,7 @@ test("initializes commands and bulk registers once per unique guild without logi
 
     const client = await HyperionClient.create({
         name: "Test",
+        logging: false as const,
         discord: { intents: [] },
         root,
         commands: {
@@ -179,6 +180,7 @@ test("initialization rejects when deployment fails", async t => {
     await assert.rejects(
         HyperionClient.create({
             name: "Test",
+            logging: false as const,
             discord: { intents: [] },
             root,
             commands: { applicationId: "123", token: "test-token" },
@@ -282,6 +284,7 @@ test("initialization skips absent or empty conventional folders and ignores othe
 
     const options = {
         name: "Test",
+        logging: false as const,
         root,
         discord: { intents: [] },
         commands: { applicationId: "123", token: "test-token" },

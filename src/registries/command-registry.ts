@@ -2,6 +2,7 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection, DiscordAPIError, REST, Routes } from "discord.js";
+import type { Logger } from "pino";
 import { Command } from "../commands/index.ts";
 
 export interface CommandRegistrationOptions {
@@ -14,10 +15,19 @@ export interface CommandRegistrationOptions {
 export class CommandRegistry extends Collection<string, Command> {
     private sources = new WeakMap<Command, string>();
 
+    public constructor(private readonly logger?: Logger) {
+        super();
+    }
+
     public async load(root: string | URL = process.cwd()): Promise<void> {
         const rootPath =
             root instanceof URL ? fileURLToPath(root) : path.resolve(root);
         const directoryPath = path.join(rootPath, "src", "commands");
+        this.logger?.debug(
+            { event: "commands.discover", directory: directoryPath },
+            "Discovering command files",
+        );
+
         const files = await this.discover(directoryPath, true);
 
         const commands = new Collection<string, Command>();
@@ -53,6 +63,7 @@ export class CommandRegistry extends Collection<string, Command> {
             }
 
             const name = command.builder.toJSON(false).name;
+
             if (typeof name !== "string" || typeof command.run !== "function") {
                 throw new Error(
                     `Command in "${file}" must provide a named builder and a run() method.`,
@@ -67,6 +78,10 @@ export class CommandRegistry extends Collection<string, Command> {
 
             commands.set(name, command);
             sources.set(command, file);
+            this.logger?.debug(
+                { event: "command.loaded", command: name, source: file },
+                "Loaded command",
+            );
         }
 
         this.clear();
@@ -75,6 +90,10 @@ export class CommandRegistry extends Collection<string, Command> {
         for (const [name, command] of commands) {
             this.set(name, command);
         }
+        this.logger?.info(
+            { event: "commands.loaded", count: this.size },
+            "Command discovery complete",
+        );
     }
 
     /** Replaces all application commands in each selected scope. */
@@ -123,8 +142,18 @@ export class CommandRegistry extends Collection<string, Command> {
             : [Routes.applicationCommands(options.applicationId)];
 
         for (const route of routes) {
+            const started = performance.now();
             try {
                 await rest.put(route, { body });
+                this.logger?.info(
+                    {
+                        event: "commands.deployed",
+                        route,
+                        count: body.length,
+                        durationMs: Math.round(performance.now() - started),
+                    },
+                    "Application commands deployed",
+                );
             } catch (cause) {
                 const details =
                     cause instanceof Error ? cause.message : String(cause);
@@ -173,6 +202,10 @@ export class CommandRegistry extends Collection<string, Command> {
                     "code" in error &&
                     error.code === "ENOENT"
                 ) {
+                    this.logger?.debug(
+                        { event: "commands.directory.missing", directory },
+                        "Optional command directory does not exist",
+                    );
                     return [];
                 }
                 throw error;

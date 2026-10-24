@@ -27,9 +27,9 @@ class TestCommand extends Command {
     }
 }
 
-function createInteraction(
+const createInteraction = (
     state: { deferred?: boolean; replied?: boolean; chatInput?: boolean } = {},
-) {
+) => {
     const reply = mock.fn(async (_options: unknown) => undefined);
     const editReply = mock.fn(async (_options: unknown) => undefined);
     const followUp = mock.fn(async (_options: unknown) => undefined);
@@ -50,12 +50,13 @@ function createInteraction(
     } as unknown as ChatInputCommandInteraction;
 
     return { interaction, reply, editReply, followUp, deferReply, showModal };
-}
+};
 
 test("filesystem-loaded ping runs through the client's interaction listener", async t => {
     const put = t.mock.method(REST.prototype, "put", async () => []);
     const client = await HyperionClient.create({
         name: "Test",
+        logging: false as const,
         root: new URL("../dev/bot/", import.meta.url),
         discord: { intents: [] },
         commands: {
@@ -81,6 +82,7 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
 test("passes a fresh context and preserves the command receiver", async t => {
     const client = await HyperionClient.create({
         name: "Test",
+        logging: false as const,
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
@@ -106,6 +108,7 @@ test("passes a fresh context and preserves the command receiver", async t => {
 test("ignores interactions other than slash commands", async t => {
     const client = await HyperionClient.create({
         name: "Test",
+        logging: false as const,
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
@@ -120,6 +123,7 @@ test("ignores interactions other than slash commands", async t => {
 test("acknowledges a stale command with a private unavailable response", async t => {
     const client = await HyperionClient.create({
         name: "Test",
+        logging: false as const,
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
@@ -135,11 +139,13 @@ for (const phase of ["new", "deferred", "replied"] as const) {
     test(`handles a command failure after the ${phase} acknowledgment state`, async t => {
         const client = await HyperionClient.create({
             name: "Test",
+            logging: false as const,
             discord: { intents: [] },
         });
         t.after(() => client.destroy());
         const failure = new Error("Internal service details");
-        const log = t.mock.method(console, "error", () => undefined);
+        t.mock.method(client.logger, "child", () => client.logger);
+        const log = t.mock.method(client.logger, "error", () => undefined);
         client.commands.set(
             "ping",
             new TestCommand(async () => {
@@ -155,7 +161,11 @@ for (const phase of ["new", "deferred", "replied"] as const) {
 
         const content = "Something went wrong while running this command.";
         assert.equal(log.mock.callCount(), 1);
-        assert.equal(log.mock.calls[0]?.arguments[1], failure);
+        assert.equal(
+            (log.mock.calls[0]?.arguments[0] as { err: unknown } | undefined)
+                ?.err,
+            failure,
+        );
         assert.equal(fixture.reply.mock.callCount(), phase === "new" ? 1 : 0);
         assert.equal(
             fixture.editReply.mock.callCount(),
@@ -182,10 +192,12 @@ for (const phase of ["new", "deferred", "replied"] as const) {
 test("contains synchronous throws and failed error responses in the event listener", async t => {
     const client = await HyperionClient.create({
         name: "Test",
+        logging: false as const,
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
-    const log = t.mock.method(console, "error", () => undefined);
+    t.mock.method(client.logger, "child", () => client.logger);
+    const log = t.mock.method(client.logger, "error", () => undefined);
     client.commands.set(
         "ping",
         new TestCommand(() => {
@@ -207,6 +219,7 @@ test("contains synchronous throws and failed error responses in the event listen
 test("does not acknowledge before a handler opens a modal", async t => {
     const client = await HyperionClient.create({
         name: "Test",
+        logging: false as const,
         discord: { intents: [] },
     });
     t.after(() => client.destroy());

@@ -117,7 +117,7 @@ appropriate; Hyperion does not automatically defer before calling `run()`.
 For example, slow handlers can call `deferReply()` before awaiting their work,
 then `editReply()` to deliver the result.
 
-Handler failures are reported to the console with the command and interaction ID.
+Handler failures are reported through Pino with the command and interaction ID.
 Users receive a generic error message without internal exception details:
 - Before acknowledgment: an ephemeral reply.
 - After deferral, before a reply: an edit to the deferred response. This retains
@@ -127,6 +127,10 @@ Users receive a generic error message without internal exception details:
 Failures while sending these error messages are also reported and contained.
 Unknown command names receive a private unavailable response. Successful handlers
 are responsible for providing their own response; Hyperion adds no extra message.
+
+Commands also receive `context.logger`, a Pino child logger carrying invocation
+metadata. See [Logging and startup progress](./logging.md) for levels, coloured
+output, startup indicators, and configuration.
 
 ## Development bot
 

@@ -31,6 +31,9 @@ the old Hyperion repository is background context, not the current API.
   ESLint or Prettier alongside it. Do not format the generated lockfile manually.
 - Filenames and directories use kebab-case. Classes and types use PascalCase;
   functions and variables use camelCase.
+- Prefer arrow functions over the `function` keyword for standalone functions
+  and callbacks. Keep normal class methods; use a function declaration only when
+  its semantics are required.
 
 ## Repository layout
 
@@ -53,8 +56,9 @@ docs/           Usage and architecture documentation
 
 Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
-dispatch exist. Component dispatch, guards, and a logging-library integration
-are not implemented yet. Database support is intentionally out of scope.
+dispatch exist, along with Pino logging and Ora startup indicators. Component
+dispatch and guards are not implemented yet. Database support is intentionally
+out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
 - Keep folder aliases in `tsconfig.json` synchronized with the layout. Examples
@@ -80,6 +84,10 @@ are not implemented yet. Database support is intentionally out of scope.
   for exported classes, executable handlers, lookup names, and duplicate names.
 - Preserve original failures with `cause` and retain source-file context for
   builder failures and indexed Discord validation errors.
+- Use `client.logger` or the invocation's `context.logger` for structured logs.
+  Do not log credentials, whole client options, raw interactions, or command
+  arguments. Preserve configurable levels, silent mode, JSON output outside
+  interactive terminals, and progress cleanup after failures.
 
 ## Filesystem discovery and deployment
 
