@@ -1,4 +1,5 @@
 import type { ClientOptions } from "discord.js";
+import type { LoggingOptions } from "../logging/index.ts";
 import type { CommandRegistrationOptions } from "../registries/index.ts";
 
 export interface HyperionClientOptions {
@@ -9,4 +10,5 @@ export interface HyperionClientOptions {
     /** Bot project root */
     root?: string | URL;
     commands?: CommandRegistrationOptions;
+    logging?: LoggingOptions | false;
 }
