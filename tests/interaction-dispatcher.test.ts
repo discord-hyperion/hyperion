@@ -13,7 +13,7 @@ import { InteractionDispatcher } from "../src/execution/index.ts";
 
 class TestCommand extends Command {
     public constructor(
-        private readonly execute: (context: CommandContext) => Promise<void>,
+        private readonly execute: (ctx: CommandContext) => Promise<void>,
     ) {
         super({
             builder: new ChatInputCommandBuilder()
@@ -22,8 +22,8 @@ class TestCommand extends Command {
         });
     }
 
-    public override run(context: CommandContext): Promise<void> {
-        return this.execute(context);
+    public override run(ctx: CommandContext): Promise<void> {
+        return this.execute(ctx);
     }
 }
 
@@ -38,6 +38,7 @@ const createInteraction = (
     // Only the interaction surface used by dispatch and these handlers is mocked.
     const interaction = {
         id: "test-interaction",
+        user: { id: "test-owner" },
         commandName: "ping",
         deferred: state.deferred ?? false,
         replied: state.replied ?? false,
@@ -58,6 +59,7 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
         name: "Test",
         logging: false as const,
         root: new URL("../dev/bot/", import.meta.url),
+        ownerIds: ["test-owner"],
         discord: { intents: [] },
         commands: {
             applicationId: "123",
@@ -87,8 +89,8 @@ test("passes a fresh context and preserves the command receiver", async t => {
     });
     t.after(() => client.destroy());
     const contexts: CommandContext[] = [];
-    const handler = new TestCommand(async context => {
-        contexts.push(context);
+    const handler = new TestCommand(async ctx => {
+        contexts.push(ctx);
     });
     client.commands.set("ping", handler);
     const dispatcher = new InteractionDispatcher(client);
@@ -226,8 +228,8 @@ test("does not acknowledge before a handler opens a modal", async t => {
     const fixture = createInteraction();
     client.commands.set(
         "ping",
-        new TestCommand(async context => {
-            await context.interaction.showModal({
+        new TestCommand(async ctx => {
+            await ctx.interaction.showModal({
                 custom_id: "test",
                 title: "Test",
                 components: [],

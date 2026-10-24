@@ -6,8 +6,11 @@ import {
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
+import { GuardPipeline } from "./guard-pipeline.ts";
 
 export class InteractionDispatcher {
+    private readonly guards = new GuardPipeline();
+
     public constructor(private readonly client: HyperionClient) {}
 
     public attach(): void {
@@ -42,8 +45,34 @@ export class InteractionDispatcher {
 
         const started = performance.now();
         logger.debug({ event: "command.started" }, "Running command");
+        let stage: "guards" | "handler" = "guards";
         try {
-            await command.run({ client: this.client, interaction, logger });
+            const ctx = { client: this.client, interaction, logger };
+            const result = await this.guards.run(command.guards, ctx);
+
+            if (!result.passed) {
+                logger.info(
+                    {
+                        event: "command.rejected",
+                        guard: result.guard.name,
+                        durationMs: Math.round(performance.now() - started),
+                    },
+                    "Command rejected by guard",
+                );
+                if (result.guard.onFail) {
+                    await result.guard.onFail(ctx);
+                } else {
+                    await this.respondWithError(
+                        interaction,
+                        result.guard.description,
+                        logger,
+                    );
+                }
+                return;
+            }
+
+            stage = "handler";
+            await command.run(ctx);
             logger.info(
                 {
                     event: "command.completed",
@@ -55,6 +84,7 @@ export class InteractionDispatcher {
             logger.error(
                 {
                     event: "command.failed",
+                    stage,
                     durationMs: Math.round(performance.now() - started),
                     err,
                 },

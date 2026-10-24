@@ -126,9 +126,9 @@ test("command context gets a correlated logger and completion timing", async t =
                     .setDescription("Ping"),
             });
         }
-        public override async run(context: CommandContext): Promise<void> {
-            context.logger.debug({ checkpoint: "ready" }, "Handler checkpoint");
-            await context.interaction.reply("Pong!");
+        public override async run(ctx: CommandContext): Promise<void> {
+            ctx.logger.debug({ checkpoint: "ready" }, "Handler checkpoint");
+            await ctx.interaction.reply("Pong!");
         }
     }
     client.commands.set("ping", new LoggedCommand());

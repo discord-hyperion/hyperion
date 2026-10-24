@@ -1,5 +1,5 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion";
+import { Command, type CommandContext, OwnerOnly } from "@hyperion";
 
 export default class PingCommand extends Command {
     constructor() {
@@ -7,6 +7,7 @@ export default class PingCommand extends Command {
             builder: new ChatInputCommandBuilder()
                 .setName("ping")
                 .setDescription("Check whether the bot is responding."),
+            guards: [new OwnerOnly()],
         });
     }
 

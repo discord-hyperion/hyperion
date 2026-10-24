@@ -48,6 +48,7 @@ src/
   registries/   Filesystem discovery and handler registries
   execution/    Dispatch and execution orchestration
   logging/      Logging integration
+  util/         Shared utilities
 dev/bot/        Development bot, separate from framework source
   src/commands/ Example command modules
 tests/          Isolated tests
@@ -56,9 +57,9 @@ docs/           Usage and architecture documentation
 
 Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
-dispatch exist, along with Pino logging and Ora startup indicators. Component
-dispatch and guards are not implemented yet. Database support is intentionally
-out of scope.
+dispatch exist, along with command guards, Pino logging and Ora startup indicators.
+Component dispatch is not implemented yet. Database support is intentionally out
+of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
 - Keep folder aliases in `tsconfig.json` synchronized with the layout. Examples
@@ -84,10 +85,13 @@ out of scope.
   for exported classes, executable handlers, lookup names, and duplicate names.
 - Preserve original failures with `cause` and retain source-file context for
   builder failures and indexed Discord validation errors.
-- Use `client.logger` or the invocation's `context.logger` for structured logs.
+- Use `client.logger` or the invocation's `ctx.logger` for structured logs.
   Do not log credentials, whole client options, raw interactions, or command
   arguments. Preserve configurable levels, silent mode, JSON output outside
   interactive terminals, and progress cleanup after failures.
+- Command guards are ordered `Guard` instances or lazy per-invocation factories.
+  Stop on rejection or error. Do not invoke factories during discovery or
+  deployment, or keep invocation-specific mutable state on shared guards.
 
 ## Filesystem discovery and deployment
 
@@ -142,3 +146,9 @@ Discord login, or external requests. Do not run `pnpm start`, `pnpm dev`, or
 - Example: `feat(commands): load commands from conventional directories`.
 - Before committing, inspect the staged filenames and run relevant checks. Keep
   private environment files and generated dependencies out of the commit.
+- Use GitHub CLI (`gh`) for GitHub operations, including creating and updating PRs.
+- Structure every PR description with these headings, in order:
+  - `## Title`: repeat the PR title exactly.
+  - `## Changes`: list the concrete changes as bullet points.
+  - `## Description`: give a short overview and explain the implementation choices.
+    Include relevant validation and limitations here without adding extra headings.
