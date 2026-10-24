@@ -1,0 +1,38 @@
+{
+    "name": "discord-hyperion",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.ts",
+    "scripts": {
+        "start": "tsx --env-file-if-exists=.env src/index.ts",
+        "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+        "start:debug": "tsx --inspect --env-file-if-exists=.env src/index.ts",
+        "check": "biome check .",
+        "check:fix": "biome check --write .",
+        "lint": "biome lint .",
+        "format": "biome format --write .",
+        "test": "node --import tsx --test tests/*.test.ts"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devEngines": {
+        "packageManager": {
+            "name": "pnpm",
+            "version": "12.15.0",
+            "onFail": "download"
+        }
+    },
+    "packageManager": "pnpm@12.15.0",
+    "type": "module",
+    "devDependencies": {
+        "@biomejs/biome": "2.6.2",
+        "@types/node": "^26.6.5",
+        "tsx": "^4.23.15",
+        "typescript": "^7.0.2"
+    },
+    "dependencies": {
+        "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54",
+        "discord.js": "15.0.0-dev.1792497873-5050a3b54"
+    }
+}
