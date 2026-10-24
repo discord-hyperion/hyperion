@@ -4,9 +4,9 @@
     "description": "",
     "main": "index.ts",
     "scripts": {
-        "start": "tsx --env-file-if-exists=.env src/index.ts",
-        "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
-        "start:debug": "tsx --inspect --env-file-if-exists=.env src/index.ts",
+        "start": "tsx --env-file-if-exists=.env dev/bot/index.ts",
+        "dev": "tsx watch --env-file-if-exists=.env dev/bot/index.ts",
+        "start:debug": "tsx --inspect --env-file-if-exists=.env dev/bot/index.ts",
         "check": "biome check .",
         "check:fix": "biome check --write .",
         "lint": "biome lint .",

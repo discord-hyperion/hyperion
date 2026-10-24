@@ -106,8 +106,48 @@ If no `commands` options are provided, the client starts with an empty registry
 and does not deploy anything. Module import, validation, and deployment errors
 reject `create()`; initialization failures destroy the local client.
 
-This implements discovery and deployment only. Interaction dispatch to the
-command's `run()` method is not implemented yet.
+## Command execution
 
-Run the registration tests with `pnpm test`. The tests mock REST requests and
-do not log in, contact Discord, or load environment files.
+After initialization, the client listens for slash-command interactions and looks
+up each command by name. The handler receives a fresh `CommandContext` containing
+the Hyperion client and the interaction. Other interaction types are left alone.
+
+Handlers control acknowledgment themselves. Reply, defer, or open a modal as
+appropriate; Hyperion does not automatically defer before calling `run()`.
+For example, slow handlers can call `deferReply()` before awaiting their work,
+then `editReply()` to deliver the result.
+
+Handler failures are reported to the console with the command and interaction ID.
+Users receive a generic error message without internal exception details:
+- Before acknowledgment: an ephemeral reply.
+- After deferral, before a reply: an edit to the deferred response. This retains
+  the original visibility selected by the handler.
+- After a reply: an ephemeral follow-up.
+
+Failures while sending these error messages are also reported and contained.
+Unknown command names receive a private unavailable response. Successful handlers
+are responsible for providing their own response; Hyperion adds no extra message.
+
+## Development bot
+
+The startup scripts now target `dev/bot/index.ts`:
+
+```sh
+pnpm dev          # Restart on source changes
+pnpm start        # Run once
+pnpm start:debug  # Run with the Node inspector
+```
+
+Configure `DISCORD_TOKEN`, `DISCORD_APPLICATION_ID`, and `DISCORD_DEV_GUILD_ID`
+yourself in the startup environment or your private root `.env` file. All three
+are required by the development bot. Startup deploys commands to that development
+guild before logging in; it does not perform global registration. Invite the
+application to your test guild, start the bot, wait for the ready message, and
+invoke `/ping` to receive `Pong!`.
+
+These scripts load private environment files and must only be run by the user,
+not by coding agents. Live Discord execution is separate from automated tests.
+
+Run the registration and dispatch tests with `pnpm test`. The tests mock REST
+requests and interactions and do not log in, contact Discord, or load environment
+files.

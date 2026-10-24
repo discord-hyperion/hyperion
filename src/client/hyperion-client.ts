@@ -1,4 +1,5 @@
 import { Client } from "discord.js";
+import { InteractionDispatcher } from "../execution/index.ts";
 import { CommandRegistry } from "../registries/index.ts";
 import type { HyperionClientOptions } from "./options.ts";
 
@@ -7,6 +8,7 @@ export class HyperionClient extends Client {
     public readonly description: string;
     public readonly ownerIds: readonly string[];
     public readonly commands: CommandRegistry;
+    private readonly dispatcher: InteractionDispatcher;
 
     private constructor(options: HyperionClientOptions) {
         super(options.discord);
@@ -16,6 +18,7 @@ export class HyperionClient extends Client {
         this.ownerIds = Object.freeze([...(options.ownerIds ?? [])]);
 
         this.commands = new CommandRegistry();
+        this.dispatcher = new InteractionDispatcher(this);
     }
 
     public static async create(
@@ -27,18 +30,20 @@ export class HyperionClient extends Client {
             await client.init(options);
             return client;
         } catch (error) {
-            client.destroy();
+            await client.destroy();
             throw error;
         }
     }
 
     private async init(options: HyperionClientOptions): Promise<void> {
-        if (!options.commands) return;
+        if (options.commands) {
+            await this.commands.load(options.root);
 
-        await this.commands.load(options.root);
+            if (this.commands.size > 0) {
+                await this.commands.register(options.commands);
+            }
+        }
 
-        if (this.commands.size === 0) return;
-
-        await this.commands.register(options.commands);
+        this.dispatcher.attach();
     }
 }

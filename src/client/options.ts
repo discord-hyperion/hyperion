@@ -6,7 +6,7 @@ export interface HyperionClientOptions {
     description?: string;
     discord: ClientOptions;
     ownerIds?: readonly string[];
-    /** Bot project root; handler directories are resolved beneath root/src. */
+    /** Bot project root */
     root?: string | URL;
     commands?: CommandRegistrationOptions;
 }
