@@ -34,6 +34,33 @@ const commandSource = (name: string) => {
     `;
 };
 
+test("command discovery and deployment leave guard factories unevaluated", async t => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-lazy-guards-"));
+    t.after(() => rm(root, { recursive: true, force: true }));
+    const directory = path.join(root, "src", "commands");
+    await mkdir(directory, { recursive: true });
+    const source = commandSource("guarded").replace(
+        "super({ builder:",
+        'super({ guards: [() => { throw new Error("Factory ran at startup"); }], builder:',
+    );
+    await writeFile(path.join(directory, "guarded.mjs"), source);
+    const put = t.mock.method(REST.prototype, "put", async () => []);
+    const client = await HyperionClient.create({
+        name: "Test",
+        logging: false,
+        discord: { intents: [] },
+        root,
+        commands: {
+            applicationId: "123",
+            token: "test-token",
+            guildIds: ["456"],
+        },
+    });
+    t.after(() => client.destroy());
+    assert.equal(client.commands.get("guarded")?.guards.length, 1);
+    assert.equal(put.mock.callCount(), 1);
+});
+
 test("discovers nested commands and skips non-command files", async t => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-commands-"));
 

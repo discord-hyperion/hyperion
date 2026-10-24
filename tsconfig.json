@@ -35,7 +35,9 @@
             "@execution": ["./src/execution/index.ts"],
             "@execution/*": ["./src/execution/*"],
             "@logging": ["./src/logging/index.ts"],
-            "@logging/*": ["./src/logging/*"]
+            "@logging/*": ["./src/logging/*"],
+            "@util": ["./src/util/index.ts"],
+            "@util/*": ["./src/util/*"]
         }
     },
     "include": ["src/**/*.ts", "dev/**/*.ts", "tests/**/*.ts"]

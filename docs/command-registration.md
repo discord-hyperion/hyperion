@@ -75,8 +75,8 @@ export default class PingCommand extends Command {
         });
     }
 
-    public override async run(context: CommandContext): Promise<void> {
-        await context.interaction.reply("Pong!");
+    public override async run(ctx: CommandContext): Promise<void> {
+        await ctx.interaction.reply("Pong!");
     }
 }
 ```
@@ -112,6 +112,10 @@ After initialization, the client listens for slash-command interactions and look
 up each command by name. The handler receives a fresh `CommandContext` containing
 the Hyperion client and the interaction. Other interaction types are left alone.
 
+Optional command `guards` run in order before the handler. They accept shared
+instances or lazy per-invocation factories. The first rejection or error stops
+execution; see [Command guards](./guards.md) for configuration and custom responses.
+
 Handlers control acknowledgment themselves. Reply, defer, or open a modal as
 appropriate; Hyperion does not automatically defer before calling `run()`.
 For example, slow handlers can call `deferReply()` before awaiting their work,
@@ -128,7 +132,7 @@ Failures while sending these error messages are also reported and contained.
 Unknown command names receive a private unavailable response. Successful handlers
 are responsible for providing their own response; Hyperion adds no extra message.
 
-Commands also receive `context.logger`, a Pino child logger carrying invocation
+Commands also receive `ctx.logger`, a Pino child logger carrying invocation
 metadata. See [Logging and startup progress](./logging.md) for levels, coloured
 output, startup indicators, and configuration.
 
