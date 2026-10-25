@@ -177,6 +177,12 @@ Discord login, or external requests. Do not run `pnpm start`, `pnpm dev`, or
 ## Git
 
 - Preserve unrelated user changes. Do not commit or push unless requested.
+- Split work into focused commits rather than bundling all changes into one large
+  commit. Group related features and files into coherent batches, staging each
+  batch explicitly. Keep the implementation and tests needed for each change
+  together; separate independent features, refactors, examples, or documentation
+  updates when they form distinct changes. Each commit should be understandable
+  and leave the project in a working state.
 - When committing, follow this format:
   `<type>(<scope>): <concise imperative description>`.
 - Use `feat` for functionality, `fix` for corrections, `refactor` for behavior-
