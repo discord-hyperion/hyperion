@@ -1,24 +1,46 @@
-import type { StringSelectMenuBuilder } from "@discordjs/builders";
-import type { StringSelectMenuInteraction } from "discord.js";
+import type {
+    StringSelectMenuBuilder,
+    UserSelectMenuBuilder,
+} from "@discordjs/builders";
+import { ComponentType, type MappedInteractionTypes } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
 
-export interface SelectMenuContext
-    extends InteractionContext<StringSelectMenuInteraction> {}
+export type SelectMenuType =
+    | ComponentType.StringSelect
+    | ComponentType.UserSelect;
 
-export interface SelectMenuOptions {
-    builder: StringSelectMenuBuilder;
-    guards?: readonly GuardProvider<SelectMenuContext>[];
+interface SelectMenuBuilders {
+    [ComponentType.StringSelect]: StringSelectMenuBuilder;
+    [ComponentType.UserSelect]: UserSelectMenuBuilder;
 }
 
-export abstract class SelectMenu {
-    public readonly builder: StringSelectMenuBuilder;
-    public readonly customId: string;
-    public readonly guards: readonly GuardProvider<SelectMenuContext>[];
+export interface SelectMenuContext<
+    Type extends SelectMenuType = ComponentType.StringSelect,
+> extends InteractionContext<MappedInteractionTypes[Type]> {}
 
-    protected constructor(options: SelectMenuOptions) {
+export interface SelectMenuOptions<
+    Type extends SelectMenuType = ComponentType.StringSelect,
+> {
+    builder: SelectMenuBuilders[Type];
+    guards?: readonly GuardProvider<SelectMenuContext<Type>>[];
+}
+
+export abstract class SelectMenu<
+    Type extends SelectMenuType = ComponentType.StringSelect,
+> {
+    public readonly builder: SelectMenuBuilders[Type];
+    public readonly componentType: Type;
+    public readonly customId: string;
+    public readonly guards: readonly GuardProvider<SelectMenuContext<Type>>[];
+
+    protected constructor(options: SelectMenuOptions<Type>) {
         this.builder = options.builder;
-        this.customId = this.builder.toJSON(false).custom_id;
+        const data = this.builder.toJSON(false);
+
+        this.customId = data.custom_id;
+        // The builder map pairs each generic type with its matching builder.
+        this.componentType = data.type as Type;
         this.guards = Object.freeze([...(options.guards ?? [])]);
 
         for (const provider of this.guards) {
@@ -34,5 +56,9 @@ export abstract class SelectMenu {
         }
     }
 
-    public abstract run(ctx: SelectMenuContext): Promise<void>;
+    public abstract run(ctx: SelectMenuContext<Type>): Promise<void>;
 }
+
+export type AnySelectMenu =
+    | SelectMenu<ComponentType.StringSelect>
+    | SelectMenu<ComponentType.UserSelect>;
