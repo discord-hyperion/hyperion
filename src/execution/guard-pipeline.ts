@@ -1,14 +1,17 @@
+import type { Logger } from "pino";
 import type { CommandContext } from "../commands/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
 import { resolve } from "../util/index.ts";
 
-export type GuardResult = { passed: true } | { passed: false; guard: Guard };
+export type GuardResult<Context = CommandContext> =
+    | { passed: true }
+    | { passed: false; guard: Guard<Context> };
 
 export class GuardPipeline {
-    public async run(
-        providers: readonly GuardProvider[],
-        ctx: CommandContext,
-    ): Promise<GuardResult> {
+    public async run<Context extends { readonly logger: Logger }>(
+        providers: readonly GuardProvider<Context>[],
+        ctx: Context,
+    ) {
         for (const provider of providers) {
             const guard = await resolve(provider, ctx);
 
@@ -44,11 +47,11 @@ export class GuardPipeline {
 
             if (!passed)
                 return {
-                    passed: false,
+                    passed: false as const,
                     guard,
                 };
         }
 
-        return { passed: true };
+        return { passed: true as const };
     }
 }

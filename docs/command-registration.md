@@ -75,7 +75,7 @@ export default class PingCommand extends Command {
         });
     }
 
-    public override async run(ctx: CommandContext): Promise<void> {
+    async run(ctx: CommandContext) {
         await ctx.interaction.reply("Pong!");
     }
 }
@@ -110,7 +110,8 @@ reject `create()`; initialization failures destroy the local client.
 
 After initialization, the client listens for slash-command interactions and looks
 up each command by name. The handler receives a fresh `CommandContext` containing
-the Hyperion client and the interaction. Other interaction types are left alone.
+the Hyperion client and the interaction. Button interactions are routed separately
+through [button handlers](./buttons.md); other interaction types are left alone.
 
 Optional command `guards` run in order before the handler. They accept shared
 instances or lazy per-invocation factories. The first rejection or error stops
@@ -135,6 +136,7 @@ are responsible for providing their own response; Hyperion adds no extra message
 Commands also receive `ctx.logger`, a Pino child logger carrying invocation
 metadata. See [Logging and startup progress](./logging.md) for levels, coloured
 output, startup indicators, and configuration.
+
 
 ## Development bot
 

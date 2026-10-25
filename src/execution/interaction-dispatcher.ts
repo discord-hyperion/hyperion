@@ -1,4 +1,5 @@
 import {
+    type ButtonInteraction,
     type ChatInputCommandInteraction,
     Events,
     type Interaction,
@@ -6,58 +7,101 @@ import {
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
+import type { InteractionContext } from "../contexts/index.ts";
+import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
+
+type HandlerKind = "command" | "button";
 
 export class InteractionDispatcher {
     private readonly guards = new GuardPipeline();
 
     public constructor(private readonly client: HyperionClient) {}
 
-    public attach(): void {
+    public attach() {
         this.client.on(Events.InteractionCreate, interaction =>
             this.dispatch(interaction),
         );
     }
 
-    public async dispatch(interaction: Interaction): Promise<void> {
-        if (!interaction.isChatInputCommand()) return;
+    public async dispatch(interaction: Interaction) {
+        if (interaction.isChatInputCommand()) {
+            const logger = this.createLogger(interaction, {
+                command: interaction.commandName,
+            });
+            const command = this.client.commands.get(interaction.commandName);
+            if (!command) {
+                logger.warn(
+                    { event: "command.unavailable" },
+                    "No handler found for command",
+                );
+                await this.respondWithError(
+                    interaction,
+                    "This command is no longer available. Please try again later.",
+                    logger,
+                    "command",
+                );
+                return;
+            }
+            await this.execute(
+                command,
+                {
+                    client: this.client,
+                    interaction,
+                    logger,
+                },
+                "command",
+            );
+        } else if (interaction.isButton()) {
+            const button = this.client.buttons.get(interaction.customId);
+            // Unmatched IDs may belong to application-owned collectors/listeners.
+            if (!button) return;
+            const logger = this.createLogger(interaction, {
+                button: button.customId,
+            });
+            await this.execute(
+                button,
+                { client: this.client, interaction, logger },
+                "button",
+            );
+        }
+    }
 
-        const logger = this.client.logger.child({
+    private createLogger(
+        interaction: ChatInputCommandInteraction | ButtonInteraction,
+        handler: { command: string } | { button: string },
+    ) {
+        return this.client.logger.child({
             component: "execution",
-            command: interaction.commandName,
+            ...handler,
             interactionId: interaction.id,
             guildId: interaction.guildId,
             userId: interaction.user?.id,
         });
-        const command = this.client.commands.get(interaction.commandName);
-        if (!command) {
-            logger.warn(
-                { event: "command.unavailable" },
-                "No handler found for command",
-            );
-            await this.respondWithError(
-                interaction,
-                "This command is no longer available. Please try again later.",
-                logger,
-            );
-            return;
-        }
+    }
 
+    private async execute<Context extends InteractionContext>(
+        handler: {
+            readonly guards: readonly GuardProvider<Context>[];
+            run(ctx: Context): Promise<void>;
+        },
+        ctx: Context,
+        kind: HandlerKind,
+    ) {
+        const { interaction, logger } = ctx;
         const started = performance.now();
-        logger.debug({ event: "command.started" }, "Running command");
+        logger.debug({ event: `${kind}.started` }, `Running ${kind}`);
         let stage: "guards" | "handler" = "guards";
         try {
-            const ctx = { client: this.client, interaction, logger };
-            const result = await this.guards.run(command.guards, ctx);
-
+            const result = await this.guards.run(handler.guards, ctx);
             if (!result.passed) {
                 logger.info(
                     {
-                        event: "command.rejected",
+                        event: `${kind}.rejected`,
                         guard: result.guard.name,
                         durationMs: Math.round(performance.now() - started),
                     },
-                    "Command rejected by guard",
+                    `${kind} rejected by guard`,
                 );
                 if (result.guard.onFail) {
                     await result.guard.onFail(ctx);
@@ -66,45 +110,53 @@ export class InteractionDispatcher {
                         interaction,
                         result.guard.description,
                         logger,
+                        kind,
                     );
                 }
                 return;
             }
-
             stage = "handler";
-            await command.run(ctx);
+            await handler.run(ctx);
             logger.info(
                 {
-                    event: "command.completed",
+                    event: `${kind}.completed`,
                     durationMs: Math.round(performance.now() - started),
                 },
-                "Command completed",
+                `${kind} completed`,
             );
         } catch (err) {
             logger.error(
                 {
-                    event: "command.failed",
+                    event: `${kind}.failed`,
                     stage,
                     durationMs: Math.round(performance.now() - started),
                     err,
                 },
-                "Command execution failed",
+                `${kind} execution failed`,
             );
             await this.respondWithError(
                 interaction,
-                "Something went wrong while running this command.",
+                `Something went wrong while running this ${kind}.`,
                 logger,
+                kind,
             );
         }
     }
 
     private async respondWithError(
-        interaction: ChatInputCommandInteraction,
+        interaction: ChatInputCommandInteraction | ButtonInteraction,
         content: string,
         logger: Logger,
-    ): Promise<void> {
+        kind: HandlerKind,
+    ) {
         try {
-            if (interaction.replied) {
+            // deferUpdate() leaves ephemeral null: editing its reply would replace
+            // the source message. Send a private follow-up in that state instead.
+            const deferredUpdate =
+                kind === "button" &&
+                interaction.deferred &&
+                interaction.ephemeral === null;
+            if (interaction.replied || deferredUpdate) {
                 await interaction.followUp({
                     content,
                     flags: MessageFlags.Ephemeral,
@@ -119,8 +171,8 @@ export class InteractionDispatcher {
             }
         } catch (err) {
             logger.error(
-                { event: "command.error-response.failed", err },
-                "Failed to send command error response",
+                { event: `${kind}.error-response.failed`, err },
+                `Failed to send ${kind} error response`,
             );
         }
     }

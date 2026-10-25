@@ -71,11 +71,7 @@ export class LogManager {
         );
     }
 
-    public async step<T>(
-        label: string,
-        event: string,
-        task: () => Promise<T>,
-    ): Promise<T> {
+    public async step<T>(label: string, event: string, task: () => Promise<T>) {
         const started = performance.now();
         this.logger.info({ event: `${event}.started` }, label);
 

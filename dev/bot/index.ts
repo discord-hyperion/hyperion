@@ -17,7 +17,6 @@ const bot = await HyperionClient.create({
         intents: ["Guilds"],
     },
     description: "Developer bot for the Hyperion framework",
-    ownerIds: [],
     commands: {
         applicationId,
         token,

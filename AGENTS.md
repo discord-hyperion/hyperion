@@ -34,8 +34,22 @@ the old Hyperion repository is background context, not the current API.
 - Prefer arrow functions over the `function` keyword for standalone functions
   and callbacks. Keep normal class methods; use a function declaration only when
   its semantics are required.
+- When implementing or extending an abstract class, omit redundant `public` and
+  `override` modifiers on constructors and methods. Public visibility is implicit;
+  retain `private`, `protected`, `abstract`, or other modifiers when they express
+  required semantics. Do not enable `noImplicitOverride` for these implementations.
+- Let TypeScript infer return types for implemented methods. Keep explicit return
+  types on abstract methods, interfaces, and other declarations that define a
+  contract without an implementation.
+- Group related statements together and separate logical groups with a blank
+  line. Keep related assignments adjacent, but give validation, state mutations,
+  logging, and subsequent operations their own visual groups. Follow the spacing
+  in the registry loaders; avoid tightly packing unrelated steps or inserting a
+  blank line between every statement.
 
 ## Repository layout
+
+Deferred feature work is tracked in `docs/features.md`.
 
 ```text
 src/
@@ -51,15 +65,16 @@ src/
   util/         Shared utilities
 dev/bot/        Development bot, separate from framework source
   src/commands/ Example command modules
+  src/buttons/  Example button modules
 tests/          Isolated tests
 docs/           Usage and architecture documentation
 ```
 
 Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
-dispatch exist, along with command guards, Pino logging and Ora startup indicators.
-Component dispatch is not implemented yet. Database support is intentionally out
-of scope.
+dispatch exist, along with button discovery and dispatch, guards, Pino logging and
+Ora startup indicators. Select menus and modals do not have framework dispatch
+yet. Database support is intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
 - Keep folder aliases in `tsconfig.json` synchronized with the layout. Examples
@@ -80,6 +95,8 @@ of scope.
   is a separate operation; do not silently introduce network activity elsewhere.
 - Use Discord's `Collection` for keyed handler registries. Arrays, sets, and weak
   maps remain appropriate for ordered data, uniqueness, and object metadata.
+- Use `Collection` rather than `Map` for other keyed stores as well, including
+  cooldown state, tests, and examples.
 - Command definitions use `ChatInputCommandBuilder`. Serialize through `toJSON()`
   and leave payload validation to the builder and Discord. Keep framework checks
   for exported classes, executable handlers, lookup names, and duplicate names.
@@ -92,6 +109,23 @@ of scope.
 - Command guards are ordered `Guard` instances or lazy per-invocation factories.
   Stop on rejection or error. Do not invoke factories during discovery or
   deployment, or keep invocation-specific mutable state on shared guards.
+- Ship reusable guards in `src/guards/builtins`, with a barrel re-exported through
+  the guards barrel and public library entry point. Consumers can use built-in
+  guards without defining their own subclasses.
+- `OwnerOnly` uses `client.getOwnerId()` to resolve the current application's
+  personal owner or team owner from Discord. Cache successful results per login,
+  share concurrent lookups, and fail closed when ownership cannot be resolved.
+- Buttons use custom-ID builders from `@discordjs/builders`, are keyed by exact
+  custom ID in `client.buttons`, and load from `<root>/src/buttons` without REST
+  registration. Unmatched IDs are left to collectors and application listeners.
+- Button guards use `ButtonContext`; shared command/button guards can use
+  `InteractionContext`. Filesystem handlers control their reply,
+  update, or modal lifecycle. After `deferUpdate()`, send errors as ephemeral
+  follow-ups rather than editing the source message.
+- Keep components stateless: retain handler definitions for routing, but do not
+  introduce per-message sessions, callback closures, timers, counters, or update
+  queues. Persistent state and atomic updates belong in application-owned storage.
+  SQLite integration is future work; do not add database dependencies yet.
 
 ## Filesystem discovery and deployment
 

@@ -11,7 +11,7 @@ export default class PingCommand extends Command {
         });
     }
 
-    public override async run(ctx: CommandContext): Promise<void> {
+    async run(ctx: CommandContext) {
         await ctx.interaction.reply("Pong!");
     }
 }

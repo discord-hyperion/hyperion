@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { mock, test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import {
@@ -12,7 +15,7 @@ import { Command, type CommandContext } from "../src/commands/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 
 class TestCommand extends Command {
-    public constructor(
+    constructor(
         private readonly execute: (ctx: CommandContext) => Promise<void>,
     ) {
         super({
@@ -22,7 +25,7 @@ class TestCommand extends Command {
         });
     }
 
-    public override run(ctx: CommandContext): Promise<void> {
+    run(ctx: CommandContext) {
         return this.execute(ctx);
     }
 }
@@ -43,6 +46,7 @@ const createInteraction = (
         deferred: state.deferred ?? false,
         replied: state.replied ?? false,
         isChatInputCommand: () => state.chatInput ?? true,
+        isButton: () => false,
         reply,
         editReply,
         followUp,
@@ -54,12 +58,18 @@ const createInteraction = (
 };
 
 test("filesystem-loaded ping runs through the client's interaction listener", async t => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-ping-"));
+    t.after(() => rm(root, { recursive: true, force: true }));
+    await mkdir(path.join(root, "src", "commands"), { recursive: true });
+    await writeFile(
+        path.join(root, "src", "commands", "ping.mjs"),
+        `export { default } from ${JSON.stringify(new URL("../dev/bot/src/commands/ping.ts", import.meta.url).href)};`,
+    );
     const put = t.mock.method(REST.prototype, "put", async () => []);
     const client = await HyperionClient.create({
         name: "Test",
         logging: false as const,
-        root: new URL("../dev/bot/", import.meta.url),
-        ownerIds: ["test-owner"],
+        root,
         discord: { intents: [] },
         commands: {
             applicationId: "123",
@@ -68,6 +78,7 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
         },
     });
     t.after(() => client.destroy());
+    t.mock.method(client, "getOwnerId", async () => "test-owner");
     assert.equal(put.mock.callCount(), 1);
     assert.equal(client.listenerCount(Events.InteractionCreate), 1);
 
@@ -88,6 +99,7 @@ test("passes a fresh context and preserves the command receiver", async t => {
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
+    t.mock.method(client, "getOwnerId", async () => "test-owner");
     const contexts: CommandContext[] = [];
     const handler = new TestCommand(async ctx => {
         contexts.push(ctx);
@@ -107,13 +119,14 @@ test("passes a fresh context and preserves the command receiver", async t => {
     assert.equal(first.deferReply.mock.callCount(), 0);
 });
 
-test("ignores interactions other than slash commands", async t => {
+test("ignores interactions other than slash commands and buttons", async t => {
     const client = await HyperionClient.create({
         name: "Test",
         logging: false as const,
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
+    t.mock.method(client, "getOwnerId", async () => "test-owner");
     const execute = mock.fn(async () => undefined);
     client.commands.set("ping", new TestCommand(execute));
     const fixture = createInteraction({ chatInput: false });
@@ -129,6 +142,7 @@ test("acknowledges a stale command with a private unavailable response", async t
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
+    t.mock.method(client, "getOwnerId", async () => "test-owner");
     const fixture = createInteraction();
     await new InteractionDispatcher(client).dispatch(fixture.interaction);
     assert.deepEqual(fixture.reply.mock.calls[0]?.arguments[0], {
@@ -145,6 +159,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
             discord: { intents: [] },
         });
         t.after(() => client.destroy());
+        t.mock.method(client, "getOwnerId", async () => "test-owner");
         const failure = new Error("Internal service details");
         t.mock.method(client.logger, "child", () => client.logger);
         const log = t.mock.method(client.logger, "error", () => undefined);
@@ -198,6 +213,7 @@ test("contains synchronous throws and failed error responses in the event listen
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
+    t.mock.method(client, "getOwnerId", async () => "test-owner");
     t.mock.method(client.logger, "child", () => client.logger);
     const log = t.mock.method(client.logger, "error", () => undefined);
     client.commands.set(
@@ -225,6 +241,7 @@ test("does not acknowledge before a handler opens a modal", async t => {
         discord: { intents: [] },
     });
     t.after(() => client.destroy());
+    t.mock.method(client, "getOwnerId", async () => "test-owner");
     const fixture = createInteraction();
     client.commands.set(
         "ping",

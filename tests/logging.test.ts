@@ -126,7 +126,7 @@ test("command context gets a correlated logger and completion timing", async t =
                     .setDescription("Ping"),
             });
         }
-        public override async run(ctx: CommandContext): Promise<void> {
+        async run(ctx: CommandContext) {
             ctx.logger.debug({ checkpoint: "ready" }, "Handler checkpoint");
             await ctx.interaction.reply("Pong!");
         }
@@ -173,7 +173,7 @@ test("errors stay visible at error level and users still receive error responses
                     .setDescription("Ping"),
             });
         }
-        public override async run(): Promise<void> {
+        async run() {
             throw new Error("Handler failed");
         }
     }

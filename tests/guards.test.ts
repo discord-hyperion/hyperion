@@ -8,7 +8,7 @@ import { InteractionDispatcher } from "../src/execution/index.ts";
 import { Guard, type GuardProvider, OwnerOnly } from "../src/guards/index.ts";
 
 class Check extends Guard {
-    public constructor(
+    constructor(
         private readonly execute: (
             ctx: CommandContext,
         ) => boolean | Promise<boolean>,
@@ -16,13 +16,13 @@ class Check extends Guard {
         super({ name: "test-check", description: "Access denied." });
     }
 
-    public override run(ctx: CommandContext): boolean | Promise<boolean> {
+    run(ctx: CommandContext) {
         return this.execute(ctx);
     }
 }
 
 class GuardedCommand extends Command {
-    public constructor(
+    constructor(
         guards: readonly GuardProvider[],
         private readonly execute = async (_ctx: CommandContext) => {},
     ) {
@@ -34,17 +34,16 @@ class GuardedCommand extends Command {
         });
     }
 
-    public override run(ctx: CommandContext): Promise<void> {
+    run(ctx: CommandContext) {
         return this.execute(ctx);
     }
 }
 
-const setup = async (t: TestContext, ownerIds: string[] = []) => {
+const setup = async (t: TestContext) => {
     const records: Record<string, unknown>[] = [];
     const client = await HyperionClient.create({
         name: "Test",
         discord: { intents: [] },
-        ownerIds,
         logging: {
             level: "debug",
             pretty: false,
@@ -57,6 +56,7 @@ const setup = async (t: TestContext, ownerIds: string[] = []) => {
         },
     });
     t.after(() => client.destroy());
+    t.mock.method(client, "getOwnerId", async () => "owner");
     return { client, records, dispatcher: new InteractionDispatcher(client) };
 };
 
@@ -169,7 +169,7 @@ test("custom onFail preserves its receiver and owns the response", async t => {
     const { client, dispatcher } = await setup(t);
     let failed = 0;
     class CustomCheck extends Check {
-        public override async onFail(ctx: CommandContext): Promise<void> {
+        async onFail(ctx: CommandContext) {
             assert.equal(this.name, "test-check");
             failed++;
             await ctx.interaction.reply("Custom rejection");
@@ -289,14 +289,17 @@ test("rejects malformed shared guards and snapshots the provider list", () => {
     assert.ok(Object.isFrozen(command.guards));
 });
 
-test("OwnerOnly allows configured owners and denies everyone when no owners are configured", async t => {
-    const { client, dispatcher } = await setup(t, ["owner"]);
+test("OwnerOnly allows the API owner and denies others or failed lookups", async t => {
+    const { client, dispatcher } = await setup(t);
     const execute = mock.fn(async (_ctx: CommandContext) => {});
     client.commands.set("test", new GuardedCommand([new OwnerOnly()], execute));
     await dispatcher.dispatch(interaction().value);
     await dispatcher.dispatch(interaction("new", "other").value);
     assert.equal(execute.mock.callCount(), 1);
     const empty = await setup(t);
+    t.mock.method(empty.client, "getOwnerId", async () => {
+        throw new Error("Ownership lookup failed");
+    });
     empty.client.commands.set(
         "test",
         new GuardedCommand([new OwnerOnly()], execute),
