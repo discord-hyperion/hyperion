@@ -7,7 +7,7 @@ custom ID, and `run(ctx)`. Invalid builders and duplicate IDs fail startup
 before command deployment. Loading is atomic: a failed reload preserves the
 previous registry.
 
-String and user selects are supported. Role, mentionable, and channel selects,
+String, user, and role selects are supported. Mentionable and channel selects,
 and selects embedded in modals, are not dispatched yet.
 
 ## Define a string handler
@@ -80,10 +80,50 @@ export default class ChooseUser extends SelectMenu<ComponentType.UserSelect> {
 
 Discord supplies the user options; do not call `addOptions()` on a user builder.
 String selects retain the default generic, so existing handlers need no changes.
-Both types share `client.selectMenus` and must have unique IDs within it. The
+All supported types share `client.selectMenus` and must have unique IDs within it. The
 registry returns a union of typed handlers; narrow `menu.componentType` before
 accessing type-specific builder methods. Dispatch checks the ID and component
 type together before running guards or a handler.
+
+## Define a role handler
+
+Use `ComponentType.RoleSelect` to pair `RoleSelectMenuBuilder` with
+`RoleSelectMenuInteraction`. The selected role IDs are in `.values`, with resolved
+roles in `.roles`. Resolved entries can be Discord.js roles or API role objects,
+depending on guild cache state; `.name` is available on either. Narrow with
+`inCachedGuild()` before relying on cached-role methods.
+
+```ts
+import { RoleSelectMenuBuilder } from "@discordjs/builders";
+import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import type { ComponentType } from "discord.js";
+
+export default class ChooseRole extends SelectMenu<ComponentType.RoleSelect> {
+    constructor() {
+        super({
+            builder: new RoleSelectMenuBuilder()
+                .setCustomId("role.choose")
+                .setPlaceholder("Choose a role")
+                .setMinValues(1)
+                .setMaxValues(1),
+        });
+    }
+
+    async run(ctx: SelectMenuContext<ComponentType.RoleSelect>) {
+        const names = ctx.interaction.roles.map(role => role.name);
+
+        await ctx.interaction.update({
+            content: `Selected roles: ${names.join(", ") || "None"}.`,
+            allowedMentions: { parse: [] },
+        });
+    }
+}
+```
+
+Discord supplies the server's role options, so role builders do not use
+`addOptions()`. Selecting a role supplies data to your handler; it does not assign
+that role to anyone. The dev bot's `/role` command uses
+`setContexts(InteractionContextType.Guild)` to make the example server-only.
 
 ## Send a menu
 
@@ -110,7 +150,8 @@ collectors and listeners; avoid acknowledging the same interaction twice.
 
 The optional `guards` array accepts instances or lazy async factories for
 `Guard<SelectMenuContext>` (string selects) or
-`Guard<SelectMenuContext<ComponentType.UserSelect>>` (user selects). Shared guards such as `OwnerOnly` also work. Every component
+`Guard<SelectMenuContext<ComponentType.UserSelect>>` (user selects), or
+`Guard<SelectMenuContext<ComponentType.RoleSelect>>` (role selects). Shared guards such as `OwnerOnly` also work. Every component
 must declare its own guards; a command's guards do not apply to its menus.
 
 Handlers control acknowledgment. Use `update()` for immediate message changes,
@@ -126,5 +167,5 @@ Use `ctx.logger` for correlated logs. Selected values are not logged by the
 framework. Handlers stay stateless: fetch async data and persist application
 state in application-owned storage rather than fields on a shared handler.
 
-The dev bot includes `/colour` with `src/select-menus/choose-colour.ts` and
-`/user` with `src/select-menus/choose-user.ts` as complete examples.
+The dev bot includes `/colour`, `/user`, and `/role`, with matching handlers in
+`src/select-menus/choose-colour.ts`, `choose-user.ts`, and `choose-role.ts`.
