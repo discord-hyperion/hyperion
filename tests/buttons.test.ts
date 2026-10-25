@@ -148,6 +148,7 @@ test("unmatched IDs and unsupported components remain available to collectors", 
         isButton: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
+        isRoleSelectMenu: () => false,
     });
     await dispatcher.dispatch(select.value);
     assert.equal(execute.mock.callCount(), 0);

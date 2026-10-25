@@ -1,4 +1,5 @@
 import {
+    RoleSelectMenuBuilder,
     StringSelectMenuBuilder,
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
@@ -12,10 +13,16 @@ import type {
 export const selectMenuContracts = (
     stringCtx: SelectMenuContext,
     userCtx: SelectMenuContext<ComponentType.UserSelect>,
+    roleCtx: SelectMenuContext<ComponentType.RoleSelect>,
 ) => {
     stringCtx.interaction.values satisfies string[];
     userCtx.interaction.users.first()?.username satisfies string | undefined;
     userCtx.interaction.members.size satisfies number;
+    roleCtx.interaction.roles.first()?.name satisfies string | undefined;
+    roleCtx.interaction.values satisfies string[];
+
+    // @ts-expect-error Role selects do not expose resolved users.
+    roleCtx.interaction.users;
 
     // @ts-expect-error String selects do not expose resolved users.
     stringCtx.interaction.users;
@@ -41,5 +48,31 @@ export const selectMenuContracts = (
         builder: userOptions.builder,
     };
 
-    return { userOptions, stringOptions, wrongUser, wrongString };
+    const roleOptions: SelectMenuOptions<ComponentType.RoleSelect> = {
+        builder: new RoleSelectMenuBuilder().setCustomId("role"),
+        guards: [
+            ctx => {
+                ctx.interaction.roles.size satisfies number;
+                throw new Error("Type contract only");
+            },
+        ],
+    };
+    const wrongRole: SelectMenuOptions<ComponentType.RoleSelect> = {
+        // @ts-expect-error A role handler requires a role builder.
+        builder: userOptions.builder,
+    };
+    const roleAsUser: SelectMenuOptions<ComponentType.UserSelect> = {
+        // @ts-expect-error A user handler cannot accept a role builder.
+        builder: roleOptions.builder,
+    };
+
+    return {
+        userOptions,
+        stringOptions,
+        roleOptions,
+        wrongUser,
+        wrongString,
+        wrongRole,
+        roleAsUser,
+    };
 };

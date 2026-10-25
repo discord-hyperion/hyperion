@@ -1,6 +1,7 @@
 import type {
     ButtonInteraction,
     ChatInputCommandInteraction,
+    RoleSelectMenuInteraction,
     StringSelectMenuInteraction,
     UserSelectMenuInteraction,
 } from "discord.js";
@@ -12,11 +13,13 @@ export interface InteractionContext<
         | ChatInputCommandInteraction
         | ButtonInteraction
         | StringSelectMenuInteraction
-        | UserSelectMenuInteraction =
+        | UserSelectMenuInteraction
+        | RoleSelectMenuInteraction =
         | ChatInputCommandInteraction
         | ButtonInteraction
         | StringSelectMenuInteraction
-        | UserSelectMenuInteraction,
+        | UserSelectMenuInteraction
+        | RoleSelectMenuInteraction,
 > {
     readonly client: HyperionClient;
     readonly interaction: InteractionType;

@@ -45,6 +45,7 @@ const interaction = (phase = "new", customId = "colour.choose") => {
         isButton: () => false,
         isStringSelectMenu: () => true,
         isUserSelectMenu: () => false,
+        isRoleSelectMenu: () => false,
         reply,
         editReply,
         followUp,
@@ -105,6 +106,7 @@ test("unmatched IDs and unsupported selects are not acknowledged", async t => {
     Object.assign(unsupported.value, {
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
+        isRoleSelectMenu: () => false,
     });
     await dispatcher.dispatch(unsupported.value);
 

@@ -5,6 +5,7 @@ import {
     Events,
     type Interaction,
     MessageFlags,
+    type RoleSelectMenuInteraction,
     type StringSelectMenuInteraction,
     type UserSelectMenuInteraction,
 } from "discord.js";
@@ -69,7 +70,8 @@ export class InteractionDispatcher {
             );
         } else if (
             interaction.isStringSelectMenu() ||
-            interaction.isUserSelectMenu()
+            interaction.isUserSelectMenu() ||
+            interaction.isRoleSelectMenu()
         ) {
             const selectMenu = this.client.selectMenus.get(
                 interaction.customId,
@@ -99,6 +101,15 @@ export class InteractionDispatcher {
                     { client: this.client, interaction, logger },
                     "select-menu",
                 );
+            } else if (
+                selectMenu.componentType === ComponentType.RoleSelect &&
+                interaction.isRoleSelectMenu()
+            ) {
+                await this.execute(
+                    selectMenu,
+                    { client: this.client, interaction, logger },
+                    "select-menu",
+                );
             }
         }
     }
@@ -108,7 +119,8 @@ export class InteractionDispatcher {
             | ChatInputCommandInteraction
             | ButtonInteraction
             | StringSelectMenuInteraction
-            | UserSelectMenuInteraction,
+            | UserSelectMenuInteraction
+            | RoleSelectMenuInteraction,
         handler:
             | { command: string }
             | { button: string }
@@ -191,7 +203,8 @@ export class InteractionDispatcher {
             | ChatInputCommandInteraction
             | ButtonInteraction
             | StringSelectMenuInteraction
-            | UserSelectMenuInteraction,
+            | UserSelectMenuInteraction
+            | RoleSelectMenuInteraction,
         content: string,
         logger: Logger,
         kind: HandlerKind,
