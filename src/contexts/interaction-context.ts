@@ -1,14 +1,19 @@
 import type {
     ButtonInteraction,
     ChatInputCommandInteraction,
+    StringSelectMenuInteraction,
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
 
 export interface InteractionContext<
-    InteractionType extends ChatInputCommandInteraction | ButtonInteraction =
+    InteractionType extends
         | ChatInputCommandInteraction
-        | ButtonInteraction,
+        | ButtonInteraction
+        | StringSelectMenuInteraction =
+        | ChatInputCommandInteraction
+        | ButtonInteraction
+        | StringSelectMenuInteraction,
 > {
     readonly client: HyperionClient;
     readonly interaction: InteractionType;

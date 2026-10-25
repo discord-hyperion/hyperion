@@ -144,7 +144,10 @@ test("unmatched IDs and unsupported components remain available to collectors", 
         assert.equal(unknown.value.deferred, false);
     }
     const select = interaction();
-    Object.assign(select.value, { isButton: () => false });
+    Object.assign(select.value, {
+        isButton: () => false,
+        isStringSelectMenu: () => false,
+    });
     await dispatcher.dispatch(select.value);
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(select.reply.mock.callCount(), 0);

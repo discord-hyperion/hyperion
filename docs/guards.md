@@ -157,9 +157,11 @@ Guards receive `ctx.logger` with the same invocation metadata as the handler.
 name and check duration. A rejected command does not emit `command.completed`.
 Set `logging.level` to `debug` to inspect individual passing checks.
 
-The dispatcher supports command and [button](./buttons.md) guards. Custom button
-guards extend `Guard<ButtonContext>`; guards shared across both can accept
+The dispatcher supports command, [button](./buttons.md), and
+[select menu](./select-menus.md) guards. Custom button
+guards extend `Guard<ButtonContext>`; select menu guards extend
+`Guard<SelectMenuContext>`. Guards shared across interaction types can accept
 `InteractionContext`. `OwnerOnly` already supports both. Each handler has its own
-guard list: restricting a command does not automatically restrict its buttons.
+guard list: restricting a command does not automatically restrict its components.
 `Guard<Context>` and `GuardFactory<Context>` accept the handler's context without
 adding separate execution methods to every guard.

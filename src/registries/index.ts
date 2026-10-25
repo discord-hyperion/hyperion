@@ -3,3 +3,4 @@ export {
     type CommandRegistrationOptions,
     CommandRegistry,
 } from "./command-registry.ts";
+export { SelectMenuRegistry } from "./select-menu-registry.ts";

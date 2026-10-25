@@ -47,6 +47,7 @@ const createInteraction = (
         replied: state.replied ?? false,
         isChatInputCommand: () => state.chatInput ?? true,
         isButton: () => false,
+        isStringSelectMenu: () => false,
         reply,
         editReply,
         followUp,
