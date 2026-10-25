@@ -206,7 +206,7 @@ const userSource = (id: string) =>
         .replaceAll("StringSelectMenuBuilder", "UserSelectMenuBuilder")
         .replace('.addOptions({ label: "Blue", value: "blue" })', "");
 
-test("loads string, user, and role selects together without REST registration", async t => {
+test("loads all supported selects together without REST registration", async t => {
     const { root, directory } = await fixture(t);
     await writeFile(
         path.join(directory, "string.mjs"),
@@ -220,6 +220,10 @@ test("loads string, user, and role selects together without REST registration", 
         path.join(directory, "role.mjs"),
         roleSource("role.choose"),
     );
+    await writeFile(
+        path.join(directory, "mentionable.mjs"),
+        mentionableSource("mentionable.choose"),
+    );
     const put = t.mock.method(REST.prototype, "put", async () => []);
     const client = await HyperionClient.create({
         name: "Test",
@@ -229,7 +233,11 @@ test("loads string, user, and role selects together without REST registration", 
     });
     t.after(() => client.destroy());
 
-    assert.equal(client.selectMenus.size, 3);
+    assert.equal(client.selectMenus.size, 4);
+    assert.equal(
+        client.selectMenus.get("mentionable.choose")?.componentType,
+        ComponentType.MentionableSelect,
+    );
     assert.equal(
         client.selectMenus.get("role.choose")?.componentType,
         ComponentType.RoleSelect,
@@ -306,6 +314,56 @@ test("invalid role limits retain source context and previous handlers", async t 
     await writeFile(
         path.join(directory, "invalid.mjs"),
         roleSource("invalid").replace(
+            '.setCustomId("invalid")',
+            '.setCustomId("invalid").setMaxValues(26)',
+        ),
+    );
+
+    await assert.rejects(registry.load(root), error => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message, /Failed to load select menu.*invalid.mjs/);
+        assert.ok(error.cause instanceof Error);
+        return true;
+    });
+    assert.equal(registry.get("valid"), original);
+});
+
+const mentionableSource = (id: string) =>
+    userSource(id).replaceAll(
+        "UserSelectMenuBuilder",
+        "MentionableSelectMenuBuilder",
+    );
+
+test("duplicate mentionable IDs preserve previously loaded handlers", async t => {
+    const { root, directory } = await fixture(t);
+    await writeFile(
+        path.join(directory, "mentionable.mjs"),
+        mentionableSource("shared"),
+    );
+    const registry = new SelectMenuRegistry();
+    await registry.load(root);
+    const original = registry.get("shared");
+    await writeFile(path.join(directory, "user.mjs"), userSource("shared"));
+
+    await assert.rejects(
+        registry.load(root),
+        /Duplicate select menu custom ID/,
+    );
+    assert.equal(registry.get("shared"), original);
+});
+
+test("invalid mentionable limits retain source context and previous handlers", async t => {
+    const { root, directory } = await fixture(t);
+    await writeFile(
+        path.join(directory, "valid.mjs"),
+        mentionableSource("valid"),
+    );
+    const registry = new SelectMenuRegistry();
+    await registry.load(root);
+    const original = registry.get("valid");
+    await writeFile(
+        path.join(directory, "invalid.mjs"),
+        mentionableSource("invalid").replace(
             '.setCustomId("invalid")',
             '.setCustomId("invalid").setMaxValues(26)',
         ),

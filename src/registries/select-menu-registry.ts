@@ -52,10 +52,11 @@ export class SelectMenuRegistry extends Collection<string, AnySelectMenu> {
                 if (
                     data.type !== ComponentType.StringSelect &&
                     data.type !== ComponentType.UserSelect &&
-                    data.type !== ComponentType.RoleSelect
+                    data.type !== ComponentType.RoleSelect &&
+                    data.type !== ComponentType.MentionableSelect
                 ) {
                     throw new TypeError(
-                        "SelectMenu requires a string, user, or role select builder.",
+                        "SelectMenu requires a string, user, role, or mentionable select builder.",
                     );
                 }
 

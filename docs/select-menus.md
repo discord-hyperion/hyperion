@@ -7,8 +7,8 @@ custom ID, and `run(ctx)`. Invalid builders and duplicate IDs fail startup
 before command deployment. Loading is atomic: a failed reload preserves the
 previous registry.
 
-String, user, and role selects are supported. Mentionable and channel selects,
-and selects embedded in modals, are not dispatched yet.
+String, user, role, and mentionable selects are supported. Channel selects and
+selects embedded in modals are not dispatched yet.
 
 ## Define a string handler
 
@@ -125,6 +125,50 @@ Discord supplies the server's role options, so role builders do not use
 that role to anyone. The dev bot's `/role` command uses
 `setContexts(InteractionContextType.Guild)` to make the example server-only.
 
+## Define a mentionable handler
+
+`ComponentType.MentionableSelect` pairs a `MentionableSelectMenuBuilder` with
+`MentionableSelectMenuInteraction`. It offers users and roles in the same menu.
+Selected IDs are in `.values`, resolved users in `.users`, guild members in
+`.members`, and roles in `.roles`. These collections can be empty depending on
+the selection and guild data; a role selection does not have a user entry.
+
+```ts
+import { MentionableSelectMenuBuilder } from "@discordjs/builders";
+import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import type { ComponentType } from "discord.js";
+
+export default class ChooseMentionable extends SelectMenu<ComponentType.MentionableSelect> {
+    constructor() {
+        super({
+            builder: new MentionableSelectMenuBuilder()
+                .setCustomId("mentionable.choose")
+                .setPlaceholder("Choose users or roles")
+                .setMinValues(0)
+                .setMaxValues(5),
+        });
+    }
+
+    async run(ctx: SelectMenuContext<ComponentType.MentionableSelect>) {
+        const { values, users, roles } = ctx.interaction;
+        const names = values.map(
+            id => users.get(id)?.username ?? roles.get(id)?.name ?? id,
+        );
+
+        await ctx.interaction.update({
+            content: `Selected: ${names.join(", ") || "None"}.`,
+            allowedMentions: { parse: [] },
+        });
+    }
+}
+```
+
+Iterating `.values` preserves the selected order when users and roles are mixed.
+With `minValues` set to zero, clearing the selection produces an empty array; the
+example displays `None`. Discord supplies options, so do not call `addOptions()`.
+The server-only `/mentionable` dev command sends this menu. Selecting entries
+returns data without pinging users, assigning roles, or storing message state.
+
 ## Send a menu
 
 Inside a command, retrieve the registered definition and place its builder in an
@@ -151,7 +195,8 @@ collectors and listeners; avoid acknowledging the same interaction twice.
 The optional `guards` array accepts instances or lazy async factories for
 `Guard<SelectMenuContext>` (string selects) or
 `Guard<SelectMenuContext<ComponentType.UserSelect>>` (user selects), or
-`Guard<SelectMenuContext<ComponentType.RoleSelect>>` (role selects). Shared guards such as `OwnerOnly` also work. Every component
+`Guard<SelectMenuContext<ComponentType.RoleSelect>>` (role selects), or
+`Guard<SelectMenuContext<ComponentType.MentionableSelect>>` (mentionable selects). Shared guards such as `OwnerOnly` also work. Every component
 must declare its own guards; a command's guards do not apply to its menus.
 
 Handlers control acknowledgment. Use `update()` for immediate message changes,
@@ -167,5 +212,6 @@ Use `ctx.logger` for correlated logs. Selected values are not logged by the
 framework. Handlers stay stateless: fetch async data and persist application
 state in application-owned storage rather than fields on a shared handler.
 
-The dev bot includes `/colour`, `/user`, and `/role`, with matching handlers in
-`src/select-menus/choose-colour.ts`, `choose-user.ts`, and `choose-role.ts`.
+The dev bot includes `/colour`, `/user`, `/role`, and `/mentionable`, with matching
+handlers in `src/select-menus/choose-colour.ts`, `choose-user.ts`, `choose-role.ts`,
+and `choose-mentionable.ts`.

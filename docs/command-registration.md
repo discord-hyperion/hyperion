@@ -111,7 +111,7 @@ reject `create()`; initialization failures destroy the local client.
 After initialization, the client listens for slash-command interactions and looks
 up each command by name. The handler receives a fresh `CommandContext` containing
 the Hyperion client and the interaction. Button interactions are routed separately
-through [button handlers](./buttons.md), and string, user, or role selects through
+through [button handlers](./buttons.md), and string, user, role, or mentionable selects through
 [select menu handlers](./select-menus.md). Other interaction types are left alone.
 
 Optional command `guards` run in order before the handler. They accept shared

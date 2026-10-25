@@ -66,16 +66,16 @@ src/
 dev/bot/        Development bot, separate from framework source
   src/commands/ Example command modules
   src/buttons/  Example button modules
-  src/select-menus/ Example string, user, and role select menu modules
+  src/select-menus/ Example select menu modules
 tests/          Isolated tests
 docs/           Usage and architecture documentation
 ```
 
 Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
-dispatch exist, along with button, string select, user select, and role select
-support, guards, Pino logging and Ora startup indicators. Mentionable and channel
-select menus and modals do not have framework dispatch yet. Database support is
+dispatch exist, along with button, string select, user select, role select, and
+mentionable select support, guards, Pino logging and Ora startup indicators.
+Channel select menus and modals do not have framework dispatch yet. Database support is
 intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
@@ -124,11 +124,13 @@ intentionally out of scope.
   `SelectMenu<ComponentType.UserSelect>`, a `UserSelectMenuBuilder`, and
   `SelectMenuContext<ComponentType.UserSelect>` for resolved users and members.
   Role selects use `ComponentType.RoleSelect`, a `RoleSelectMenuBuilder`, and
-  the matching context for resolved roles. Load all supported selects from
+  the matching context for resolved roles. Mentionable selects use
+  `ComponentType.MentionableSelect`, a `MentionableSelectMenuBuilder`, and the
+  matching context for resolved users, members, and roles. Load all supported selects from
   `<root>/src/select-menus` into `client.selectMenus`; match exact
   custom IDs and component types, leaving unmatched interactions alone.
   Keep builder, interaction, and guard types paired through the generic type.
-  Mentionable and channel select variants are not supported yet.
+  Channel select menus are not supported yet.
 - Button guards use `ButtonContext`; shared interaction guards can use
   `InteractionContext`. Filesystem handlers control their reply,
   update, or modal lifecycle. After `deferUpdate()`, send errors as ephemeral
