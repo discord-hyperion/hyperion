@@ -44,6 +44,7 @@ const interaction = (phase = "new", customId = "colour.choose") => {
         isChatInputCommand: () => false,
         isButton: () => false,
         isStringSelectMenu: () => true,
+        isUserSelectMenu: () => false,
         reply,
         editReply,
         followUp,
@@ -101,7 +102,10 @@ test("unmatched IDs and unsupported selects are not acknowledged", async t => {
     const unknown = interaction("new", "unknown");
     await dispatcher.dispatch(unknown.value);
     const unsupported = interaction();
-    Object.assign(unsupported.value, { isStringSelectMenu: () => false });
+    Object.assign(unsupported.value, {
+        isStringSelectMenu: () => false,
+        isUserSelectMenu: () => false,
+    });
     await dispatcher.dispatch(unsupported.value);
 
     assert.equal(execute.mock.callCount(), 0);

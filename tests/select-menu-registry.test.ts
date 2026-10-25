@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { REST } from "discord.js";
+import { ComponentType, REST } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { SelectMenuRegistry } from "../src/registries/index.ts";
 
@@ -96,7 +96,7 @@ for (const [name, contents] of Object.entries({
     "missing custom ID": source(""),
     "invalid guard": source("guard", "guards: [{}]"),
     "wrong component type": source("wrong")
-        .replaceAll("StringSelectMenuBuilder", "UserSelectMenuBuilder")
+        .replaceAll("StringSelectMenuBuilder", "RoleSelectMenuBuilder")
         .replace('.addOptions({ label: "Blue", value: "blue" })', ""),
 })) {
     test(`${name} fails initialization with its source and original cause`, async t => {
@@ -199,4 +199,74 @@ test("invalid select menus prevent application-command deployment", async t => {
         /Failed to load select menu/,
     );
     assert.equal(put.mock.callCount(), 0);
+});
+
+const userSource = (id: string) =>
+    source(id)
+        .replaceAll("StringSelectMenuBuilder", "UserSelectMenuBuilder")
+        .replace('.addOptions({ label: "Blue", value: "blue" })', "");
+
+test("loads string and user selects together without REST registration", async t => {
+    const { root, directory } = await fixture(t);
+    await writeFile(
+        path.join(directory, "string.mjs"),
+        source("colour.choose"),
+    );
+    await writeFile(
+        path.join(directory, "user.mjs"),
+        userSource("user.choose"),
+    );
+    const put = t.mock.method(REST.prototype, "put", async () => []);
+    const client = await HyperionClient.create({
+        name: "Test",
+        root,
+        discord: { intents: [] },
+        logging: false,
+    });
+    t.after(() => client.destroy());
+
+    assert.equal(client.selectMenus.size, 2);
+    assert.equal(
+        client.selectMenus.get("user.choose")?.builder.toJSON().type,
+        ComponentType.UserSelect,
+    );
+    assert.equal(put.mock.callCount(), 0);
+});
+
+test("duplicate IDs across select types preserve the previous registry", async t => {
+    const { root, directory } = await fixture(t);
+    await writeFile(path.join(directory, "string.mjs"), source("shared"));
+    const registry = new SelectMenuRegistry();
+    await registry.load(root);
+    const original = registry.get("shared");
+    await writeFile(path.join(directory, "user.mjs"), userSource("shared"));
+
+    await assert.rejects(
+        registry.load(root),
+        /Duplicate select menu custom ID/,
+    );
+    assert.equal(registry.get("shared"), original);
+});
+
+test("invalid user select limits retain source context and previous handlers", async t => {
+    const { root, directory } = await fixture(t);
+    await writeFile(path.join(directory, "valid.mjs"), userSource("valid"));
+    const registry = new SelectMenuRegistry();
+    await registry.load(root);
+    const original = registry.get("valid");
+    await writeFile(
+        path.join(directory, "invalid.mjs"),
+        userSource("invalid").replace(
+            '.setCustomId("invalid")',
+            '.setCustomId("invalid").setMaxValues(26)',
+        ),
+    );
+
+    await assert.rejects(registry.load(root), error => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message, /Failed to load select menu.*invalid.mjs/);
+        assert.ok(error.cause instanceof Error);
+        return true;
+    });
+    assert.equal(registry.get("valid"), original);
 });

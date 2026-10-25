@@ -2,10 +2,10 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection, ComponentType } from "discord.js";
 import type { Logger } from "pino";
-import { SelectMenu } from "../components/index.ts";
-import { discoverModules } from "../util/index.ts";
+import { type AnySelectMenu, SelectMenu } from "../components/index.ts";
+import { assertRegistryClass, discoverModules } from "../util/index.ts";
 
-export class SelectMenuRegistry extends Collection<string, SelectMenu> {
+export class SelectMenuRegistry extends Collection<string, AnySelectMenu> {
     public constructor(private readonly logger?: Logger) {
         super();
     }
@@ -27,23 +27,16 @@ export class SelectMenuRegistry extends Collection<string, SelectMenu> {
             );
         });
 
-        const selectMenus = new Collection<string, SelectMenu>();
+        const selectMenus = new Collection<string, AnySelectMenu>();
 
         for (const file of files) {
-            let selectMenu: SelectMenu;
+            let selectMenu: AnySelectMenu;
 
             try {
                 const module = await import(pathToFileURL(file).href);
                 const SelectMenuClass = module.default;
 
-                if (
-                    typeof SelectMenuClass !== "function" ||
-                    !(SelectMenuClass.prototype instanceof SelectMenu)
-                ) {
-                    throw new TypeError(
-                        "Expected a default-exported class extending SelectMenu.",
-                    );
-                }
+                assertRegistryClass(SelectMenuClass, SelectMenu);
 
                 selectMenu = new SelectMenuClass();
 
@@ -56,15 +49,24 @@ export class SelectMenuRegistry extends Collection<string, SelectMenu> {
                 // Validate the complete builder locally; select menus have no deployment request.
                 const data = selectMenu.builder.toJSON();
 
-                if (data.type !== ComponentType.StringSelect) {
+                if (
+                    data.type !== ComponentType.StringSelect &&
+                    data.type !== ComponentType.UserSelect
+                ) {
                     throw new TypeError(
-                        "SelectMenu requires a string select builder.",
+                        "SelectMenu requires a string or user select builder.",
                     );
                 }
 
                 if (typeof data.custom_id !== "string" || !data.custom_id) {
                     throw new TypeError(
                         "SelectMenu handlers require an interactive custom-ID builder.",
+                    );
+                }
+
+                if (data.type !== selectMenu.componentType) {
+                    throw new Error(
+                        "SelectMenu builder type must match its handler's component type.",
                     );
                 }
 

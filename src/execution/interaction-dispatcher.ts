@@ -1,10 +1,12 @@
 import {
     type ButtonInteraction,
     type ChatInputCommandInteraction,
+    ComponentType,
     Events,
     type Interaction,
     MessageFlags,
     type StringSelectMenuInteraction,
+    type UserSelectMenuInteraction,
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
@@ -65,7 +67,10 @@ export class InteractionDispatcher {
                 { client: this.client, interaction, logger },
                 "button",
             );
-        } else if (interaction.isStringSelectMenu()) {
+        } else if (
+            interaction.isStringSelectMenu() ||
+            interaction.isUserSelectMenu()
+        ) {
             const selectMenu = this.client.selectMenus.get(
                 interaction.customId,
             );
@@ -76,11 +81,25 @@ export class InteractionDispatcher {
                 selectMenu: selectMenu.customId,
             });
 
-            await this.execute(
-                selectMenu,
-                { client: this.client, interaction, logger },
-                "select-menu",
-            );
+            if (
+                selectMenu.componentType === ComponentType.StringSelect &&
+                interaction.isStringSelectMenu()
+            ) {
+                await this.execute(
+                    selectMenu,
+                    { client: this.client, interaction, logger },
+                    "select-menu",
+                );
+            } else if (
+                selectMenu.componentType === ComponentType.UserSelect &&
+                interaction.isUserSelectMenu()
+            ) {
+                await this.execute(
+                    selectMenu,
+                    { client: this.client, interaction, logger },
+                    "select-menu",
+                );
+            }
         }
     }
 
@@ -88,7 +107,8 @@ export class InteractionDispatcher {
         interaction:
             | ChatInputCommandInteraction
             | ButtonInteraction
-            | StringSelectMenuInteraction,
+            | StringSelectMenuInteraction
+            | UserSelectMenuInteraction,
         handler:
             | { command: string }
             | { button: string }
@@ -170,7 +190,8 @@ export class InteractionDispatcher {
         interaction:
             | ChatInputCommandInteraction
             | ButtonInteraction
-            | StringSelectMenuInteraction,
+            | StringSelectMenuInteraction
+            | UserSelectMenuInteraction,
         content: string,
         logger: Logger,
         kind: HandlerKind,
