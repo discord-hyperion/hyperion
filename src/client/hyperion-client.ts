@@ -1,43 +1,50 @@
-import { Client, Events } from "discord.js";
+import { Client, Events, Team } from "discord.js";
 import type { Logger } from "pino";
 import { InteractionDispatcher } from "../execution/index.ts";
 import { LogManager } from "../logging/index.ts";
-import { CommandRegistry } from "../registries/index.ts";
+import { ButtonRegistry, CommandRegistry } from "../registries/index.ts";
 import type { HyperionClientOptions } from "./options.ts";
 
 export class HyperionClient extends Client {
     public readonly name: string;
     public readonly description: string;
-    public readonly ownerIds: readonly string[];
     public readonly commands: CommandRegistry;
+    public readonly buttons: ButtonRegistry;
     public readonly logger: Logger;
     private readonly logging: LogManager;
     private readonly dispatcher: InteractionDispatcher;
+    private ownerLookup: Promise<string> | undefined;
 
     private constructor(options: HyperionClientOptions) {
         super(options.discord);
 
         this.name = options.name;
         this.description = options.description ?? "";
-        this.ownerIds = Object.freeze([...(options.ownerIds ?? [])]);
 
         this.logging = new LogManager(this.name, options.logging);
         this.logger = this.logging.logger;
+
         this.commands = new CommandRegistry(
             this.logger.child({ component: "commands" }),
         );
+        this.buttons = new ButtonRegistry(
+            this.logger.child({ component: "buttons" }),
+        );
         this.dispatcher = new InteractionDispatcher(this);
-        this.once(Events.ClientReady, client => {
+
+        this.once(Events.ClientReady, async client => {
             this.logger.info(
                 { event: "client.ready", userId: client.user.id },
                 "Discord client ready",
             );
+
+            // Fetch eagerly; guards share this request if a click arrives meanwhile.
+            // The lookup logs failures and a later guard can retry them.
+            await this.getOwnerId().catch(() => undefined);
         });
     }
 
-    public static async create(
-        options: HyperionClientOptions,
-    ): Promise<HyperionClient> {
+    public static async create(options: HyperionClientOptions) {
         const client = new HyperionClient(options);
 
         try {
@@ -56,14 +63,20 @@ export class HyperionClient extends Client {
         }
     }
 
-    private async init(options: HyperionClientOptions): Promise<void> {
+    private async init(options: HyperionClientOptions) {
         const started = performance.now();
 
         if (options.commands) {
             await this.logging.step("Loading commands", "commands.load", () =>
                 this.commands.load(options.root),
             );
+        }
 
+        await this.logging.step("Loading buttons", "buttons.load", () =>
+            this.buttons.load(options.root),
+        );
+
+        if (options.commands) {
             if (this.commands.size > 0) {
                 const registration = options.commands;
 
@@ -86,15 +99,59 @@ export class HyperionClient extends Client {
             {
                 event: "client.initialized",
                 commandCount: this.commands.size,
+                buttonCount: this.buttons.size,
                 durationMs: Math.round(performance.now() - started),
             },
             "Hyperion initialized",
         );
     }
 
-    public override async login(token?: string): Promise<string> {
+    public override async login(token?: string) {
+        this.ownerLookup = undefined;
+
         return this.logging.step("Connecting to Discord", "client.login", () =>
             super.login(token),
         );
+    }
+
+    async getOwnerId() {
+        if (!this.application) {
+            throw new Error(
+                "Application ownership is unavailable before the bot has logged in.",
+            );
+        }
+
+        if (!this.ownerLookup) {
+            const application = this.application;
+            const pending = this.logging.step(
+                "Fetching application owner",
+                "application.owner",
+                async () => {
+                    const { owner } = await application.fetch();
+                    const ownerId =
+                        owner instanceof Team ? owner.ownerId : owner?.id;
+
+                    if (!ownerId) {
+                        throw new Error(
+                            "Discord did not return an application owner.",
+                        );
+                    }
+
+                    return ownerId;
+                },
+            );
+
+            this.ownerLookup = pending;
+            void pending.catch(() => {
+                if (this.ownerLookup === pending) this.ownerLookup = undefined;
+            });
+        }
+
+        return this.ownerLookup;
+    }
+
+    public override async destroy() {
+        this.ownerLookup = undefined;
+        await super.destroy();
     }
 }

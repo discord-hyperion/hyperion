@@ -1,7 +1,6 @@
 import type { ChatInputCommandBuilder } from "@discordjs/builders";
 import type { ChatInputCommandInteraction } from "discord.js";
-import type { Logger } from "pino";
-import type { HyperionClient } from "../client/index.ts";
+import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
 
 export interface CommandOptions {
@@ -9,11 +8,8 @@ export interface CommandOptions {
     guards?: readonly GuardProvider[];
 }
 
-export interface CommandContext {
-    readonly client: HyperionClient;
-    readonly interaction: ChatInputCommandInteraction;
-    readonly logger: Logger;
-}
+export interface CommandContext
+    extends InteractionContext<ChatInputCommandInteraction> {}
 
 export abstract class Command {
     public readonly builder: ChatInputCommandBuilder;

@@ -6,7 +6,6 @@ export interface HyperionClientOptions {
     name: string;
     description?: string;
     discord: ClientOptions;
-    ownerIds?: readonly string[];
     /** Bot project root */
     root?: string | URL;
     commands?: CommandRegistrationOptions;

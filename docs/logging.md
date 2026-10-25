@@ -32,8 +32,16 @@ No global console interception or background formatting worker is installed.
 - Command registration: start, completion, or failure, plus each deployment's
   route, count, and duration. Empty registries emit a skipped event.
 - Initialization: final command count and duration.
+- Button loading: start, completion, count, duration, or failure. Debug level
+  includes discovered source paths and skipped missing button directories.
+- Button execution: debug start, info completion or rejection, and error failure.
+  Logs carry the registered button ID and invocation metadata. Failed responses
+  emit `button.error-response.failed`; unmatched custom IDs are ignored.
 - Login: start, completion, or failure. Client readiness is a separate event;
   command deployment and login remain separate operations.
+- Application ownership: `application.owner.started`, completion, or failure
+  when fetching the current bot's personal or team owner. Readiness starts the
+  lookup; guards share the request and reuse the cached result for that login.
 - Command execution: debug start, info completion, or error failure, including
   duration. Missing handlers emit warnings. Failed error responses emit errors.
 - Guards: debug `guard.started` and `guard.passed`, info `guard.rejected` and
@@ -41,7 +49,7 @@ No global console interception or background formatting worker is installed.
   Guard errors emit `command.failed` with `stage: "guards"`; handler errors use
   `stage: "handler"`. Guard logs carry the command's invocation metadata.
 
-Progress indicators cover command loading, application-command registration, and
+Progress indicators cover command and button loading, application-command registration, and
 login. Runtime handlers do not display spinners automatically.
 
 ## Handler logging
@@ -49,7 +57,7 @@ login. Runtime handlers do not display spinners automatically.
 Use the scoped logger provided with each command invocation:
 
 ```ts
-public override async run(ctx: CommandContext): Promise<void> {
+async run(ctx: CommandContext) {
     ctx.logger.debug({ checkpoint: "lookup" }, "Looking up results");
     await ctx.interaction.reply("Pong!");
 }

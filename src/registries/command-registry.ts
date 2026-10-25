@@ -1,9 +1,9 @@
-import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection, DiscordAPIError, REST, Routes } from "discord.js";
 import type { Logger } from "pino";
 import { Command } from "../commands/index.ts";
+import { discoverModules } from "../util/index.ts";
 
 export interface CommandRegistrationOptions {
     applicationId: string;
@@ -19,16 +19,25 @@ export class CommandRegistry extends Collection<string, Command> {
         super();
     }
 
-    public async load(root: string | URL = process.cwd()): Promise<void> {
+    public async load(root: string | URL = process.cwd()) {
         const rootPath =
             root instanceof URL ? fileURLToPath(root) : path.resolve(root);
         const directoryPath = path.join(rootPath, "src", "commands");
+
         this.logger?.debug(
             { event: "commands.discover", directory: directoryPath },
             "Discovering command files",
         );
 
-        const files = await this.discover(directoryPath, true);
+        const files = await discoverModules(directoryPath, () => {
+            this.logger?.debug(
+                {
+                    event: "commands.directory.missing",
+                    directory: directoryPath,
+                },
+                "Optional command directory does not exist",
+            );
+        });
 
         const commands = new Collection<string, Command>();
         const sources = new WeakMap<Command, string>();
@@ -78,6 +87,7 @@ export class CommandRegistry extends Collection<string, Command> {
 
             commands.set(name, command);
             sources.set(command, file);
+
             this.logger?.debug(
                 { event: "command.loaded", command: name, source: file },
                 "Loaded command",
@@ -90,6 +100,7 @@ export class CommandRegistry extends Collection<string, Command> {
         for (const [name, command] of commands) {
             this.set(name, command);
         }
+
         this.logger?.info(
             { event: "commands.loaded", count: this.size },
             "Command discovery complete",
@@ -97,7 +108,7 @@ export class CommandRegistry extends Collection<string, Command> {
     }
 
     /** Replaces all application commands in each selected scope. */
-    public async register(options: CommandRegistrationOptions): Promise<void> {
+    public async register(options: CommandRegistrationOptions) {
         if (!options.applicationId.trim() || !options.token.trim()) {
             throw new Error(
                 "Command registration requires an application ID and bot token.",
@@ -143,8 +154,10 @@ export class CommandRegistry extends Collection<string, Command> {
 
         for (const route of routes) {
             const started = performance.now();
+
             try {
                 await rest.put(route, { body });
+
                 this.logger?.info(
                     {
                         event: "commands.deployed",
@@ -165,15 +178,17 @@ export class CommandRegistry extends Collection<string, Command> {
                 ) {
                     const errors = cause.rawError.errors;
                     if (errors && typeof errors === "object") {
-                        for (const key of Object.keys(errors)) {
-                            if (!/^\d+$/.test(key)) continue;
+                        for (const k of Object.keys(errors)) {
+                            if (!/^\d+$/.test(k)) continue;
 
-                            const command = commands[Number(key)];
+                            const key = Number(k);
+                            const command = commands[key];
+
                             if (!command) continue;
 
                             const source = this.sources.get(command);
                             sources.push(
-                                `body[${key}]: "${body[Number(key)]?.name}"${source ? ` (${source})` : ""}`,
+                                `body[${key}]: "${body[key]?.name}"${source ? ` (${source})` : ""}`,
                             );
                         }
                     }
@@ -188,52 +203,5 @@ export class CommandRegistry extends Collection<string, Command> {
                 );
             }
         }
-    }
-
-    private async discover(
-        directory: string,
-        optional = false,
-    ): Promise<string[]> {
-        const entries = await readdir(directory, { withFileTypes: true }).catch(
-            (error: unknown) => {
-                if (
-                    optional &&
-                    error instanceof Error &&
-                    "code" in error &&
-                    error.code === "ENOENT"
-                ) {
-                    this.logger?.debug(
-                        { event: "commands.directory.missing", directory },
-                        "Optional command directory does not exist",
-                    );
-                    return [];
-                }
-                throw error;
-            },
-        );
-
-        entries.sort((a, b) => a.name.localeCompare(b.name));
-        const files: string[] = [];
-
-        for (const entry of entries) {
-            if (entry.name.startsWith(".") || entry.name === "node_modules")
-                continue;
-
-            const entryPath = path.join(directory, entry.name);
-
-            if (entry.isDirectory()) {
-                files.push(...(await this.discover(entryPath)));
-            } else if (
-                entry.isFile() &&
-                /\.(?:[cm]?ts|[cm]?js)$/.test(entry.name) &&
-                !/\.d\.[cm]?ts$/.test(entry.name) &&
-                !/^index\./.test(entry.name) &&
-                !/\.(?:test|spec)\.[cm]?[jt]s$/.test(entry.name)
-            ) {
-                files.push(entryPath);
-            }
-        }
-
-        return files;
     }
 }
