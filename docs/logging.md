@@ -37,7 +37,7 @@ No global console interception or background formatting worker is installed.
 - Button execution: debug start, info completion or rejection, and error failure.
   Logs carry the registered button ID and invocation metadata. Failed responses
   emit `button.error-response.failed`; unmatched custom IDs are ignored.
-- String select menus: `select-menus.load` startup steps and discovery counts;
+- String and user select menus: `select-menus.load` startup steps and discovery counts;
   `select-menu.started`, `select-menu.completed`, `select-menu.rejected`, and
   `select-menu.failed` execution events. Invocation logs include `selectMenu`,
   `interactionId`, `guildId`, and `userId`, without logging selected values.

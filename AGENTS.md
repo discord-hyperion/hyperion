@@ -66,16 +66,16 @@ src/
 dev/bot/        Development bot, separate from framework source
   src/commands/ Example command modules
   src/buttons/  Example button modules
-  src/select-menus/ Example string select menu modules
+  src/select-menus/ Example string and user select menu modules
 tests/          Isolated tests
 docs/           Usage and architecture documentation
 ```
 
 Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
-dispatch exist, along with button and string select menu discovery and dispatch,
-guards, Pino logging and Ora startup indicators. Entity select menus and modals
-do not have framework dispatch yet. Database support is intentionally out of scope.
+dispatch exist, along with button, string select, and user select discovery and dispatch,
+guards, Pino logging and Ora startup indicators. Role, mentionable, and channel select menus
+and modals do not have framework dispatch yet. Database support is intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
 - Keep folder aliases in `tsconfig.json` synchronized with the layout. Examples
@@ -119,10 +119,13 @@ do not have framework dispatch yet. Database support is intentionally out of sco
 - Buttons use custom-ID builders from `@discordjs/builders`, are keyed by exact
   custom ID in `client.buttons`, and load from `<root>/src/buttons` without REST
   registration. Unmatched IDs are left to collectors and application listeners.
-- String selects extend `SelectMenu` with a `StringSelectMenuBuilder` and
-  `SelectMenuContext`. Load them from `<root>/src/select-menus` into
-  `client.selectMenus`; match exact custom IDs and leave unmatched IDs alone.
-  Other select variants are not supported yet.
+- Selects extend `SelectMenu`, defaulting to string selects. User selects use
+  `SelectMenu<ComponentType.UserSelect>`, a `UserSelectMenuBuilder`, and
+  `SelectMenuContext<ComponentType.UserSelect>` for resolved users and members.
+  Load both from `<root>/src/select-menus` into `client.selectMenus`; match exact
+  custom IDs and component types, leaving unmatched interactions alone.
+  Keep builder, interaction, and guard types paired through the generic type.
+  Role, mentionable, and channel select variants are not supported yet.
 - Button guards use `ButtonContext`; shared interaction guards can use
   `InteractionContext`. Filesystem handlers control their reply,
   update, or modal lifecycle. After `deferUpdate()`, send errors as ephemeral

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mock, type TestContext, test } from "node:test";
 import { UserSelectMenuBuilder } from "@discordjs/builders";
 import {
+    type ChatInputCommandInteraction,
     Collection,
     type ComponentType,
     Events,
@@ -200,3 +201,44 @@ for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
             assert.equal(fixture.editReply.mock.callCount(), 0);
     });
 }
+
+test("development user command and filesystem menu complete the selection flow", async t => {
+    const client = await HyperionClient.create({
+        name: "Test",
+        root: new URL("../dev/bot/", import.meta.url),
+        discord: { intents: [] },
+        logging: false,
+    });
+    t.after(() => client.destroy());
+    await client.commands.load(new URL("../dev/bot/", import.meta.url));
+    const reply = mock.fn(async (_payload: unknown) => {});
+    const dispatcher = new InteractionDispatcher(client);
+    await dispatcher.dispatch({
+        id: "user-command",
+        commandName: "user",
+        user: { id: "caller" },
+        isChatInputCommand: () => true,
+        reply,
+    } as unknown as ChatInputCommandInteraction);
+    const payload = reply.mock.calls[0]?.arguments[0] as {
+        components: { toJSON(): unknown }[];
+    };
+    assert.match(
+        JSON.stringify(payload.components[0]?.toJSON()),
+        /user.choose/,
+    );
+
+    const fixture = interaction();
+    const template = client.selectMenus.get("user.choose")?.builder.toJSON();
+    await dispatcher.dispatch(fixture.value);
+
+    assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
+        content: "Selected users: name-selected.",
+        allowedMentions: { parse: [] },
+    });
+    assert.equal(fixture.reply.mock.callCount(), 0);
+    assert.deepEqual(
+        client.selectMenus.get("user.choose")?.builder.toJSON(),
+        template,
+    );
+});
