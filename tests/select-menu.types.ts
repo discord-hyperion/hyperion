@@ -1,4 +1,5 @@
 import {
+    MentionableSelectMenuBuilder,
     RoleSelectMenuBuilder,
     StringSelectMenuBuilder,
     UserSelectMenuBuilder,
@@ -14,12 +15,22 @@ export const selectMenuContracts = (
     stringCtx: SelectMenuContext,
     userCtx: SelectMenuContext<ComponentType.UserSelect>,
     roleCtx: SelectMenuContext<ComponentType.RoleSelect>,
+    mentionableCtx: SelectMenuContext<ComponentType.MentionableSelect>,
 ) => {
     stringCtx.interaction.values satisfies string[];
     userCtx.interaction.users.first()?.username satisfies string | undefined;
     userCtx.interaction.members.size satisfies number;
     roleCtx.interaction.roles.first()?.name satisfies string | undefined;
     roleCtx.interaction.values satisfies string[];
+    mentionableCtx.interaction.values satisfies string[];
+    mentionableCtx.interaction.users.first()?.username satisfies
+        | string
+        | undefined;
+    mentionableCtx.interaction.roles.first()?.name satisfies string | undefined;
+    mentionableCtx.interaction.members.size satisfies number;
+
+    // @ts-expect-error Mentionable selects do not expose channels.
+    mentionableCtx.interaction.channels;
 
     // @ts-expect-error Role selects do not expose resolved users.
     roleCtx.interaction.users;
@@ -66,7 +77,33 @@ export const selectMenuContracts = (
         builder: roleOptions.builder,
     };
 
+    const mentionableOptions: SelectMenuOptions<ComponentType.MentionableSelect> =
+        {
+            builder: new MentionableSelectMenuBuilder().setCustomId(
+                "mentionable",
+            ),
+            guards: [
+                ctx => {
+                    ctx.interaction.users.size satisfies number;
+                    ctx.interaction.roles.size satisfies number;
+                    throw new Error("Type contract only");
+                },
+            ],
+        };
+    const wrongMentionable: SelectMenuOptions<ComponentType.MentionableSelect> =
+        {
+            // @ts-expect-error A mentionable handler requires a mentionable builder.
+            builder: userOptions.builder,
+        };
+    const mentionableAsRole: SelectMenuOptions<ComponentType.RoleSelect> = {
+        // @ts-expect-error A role handler cannot accept a mentionable builder.
+        builder: mentionableOptions.builder,
+    };
+
     return {
+        mentionableOptions,
+        wrongMentionable,
+        mentionableAsRole,
         userOptions,
         stringOptions,
         roleOptions,

@@ -4,6 +4,7 @@ import {
     ComponentType,
     Events,
     type Interaction,
+    type MentionableSelectMenuInteraction,
     MessageFlags,
     type RoleSelectMenuInteraction,
     type StringSelectMenuInteraction,
@@ -16,6 +17,13 @@ import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
 
 type HandlerKind = "command" | "button" | "select-menu";
+type AnyInteraction =
+    | ChatInputCommandInteraction
+    | ButtonInteraction
+    | StringSelectMenuInteraction
+    | UserSelectMenuInteraction
+    | RoleSelectMenuInteraction
+    | MentionableSelectMenuInteraction;
 
 export class InteractionDispatcher {
     private readonly guards = new GuardPipeline();
@@ -60,9 +68,11 @@ export class InteractionDispatcher {
             const button = this.client.buttons.get(interaction.customId);
             // Unmatched IDs may belong to application-owned collectors/listeners.
             if (!button) return;
+
             const logger = this.createLogger(interaction, {
                 button: button.customId,
             });
+
             await this.execute(
                 button,
                 { client: this.client, interaction, logger },
@@ -71,7 +81,8 @@ export class InteractionDispatcher {
         } else if (
             interaction.isStringSelectMenu() ||
             interaction.isUserSelectMenu() ||
-            interaction.isRoleSelectMenu()
+            interaction.isRoleSelectMenu() ||
+            interaction.isMentionableSelectMenu()
         ) {
             const selectMenu = this.client.selectMenus.get(
                 interaction.customId,
@@ -110,17 +121,21 @@ export class InteractionDispatcher {
                     { client: this.client, interaction, logger },
                     "select-menu",
                 );
+            } else if (
+                selectMenu.componentType === ComponentType.MentionableSelect &&
+                interaction.isMentionableSelectMenu()
+            ) {
+                await this.execute(
+                    selectMenu,
+                    { client: this.client, interaction, logger },
+                    "select-menu",
+                );
             }
         }
     }
 
     private createLogger(
-        interaction:
-            | ChatInputCommandInteraction
-            | ButtonInteraction
-            | StringSelectMenuInteraction
-            | UserSelectMenuInteraction
-            | RoleSelectMenuInteraction,
+        interaction: AnyInteraction,
         handler:
             | { command: string }
             | { button: string }
@@ -145,10 +160,14 @@ export class InteractionDispatcher {
     ) {
         const { interaction, logger } = ctx;
         const started = performance.now();
+
         logger.debug({ event: `${kind}.started` }, `Running ${kind}`);
+
         let stage: "guards" | "handler" = "guards";
+
         try {
             const result = await this.guards.run(handler.guards, ctx);
+
             if (!result.passed) {
                 logger.info(
                     {
@@ -170,8 +189,10 @@ export class InteractionDispatcher {
                 }
                 return;
             }
+
             stage = "handler";
             await handler.run(ctx);
+
             logger.info(
                 {
                     event: `${kind}.completed`,
@@ -189,6 +210,7 @@ export class InteractionDispatcher {
                 },
                 `${kind} execution failed`,
             );
+
             await this.respondWithError(
                 interaction,
                 `Something went wrong while running this ${kind === "select-menu" ? "select menu" : kind}.`,
@@ -199,12 +221,7 @@ export class InteractionDispatcher {
     }
 
     private async respondWithError(
-        interaction:
-            | ChatInputCommandInteraction
-            | ButtonInteraction
-            | StringSelectMenuInteraction
-            | UserSelectMenuInteraction
-            | RoleSelectMenuInteraction,
+        interaction: AnyInteraction,
         content: string,
         logger: Logger,
         kind: HandlerKind,

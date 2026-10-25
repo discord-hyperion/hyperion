@@ -1,6 +1,7 @@
 import type {
     ButtonInteraction,
     ChatInputCommandInteraction,
+    MentionableSelectMenuInteraction,
     RoleSelectMenuInteraction,
     StringSelectMenuInteraction,
     UserSelectMenuInteraction,
@@ -14,12 +15,14 @@ export interface InteractionContext<
         | ButtonInteraction
         | StringSelectMenuInteraction
         | UserSelectMenuInteraction
-        | RoleSelectMenuInteraction =
+        | RoleSelectMenuInteraction
+        | MentionableSelectMenuInteraction =
         | ChatInputCommandInteraction
         | ButtonInteraction
         | StringSelectMenuInteraction
         | UserSelectMenuInteraction
-        | RoleSelectMenuInteraction,
+        | RoleSelectMenuInteraction
+        | MentionableSelectMenuInteraction,
 > {
     readonly client: HyperionClient;
     readonly interaction: InteractionType;

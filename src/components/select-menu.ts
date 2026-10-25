@@ -1,4 +1,5 @@
 import type {
+    MentionableSelectMenuBuilder,
     RoleSelectMenuBuilder,
     StringSelectMenuBuilder,
     UserSelectMenuBuilder,
@@ -10,12 +11,14 @@ import { Guard, type GuardProvider } from "../guards/index.ts";
 export type SelectMenuType =
     | ComponentType.StringSelect
     | ComponentType.UserSelect
-    | ComponentType.RoleSelect;
+    | ComponentType.RoleSelect
+    | ComponentType.MentionableSelect;
 
 interface SelectMenuBuilders {
     [ComponentType.StringSelect]: StringSelectMenuBuilder;
     [ComponentType.UserSelect]: UserSelectMenuBuilder;
     [ComponentType.RoleSelect]: RoleSelectMenuBuilder;
+    [ComponentType.MentionableSelect]: MentionableSelectMenuBuilder;
 }
 
 export interface SelectMenuContext<
@@ -65,4 +68,5 @@ export abstract class SelectMenu<
 export type AnySelectMenu =
     | SelectMenu<ComponentType.StringSelect>
     | SelectMenu<ComponentType.UserSelect>
-    | SelectMenu<ComponentType.RoleSelect>;
+    | SelectMenu<ComponentType.RoleSelect>
+    | SelectMenu<ComponentType.MentionableSelect>;
