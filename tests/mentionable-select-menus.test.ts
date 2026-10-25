@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mock, type TestContext, test } from "node:test";
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
 import {
+    type ChatInputCommandInteraction,
     Collection,
     type ComponentType,
     Events,
@@ -224,5 +225,55 @@ for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
         });
         if (phase === "defer-update")
             assert.equal(fixture.editReply.mock.callCount(), 0);
+    });
+}
+
+for (const [name, values, expected] of [
+    ["mixed", ["role", "person"], "Selected role, Selected user"],
+    ["users only", ["person"], "Selected user"],
+    ["roles only", ["role"], "Selected role"],
+    ["empty", [], "None"],
+] as const) {
+    test(`development mentionable command handles ${name} selections`, async t => {
+        const client = await HyperionClient.create({
+            name: "Test",
+            root: new URL("../dev/bot/", import.meta.url),
+            discord: { intents: [] },
+            logging: false,
+        });
+        t.after(() => client.destroy());
+        await client.commands.load(new URL("../dev/bot/", import.meta.url));
+        const reply = mock.fn(async (_payload: unknown) => {});
+        const dispatcher = new InteractionDispatcher(client);
+        await dispatcher.dispatch({
+            id: "mentionable-command",
+            commandName: "mentionable",
+            user: { id: "caller" },
+            isChatInputCommand: () => true,
+            reply,
+        } as unknown as ChatInputCommandInteraction);
+        const payload = reply.mock.calls[0]?.arguments[0] as {
+            components: { toJSON(): unknown }[];
+        };
+        assert.match(
+            JSON.stringify(payload.components[0]?.toJSON()),
+            /mentionable.choose/,
+        );
+
+        const fixture = interaction("new", [...values]);
+        const template = client.selectMenus
+            .get("mentionable.choose")
+            ?.builder.toJSON();
+        await dispatcher.dispatch(fixture.value);
+
+        assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
+            content: `Selected: ${expected}.`,
+            allowedMentions: { parse: [] },
+        });
+        assert.equal(fixture.reply.mock.callCount(), 0);
+        assert.deepEqual(
+            client.selectMenus.get("mentionable.choose")?.builder.toJSON(),
+            template,
+        );
     });
 }
