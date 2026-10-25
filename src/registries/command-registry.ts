@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection, DiscordAPIError, REST, Routes } from "discord.js";
 import type { Logger } from "pino";
 import { Command } from "../commands/index.ts";
-import { discoverModules } from "../util/index.ts";
+import { assertRegistryClass, discoverModules } from "../util/index.ts";
 
 export interface CommandRegistrationOptions {
     applicationId: string;
@@ -49,14 +49,7 @@ export class CommandRegistry extends Collection<string, Command> {
                 const module = await import(pathToFileURL(file).href);
                 const CommandClass = module.default;
 
-                if (
-                    typeof CommandClass !== "function" ||
-                    !(CommandClass.prototype instanceof Command)
-                ) {
-                    throw new Error(
-                        "Expected a default-exported class extending Command.",
-                    );
-                }
+                assertRegistryClass(CommandClass, Command);
 
                 command = new CommandClass();
             } catch (cause) {

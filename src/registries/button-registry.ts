@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection } from "discord.js";
 import type { Logger } from "pino";
 import { Button } from "../components/index.ts";
-import { discoverModules } from "../util/index.ts";
+import { assertRegistryClass, discoverModules } from "../util/index.ts";
 
 export class ButtonRegistry extends Collection<string, Button> {
     public constructor(private readonly logger?: Logger) {
@@ -36,14 +36,7 @@ export class ButtonRegistry extends Collection<string, Button> {
                 const module = await import(pathToFileURL(file).href);
                 const ButtonClass = module.default;
 
-                if (
-                    typeof ButtonClass !== "function" ||
-                    !(ButtonClass.prototype instanceof Button)
-                ) {
-                    throw new TypeError(
-                        "Expected a default-exported class extending Button.",
-                    );
-                }
+                assertRegistryClass(ButtonClass, Button);
 
                 button = new ButtonClass();
 

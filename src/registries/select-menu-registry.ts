@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection, ComponentType } from "discord.js";
 import type { Logger } from "pino";
 import { SelectMenu } from "../components/index.ts";
-import { discoverModules } from "../util/index.ts";
+import { assertRegistryClass, discoverModules } from "../util/index.ts";
 
 export class SelectMenuRegistry extends Collection<string, SelectMenu> {
     public constructor(private readonly logger?: Logger) {
@@ -36,14 +36,7 @@ export class SelectMenuRegistry extends Collection<string, SelectMenu> {
                 const module = await import(pathToFileURL(file).href);
                 const SelectMenuClass = module.default;
 
-                if (
-                    typeof SelectMenuClass !== "function" ||
-                    !(SelectMenuClass.prototype instanceof SelectMenu)
-                ) {
-                    throw new TypeError(
-                        "Expected a default-exported class extending SelectMenu.",
-                    );
-                }
+                assertRegistryClass(SelectMenuClass, SelectMenu);
 
                 selectMenu = new SelectMenuClass();
 
