@@ -4,6 +4,7 @@ import {
     Events,
     type Interaction,
     MessageFlags,
+    type StringSelectMenuInteraction,
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
@@ -11,7 +12,7 @@ import type { InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
 
-type HandlerKind = "command" | "button";
+type HandlerKind = "command" | "button" | "select-menu";
 
 export class InteractionDispatcher {
     private readonly guards = new GuardPipeline();
@@ -64,12 +65,34 @@ export class InteractionDispatcher {
                 { client: this.client, interaction, logger },
                 "button",
             );
+        } else if (interaction.isStringSelectMenu()) {
+            const selectMenu = this.client.selectMenus.get(
+                interaction.customId,
+            );
+
+            if (!selectMenu) return;
+
+            const logger = this.createLogger(interaction, {
+                selectMenu: selectMenu.customId,
+            });
+
+            await this.execute(
+                selectMenu,
+                { client: this.client, interaction, logger },
+                "select-menu",
+            );
         }
     }
 
     private createLogger(
-        interaction: ChatInputCommandInteraction | ButtonInteraction,
-        handler: { command: string } | { button: string },
+        interaction:
+            | ChatInputCommandInteraction
+            | ButtonInteraction
+            | StringSelectMenuInteraction,
+        handler:
+            | { command: string }
+            | { button: string }
+            | { selectMenu: string },
     ) {
         return this.client.logger.child({
             component: "execution",
@@ -136,7 +159,7 @@ export class InteractionDispatcher {
             );
             await this.respondWithError(
                 interaction,
-                `Something went wrong while running this ${kind}.`,
+                `Something went wrong while running this ${kind === "select-menu" ? "select menu" : kind}.`,
                 logger,
                 kind,
             );
@@ -144,7 +167,10 @@ export class InteractionDispatcher {
     }
 
     private async respondWithError(
-        interaction: ChatInputCommandInteraction | ButtonInteraction,
+        interaction:
+            | ChatInputCommandInteraction
+            | ButtonInteraction
+            | StringSelectMenuInteraction,
         content: string,
         logger: Logger,
         kind: HandlerKind,
@@ -153,7 +179,7 @@ export class InteractionDispatcher {
             // deferUpdate() leaves ephemeral null: editing its reply would replace
             // the source message. Send a private follow-up in that state instead.
             const deferredUpdate =
-                kind === "button" &&
+                kind !== "command" &&
                 interaction.deferred &&
                 interaction.ephemeral === null;
             if (interaction.replied || deferredUpdate) {

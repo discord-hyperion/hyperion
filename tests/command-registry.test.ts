@@ -303,9 +303,9 @@ test("initialization skips absent or empty conventional folders and ignores othe
         path.join(root, "commands", "ping.mjs"),
         commandSource("ping"),
     );
-    await mkdir(path.join(root, "src", "select-menus"), { recursive: true });
+    await mkdir(path.join(root, "src", "modals"), { recursive: true });
     await writeFile(
-        path.join(root, "src", "select-menus", "other.mjs"),
+        path.join(root, "src", "modals", "other.mjs"),
         'throw new Error("Not a command");',
     );
 

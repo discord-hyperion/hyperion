@@ -66,15 +66,16 @@ src/
 dev/bot/        Development bot, separate from framework source
   src/commands/ Example command modules
   src/buttons/  Example button modules
+  src/select-menus/ Example string select menu modules
 tests/          Isolated tests
 docs/           Usage and architecture documentation
 ```
 
 Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
-dispatch exist, along with button discovery and dispatch, guards, Pino logging and
-Ora startup indicators. Select menus and modals do not have framework dispatch
-yet. Database support is intentionally out of scope.
+dispatch exist, along with button and string select menu discovery and dispatch,
+guards, Pino logging and Ora startup indicators. Entity select menus and modals
+do not have framework dispatch yet. Database support is intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
 - Keep folder aliases in `tsconfig.json` synchronized with the layout. Examples
@@ -118,7 +119,11 @@ yet. Database support is intentionally out of scope.
 - Buttons use custom-ID builders from `@discordjs/builders`, are keyed by exact
   custom ID in `client.buttons`, and load from `<root>/src/buttons` without REST
   registration. Unmatched IDs are left to collectors and application listeners.
-- Button guards use `ButtonContext`; shared command/button guards can use
+- String selects extend `SelectMenu` with a `StringSelectMenuBuilder` and
+  `SelectMenuContext`. Load them from `<root>/src/select-menus` into
+  `client.selectMenus`; match exact custom IDs and leave unmatched IDs alone.
+  Other select variants are not supported yet.
+- Button guards use `ButtonContext`; shared interaction guards can use
   `InteractionContext`. Filesystem handlers control their reply,
   update, or modal lifecycle. After `deferUpdate()`, send errors as ephemeral
   follow-ups rather than editing the source message.
@@ -131,7 +136,7 @@ yet. Database support is intentionally out of scope.
 
 - Resolve command modules from `<root>/src/commands`; `root` defaults to the
   working directory and may be a filesystem path or file URL. Do not add arbitrary
-  per-handler folder paths. Future handler types should follow fixed folders
+  per-handler folder paths. Handler types follow fixed folders
   such as `<root>/src/select-menus`.
 - Keep framework source separate from the consuming bot root. The development
   bot sets its root to `dev/bot`.
@@ -172,6 +177,12 @@ Discord login, or external requests. Do not run `pnpm start`, `pnpm dev`, or
 ## Git
 
 - Preserve unrelated user changes. Do not commit or push unless requested.
+- Split work into focused commits rather than bundling all changes into one large
+  commit. Group related features and files into coherent batches, staging each
+  batch explicitly. Keep the implementation and tests needed for each change
+  together; separate independent features, refactors, examples, or documentation
+  updates when they form distinct changes. Each commit should be understandable
+  and leave the project in a working state.
 - When committing, follow this format:
   `<type>(<scope>): <concise imperative description>`.
 - Use `feat` for functionality, `fix` for corrections, `refactor` for behavior-

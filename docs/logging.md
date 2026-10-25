@@ -31,12 +31,16 @@ No global console interception or background formatting worker is installed.
   includes discovered source paths and skipped missing command directories.
 - Command registration: start, completion, or failure, plus each deployment's
   route, count, and duration. Empty registries emit a skipped event.
-- Initialization: final command count and duration.
+- Initialization: final command, button, and select menu counts and duration.
 - Button loading: start, completion, count, duration, or failure. Debug level
   includes discovered source paths and skipped missing button directories.
 - Button execution: debug start, info completion or rejection, and error failure.
   Logs carry the registered button ID and invocation metadata. Failed responses
   emit `button.error-response.failed`; unmatched custom IDs are ignored.
+- String select menus: `select-menus.load` startup steps and discovery counts;
+  `select-menu.started`, `select-menu.completed`, `select-menu.rejected`, and
+  `select-menu.failed` execution events. Invocation logs include `selectMenu`,
+  `interactionId`, `guildId`, and `userId`, without logging selected values.
 - Login: start, completion, or failure. Client readiness is a separate event;
   command deployment and login remain separate operations.
 - Application ownership: `application.owner.started`, completion, or failure
@@ -49,7 +53,7 @@ No global console interception or background formatting worker is installed.
   Guard errors emit `command.failed` with `stage: "guards"`; handler errors use
   `stage: "handler"`. Guard logs carry the command's invocation metadata.
 
-Progress indicators cover command and button loading, application-command registration, and
+Progress indicators cover command, button, and select menu loading, application-command registration, and
 login. Runtime handlers do not display spinners automatically.
 
 ## Handler logging

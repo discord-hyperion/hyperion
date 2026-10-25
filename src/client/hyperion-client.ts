@@ -2,7 +2,11 @@ import { Client, Events, Team } from "discord.js";
 import type { Logger } from "pino";
 import { InteractionDispatcher } from "../execution/index.ts";
 import { LogManager } from "../logging/index.ts";
-import { ButtonRegistry, CommandRegistry } from "../registries/index.ts";
+import {
+    ButtonRegistry,
+    CommandRegistry,
+    SelectMenuRegistry,
+} from "../registries/index.ts";
 import type { HyperionClientOptions } from "./options.ts";
 
 export class HyperionClient extends Client {
@@ -10,6 +14,7 @@ export class HyperionClient extends Client {
     public readonly description: string;
     public readonly commands: CommandRegistry;
     public readonly buttons: ButtonRegistry;
+    public readonly selectMenus: SelectMenuRegistry;
     public readonly logger: Logger;
     private readonly logging: LogManager;
     private readonly dispatcher: InteractionDispatcher;
@@ -29,6 +34,9 @@ export class HyperionClient extends Client {
         );
         this.buttons = new ButtonRegistry(
             this.logger.child({ component: "buttons" }),
+        );
+        this.selectMenus = new SelectMenuRegistry(
+            this.logger.child({ component: "select-menus" }),
         );
         this.dispatcher = new InteractionDispatcher(this);
 
@@ -76,6 +84,12 @@ export class HyperionClient extends Client {
             this.buttons.load(options.root),
         );
 
+        await this.logging.step(
+            "Loading select menus",
+            "select-menus.load",
+            () => this.selectMenus.load(options.root),
+        );
+
         if (options.commands) {
             if (this.commands.size > 0) {
                 const registration = options.commands;
@@ -100,6 +114,7 @@ export class HyperionClient extends Client {
                 event: "client.initialized",
                 commandCount: this.commands.size,
                 buttonCount: this.buttons.size,
+                selectMenuCount: this.selectMenus.size,
                 durationMs: Math.round(performance.now() - started),
             },
             "Hyperion initialized",
