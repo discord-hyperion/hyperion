@@ -1,4 +1,5 @@
 import type {
+    RoleSelectMenuBuilder,
     StringSelectMenuBuilder,
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
@@ -8,11 +9,13 @@ import { Guard, type GuardProvider } from "../guards/index.ts";
 
 export type SelectMenuType =
     | ComponentType.StringSelect
-    | ComponentType.UserSelect;
+    | ComponentType.UserSelect
+    | ComponentType.RoleSelect;
 
 interface SelectMenuBuilders {
     [ComponentType.StringSelect]: StringSelectMenuBuilder;
     [ComponentType.UserSelect]: UserSelectMenuBuilder;
+    [ComponentType.RoleSelect]: RoleSelectMenuBuilder;
 }
 
 export interface SelectMenuContext<
@@ -61,4 +64,5 @@ export abstract class SelectMenu<
 
 export type AnySelectMenu =
     | SelectMenu<ComponentType.StringSelect>
-    | SelectMenu<ComponentType.UserSelect>;
+    | SelectMenu<ComponentType.UserSelect>
+    | SelectMenu<ComponentType.RoleSelect>;

@@ -54,6 +54,7 @@ const interaction = (phase = "new", ids = ["selected"]) => {
         isButton: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => true,
+        isRoleSelectMenu: () => false,
         reply,
         editReply,
         followUp,
@@ -128,6 +129,7 @@ test("unknown IDs and type mismatches never run a handler or guard", async t => 
     const wrongType = interaction();
     Object.assign(wrongType.value, {
         isUserSelectMenu: () => false,
+        isRoleSelectMenu: () => false,
         isStringSelectMenu: () => true,
     });
     const unknown = interaction();

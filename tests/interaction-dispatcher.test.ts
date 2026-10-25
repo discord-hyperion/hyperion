@@ -49,6 +49,7 @@ const createInteraction = (
         isButton: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
+        isRoleSelectMenu: () => false,
         reply,
         editReply,
         followUp,
