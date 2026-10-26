@@ -44,6 +44,9 @@ the old Hyperion repository is background context, not the current API.
 - Let TypeScript infer return types for implemented methods. Keep explicit return
   types on abstract methods, interfaces, and other declarations that define a
   contract without an implementation.
+- Avoid one-off variables that only rename an already clear expression. Prefer
+  direct access such as `options.commands` unless a local variable improves
+  clarity, avoids repeated work, or is needed for type safety.
 - Group related statements together and separate logical groups with a blank
   line. Keep related assignments adjacent, but give validation, state mutations,
   logging, and subsequent operations their own visual groups. Follow the spacing
