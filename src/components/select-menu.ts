@@ -1,4 +1,5 @@
 import type {
+    ChannelSelectMenuBuilder,
     MentionableSelectMenuBuilder,
     RoleSelectMenuBuilder,
     StringSelectMenuBuilder,
@@ -12,9 +13,11 @@ export type SelectMenuType =
     | ComponentType.StringSelect
     | ComponentType.UserSelect
     | ComponentType.RoleSelect
-    | ComponentType.MentionableSelect;
+    | ComponentType.MentionableSelect
+    | ComponentType.ChannelSelect;
 
 interface SelectMenuBuilders {
+    [ComponentType.ChannelSelect]: ChannelSelectMenuBuilder;
     [ComponentType.StringSelect]: StringSelectMenuBuilder;
     [ComponentType.UserSelect]: UserSelectMenuBuilder;
     [ComponentType.RoleSelect]: RoleSelectMenuBuilder;
@@ -69,4 +72,5 @@ export type AnySelectMenu =
     | SelectMenu<ComponentType.StringSelect>
     | SelectMenu<ComponentType.UserSelect>
     | SelectMenu<ComponentType.RoleSelect>
-    | SelectMenu<ComponentType.MentionableSelect>;
+    | SelectMenu<ComponentType.MentionableSelect>
+    | SelectMenu<ComponentType.ChannelSelect>;
