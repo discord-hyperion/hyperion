@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mock, test } from "node:test";
 import { StringSelectMenuBuilder } from "@discordjs/builders";
 import {
+    ComponentType,
     Events,
     MessageFlags,
     type StringSelectMenuInteraction,
@@ -35,6 +36,7 @@ const interaction = (phase = "new", customId = "colour.choose") => {
     const followUp = mock.fn(async (_payload: unknown) => {});
     const value = {
         id: "selection",
+        componentType: ComponentType.StringSelect,
         customId,
         values: ["blue"],
         user: { id: "user" },
@@ -88,6 +90,7 @@ test("select menu listener preserves the receiver, typed values, and scoped logs
     client.emit(Events.InteractionCreate, fixture.value);
     await client.waitForAllListenersToComplete();
 
+    assert.equal(fixture.reply.mock.callCount(), 1);
     assert.equal(fixture.reply.mock.calls[0]?.arguments[0], "blue");
     const completed = records.find(
         record => record.event === "select-menu.completed",
@@ -105,6 +108,7 @@ test("unmatched IDs and unsupported selects are not acknowledged", async t => {
     await dispatcher.dispatch(unknown.value);
     const unsupported = interaction();
     Object.assign(unsupported.value, {
+        isChannelSelectMenu: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,

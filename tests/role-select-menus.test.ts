@@ -4,7 +4,7 @@ import { RoleSelectMenuBuilder } from "@discordjs/builders";
 import {
     type ChatInputCommandInteraction,
     Collection,
-    type ComponentType,
+    ComponentType,
     Events,
     MessageFlags,
     type Role,
@@ -40,6 +40,7 @@ const interaction = (phase = "new", ids = ["selected"]) => {
     const update = mock.fn(async (_payload: unknown) => {});
     const value = {
         id: "role-selection",
+        componentType: ComponentType.RoleSelect,
         customId: "role.choose",
         values: ids,
         roles: new Collection(
@@ -104,6 +105,7 @@ test("role select listener provides resolved roles and scoped logs without loggi
     client.emit(Events.InteractionCreate, fixture.value);
     await client.waitForAllListenersToComplete();
 
+    assert.equal(fixture.reply.mock.callCount(), 1);
     assert.equal(
         fixture.reply.mock.calls[0]?.arguments[0],
         "name-first, name-second",
@@ -127,6 +129,7 @@ test("unknown IDs and type mismatches never run a handler or guard", async t => 
 
     const wrongType = interaction();
     Object.assign(wrongType.value, {
+        componentType: ComponentType.StringSelect,
         isRoleSelectMenu: () => false,
         isMentionableSelectMenu: () => false,
         isUserSelectMenu: () => false,

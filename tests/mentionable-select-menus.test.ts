@@ -4,7 +4,7 @@ import { MentionableSelectMenuBuilder } from "@discordjs/builders";
 import {
     type ChatInputCommandInteraction,
     Collection,
-    type ComponentType,
+    ComponentType,
     Events,
     type MentionableSelectMenuInteraction,
     MessageFlags,
@@ -43,6 +43,7 @@ const interaction = (phase = "new", values = ["role", "person"]) => {
     const update = mock.fn(async (_payload: unknown) => {});
     const value = {
         id: "mentionable-selection",
+        componentType: ComponentType.MentionableSelect,
         customId: "mentionable.choose",
         values,
         users: new Collection(
@@ -123,6 +124,7 @@ test("mentionable listener exposes mixed resolved data and scoped logs without l
     client.emit(Events.InteractionCreate, fixture.value);
     await client.waitForAllListenersToComplete();
 
+    assert.equal(fixture.reply.mock.callCount(), 1);
     assert.equal(fixture.reply.mock.calls[0]?.arguments[0], "Resolved");
     const completed = records.find(
         record => record.event === "select-menu.completed",
@@ -145,13 +147,14 @@ test("unknown IDs and string, user, and role type mismatches leave interactions 
         new MentionableMenu(execute, [factory]),
     );
 
-    for (const predicate of [
-        "isStringSelectMenu",
-        "isUserSelectMenu",
-        "isRoleSelectMenu",
-    ]) {
+    for (const [predicate, componentType] of [
+        ["isStringSelectMenu", ComponentType.StringSelect],
+        ["isUserSelectMenu", ComponentType.UserSelect],
+        ["isRoleSelectMenu", ComponentType.RoleSelect],
+    ] as const) {
         const fixture = interaction();
         Object.assign(fixture.value, {
+            componentType,
             isMentionableSelectMenu: () => false,
             [predicate]: () => true,
         });

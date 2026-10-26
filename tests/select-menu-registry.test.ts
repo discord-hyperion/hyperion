@@ -96,7 +96,8 @@ for (const [name, contents] of Object.entries({
     "missing custom ID": source(""),
     "invalid guard": source("guard", "guards: [{}]"),
     "wrong component type": source("wrong")
-        .replaceAll("StringSelectMenuBuilder", "ChannelSelectMenuBuilder")
+        .replaceAll("StringSelectMenuBuilder", "ButtonBuilder")
+        .replace('.setCustomId("wrong")', '.setCustomId("wrong").setStyle(1)')
         .replace('.addOptions({ label: "Blue", value: "blue" })', ""),
 })) {
     test(`${name} fails initialization with its source and original cause`, async t => {
@@ -224,6 +225,10 @@ test("loads all supported selects together without REST registration", async t =
         path.join(directory, "mentionable.mjs"),
         mentionableSource("mentionable.choose"),
     );
+    await writeFile(
+        path.join(directory, "channel.mjs"),
+        channelSource("channel.choose"),
+    );
     const put = t.mock.method(REST.prototype, "put", async () => []);
     const client = await HyperionClient.create({
         name: "Test",
@@ -233,7 +238,11 @@ test("loads all supported selects together without REST registration", async t =
     });
     t.after(() => client.destroy());
 
-    assert.equal(client.selectMenus.size, 4);
+    assert.equal(client.selectMenus.size, 5);
+    assert.equal(
+        client.selectMenus.get("channel.choose")?.componentType,
+        ComponentType.ChannelSelect,
+    );
     assert.equal(
         client.selectMenus.get("mentionable.choose")?.componentType,
         ComponentType.MentionableSelect,
@@ -289,6 +298,61 @@ test("invalid user select limits retain source context and previous handlers", a
 
 const roleSource = (id: string) =>
     userSource(id).replaceAll("UserSelectMenuBuilder", "RoleSelectMenuBuilder");
+
+const channelSource = (id: string) =>
+    userSource(id).replaceAll(
+        "UserSelectMenuBuilder",
+        "ChannelSelectMenuBuilder",
+    );
+
+test("duplicate channel IDs preserve previously loaded handlers", async t => {
+    const { root, directory } = await fixture(t);
+    await writeFile(
+        path.join(directory, "channel.mjs"),
+        channelSource("shared"),
+    );
+    const registry = new SelectMenuRegistry();
+    await registry.load(root);
+    const original = registry.get("shared");
+    await writeFile(path.join(directory, "string.mjs"), source("shared"));
+
+    await assert.rejects(
+        registry.load(root),
+        /Duplicate select menu custom ID/,
+    );
+    assert.equal(registry.get("shared"), original);
+});
+
+for (const setting of ["setMaxValues(26)", "setChannelTypes(999)"]) {
+    test(`invalid channel ${setting} retains source context and previous handlers`, async t => {
+        const { root, directory } = await fixture(t);
+        await writeFile(
+            path.join(directory, "valid.mjs"),
+            channelSource("valid"),
+        );
+        const registry = new SelectMenuRegistry();
+        await registry.load(root);
+        const original = registry.get("valid");
+        await writeFile(
+            path.join(directory, "invalid.mjs"),
+            channelSource("invalid").replace(
+                '.setCustomId("invalid")',
+                `.setCustomId("invalid").${setting}`,
+            ),
+        );
+
+        await assert.rejects(registry.load(root), error => {
+            assert.ok(error instanceof Error);
+            assert.match(
+                error.message,
+                /Failed to load select menu.*invalid.mjs/,
+            );
+            assert.ok(error.cause instanceof Error);
+            return true;
+        });
+        assert.equal(registry.get("valid"), original);
+    });
+}
 
 test("duplicate role IDs preserve previously loaded handlers", async t => {
     const { root, directory } = await fixture(t);

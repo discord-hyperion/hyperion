@@ -1,1 +1,4 @@
-export type { InteractionContext } from "./interaction-context.ts";
+export type {
+    AnyInteraction,
+    InteractionContext,
+} from "./interaction-context.ts";

@@ -1,29 +1,14 @@
-import {
-    type ButtonInteraction,
-    type ChatInputCommandInteraction,
-    ComponentType,
-    Events,
-    type Interaction,
-    type MentionableSelectMenuInteraction,
-    MessageFlags,
-    type RoleSelectMenuInteraction,
-    type StringSelectMenuInteraction,
-    type UserSelectMenuInteraction,
-} from "discord.js";
+import { Events, type Interaction, MessageFlags } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
-import type { InteractionContext } from "../contexts/index.ts";
+import type { SelectMenu, SelectMenuType } from "../components/index.ts";
+import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
 
 type HandlerKind = "command" | "button" | "select-menu";
-type AnyInteraction =
-    | ChatInputCommandInteraction
-    | ButtonInteraction
-    | StringSelectMenuInteraction
-    | UserSelectMenuInteraction
-    | RoleSelectMenuInteraction
-    | MentionableSelectMenuInteraction;
+
+export type { AnyInteraction } from "../contexts/index.ts";
 
 export class InteractionDispatcher {
     private readonly guards = new GuardPipeline();
@@ -41,18 +26,22 @@ export class InteractionDispatcher {
             const logger = this.createLogger(interaction, {
                 command: interaction.commandName,
             });
+
             const command = this.client.commands.get(interaction.commandName);
+
             if (!command) {
                 logger.warn(
                     { event: "command.unavailable" },
                     "No handler found for command",
                 );
+
                 await this.respondWithError(
                     interaction,
                     "This command is no longer available. Please try again later.",
                     logger,
                     "command",
                 );
+
                 return;
             }
             await this.execute(
@@ -82,55 +71,29 @@ export class InteractionDispatcher {
             interaction.isStringSelectMenu() ||
             interaction.isUserSelectMenu() ||
             interaction.isRoleSelectMenu() ||
-            interaction.isMentionableSelectMenu()
+            interaction.isMentionableSelectMenu() ||
+            interaction.isChannelSelectMenu()
         ) {
             const selectMenu = this.client.selectMenus.get(
                 interaction.customId,
             );
 
-            if (!selectMenu) return;
+            if (
+                !selectMenu ||
+                selectMenu.componentType !== interaction.componentType
+            ) {
+                return;
+            }
 
             const logger = this.createLogger(interaction, {
                 selectMenu: selectMenu.customId,
             });
 
-            if (
-                selectMenu.componentType === ComponentType.StringSelect &&
-                interaction.isStringSelectMenu()
-            ) {
-                await this.execute(
-                    selectMenu,
-                    { client: this.client, interaction, logger },
-                    "select-menu",
-                );
-            } else if (
-                selectMenu.componentType === ComponentType.UserSelect &&
-                interaction.isUserSelectMenu()
-            ) {
-                await this.execute(
-                    selectMenu,
-                    { client: this.client, interaction, logger },
-                    "select-menu",
-                );
-            } else if (
-                selectMenu.componentType === ComponentType.RoleSelect &&
-                interaction.isRoleSelectMenu()
-            ) {
-                await this.execute(
-                    selectMenu,
-                    { client: this.client, interaction, logger },
-                    "select-menu",
-                );
-            } else if (
-                selectMenu.componentType === ComponentType.MentionableSelect &&
-                interaction.isMentionableSelectMenu()
-            ) {
-                await this.execute(
-                    selectMenu,
-                    { client: this.client, interaction, logger },
-                    "select-menu",
-                );
-            }
+            await this.execute(
+                selectMenu as SelectMenu<SelectMenuType>,
+                { client: this.client, interaction, logger },
+                "select-menu",
+            );
         }
     }
 
@@ -153,7 +116,7 @@ export class InteractionDispatcher {
     private async execute<Context extends InteractionContext>(
         handler: {
             readonly guards: readonly GuardProvider<Context>[];
-            run(ctx: Context): Promise<void>;
+            run: (ctx: Context) => Promise<void>;
         },
         ctx: Context,
         kind: HandlerKind,
