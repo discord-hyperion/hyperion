@@ -73,6 +73,7 @@ dev/bot/        Development bot, separate from framework source
   src/commands/ Example command modules
   src/buttons/  Example button modules
   src/select-menus/ Example select menu modules
+  src/modals/   Example modal modules
 tests/          Isolated tests
 docs/           Usage and architecture documentation
 ```
@@ -81,8 +82,8 @@ Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
 dispatch exist, along with button, string select, user select, role select,
 mentionable select, and channel select support, guards, Pino logging and Ora
-startup indicators. Modals do not have framework dispatch yet. Database support
-is intentionally out of scope.
+startup indicators. Modal discovery and submission dispatch are supported.
+Database support is intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
 - Keep folder aliases in `tsconfig.json` synchronized with the layout. Examples
@@ -142,6 +143,13 @@ is intentionally out of scope.
   `InteractionContext`. Filesystem handlers control their reply,
   update, or modal lifecycle. After `deferUpdate()`, send errors as ephemeral
   follow-ups rather than editing the source message.
+- Modals extend `Modal`, use `ModalBuilder` from `@discordjs/builders`, and load
+  from `<root>/src/modals` into `client.modals` without REST registration. Match
+  exact custom IDs and leave unmatched submissions to collectors and listeners.
+  `ModalContext` exposes the v15 `ModalSubmitInteraction.components` resolver.
+  Read embedded selects through the modal handler, not message select dispatch.
+  Use `LabelBuilder` for text-input labels in examples. Modal guards run on
+  submission independently of the command or component that opened the modal.
 - Keep components stateless: retain handler definitions for routing, but do not
   introduce per-message sessions, callback closures, timers, counters, or update
   queues. Persistent state and atomic updates belong in application-owned storage.

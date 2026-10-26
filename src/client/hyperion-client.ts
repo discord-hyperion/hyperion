@@ -5,6 +5,7 @@ import { LogManager } from "../logging/index.ts";
 import {
     ButtonRegistry,
     CommandRegistry,
+    ModalRegistry,
     SelectMenuRegistry,
 } from "../registries/index.ts";
 import type { HyperionClientOptions } from "./options.ts";
@@ -15,6 +16,7 @@ export class HyperionClient extends Client {
     public readonly commands: CommandRegistry;
     public readonly buttons: ButtonRegistry;
     public readonly selectMenus: SelectMenuRegistry;
+    readonly modals: ModalRegistry;
     public readonly logger: Logger;
     private readonly logging: LogManager;
     private readonly dispatcher: InteractionDispatcher;
@@ -37,6 +39,9 @@ export class HyperionClient extends Client {
         );
         this.selectMenus = new SelectMenuRegistry(
             this.logger.child({ component: "select-menus" }),
+        );
+        this.modals = new ModalRegistry(
+            this.logger.child({ component: "modals" }),
         );
         this.dispatcher = new InteractionDispatcher(this);
 
@@ -90,6 +95,10 @@ export class HyperionClient extends Client {
             () => this.selectMenus.load(options.root),
         );
 
+        await this.logging.step("Loading modals", "modals.load", () =>
+            this.modals.load(options.root),
+        );
+
         if (options.commands) {
             if (this.commands.size > 0) {
                 const registration = options.commands;
@@ -115,6 +124,7 @@ export class HyperionClient extends Client {
                 commandCount: this.commands.size,
                 buttonCount: this.buttons.size,
                 selectMenuCount: this.selectMenus.size,
+                modalCount: this.modals.size,
                 durationMs: Math.round(performance.now() - started),
             },
             "Hyperion initialized",
