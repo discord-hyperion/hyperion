@@ -11,6 +11,7 @@ import {
     type APIChannel,
     type ChannelSelectMenuInteraction,
     ChannelType,
+    type ChatInputCommandInteraction,
     Collection,
     ComponentType,
     Events,
@@ -343,5 +344,69 @@ for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
         });
         if (phase === "defer-update")
             assert.equal(fixture.editReply.mock.callCount(), 0);
+    });
+}
+
+for (const [label, ids, expected] of [
+    ["multiple", ["second", "first"], "name-second, name-first"],
+    ["empty", [], "None"],
+    ["unnamed", ["unnamed"], "unnamed"],
+    ["missing", ["missing"], "missing"],
+] as const) {
+    test(`development channel command and filesystem menu handle ${label} selections`, async t => {
+        const client = await HyperionClient.create({
+            name: "Test",
+            root: new URL("../dev/bot/", import.meta.url),
+            discord: { intents: [] },
+            logging: false,
+        });
+        t.after(() => client.destroy());
+        await client.commands.load(new URL("../dev/bot/", import.meta.url));
+        const reply = mock.fn(async (_payload: unknown) => {});
+        const dispatcher = new InteractionDispatcher(client);
+        await dispatcher.dispatch({
+            id: "channel-command",
+            commandName: "channel",
+            user: { id: "caller" },
+            isChatInputCommand: () => true,
+            reply,
+        } as unknown as ChatInputCommandInteraction);
+        const payload = reply.mock.calls[0]?.arguments[0] as {
+            components: { toJSON(): unknown }[];
+        };
+        assert.match(
+            JSON.stringify(payload.components[0]?.toJSON()),
+            /channel.choose/,
+        );
+        const menu = client.selectMenus.get("channel.choose");
+        assert.ok(menu);
+        assert.equal(menu.componentType, ComponentType.ChannelSelect);
+        assert.deepEqual(menu.builder.toJSON().channel_types, [
+            ChannelType.GuildText,
+            ChannelType.GuildVoice,
+        ]);
+
+        const fixture = interaction("new", [...ids]);
+        if (label === "unnamed") {
+            Object.assign(fixture.value.channels.get("unnamed") ?? {}, {
+                name: null,
+            });
+        } else if (label === "missing") {
+            fixture.value.channels.clear();
+        }
+        const template = client.selectMenus
+            .get("channel.choose")
+            ?.builder.toJSON();
+        await dispatcher.dispatch(fixture.value);
+
+        assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
+            content: `Selected channels: ${expected}.`,
+            allowedMentions: { parse: [] },
+        });
+        assert.equal(fixture.reply.mock.callCount(), 0);
+        assert.deepEqual(
+            client.selectMenus.get("channel.choose")?.builder.toJSON(),
+            template,
+        );
     });
 }

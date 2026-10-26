@@ -7,8 +7,8 @@ custom ID, and `run(ctx)`. Invalid builders and duplicate IDs fail startup
 before command deployment. Loading is atomic: a failed reload preserves the
 previous registry.
 
-String, user, role, and mentionable selects are supported. Channel selects and
-selects embedded in modals are not dispatched yet.
+String, user, role, mentionable, and channel selects are supported. Selects
+embedded in modals are not dispatched yet.
 
 ## Define a string handler
 
@@ -169,6 +169,52 @@ example displays `None`. Discord supplies options, so do not call `addOptions()`
 The server-only `/mentionable` dev command sends this menu. Selecting entries
 returns data without pinging users, assigning roles, or storing message state.
 
+## Define a channel handler
+
+Use `ComponentType.ChannelSelect` to pair `ChannelSelectMenuBuilder` with
+`ChannelSelectMenuInteraction`. Selected IDs are in `.values` and resolved
+channels in `.channels`. Depending on cache state, entries can be Discord.js
+channels or API channel objects. Narrow with `inCachedGuild()` and check the
+channel type before using cache-specific methods.
+
+```ts
+import { ChannelSelectMenuBuilder } from "@discordjs/builders";
+import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import { ChannelType, type ComponentType } from "discord.js";
+
+export default class ChooseChannel extends SelectMenu<ComponentType.ChannelSelect> {
+    constructor() {
+        super({
+            builder: new ChannelSelectMenuBuilder()
+                .setCustomId("channel.choose")
+                .setPlaceholder("Choose text or voice channels")
+                .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
+                .setMinValues(0)
+                .setMaxValues(5),
+        });
+    }
+
+    async run(ctx: SelectMenuContext<ComponentType.ChannelSelect>) {
+        const names = ctx.interaction.values.map(id => {
+            const channel = ctx.interaction.channels.get(id);
+            return channel && "name" in channel ? (channel.name ?? id) : id;
+        });
+
+        await ctx.interaction.update({
+            content: `Selected channels: ${names.join(", ") || "None"}.`,
+            allowedMentions: { parse: [] },
+        });
+    }
+}
+```
+
+Discord supplies the channel options; do not call `addOptions()`. Use
+`setChannelTypes()` to restrict the offered channel types, or omit it to leave
+them unrestricted. With `minValues` set to zero, users can clear their selection.
+The example preserves selected order and falls back to IDs for missing names.
+The server-only `/channel` dev command sends this menu. Selection supplies data;
+it does not change channel permissions or persist application state.
+
 ## Send a menu
 
 Inside a command, retrieve the registered definition and place its builder in an
@@ -196,7 +242,9 @@ The optional `guards` array accepts instances or lazy async factories for
 `Guard<SelectMenuContext>` (string selects) or
 `Guard<SelectMenuContext<ComponentType.UserSelect>>` (user selects), or
 `Guard<SelectMenuContext<ComponentType.RoleSelect>>` (role selects), or
-`Guard<SelectMenuContext<ComponentType.MentionableSelect>>` (mentionable selects). Shared guards such as `OwnerOnly` also work. Every component
+`Guard<SelectMenuContext<ComponentType.MentionableSelect>>` (mentionable selects), or
+`Guard<SelectMenuContext<ComponentType.ChannelSelect>>` (channel selects).
+Shared guards such as `OwnerOnly` also work. Every component
 must declare its own guards; a command's guards do not apply to its menus.
 
 Handlers control acknowledgment. Use `update()` for immediate message changes,
@@ -212,6 +260,6 @@ Use `ctx.logger` for correlated logs. Selected values are not logged by the
 framework. Handlers stay stateless: fetch async data and persist application
 state in application-owned storage rather than fields on a shared handler.
 
-The dev bot includes `/colour`, `/user`, `/role`, and `/mentionable`, with matching
+The dev bot includes `/colour`, `/user`, `/role`, `/mentionable`, and `/channel`, with matching
 handlers in `src/select-menus/choose-colour.ts`, `choose-user.ts`, `choose-role.ts`,
-and `choose-mentionable.ts`.
+`choose-mentionable.ts`, and `choose-channel.ts`.
