@@ -34,6 +34,9 @@ the old Hyperion repository is background context, not the current API.
 - Prefer arrow functions over the `function` keyword for standalone functions
   and callbacks. Keep normal class methods; use a function declaration only when
   its semantics are required.
+- Prefer arrow-function signatures in type definitions as well, such as
+  `run: (ctx: Context) => Promise<void>` rather than
+  `run(ctx: Context): Promise<void>`. Keep normal methods in class declarations.
 - When implementing or extending an abstract class, omit redundant `public` and
   `override` modifiers on constructors and methods. Public visibility is implicit;
   retain `private`, `protected`, `abstract`, or other modifiers when they express
@@ -73,10 +76,10 @@ docs/           Usage and architecture documentation
 
 Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
-dispatch exist, along with button, string select, user select, role select, and
-mentionable select support, guards, Pino logging and Ora startup indicators.
-Channel select menus and modals do not have framework dispatch yet. Database support is
-intentionally out of scope.
+dispatch exist, along with button, string select, user select, role select,
+mentionable select, and channel select support, guards, Pino logging and Ora
+startup indicators. Modals do not have framework dispatch yet. Database support
+is intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
 - Keep folder aliases in `tsconfig.json` synchronized with the layout. Examples
@@ -126,11 +129,12 @@ intentionally out of scope.
   Role selects use `ComponentType.RoleSelect`, a `RoleSelectMenuBuilder`, and
   the matching context for resolved roles. Mentionable selects use
   `ComponentType.MentionableSelect`, a `MentionableSelectMenuBuilder`, and the
-  matching context for resolved users, members, and roles. Load all supported selects from
+  matching context for resolved users, members, and roles. Channel selects use
+  `ComponentType.ChannelSelect`, a `ChannelSelectMenuBuilder`, and the matching
+  context for resolved channels. Load all supported selects from
   `<root>/src/select-menus` into `client.selectMenus`; match exact
   custom IDs and component types, leaving unmatched interactions alone.
   Keep builder, interaction, and guard types paired through the generic type.
-  Channel select menus are not supported yet.
 - Button guards use `ButtonContext`; shared interaction guards can use
   `InteractionContext`. Filesystem handlers control their reply,
   update, or modal lifecycle. After `deferUpdate()`, send errors as ephemeral
