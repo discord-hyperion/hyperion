@@ -210,6 +210,13 @@ test("initialization reports missing directories and skips deployment", async t 
     t.after(() => client.destroy());
     const events = capture.records().map(record => record.event);
     assert.ok(events.includes("commands.directory.missing"));
+    assert.ok(events.includes("modals.directory.missing"));
+    assert.ok(events.includes("modals.load.completed"));
+    assert.equal(
+        capture.records().find(record => record.event === "client.initialized")
+            ?.modalCount,
+        0,
+    );
     assert.ok(events.includes("commands.register.skipped"));
     assert.ok(events.includes("client.initialized"));
     assert.equal(put.mock.callCount(), 0);

@@ -6,7 +6,7 @@ import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
 
-type HandlerKind = "command" | "button" | "select-menu";
+type HandlerKind = "command" | "button" | "select-menu" | "modal";
 
 export type { AnyInteraction } from "../contexts/index.ts";
 
@@ -94,6 +94,20 @@ export class InteractionDispatcher {
                 { client: this.client, interaction, logger },
                 "select-menu",
             );
+        } else if (interaction.isModalSubmit()) {
+            const modal = this.client.modals.get(interaction.customId);
+
+            if (!modal) return;
+
+            const logger = this.createLogger(interaction, {
+                modal: modal.customId,
+            });
+
+            await this.execute(
+                modal,
+                { client: this.client, interaction, logger },
+                "modal",
+            );
         }
     }
 
@@ -102,7 +116,8 @@ export class InteractionDispatcher {
         handler:
             | { command: string }
             | { button: string }
-            | { selectMenu: string },
+            | { selectMenu: string }
+            | { modal: string },
     ) {
         return this.client.logger.child({
             component: "execution",

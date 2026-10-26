@@ -7,8 +7,9 @@ custom ID, and `run(ctx)`. Invalid builders and duplicate IDs fail startup
 before command deployment. Loading is atomic: a failed reload preserves the
 previous registry.
 
-String, user, role, mentionable, and channel selects are supported. Selects
-embedded in modals are not dispatched yet.
+String, user, role, mentionable, and channel message selects are supported.
+Selects embedded in modals are read by the [modal handler](modals.md) through
+the submission's components resolver, not dispatched to message select handlers.
 
 ## Define a string handler
 

@@ -109,6 +109,7 @@ test("unmatched IDs and unsupported selects are not acknowledged", async t => {
     const unsupported = interaction();
     Object.assign(unsupported.value, {
         isChannelSelectMenu: () => false,
+        isModalSubmit: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,
