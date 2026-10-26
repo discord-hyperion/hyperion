@@ -1,11 +1,15 @@
 import {
     type AutocompleteInteraction,
+    type ChatInputCommandInteraction,
     Events,
     type Interaction,
+    type MessageContextMenuCommandInteraction,
     MessageFlags,
+    type UserContextMenuCommandInteraction,
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
+import type { CommandType } from "../commands/index.ts";
 import type { SelectMenu, SelectMenuType } from "../components/index.ts";
 import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
@@ -28,36 +32,7 @@ export class InteractionDispatcher {
 
     public async dispatch(interaction: Interaction) {
         if (interaction.isChatInputCommand()) {
-            const logger = this.createLogger(interaction, {
-                command: interaction.commandName,
-            });
-
-            const command = this.client.commands.get(interaction.commandName);
-
-            if (!command) {
-                logger.warn(
-                    { event: "command.unavailable" },
-                    "No handler found for command",
-                );
-
-                await this.respondWithError(
-                    interaction,
-                    "This command is no longer available. Please try again later.",
-                    logger,
-                    "command",
-                );
-
-                return;
-            }
-            await this.execute(
-                command,
-                {
-                    client: this.client,
-                    interaction,
-                    logger,
-                },
-                "command",
-            );
+            await this.dispatchCommand(interaction);
         } else if (interaction.isButton()) {
             const button = this.client.buttons.get(interaction.customId);
             // Unmatched IDs may belong to application-owned collectors/listeners.
@@ -115,7 +90,49 @@ export class InteractionDispatcher {
             );
         } else if (interaction.isAutocomplete()) {
             await this.dispatchAutocomplete(interaction);
+        } else if (
+            interaction.isUserContextMenuCommand() ||
+            interaction.isMessageContextMenuCommand()
+        ) {
+            await this.dispatchCommand(interaction);
         }
+    }
+
+    private async dispatchCommand(
+        interaction:
+            | ChatInputCommandInteraction
+            | UserContextMenuCommandInteraction
+            | MessageContextMenuCommandInteraction,
+    ) {
+        const logger = this.createLogger(interaction, {
+            command: interaction.commandName,
+            commandType: interaction.commandType,
+        });
+        const command = this.client.commands.resolve(
+            interaction.commandName,
+            interaction.commandType,
+        );
+
+        if (!command) {
+            logger.warn(
+                { event: "command.unavailable" },
+                "No handler found for command",
+            );
+
+            await this.respondWithError(
+                interaction,
+                "This command is no longer available. Please try again later.",
+                logger,
+                "command",
+            );
+            return;
+        }
+
+        await this.execute(
+            command,
+            { client: this.client, interaction, logger },
+            "command",
+        );
     }
 
     private async dispatchAutocomplete(interaction: AutocompleteInteraction) {
@@ -124,7 +141,7 @@ export class InteractionDispatcher {
         const logger = this.createLogger(interaction, {
             command: interaction.commandName,
         });
-        const command = this.client.commands.get(interaction.commandName);
+        const command = this.client.commands.resolve(interaction.commandName);
         const started = performance.now();
 
         logger.debug({ event: "autocomplete.started" }, "Running autocomplete");
@@ -188,7 +205,7 @@ export class InteractionDispatcher {
     private createLogger(
         interaction: AnyInteraction,
         handler:
-            | { command: string }
+            | { command: string; commandType?: CommandType }
             | { button: string }
             | { selectMenu: string }
             | { modal: string },

@@ -1,8 +1,18 @@
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { Collection, DiscordAPIError, REST, Routes } from "discord.js";
+import {
+    ApplicationCommandType,
+    Collection,
+    DiscordAPIError,
+    REST,
+    Routes,
+} from "discord.js";
 import type { Logger } from "pino";
-import { Command } from "../commands/index.ts";
+import {
+    type AnyCommand,
+    Command,
+    type CommandType,
+} from "../commands/index.ts";
 import { assertRegistryClass, discoverModules } from "../util/index.ts";
 
 export interface CommandRegistrationOptions {
@@ -12,11 +22,33 @@ export interface CommandRegistrationOptions {
     guildIds?: readonly string[];
 }
 
-export class CommandRegistry extends Collection<string, Command> {
-    private sources = new WeakMap<Command, string>();
+export class CommandRegistry extends Collection<string, AnyCommand> {
+    private sources = new WeakMap<AnyCommand, string>();
 
     public constructor(private readonly logger?: Logger) {
         super();
+    }
+
+    static key(
+        name: string,
+        type: CommandType = ApplicationCommandType.ChatInput,
+    ) {
+        return type === ApplicationCommandType.ChatInput
+            ? name
+            : `${type}:${name}`;
+    }
+
+    resolve(name: string): Command | undefined;
+    resolve<Type extends CommandType>(
+        name: string,
+        type: Type,
+    ): Command<Type> | undefined;
+    resolve(
+        name: string,
+        type: CommandType = ApplicationCommandType.ChatInput,
+    ) {
+        const command = this.get(CommandRegistry.key(name, type));
+        return command?.commandType === type ? command : undefined;
     }
 
     public async load(root: string | URL = process.cwd()) {
@@ -39,11 +71,11 @@ export class CommandRegistry extends Collection<string, Command> {
             );
         });
 
-        const commands = new Collection<string, Command>();
-        const sources = new WeakMap<Command, string>();
+        const commands = new Collection<string, AnyCommand>();
+        const sources = new WeakMap<AnyCommand, string>();
 
         for (const file of files) {
-            let command: Command;
+            let command: AnyCommand;
 
             try {
                 const module = await import(pathToFileURL(file).href);
@@ -64,7 +96,27 @@ export class CommandRegistry extends Collection<string, Command> {
                 );
             }
 
-            const name = command.builder.toJSON(false).name;
+            const data = command.builder.toJSON(false);
+            const name = data.name;
+
+            if (
+                command.commandType !== ApplicationCommandType.ChatInput &&
+                command.commandType !== ApplicationCommandType.User &&
+                command.commandType !== ApplicationCommandType.Message
+            ) {
+                throw new Error(
+                    `Command in "${file}" has an unsupported command type.`,
+                );
+            }
+
+            if (
+                (data.type ?? ApplicationCommandType.ChatInput) !==
+                command.commandType
+            ) {
+                throw new Error(
+                    `Command builder type in "${file}" must match its handler's command type.`,
+                );
+            }
 
             if (typeof name !== "string" || typeof command.run !== "function") {
                 throw new Error(
@@ -74,24 +126,32 @@ export class CommandRegistry extends Collection<string, Command> {
 
             if (
                 command.autocomplete !== undefined &&
-                typeof command.autocomplete !== "function"
+                (typeof command.autocomplete !== "function" ||
+                    command.commandType !== ApplicationCommandType.ChatInput)
             ) {
                 throw new Error(
-                    `Command in "${file}" must provide an autocomplete() method when configured.`,
+                    `Command in "${file}" may configure autocomplete() only as a function on chat-input commands.`,
                 );
             }
 
-            if (commands.has(name)) {
+            const key = CommandRegistry.key(name, command.commandType);
+
+            if (commands.has(key)) {
                 throw new Error(
-                    `Duplicate command name "${name}" in "${file}".`,
+                    `Duplicate command name "${name}" for type ${command.commandType} in "${file}".`,
                 );
             }
 
-            commands.set(name, command);
+            commands.set(key, command);
             sources.set(command, file);
 
             this.logger?.debug(
-                { event: "command.loaded", command: name, source: file },
+                {
+                    event: "command.loaded",
+                    command: name,
+                    commandType: command.commandType,
+                    source: file,
+                },
                 "Loaded command",
             );
         }

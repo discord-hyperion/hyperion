@@ -164,7 +164,7 @@ test("initializes commands and bulk registers once per unique guild without logi
         requests[0]?.body,
         client.commands.map(command => command.builder.toJSON()),
     );
-    const payload = client.commands.get("ping")?.builder.toJSON();
+    const payload = client.commands.resolve("ping")?.builder.toJSON();
     assert.equal(payload?.default_member_permissions, "8");
     assert.equal(payload?.options?.[0]?.name, "query");
 });
