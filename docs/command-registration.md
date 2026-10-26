@@ -1,5 +1,10 @@
 # Filesystem command registration
 
+The same registry also supports user and message [context-menu commands](context-menu-commands.md).
+Use `Command<ApplicationCommandType.User>` or `Command<ApplicationCommandType.Message>`
+with the matching v15 builder; its payload determines the runtime type. Plain `Command`
+continues to define a chat-input command.
+
 Place commands in `<bot root>/src/commands` and pass registration credentials to
 `HyperionClient.create()`. Individual handler paths are fixed by convention.
 
@@ -108,11 +113,13 @@ reject `create()`; initialization failures destroy the local client.
 
 ## Command execution
 
-After initialization, the client listens for slash-command interactions and looks
-up each command by name. The handler receives a fresh `CommandContext` containing
-the Hyperion client and the interaction. Button interactions are routed separately
-through [button handlers](./buttons.md), and string, user, role, or mentionable selects through
-[select menu handlers](./select-menus.md). Other interaction types are left alone.
+After initialization, the client routes slash and context-menu commands by name
+and application-command type. The handler receives a fresh `CommandContext`
+containing the Hyperion client and its typed interaction. Button interactions
+are routed through [button handlers](./buttons.md), message selects through
+[select menu handlers](./select-menus.md), and modal submissions through
+[modal handlers](./modals.md). Autocomplete has its own response pipeline;
+unsupported interaction types are left alone.
 
 Optional command `guards` run in order before the handler. They accept shared
 instances or lazy per-invocation factories. The first rejection or error stops

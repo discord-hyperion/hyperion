@@ -31,6 +31,8 @@ the old Hyperion repository is background context, not the current API.
   ESLint or Prettier alongside it. Do not format the generated lockfile manually.
 - Filenames and directories use kebab-case. Classes and types use PascalCase;
   functions and variables use camelCase.
+- Prefer `type` aliases over `interface` declarations. Use an interface only
+  when its semantics, such as declaration merging, are required.
 - Prefer arrow functions over the `function` keyword for standalone functions
   and callbacks. Keep normal class methods; use a function declaration only when
   its semantics are required.
@@ -83,7 +85,7 @@ features are implemented. Command discovery, deployment, and slash-command
 dispatch exist, along with button, string select, user select, role select,
 mentionable select, and channel select support, guards, Pino logging and Ora
 startup indicators. Modal discovery and submission dispatch are supported,
-along with command autocomplete.
+along with command autocomplete and user/message context-menu commands.
 Database support is intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
@@ -107,7 +109,20 @@ Database support is intentionally out of scope.
   maps remain appropriate for ordered data, uniqueness, and object metadata.
 - Use `Collection` rather than `Map` for other keyed stores as well, including
   cooldown state, tests, and examples.
-- Command definitions use `ChatInputCommandBuilder`. Serialize through `toJSON()`
+- Command definitions default to `ChatInputCommandBuilder`. Context-menu commands
+  use `Command<ApplicationCommandType.User>` or `Command<ApplicationCommandType.Message>`,
+  the matching `CommandContext`, and v15 `UserContextCommandBuilder` or
+  `MessageContextCommandBuilder`. Infer the runtime command type from the builder
+  rather than requiring a duplicate `type` option.
+  The generic must reject mismatched builders at compile time. Refine the pinned
+  SDK's context-menu serialization return types through declaration merging to
+  preserve that distinction without wrapping builders or adding configuration.
+  Load all command types from
+  `<root>/src/commands` and deploy them together. Names are unique within each type.
+  Use `client.commands.resolve(name, type)` for typed lookup; omitted type selects
+  chat-input commands. Keep Collection keys for slash names unchanged and generate
+  context-menu keys with `CommandRegistry.key(name, type)`.
+  Serialize through `toJSON()`
   and leave payload validation to the builder and Discord. Keep framework checks
   for exported classes, executable handlers, lookup names, and duplicate names.
 - Preserve original failures with `cause` and retain source-file context for
