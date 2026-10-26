@@ -9,6 +9,7 @@ import {
     ApplicationCommandOptionType,
     type AutocompleteFocusedOption,
     type AutocompleteInteraction,
+    type ChatInputCommandInteraction,
     Events,
     REST,
 } from "discord.js";
@@ -441,6 +442,67 @@ test("discovery and mocked registration preserve autocomplete flags without exec
     assert.equal(payload.body[0]?.options.length, 3);
     assert.ok(payload.body[0]?.options.every(option => option.autocomplete));
     assert.equal(client.isReady(), false);
+});
+
+for (const [query, expected] of [
+    ["MoD", [{ name: "Modals", value: "modals" }]],
+    ["select", [{ name: "Select menus", value: "select-menus" }]],
+    ["not-a-topic", []],
+] as const) {
+    test(`development topic autocomplete handles ${query} and normal execution validates submitted values`, async t => {
+        const { client, dispatcher } = await setup(t);
+        await client.commands.load(new URL("../dev/bot/", import.meta.url));
+        const fixture = interaction(query);
+        Object.assign(fixture.value, { commandName: "topic" });
+        await dispatcher.dispatch(fixture.value);
+
+        assert.equal(fixture.respond.mock.callCount(), 1);
+        assert.deepEqual(fixture.respond.mock.calls[0]?.arguments[0], expected);
+        assert.equal(fixture.reply.mock.callCount(), 0);
+        const reply = mock.fn(async (_payload: unknown) => {});
+        const selected = expected[0]?.value ?? "not-a-topic";
+        await dispatcher.dispatch({
+            id: "topic-command",
+            commandName: "topic",
+            user: { id: "caller" },
+            isChatInputCommand: () => true,
+            options: { getString: () => selected },
+            reply,
+        } as unknown as ChatInputCommandInteraction);
+
+        assert.equal(reply.mock.callCount(), 1);
+        const payload = reply.mock.calls[0]?.arguments[0] as {
+            content: string;
+        };
+        assert.ok(
+            payload.content.includes(
+                expected.length ? expected[0].name : "not available",
+            ),
+        );
+    });
+}
+
+test("development topic autocomplete returns initial suggestions and handles unexpected focused options", async t => {
+    const { client, dispatcher } = await setup(t);
+    await client.commands.load(new URL("../dev/bot/", import.meta.url));
+    const initial = interaction("");
+    Object.assign(initial.value, { commandName: "topic" });
+    await dispatcher.dispatch(initial.value);
+    const choices = initial.respond.mock.calls[0]?.arguments[0];
+    assert.ok(choices?.length);
+    assert.ok(choices.length <= 25);
+    assert.ok(
+        choices.every(
+            choice =>
+                typeof choice.name === "string" &&
+                typeof choice.value === "string",
+        ),
+    );
+
+    const unexpected = interaction("", "other");
+    Object.assign(unexpected.value, { commandName: "topic" });
+    await dispatcher.dispatch(unexpected.value);
+    assert.deepEqual(unexpected.respond.mock.calls[0]?.arguments[0], []);
 });
 
 test("malformed optional autocomplete hooks retain source context and the previous command registry", async t => {
