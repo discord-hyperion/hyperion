@@ -7,6 +7,7 @@ import {
     TextInputBuilder,
 } from "@discordjs/builders";
 import {
+    type ChatInputCommandInteraction,
     Events,
     MessageFlags,
     type ModalSubmitInteraction,
@@ -360,4 +361,48 @@ test("concurrent modal submissions receive independent contexts without automati
     assert.equal(first.reply.mock.callCount(), 1);
     assert.equal(first.value.deferred, false);
     assert.equal(second.value.deferred, false);
+});
+
+test("development feedback command opens the modal and its filesystem handler processes submission", async t => {
+    const root = new URL("../dev/bot/", import.meta.url);
+    const client = await HyperionClient.create({
+        name: "Test",
+        root,
+        discord: { intents: [] },
+        logging: false,
+    });
+    t.after(() => client.destroy());
+    await client.commands.load(root);
+    const showModal = mock.fn(async (_payload: unknown) => {});
+    const reply = mock.fn(async (_payload: unknown) => {});
+    const dispatcher = new InteractionDispatcher(client);
+    await dispatcher.dispatch({
+        id: "feedback-command",
+        commandName: "feedback",
+        user: { id: "caller" },
+        isChatInputCommand: () => true,
+        showModal,
+        reply,
+    } as unknown as ChatInputCommandInteraction);
+
+    assert.equal(showModal.mock.callCount(), 1);
+    assert.equal(reply.mock.callCount(), 0);
+    const modal = client.modals.get("feedback.submit");
+    assert.ok(modal);
+    assert.equal(showModal.mock.calls[0]?.arguments[0], modal.builder);
+    const template = modal.builder.toJSON();
+    assert.match(JSON.stringify(template), /feedback.message/);
+    const fixture = interaction("new", "Hello");
+    await dispatcher.dispatch(fixture.value);
+
+    assert.deepEqual(fixture.getTextInputValue.mock.calls[0]?.arguments, [
+        "feedback.message",
+    ]);
+    assert.deepEqual(fixture.reply.mock.calls[0]?.arguments[0], {
+        content:
+            "Received 5 characters of feedback. This demo does not store submissions.",
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+    });
+    assert.deepEqual(modal.builder.toJSON(), template);
 });
