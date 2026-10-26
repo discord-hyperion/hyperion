@@ -82,7 +82,8 @@ Some folders currently contain only barrel exports. Do not assume their planned
 features are implemented. Command discovery, deployment, and slash-command
 dispatch exist, along with button, string select, user select, role select,
 mentionable select, and channel select support, guards, Pino logging and Ora
-startup indicators. Modal discovery and submission dispatch are supported.
+startup indicators. Modal discovery and submission dispatch are supported,
+along with command autocomplete.
 Database support is intentionally out of scope.
 - Each framework folder has an `index.ts` barrel; expose public APIs through
   `src/index.ts`.
@@ -118,6 +119,13 @@ Database support is intentionally out of scope.
 - Command guards are ordered `Guard` instances or lazy per-invocation factories.
   Stop on rejection or error. Do not invoke factories during discovery or
   deployment, or keep invocation-specific mutable state on shared guards.
+- Commands may implement `autocomplete(ctx: AutocompleteContext)` alongside
+  `run()`. Route autocomplete separately without command guards or the normal
+  reply/error pipeline. Use the v15 `options.getFocused()` API with no argument
+  and respond with choices through `interaction.respond()`. Return empty choices
+  for missing handlers, unresponded completions, or failures, without responding
+  twice. Hooks must authorize private suggestions themselves; never log focused
+  input or suggestions. Autocomplete cannot defer its response.
 - Ship reusable guards in `src/guards/builtins`, with a barrel re-exported through
   the guards barrel and public library entry point. Consumers can use built-in
   guards without defining their own subclasses.

@@ -1,5 +1,8 @@
 import type { ChatInputCommandBuilder } from "@discordjs/builders";
-import type { ChatInputCommandInteraction } from "discord.js";
+import type {
+    AutocompleteInteraction,
+    ChatInputCommandInteraction,
+} from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
 
@@ -10,6 +13,9 @@ export interface CommandOptions {
 
 export interface CommandContext
     extends InteractionContext<ChatInputCommandInteraction> {}
+
+export interface AutocompleteContext
+    extends InteractionContext<AutocompleteInteraction> {}
 
 export abstract class Command {
     public readonly builder: ChatInputCommandBuilder;
@@ -33,4 +39,6 @@ export abstract class Command {
     }
 
     public abstract run(ctx: CommandContext): Promise<void>;
+
+    autocomplete?(ctx: AutocompleteContext): Promise<void>;
 }

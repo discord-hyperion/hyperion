@@ -139,6 +139,14 @@ metadata. See [Logging and startup progress](./logging.md) for levels, coloured
 output, startup indicators, and configuration.
 
 
+## Autocomplete
+
+Commands can also implement an optional `autocomplete(ctx)` hook. Enable it with
+`.setAutocomplete(true)` on supported options; discovery and registration do not
+execute hooks. See [autocomplete](autocomplete.md) for the typed API, response
+lifecycle, and authorization requirements. The dev bot's `/topic` command
+demonstrates autocomplete and validates submitted values in its normal handler.
+
 ## Development bot
 
 The startup scripts now target `dev/bot/index.ts`:

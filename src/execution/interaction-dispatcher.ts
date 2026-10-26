@@ -1,4 +1,9 @@
-import { Events, type Interaction, MessageFlags } from "discord.js";
+import {
+    type AutocompleteInteraction,
+    Events,
+    type Interaction,
+    MessageFlags,
+} from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
 import type { SelectMenu, SelectMenuType } from "../components/index.ts";
@@ -108,6 +113,75 @@ export class InteractionDispatcher {
                 { client: this.client, interaction, logger },
                 "modal",
             );
+        } else if (interaction.isAutocomplete()) {
+            await this.dispatchAutocomplete(interaction);
+        }
+    }
+
+    private async dispatchAutocomplete(interaction: AutocompleteInteraction) {
+        if (interaction.responded) return;
+
+        const logger = this.createLogger(interaction, {
+            command: interaction.commandName,
+        });
+        const command = this.client.commands.get(interaction.commandName);
+        const started = performance.now();
+
+        logger.debug({ event: "autocomplete.started" }, "Running autocomplete");
+
+        if (typeof command?.autocomplete !== "function") {
+            logger.debug(
+                { event: "autocomplete.unavailable" },
+                "No autocomplete handler found for command",
+            );
+
+            await this.respondWithEmptyAutocomplete(interaction, logger);
+            return;
+        }
+
+        try {
+            await command.autocomplete({
+                client: this.client,
+                interaction,
+                logger,
+            });
+
+            await this.respondWithEmptyAutocomplete(interaction, logger);
+
+            logger.debug(
+                {
+                    event: "autocomplete.completed",
+                    durationMs: Math.round(performance.now() - started),
+                },
+                "Autocomplete completed",
+            );
+        } catch (err) {
+            logger.error(
+                {
+                    event: "autocomplete.failed",
+                    durationMs: Math.round(performance.now() - started),
+                    err,
+                },
+                "Autocomplete execution failed",
+            );
+
+            await this.respondWithEmptyAutocomplete(interaction, logger);
+        }
+    }
+
+    private async respondWithEmptyAutocomplete(
+        interaction: AutocompleteInteraction,
+        logger: Logger,
+    ) {
+        if (interaction.responded) return;
+
+        try {
+            await interaction.respond([]);
+        } catch (err) {
+            logger.error(
+                { event: "autocomplete.response.failed", err },
+                "Failed to send empty autocomplete choices",
+            );
         }
     }
 
@@ -199,7 +273,7 @@ export class InteractionDispatcher {
     }
 
     private async respondWithError(
-        interaction: AnyInteraction,
+        interaction: InteractionContext["interaction"],
         content: string,
         logger: Logger,
         kind: HandlerKind,
