@@ -72,6 +72,15 @@ export class CommandRegistry extends Collection<string, Command> {
                 );
             }
 
+            if (
+                command.autocomplete !== undefined &&
+                typeof command.autocomplete !== "function"
+            ) {
+                throw new Error(
+                    `Command in "${file}" must provide an autocomplete() method when configured.`,
+                );
+            }
+
             if (commands.has(name)) {
                 throw new Error(
                     `Duplicate command name "${name}" in "${file}".`,

@@ -152,6 +152,7 @@ test("unmatched IDs and unsupported components remain available to collectors", 
         isMentionableSelectMenu: () => false,
         isChannelSelectMenu: () => false,
         isModalSubmit: () => false,
+        isAutocomplete: () => false,
     });
     await dispatcher.dispatch(select.value);
     assert.equal(execute.mock.callCount(), 0);

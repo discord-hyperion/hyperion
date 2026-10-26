@@ -1,4 +1,5 @@
 export {
+    type AutocompleteContext,
     Command,
     type CommandContext,
     type CommandOptions,

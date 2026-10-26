@@ -53,6 +53,11 @@ No global console interception or background formatting worker is installed.
   lookup; guards share the request and reuse the cached result for that login.
 - Command execution: debug start, info completion, or error failure, including
   duration. Missing handlers emit warnings. Failed error responses emit errors.
+- Autocomplete: debug `autocomplete.started`, `autocomplete.completed`, and
+  `autocomplete.unavailable`; error `autocomplete.failed` and
+  `autocomplete.response.failed`. Invocation logs carry command and interaction
+  metadata, never focused input or suggestion values. See
+  [autocomplete](autocomplete.md) for fallback behavior.
 - Guards: debug `guard.started` and `guard.passed`, info `guard.rejected` and
   `command.rejected`. Guard outcomes include the guard name and check duration.
   Guard errors emit `command.failed` with `stage: "guards"`; handler errors use

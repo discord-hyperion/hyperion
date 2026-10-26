@@ -53,6 +53,7 @@ const createInteraction = (
         isMentionableSelectMenu: () => false,
         isChannelSelectMenu: () => false,
         isModalSubmit: () => false,
+        isAutocomplete: () => false,
         reply,
         editReply,
         followUp,
