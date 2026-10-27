@@ -146,6 +146,7 @@ test("unmatched IDs and unsupported components remain available to collectors", 
     const select = interaction();
     Object.assign(select.value, {
         isButton: () => false,
+        isSelectMenu: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,
@@ -153,6 +154,7 @@ test("unmatched IDs and unsupported components remain available to collectors", 
         isChannelSelectMenu: () => false,
         isModalSubmit: () => false,
         isAutocomplete: () => false,
+        isContextMenuCommand: () => false,
         isUserContextMenuCommand: () => false,
         isMessageContextMenuCommand: () => false,
     });

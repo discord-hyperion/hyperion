@@ -105,6 +105,7 @@ const interaction = (
         replied: false,
         isChatInputCommand: () => !autocomplete,
         isButton: () => false,
+        isSelectMenu: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,

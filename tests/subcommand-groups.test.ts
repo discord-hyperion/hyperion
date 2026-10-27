@@ -699,6 +699,7 @@ test("autocomplete selects the group, skips all guard levels, and never falls ba
             user: { id: "user" },
             isChatInputCommand: () => false,
             isButton: () => false,
+            isSelectMenu: () => false,
             isStringSelectMenu: () => false,
             isUserSelectMenu: () => false,
             isRoleSelectMenu: () => false,
