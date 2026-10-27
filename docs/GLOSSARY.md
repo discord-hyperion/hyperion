@@ -46,6 +46,11 @@ The metadata and shared execution checks associated with a parent command. It
 provides configuration rather than an independently executable action.
 _Avoid_: Subcommand handler
 
+**Group definition**:
+The metadata and shared execution checks associated with a subcommand group. It
+provides configuration rather than an independently executable action.
+_Avoid_: Subcommand handler, parent definition
+
 **Context-menu command**:
 An application command invoked from Discord's Apps menu on a selected user or
 message.

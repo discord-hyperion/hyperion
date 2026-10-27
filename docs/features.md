@@ -2,7 +2,6 @@
 
 ## Planned
 
-- [ ] Subcommand groups through `{group}` folders (deferred until after subcommands).
 - [ ] Typed custom-ID data exposed through interaction handlers (deferred).
   - Separate handler definitions from visible button builders; handlers must not require a template button.
   - Let commands or shared views create multiple controls, with each custom ID carrying its own data.

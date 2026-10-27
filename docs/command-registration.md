@@ -58,8 +58,8 @@ dev/bot/
 Parenthesized folders organize examples without changing their command names.
 The parent and subcommand-group folder syntax is documented in
 [Command path conventions](command-paths.md). Subcommands under `[parent]` folders
-are registered together and dispatched to their leaf modules; `{group}` folders
-remain reserved for a later stage.
+are registered together and dispatched to their leaf modules. `{group}` folders
+add another level through explicit [group definitions](subcommand-groups.md).
 
 `root` defaults to `process.cwd()` and can be a filesystem path or file URL.
 For a dev bot in the framework repository, set it relative to the bot entry point
@@ -76,7 +76,7 @@ and supplies shared metadata and guards without `run()`. See
 [Command path conventions](command-paths.md) for complete examples.
 
 Supported extensions are `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, and `.cjs`.
-Barrels named `index.*`, TypeScript declarations, test files, hidden entries,
+Barrels named `index.*` (except direct parent/group definitions), TypeScript declarations, test files, hidden entries,
 and `node_modules` are skipped. Keep only command modules in the command tree;
 place other helpers elsewhere. Load source files or compiled files, not both.
 

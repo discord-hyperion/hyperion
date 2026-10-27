@@ -109,10 +109,16 @@ export class InteractionDispatcher {
             interaction.commandType === ApplicationCommandType.ChatInput
                 ? this.subcommandName(interaction)
                 : undefined;
+        const group =
+            interaction.commandType === ApplicationCommandType.ChatInput &&
+            this.client.commands.hasSubcommands(interaction.commandName)
+                ? (interaction.options.getSubcommandGroup(false) ?? undefined)
+                : undefined;
         const logger = this.createLogger(interaction, {
             command: interaction.commandName,
             commandType: interaction.commandType,
             ...(subcommand ? { subcommand } : {}),
+            ...(group ? { group } : {}),
         });
 
         if (
@@ -123,6 +129,7 @@ export class InteractionDispatcher {
                 ? this.client.commands.resolveSubcommand(
                       interaction.commandName,
                       subcommand,
+                      group,
                   )
                 : undefined;
             const parent = this.client.commands.parents.get(
@@ -138,7 +145,15 @@ export class InteractionDispatcher {
                 command,
                 { client: this.client, interaction, logger },
                 "command",
-                parent.guards,
+                [
+                    ...parent.guards,
+                    ...(group
+                        ? (this.client.commands.resolveGroup(
+                              interaction.commandName,
+                              group,
+                          )?.guards ?? [])
+                        : []),
+                ],
             );
             return;
         }
@@ -186,8 +201,6 @@ export class InteractionDispatcher {
             return undefined;
         }
 
-        if (interaction.options.getSubcommandGroup(false)) return undefined;
-
         return interaction.options.getSubcommand(false) ?? undefined;
     }
 
@@ -195,14 +208,21 @@ export class InteractionDispatcher {
         if (interaction.responded) return;
 
         const subcommand = this.subcommandName(interaction);
+        const group = this.client.commands.hasSubcommands(
+            interaction.commandName,
+        )
+            ? (interaction.options.getSubcommandGroup(false) ?? undefined)
+            : undefined;
         const logger = this.createLogger(interaction, {
             command: interaction.commandName,
             ...(subcommand ? { subcommand } : {}),
+            ...(group ? { group } : {}),
         });
         const command = subcommand
             ? this.client.commands.resolveSubcommand(
                   interaction.commandName,
                   subcommand,
+                  group,
               )
             : this.client.commands.resolve(interaction.commandName);
 
@@ -273,6 +293,7 @@ export class InteractionDispatcher {
                   command: string;
                   commandType?: CommandType;
                   subcommand?: string;
+                  group?: string;
               }
             | { button: string }
             | { selectMenu: string }

@@ -55,6 +55,7 @@ No global console interception or background formatting worker is installed.
   duration. Missing handlers emit warnings. Failed error responses emit errors.
   User and message context-menu commands use the same events; `commandType`
   distinguishes command types without logging resolved targets or message content.
+  Grouped commands also include `group` and `subcommand` names.
 - Autocomplete: debug `autocomplete.started`, `autocomplete.completed`, and
   `autocomplete.unavailable`; error `autocomplete.failed` and
   `autocomplete.response.failed`. Invocation logs carry command and interaction

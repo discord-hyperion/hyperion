@@ -14,12 +14,19 @@ import {
     type CommandType,
     ParentCommand,
     Subcommand,
+    SubcommandGroup,
 } from "../commands/index.ts";
 import { assertRegistryClass, discoverModules } from "../util/index.ts";
 import { parseCommandPath } from "./parse-command-path.ts";
 
 type CommandHandler = AnyCommand | Subcommand;
-type CommandDefinition = CommandHandler | ParentCommand;
+type CommandDefinition = CommandHandler | ParentCommand | SubcommandGroup;
+type GroupEntry = {
+    parent: string;
+    name: string;
+    command: SubcommandGroup;
+    subcommands: Subcommand[];
+};
 type RegistrationEntry =
     | { kind: "command"; command: AnyCommand }
     | {
@@ -27,6 +34,7 @@ type RegistrationEntry =
           name: string;
           command: ParentCommand;
           subcommands: Subcommand[];
+          groups: Collection<string, GroupEntry>;
       };
 
 export type CommandRegistrationOptions = {
@@ -38,12 +46,15 @@ export type CommandRegistrationOptions = {
 
 export class CommandRegistry extends Collection<string, CommandHandler> {
     readonly parents: Collection<string, ParentCommand>;
+    readonly groups: Collection<string, SubcommandGroup>;
     private sources = new WeakMap<CommandDefinition, string>();
     private parentNames = new WeakMap<Subcommand, string>();
+    private groupNames = new WeakMap<Subcommand, string>();
 
     constructor(private readonly logger?: Logger) {
         super();
         this.parents = new Collection();
+        this.groups = new Collection();
     }
 
     static key(
@@ -55,8 +66,18 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
             : `${type}:${name}`;
     }
 
-    static subcommandKey(parent: string, name: string) {
-        return `${parent} ${name}`;
+    static subcommandKey(parent: string, name: string, group?: string) {
+        return group === undefined
+            ? `${parent} ${name}`
+            : `${parent} ${group} ${name}`;
+    }
+
+    static groupKey(parent: string, group: string) {
+        return `${parent} ${group}`;
+    }
+
+    resolveGroup(parent: string, group: string) {
+        return this.groups.get(CommandRegistry.groupKey(parent, group));
     }
 
     resolve(name: string): Command | undefined;
@@ -64,6 +85,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         name: string,
         type: ApplicationCommandType.ChatInput,
         subcommand: string,
+        group?: string,
     ): Subcommand | undefined;
     resolve<Type extends CommandType>(
         name: string,
@@ -73,10 +95,11 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         name: string,
         type: CommandType = ApplicationCommandType.ChatInput,
         subcommand?: string,
+        group?: string,
     ) {
         if (subcommand) {
             return type === ApplicationCommandType.ChatInput
-                ? this.resolveSubcommand(name, subcommand)
+                ? this.resolveSubcommand(name, subcommand, group)
                 : undefined;
         }
 
@@ -97,11 +120,16 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         );
     }
 
-    resolveSubcommand(parent: string, name: string) {
-        const command = this.get(CommandRegistry.subcommandKey(parent, name));
+    resolveSubcommand(parent: string, name: string, group?: string) {
+        const command = this.get(
+            CommandRegistry.subcommandKey(parent, name, group),
+        );
         return command instanceof Subcommand &&
             this.parents.has(parent) &&
-            this.parentNames.get(command) === parent
+            this.parentNames.get(command) === parent &&
+            this.groupNames.get(command) === group &&
+            (group === undefined ||
+                this.resolveGroup(parent, group) !== undefined)
             ? command
             : undefined;
     }
@@ -128,17 +156,21 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         );
         const commands = new Collection<string, CommandHandler>();
         const parents = new Collection<string, ParentCommand>();
+        const groups = new Collection<string, GroupEntry>();
         const children = new Collection<string, Subcommand[]>();
         const sources = new WeakMap<CommandDefinition, string>();
         const parentNames = new WeakMap<Subcommand, string>();
+        const groupNames = new WeakMap<Subcommand, string>();
 
         for (const file of files) {
-            // Only direct [parent]/index modules define parents; other indexes remain barrels.
+            // Only direct parent/group indexes define commands; other indexes remain barrels.
             if (
                 /^index\./.test(path.basename(file)) &&
                 !(
                     /^index\.[cm]?[jt]s$/.test(path.basename(file)) &&
-                    /^\[[^()[\]{}]+\]$/.test(path.basename(path.dirname(file)))
+                    /^(?:\[[^()[\]{}]+\]|\{[^()[\]{}]+\})$/.test(
+                        path.basename(path.dirname(file)),
+                    )
                 )
             )
                 continue;
@@ -146,13 +178,30 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
             try {
                 const parsed = parseCommandPath(path.relative(directory, file));
 
-                if (parsed.group)
-                    throw new TypeError(
-                        "Filesystem subcommand groups are not supported yet.",
-                    );
-
                 const module = await import(pathToFileURL(file).href);
                 const Definition = module.default;
+
+                if (parsed.groupDefinition && parsed.parent && parsed.group) {
+                    assertRegistryClass(Definition, SubcommandGroup);
+                    const group = new Definition();
+                    const key = CommandRegistry.groupKey(
+                        parsed.parent,
+                        parsed.group,
+                    );
+
+                    if (groups.has(key)) {
+                        throw new Error(`Duplicate group definition "${key}".`);
+                    }
+
+                    groups.set(key, {
+                        parent: parsed.parent,
+                        name: parsed.group,
+                        command: group,
+                        subcommands: [],
+                    });
+                    sources.set(group, file);
+                    continue;
+                }
 
                 if (parsed.parentDefinition && parsed.parent) {
                     assertRegistryClass(Definition, ParentCommand);
@@ -236,7 +285,11 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                 }
 
                 const key = parsed.parent
-                    ? CommandRegistry.subcommandKey(parsed.parent, data.name)
+                    ? CommandRegistry.subcommandKey(
+                          parsed.parent,
+                          data.name,
+                          parsed.group,
+                      )
                     : CommandRegistry.key(
                           data.name,
                           command instanceof Command
@@ -246,11 +299,13 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
 
                 if (commands.has(key))
                     throw new Error(
-                        `Duplicate command name "${parsed.parent ? `${parsed.parent} ${data.name}` : data.name}" in "${file}".`,
+                        `Duplicate command name "${parsed.parent ? key : data.name}" in "${file}".`,
                     );
 
                 if (command instanceof Subcommand && parsed.parent) {
                     parentNames.set(command, parsed.parent);
+                    if (parsed.group !== undefined)
+                        groupNames.set(command, parsed.group);
                     const siblings = children.get(parsed.parent) ?? [];
                     siblings.push(command);
                     children.set(parsed.parent, siblings);
@@ -263,6 +318,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                         event: "command.loaded",
                         command: data.name,
                         ...(parsed.parent ? { parent: parsed.parent } : {}),
+                        ...(parsed.group ? { group: parsed.group } : {}),
                         commandType:
                             command instanceof Command
                                 ? command.commandType
@@ -276,6 +332,45 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                     cause instanceof Error ? `: ${cause.message}` : "";
                 throw new Error(
                     `Failed to load command from "${file}"${detail}`,
+                    { cause },
+                );
+            }
+        }
+
+        for (const [name, subcommands] of children) {
+            for (const command of subcommands) {
+                const groupName = groupNames.get(command);
+                if (groupName === undefined) continue;
+                const group = groups.get(
+                    CommandRegistry.groupKey(name, groupName),
+                );
+
+                if (!group) {
+                    throw new Error(
+                        `Missing group definition for "${name} ${groupName}" (referenced by "${sources.get(command)}").`,
+                    );
+                }
+
+                group.subcommands.push(command);
+            }
+        }
+
+        for (const [key, group] of groups) {
+            if (!parents.has(group.parent)) {
+                throw new Error(
+                    `Missing parent definition for "${group.parent}" (referenced by "${sources.get(group.command)}").`,
+                );
+            }
+            if (commands.has(key)) {
+                throw new Error(
+                    `Group "${key}" conflicts with a direct subcommand (${sources.get(group.command)}, ${sources.get(commands.get(key) as Subcommand)}).`,
+                );
+            }
+            try {
+                group.command.compose(group.name, group.subcommands);
+            } catch (cause) {
+                throw new Error(
+                    `Invalid subcommand group in "${sources.get(group.command)}": ${cause instanceof Error ? cause.message : String(cause)}`,
                     { cause },
                 );
             }
@@ -302,7 +397,21 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
             }
 
             try {
-                parent.serialize(name, children.get(name) ?? [], false);
+                parent.serialize(
+                    name,
+                    (children.get(name) ?? []).filter(
+                        command => !groupNames.has(command),
+                    ),
+                    false,
+                    [...groups.values()]
+                        .filter(group => group.parent === name)
+                        .map(group =>
+                            group.command.compose(
+                                group.name,
+                                group.subcommands,
+                            ),
+                        ),
+                );
             } catch (cause) {
                 const detail =
                     cause instanceof Error ? `: ${cause.message}` : "";
@@ -315,11 +424,15 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
 
         this.clear();
         this.parents.clear();
+        this.groups.clear();
         this.sources = sources;
         this.parentNames = parentNames;
+        this.groupNames = groupNames;
 
         for (const [name, command] of commands) this.set(name, command);
         for (const [name, parent] of parents) this.parents.set(name, parent);
+        for (const [name, group] of groups)
+            this.groups.set(name, group.command);
 
         this.logger?.info(
             { event: "commands.loaded", count: this.size },
@@ -372,24 +485,62 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                     name,
                     command: parent,
                     subcommands: [],
+                    groups: new Collection(),
                 };
                 parentEntries.set(name, entry);
                 entries.push(entry);
             }
 
-            entry.subcommands.push(command);
+            const groupName = this.groupNames.get(command);
+            if (groupName === undefined) {
+                entry.subcommands.push(command);
+            } else {
+                let group = entry.groups.get(groupName);
+                if (!group) {
+                    const definition = this.resolveGroup(name, groupName);
+                    if (!definition)
+                        throw new Error(
+                            `Subcommand in "${this.sources.get(command)}" has no group definition.`,
+                        );
+                    group = {
+                        parent: name,
+                        name: groupName,
+                        command: definition,
+                        subcommands: [],
+                    };
+                    entry.groups.set(groupName, group);
+                }
+                group.subcommands.push(command);
+            }
         }
 
         const registrations = entries.map(entry => {
             const definitions: CommandDefinition[] =
                 entry.kind === "parent"
-                    ? [entry.command, ...entry.subcommands]
+                    ? [
+                          entry.command,
+                          ...entry.subcommands,
+                          ...[...entry.groups.values()].flatMap(group => [
+                              group.command,
+                              ...group.subcommands,
+                          ]),
+                      ]
                     : [entry.command];
 
             try {
                 const body =
                     entry.kind === "parent"
-                        ? entry.command.serialize(entry.name, entry.subcommands)
+                        ? entry.command.serialize(
+                              entry.name,
+                              entry.subcommands,
+                              true,
+                              [...entry.groups.values()].map(group =>
+                                  group.command.compose(
+                                      group.name,
+                                      group.subcommands,
+                                  ),
+                              ),
+                          )
                         : entry.command.builder.toJSON();
                 return { body, definitions };
             } catch (cause) {

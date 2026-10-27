@@ -3,11 +3,11 @@
 Command modules live under `<bot root>/src/commands`. Terms are defined in the
 [command glossary](GLOSSARY.md#commands); their folder notation is:
 
-| Folder       | Meaning                                |
-| ------------ | -------------------------------------- |
-| `(category)` | Command category.                      |
-| `[parent]`   | Parent command.                        |
-| `{group}`    | Subcommand group; support is deferred. |
+| Folder       | Meaning           |
+| ------------ | ----------------- |
+| `(category)` | Command category. |
+| `[parent]`   | Parent command.   |
+| `{group}`    | Subcommand group. |
 
 ```text
 src/commands/
@@ -18,7 +18,9 @@ src/commands/
         ├── index.ts                    → parent metadata and guards
         ├── create.ts                   → /ticket create
         ├── close.ts                    → /ticket close
-        └── {settings}/                 → reserved; not loaded yet
+        └── {settings}/
+            ├── index.ts                → group metadata and guards
+            └── view.ts                 → /ticket settings view
 ```
 
 These examples assume builder names match module filenames. Builders remain the
@@ -32,7 +34,8 @@ match and names must not be empty. Legacy unmarked folders remain organizational
 for compatibility. The parser expects relative module paths and rejects traversal,
 unsupported extensions, declarations, and test modules. Both slash styles are
 supported. A direct `[parent]/index.ts` (or supported JS/TS equivalent) is a parent
-definition; other index files remain ignored barrels.
+definition. A direct `{group}/index.ts` is a group definition; other index files
+remain ignored barrels.
 
 ## Defining parents
 
@@ -124,6 +127,6 @@ subcommand count. Temporary builder children are removed even after failure, so
 repeated registration does not accumulate options. Deployment errors retain parent
 and leaf source files.
 
-Group syntax is recognized by the parser, but files under `{group}` fail loading
-with an explicit unsupported-group error. Group registration and dispatch will be
-implemented separately.
+Groups use explicit definitions and the same executable `Subcommand` leaves.
+See [subcommand groups](subcommand-groups.md) for configuration, lookup, validation,
+and guard inheritance.

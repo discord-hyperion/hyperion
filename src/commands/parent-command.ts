@@ -1,4 +1,7 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
+import {
+    ChatInputCommandBuilder,
+    type ChatInputCommandSubcommandGroupBuilder,
+} from "@discordjs/builders";
 import type { GuardProvider } from "../guards/index.ts";
 import type { CommandContext } from "./command.ts";
 import { freezeCommandGuards } from "./freeze-command-guards.ts";
@@ -33,6 +36,7 @@ export abstract class ParentCommand {
         name: string,
         subcommands: readonly Subcommand[],
         validate = true,
+        groups: readonly ChatInputCommandSubcommandGroupBuilder[] = [],
     ) {
         if (this.builder.options.length > 0) {
             throw new TypeError(
@@ -47,7 +51,7 @@ export abstract class ParentCommand {
                 `Parent builder name "${configuredName}" must match folder name "${name}".`,
             );
         }
-        if (subcommands.length === 0) {
+        if (subcommands.length === 0 && groups.length === 0) {
             throw new TypeError(
                 `Parent command "${name}" must contain at least one subcommand.`,
             );
@@ -59,6 +63,7 @@ export abstract class ParentCommand {
             this.builder.addSubcommands(
                 ...subcommands.map(subcommand => subcommand.builder),
             );
+            this.builder.addSubcommandGroups(...groups);
             return this.builder.toJSON(validate);
         } finally {
             this.builder.spliceOptions(0, this.builder.options.length);

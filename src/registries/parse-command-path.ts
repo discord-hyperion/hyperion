@@ -6,6 +6,7 @@ export type CommandPath = {
     parent?: string;
     group?: string;
     parentDefinition?: true;
+    groupDefinition?: true;
 };
 
 /** Parses a module path relative to src/commands; does not import or register it. */
@@ -25,6 +26,10 @@ export const parseCommandPath = (relativePath: string): CommandPath => {
     }
 
     const filename = segments.pop();
+    const groupDefinition =
+        !!filename &&
+        /^index\.[cm]?[jt]s$/.test(filename) &&
+        /^\{[^()[\]{}]+\}$/.test(segments.at(-1) ?? "");
     const parentDefinition =
         !!filename &&
         /^index\.[cm]?[jt]s$/.test(filename) &&
@@ -34,7 +39,7 @@ export const parseCommandPath = (relativePath: string): CommandPath => {
         !filename ||
         !/\.[cm]?[jt]s$/.test(filename) ||
         /\.d\.[cm]?ts$/.test(filename) ||
-        (/^index\./.test(filename) && !parentDefinition) ||
+        (/^index\./.test(filename) && !parentDefinition && !groupDefinition) ||
         /\.(?:test|spec)\.[cm]?[jt]s$/.test(filename) ||
         /[()[\]{}]/.test(filename)
     ) {
@@ -86,5 +91,6 @@ export const parseCommandPath = (relativePath: string): CommandPath => {
         ...(parent ? { parent } : {}),
         ...(group ? { group } : {}),
         ...(parentDefinition ? { parentDefinition: true as const } : {}),
+        ...(groupDefinition ? { groupDefinition: true as const } : {}),
     };
 };

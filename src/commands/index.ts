@@ -8,3 +8,7 @@ export {
 } from "./command.ts";
 export { ParentCommand, type ParentCommandOptions } from "./parent-command.ts";
 export { Subcommand, type SubcommandOptions } from "./subcommand.ts";
+export {
+    SubcommandGroup,
+    type SubcommandGroupOptions,
+} from "./subcommand-group.ts";
