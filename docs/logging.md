@@ -53,6 +53,8 @@ No global console interception or background formatting worker is installed.
   lookup; guards share the request and reuse the cached result for that login.
 - Command execution: debug start, info completion, or error failure, including
   duration. Missing handlers emit warnings. Failed error responses emit errors.
+  User and message context-menu commands use the same events; `commandType`
+  distinguishes command types without logging resolved targets or message content.
 - Autocomplete: debug `autocomplete.started`, `autocomplete.completed`, and
   `autocomplete.unavailable`; error `autocomplete.failed` and
   `autocomplete.response.failed`. Invocation logs carry command and interaction
