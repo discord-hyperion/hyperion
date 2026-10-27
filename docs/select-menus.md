@@ -1,5 +1,7 @@
 # Select menus
 
+For control and handler terminology, see the [component glossary](GLOSSARY.md#components).
+
 Hyperion loads default-exported `SelectMenu` subclasses from
 `<root>/src/select-menus`, recursively. Missing directories are optional. Each
 handler needs a zero-argument constructor, a supported builder with a unique

@@ -1,5 +1,8 @@
 # Autocomplete
 
+See the [execution glossary](GLOSSARY.md#execution) for the distinction between
+autocomplete, command invocation, and input validation.
+
 Commands can implement an optional `autocomplete(ctx)` method alongside `run()`.
 Hyperion routes autocomplete requests by command name using the existing command
 registry. There is no separate handler folder or registration step. Enable

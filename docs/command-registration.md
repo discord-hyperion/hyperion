@@ -45,8 +45,21 @@ dev/bot/
 ├── index.ts
 └── src/
     └── commands/
-        └── ping.ts
+        ├── (general)/
+        │   ├── ping.ts
+        │   └── topic.ts
+        ├── (components)/
+        │   └── profile.ts
+        └── (context-menus)/
+            ├── inspect-user.ts
+            └── inspect-message.ts
 ```
+
+Parenthesized folders organize examples without changing their command names.
+The parent and subcommand-group folder syntax is documented in
+[Command path conventions](command-paths.md). Subcommands under `[parent]` folders
+are registered together and dispatched to their leaf modules; `{group}` folders
+remain reserved for a later stage.
 
 `root` defaults to `process.cwd()` and can be a filesystem path or file URL.
 For a dev bot in the framework repository, set it relative to the bot entry point
@@ -56,8 +69,11 @@ request. An existing empty folder also results in no deployment. Other filesyste
 errors, such as an unreadable folder or a file where a folder is expected, fail
 initialization rather than being silently ignored.
 
-Each command module must default-export a concrete `Command`
-subclass with a public, zero-argument constructor and a `run()` method.
+Standalone command modules default-export a concrete `Command` subclass with a
+public, zero-argument constructor and a `run()` method. Inside `[parent]`, leaf
+modules instead extend `Subcommand`; the direct `index.ts` extends `ParentCommand`
+and supplies shared metadata and guards without `run()`. See
+[Command path conventions](command-paths.md) for complete examples.
 
 Supported extensions are `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, and `.cjs`.
 Barrels named `index.*`, TypeScript declarations, test files, hidden entries,
