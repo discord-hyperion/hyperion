@@ -35,7 +35,7 @@ export abstract class ParentCommand {
     serialize(
         name: string,
         subcommands: readonly Subcommand[],
-        validate = true,
+        validate?: boolean,
         groups: readonly ChatInputCommandSubcommandGroupBuilder[] = [],
     ) {
         if (this.builder.options.length > 0) {

@@ -1,5 +1,4 @@
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
 import {
     ApplicationCommandType,
     Collection,
@@ -16,13 +15,12 @@ import {
     Subcommand,
     SubcommandGroup,
 } from "../commands/index.ts";
-import { assertRegistryClass, discoverModules } from "../util/index.ts";
-import { parseCommandPath } from "./parse-command-path.ts";
+import { discoverHandlerFiles, loadHandler } from "./load-modules.ts";
+import { classifyCommandPath } from "./parse-command-path.ts";
 
 type CommandHandler = AnyCommand | Subcommand;
 type CommandDefinition = CommandHandler | ParentCommand | SubcommandGroup;
 type GroupEntry = {
-    parent: string;
     name: string;
     command: SubcommandGroup;
     subcommands: Subcommand[];
@@ -37,6 +35,154 @@ type RegistrationEntry =
           groups: Collection<string, GroupEntry>;
       };
 
+type CommandMetadata = { source: string; parent?: string; group?: string };
+type CommandState = {
+    commands: Collection<string, CommandHandler>;
+    parents: Collection<string, ParentCommand>;
+    groups: Collection<string, SubcommandGroup>;
+    metadata: WeakMap<CommandDefinition, CommandMetadata>;
+};
+
+const definitionClasses = {
+    command: Command,
+    parent: ParentCommand,
+    group: SubcommandGroup,
+    subcommand: Subcommand,
+};
+
+/** Builds an ephemeral hierarchy from current membership, never from cached payloads. */
+const commandEntries = (state: CommandState, loading = false) => {
+    const entries: RegistrationEntry[] = [];
+    const parents = new Collection<
+        string,
+        Extract<RegistrationEntry, { kind: "parent" }>
+    >();
+    const source = (command: CommandDefinition) =>
+        state.metadata.get(command)?.source;
+    const parentEntry = (name: string, definition: CommandDefinition) => {
+        const command = state.parents.get(name);
+        if (!command)
+            throw new Error(
+                loading
+                    ? `Missing parent definition for "${name}" (referenced by "${source(definition)}").`
+                    : `Subcommand in "${source(definition)}" has no parent definition.`,
+            );
+        let entry = parents.get(name);
+        if (!entry) {
+            entry = {
+                kind: "parent",
+                name,
+                command,
+                subcommands: [],
+                groups: new Collection(),
+            };
+            parents.set(name, entry);
+            entries.push(entry);
+        }
+        return entry;
+    };
+    const groupEntry = (
+        entry: Extract<RegistrationEntry, { kind: "parent" }>,
+        name: string,
+        definition: CommandDefinition,
+    ) => {
+        let group = entry.groups.get(name);
+        if (!group) {
+            const command = state.groups.get(
+                CommandRegistry.groupKey(entry.name, name),
+            );
+            if (!command)
+                throw new Error(
+                    loading
+                        ? `Missing group definition for "${entry.name} ${name}" (referenced by "${source(definition)}").`
+                        : `Subcommand in "${source(definition)}" has no group definition.`,
+                );
+            group = { name, command, subcommands: [] };
+            entry.groups.set(name, group);
+        }
+        return group;
+    };
+
+    if (loading) {
+        for (const [name, parent] of state.parents) {
+            if (state.commands.get(name) instanceof Command)
+                throw new Error(
+                    `Command "${name}" cannot be both a standalone command and a subcommand parent (${source(parent)}).`,
+                );
+            parentEntry(name, parent);
+        }
+        for (const [key, group] of state.groups) {
+            const route = state.metadata.get(group);
+            if (!route?.parent || !route.group)
+                throw new Error(
+                    `Missing group ancestry in "${source(group)}".`,
+                );
+            const conflicting = state.commands.get(key);
+            if (conflicting)
+                throw new Error(
+                    `Group "${key}" conflicts with a direct subcommand (${source(group)}, ${source(conflicting)}).`,
+                );
+            groupEntry(parentEntry(route.parent, group), route.group, group);
+        }
+    }
+
+    for (const command of state.commands.values()) {
+        if (command instanceof Command) {
+            entries.push({ kind: "command", command });
+            continue;
+        }
+        const route = state.metadata.get(command);
+        if (!route?.parent)
+            throw new Error(
+                `Subcommand in "${source(command)}" has no parent definition.`,
+            );
+        const entry = parentEntry(route.parent, command);
+        if (route.group === undefined) entry.subcommands.push(command);
+        else groupEntry(entry, route.group, command).subcommands.push(command);
+    }
+    return entries;
+};
+
+const serializeEntry = (
+    entry: RegistrationEntry,
+    metadata: CommandState["metadata"],
+    validate?: boolean,
+) => {
+    const definitions: CommandDefinition[] =
+        entry.kind === "command"
+            ? [entry.command]
+            : [
+                  entry.command,
+                  ...entry.subcommands,
+                  ...[...entry.groups.values()].flatMap(group => [
+                      group.command,
+                      ...group.subcommands,
+                  ]),
+              ];
+    try {
+        const body =
+            entry.kind === "command"
+                ? entry.command.builder.toJSON(validate)
+                : entry.command.serialize(
+                      entry.name,
+                      entry.subcommands,
+                      validate,
+                      [...entry.groups.values()].map(group =>
+                          group.command.compose(group.name, group.subcommands),
+                      ),
+                  );
+        return { body, definitions };
+    } catch (cause) {
+        const sources = definitions
+            .map(definition => metadata.get(definition)?.source)
+            .filter(source => source !== undefined);
+        throw new Error(
+            `Failed to serialize command builder in ${sources.map(source => `"${source}"`).join(", ")}: ${cause instanceof Error ? cause.message : String(cause)}`,
+            { cause },
+        );
+    }
+};
+
 export type CommandRegistrationOptions = {
     applicationId: string;
     token: string;
@@ -47,9 +193,7 @@ export type CommandRegistrationOptions = {
 export class CommandRegistry extends Collection<string, CommandHandler> {
     readonly parents: Collection<string, ParentCommand>;
     readonly groups: Collection<string, SubcommandGroup>;
-    private sources = new WeakMap<CommandDefinition, string>();
-    private parentNames = new WeakMap<Subcommand, string>();
-    private groupNames = new WeakMap<Subcommand, string>();
+    private metadata = new WeakMap<CommandDefinition, CommandMetadata>();
 
     constructor(private readonly logger?: Logger) {
         super();
@@ -115,7 +259,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
             this.some(
                 command =>
                     command instanceof Subcommand &&
-                    this.parentNames.get(command) === parent,
+                    this.metadata.get(command)?.parent === parent,
             )
         );
     }
@@ -126,8 +270,8 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         );
         return command instanceof Subcommand &&
             this.parents.has(parent) &&
-            this.parentNames.get(command) === parent &&
-            this.groupNames.get(command) === group &&
+            this.metadata.get(command)?.parent === parent &&
+            this.metadata.get(command)?.group === group &&
             (group === undefined ||
                 this.resolveGroup(parent, group) !== undefined)
             ? command
@@ -135,86 +279,44 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
     }
 
     async load(root: string | URL = process.cwd()) {
-        const rootPath =
-            root instanceof URL ? fileURLToPath(root) : path.resolve(root);
-        const directory = path.join(rootPath, "src", "commands");
-
-        this.logger?.debug(
-            { event: "commands.discover", directory },
-            "Discovering command files",
+        const { directory, files } = await discoverHandlerFiles(
+            root,
+            "commands",
+            this.logger,
+            true,
         );
-
-        const files = await discoverModules(
-            directory,
-            () => {
-                this.logger?.debug(
-                    { event: "commands.directory.missing", directory },
-                    "Optional command directory does not exist",
-                );
-            },
-            { includeIndexes: true },
-        );
-        const commands = new Collection<string, CommandHandler>();
-        const parents = new Collection<string, ParentCommand>();
-        const groups = new Collection<string, GroupEntry>();
-        const children = new Collection<string, Subcommand[]>();
-        const sources = new WeakMap<CommandDefinition, string>();
-        const parentNames = new WeakMap<Subcommand, string>();
-        const groupNames = new WeakMap<Subcommand, string>();
+        const state: CommandState = {
+            commands: new Collection(),
+            parents: new Collection(),
+            groups: new Collection(),
+            metadata: new WeakMap(),
+        };
+        const { commands, parents, groups, metadata } = state;
 
         for (const file of files) {
-            // Only direct parent/group indexes define commands; other indexes remain barrels.
-            if (
-                /^index\./.test(path.basename(file)) &&
-                !(
-                    /^index\.[cm]?[jt]s$/.test(path.basename(file)) &&
-                    /^(?:\[[^()[\]{}]+\]|\{[^()[\]{}]+\})$/.test(
-                        path.basename(path.dirname(file)),
-                    )
-                )
-            )
-                continue;
-
             try {
-                const parsed = parseCommandPath(path.relative(directory, file));
+                const classification = classifyCommandPath(
+                    path.relative(directory, file),
+                );
+                if (!classification) continue;
+                const { kind, path: parsed } = classification;
+                const command = await loadHandler<CommandDefinition>(
+                    file,
+                    definitionClasses[kind],
+                );
 
-                const module = await import(pathToFileURL(file).href);
-                const Definition = module.default;
+                metadata.set(command, {
+                    source: file,
+                    ...(parsed.parent ? { parent: parsed.parent } : {}),
+                    ...(parsed.group ? { group: parsed.group } : {}),
+                });
 
-                if (parsed.groupDefinition && parsed.parent && parsed.group) {
-                    assertRegistryClass(Definition, SubcommandGroup);
-                    const group = new Definition();
-                    const key = CommandRegistry.groupKey(
-                        parsed.parent,
-                        parsed.group,
-                    );
-
-                    if (groups.has(key)) {
-                        throw new Error(`Duplicate group definition "${key}".`);
-                    }
-
-                    groups.set(key, {
-                        parent: parsed.parent,
-                        name: parsed.group,
-                        command: group,
-                        subcommands: [],
-                    });
-                    sources.set(group, file);
-                    continue;
-                }
-
-                if (parsed.parentDefinition && parsed.parent) {
-                    assertRegistryClass(Definition, ParentCommand);
-                    const parent = new Definition();
-
-                    if (parents.has(parsed.parent)) {
+                if (command instanceof ParentCommand && parsed.parent) {
+                    if (parents.has(parsed.parent))
                         throw new Error(
                             `Duplicate parent definition "${parsed.parent}".`,
                         );
-                    }
-
-                    parents.set(parsed.parent, parent);
-                    sources.set(parent, file);
+                    parents.set(parsed.parent, command);
                     this.logger?.debug(
                         {
                             event: "command.parent.loaded",
@@ -225,24 +327,29 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                     );
                     continue;
                 }
-
-                let command: CommandHandler;
-
-                if (parsed.parent) {
-                    assertRegistryClass(Definition, Subcommand);
-                    command = new Definition();
-                } else {
-                    assertRegistryClass(Definition, Command);
-                    command = new Definition();
-                }
-
-                if (typeof command.builder?.toJSON !== "function")
-                    throw new TypeError(
-                        "Commands must provide a command builder.",
+                if (
+                    command instanceof SubcommandGroup &&
+                    parsed.parent &&
+                    parsed.group
+                ) {
+                    const key = CommandRegistry.groupKey(
+                        parsed.parent,
+                        parsed.group,
                     );
+                    if (groups.has(key))
+                        throw new Error(`Duplicate group definition "${key}".`);
+                    groups.set(key, command);
+                    continue;
+                }
+                if (
+                    !(
+                        command instanceof Command ||
+                        command instanceof Subcommand
+                    )
+                )
+                    throw new TypeError("Expected an executable command.");
 
                 const data = command.builder.toJSON(false);
-
                 if (
                     typeof data.name !== "string" ||
                     typeof command.run !== "function"
@@ -262,26 +369,14 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                         "Commands may configure autocomplete() only as a function on chat-input commands.",
                     );
                 }
-                if (command instanceof Command) {
-                    if (
-                        ![
-                            ApplicationCommandType.ChatInput,
-                            ApplicationCommandType.User,
-                            ApplicationCommandType.Message,
-                        ].includes(command.commandType)
-                    ) {
-                        throw new TypeError(
-                            "Command has an unsupported command type.",
-                        );
-                    }
-                    if (
-                        (data.type ?? ApplicationCommandType.ChatInput) !==
+                if (
+                    command instanceof Command &&
+                    (data.type ?? ApplicationCommandType.ChatInput) !==
                         command.commandType
-                    ) {
-                        throw new TypeError(
-                            "Command builder type must match its handler's command type.",
-                        );
-                    }
+                ) {
+                    throw new TypeError(
+                        "Command builder type must match its handler's command type.",
+                    );
                 }
 
                 const key = parsed.parent
@@ -296,23 +391,11 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                               ? command.commandType
                               : ApplicationCommandType.ChatInput,
                       );
-
                 if (commands.has(key))
                     throw new Error(
                         `Duplicate command name "${parsed.parent ? key : data.name}" in "${file}".`,
                     );
-
-                if (command instanceof Subcommand && parsed.parent) {
-                    parentNames.set(command, parsed.parent);
-                    if (parsed.group !== undefined)
-                        groupNames.set(command, parsed.group);
-                    const siblings = children.get(parsed.parent) ?? [];
-                    siblings.push(command);
-                    children.set(parsed.parent, siblings);
-                }
-
                 commands.set(key, command);
-                sources.set(command, file);
                 this.logger?.debug(
                     {
                         event: "command.loaded",
@@ -328,111 +411,25 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                     "Loaded command",
                 );
             } catch (cause) {
-                const detail =
-                    cause instanceof Error ? `: ${cause.message}` : "";
                 throw new Error(
-                    `Failed to load command from "${file}"${detail}`,
+                    `Failed to load command from "${file}": ${cause instanceof Error ? cause.message : String(cause)}`,
                     { cause },
                 );
             }
         }
 
-        for (const [name, subcommands] of children) {
-            for (const command of subcommands) {
-                const groupName = groupNames.get(command);
-                if (groupName === undefined) continue;
-                const group = groups.get(
-                    CommandRegistry.groupKey(name, groupName),
-                );
-
-                if (!group) {
-                    throw new Error(
-                        `Missing group definition for "${name} ${groupName}" (referenced by "${sources.get(command)}").`,
-                    );
-                }
-
-                group.subcommands.push(command);
-            }
-        }
-
-        for (const [key, group] of groups) {
-            if (!parents.has(group.parent)) {
-                throw new Error(
-                    `Missing parent definition for "${group.parent}" (referenced by "${sources.get(group.command)}").`,
-                );
-            }
-            if (commands.has(key)) {
-                throw new Error(
-                    `Group "${key}" conflicts with a direct subcommand (${sources.get(group.command)}, ${sources.get(commands.get(key) as Subcommand)}).`,
-                );
-            }
-            try {
-                group.command.compose(group.name, group.subcommands);
-            } catch (cause) {
-                throw new Error(
-                    `Invalid subcommand group in "${sources.get(group.command)}": ${cause instanceof Error ? cause.message : String(cause)}`,
-                    { cause },
-                );
-            }
-        }
-
-        for (const [name, subcommands] of children) {
-            if (!parents.has(name)) {
-                throw new Error(
-                    `Missing parent definition for "${name}"; add [${name}]/index.ts (referenced by "${sources.get(subcommands[0] as Subcommand)}").`,
-                );
-            }
-        }
-
-        for (const [name, parent] of parents) {
-            const standalone = commands.get(name);
-
-            if (
-                standalone instanceof Command &&
-                standalone.commandType === ApplicationCommandType.ChatInput
-            ) {
-                throw new Error(
-                    `Command "${name}" cannot be both a standalone command and a subcommand parent (${sources.get(standalone)}).`,
-                );
-            }
-
-            try {
-                parent.serialize(
-                    name,
-                    (children.get(name) ?? []).filter(
-                        command => !groupNames.has(command),
-                    ),
-                    false,
-                    [...groups.values()]
-                        .filter(group => group.parent === name)
-                        .map(group =>
-                            group.command.compose(
-                                group.name,
-                                group.subcommands,
-                            ),
-                        ),
-                );
-            } catch (cause) {
-                const detail =
-                    cause instanceof Error ? `: ${cause.message}` : "";
-                throw new Error(
-                    `Invalid parent command in "${sources.get(parent)}"${detail}`,
-                    { cause },
-                );
-            }
+        for (const entry of commandEntries(state, true)) {
+            if (entry.kind === "parent") serializeEntry(entry, metadata, false);
         }
 
         this.clear();
         this.parents.clear();
         this.groups.clear();
-        this.sources = sources;
-        this.parentNames = parentNames;
-        this.groupNames = groupNames;
+        this.metadata = metadata;
 
-        for (const [name, command] of commands) this.set(name, command);
-        for (const [name, parent] of parents) this.parents.set(name, parent);
-        for (const [name, group] of groups)
-            this.groups.set(name, group.command);
+        for (const [key, command] of commands) this.set(key, command);
+        for (const [key, parent] of parents) this.parents.set(key, parent);
+        for (const [key, group] of groups) this.groups.set(key, group);
 
         this.logger?.info(
             { event: "commands.loaded", count: this.size },
@@ -457,102 +454,12 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                 "No commands were found; refusing to overwrite commands with an empty list.",
             );
 
-        const entries: RegistrationEntry[] = [];
-        const parentEntries = new Collection<
-            string,
-            Extract<RegistrationEntry, { kind: "parent" }>
-        >();
-
-        for (const command of this.values()) {
-            if (command instanceof Command) {
-                entries.push({ kind: "command", command });
-                continue;
-            }
-
-            const name = this.parentNames.get(command);
-            const parent = name ? this.parents.get(name) : undefined;
-
-            if (!name || !parent)
-                throw new Error(
-                    `Subcommand in "${this.sources.get(command)}" has no parent definition.`,
-                );
-
-            let entry = parentEntries.get(name);
-
-            if (!entry) {
-                entry = {
-                    kind: "parent",
-                    name,
-                    command: parent,
-                    subcommands: [],
-                    groups: new Collection(),
-                };
-                parentEntries.set(name, entry);
-                entries.push(entry);
-            }
-
-            const groupName = this.groupNames.get(command);
-            if (groupName === undefined) {
-                entry.subcommands.push(command);
-            } else {
-                let group = entry.groups.get(groupName);
-                if (!group) {
-                    const definition = this.resolveGroup(name, groupName);
-                    if (!definition)
-                        throw new Error(
-                            `Subcommand in "${this.sources.get(command)}" has no group definition.`,
-                        );
-                    group = {
-                        parent: name,
-                        name: groupName,
-                        command: definition,
-                        subcommands: [],
-                    };
-                    entry.groups.set(groupName, group);
-                }
-                group.subcommands.push(command);
-            }
-        }
-
-        const registrations = entries.map(entry => {
-            const definitions: CommandDefinition[] =
-                entry.kind === "parent"
-                    ? [
-                          entry.command,
-                          ...entry.subcommands,
-                          ...[...entry.groups.values()].flatMap(group => [
-                              group.command,
-                              ...group.subcommands,
-                          ]),
-                      ]
-                    : [entry.command];
-
-            try {
-                const body =
-                    entry.kind === "parent"
-                        ? entry.command.serialize(
-                              entry.name,
-                              entry.subcommands,
-                              true,
-                              [...entry.groups.values()].map(group =>
-                                  group.command.compose(
-                                      group.name,
-                                      group.subcommands,
-                                  ),
-                              ),
-                          )
-                        : entry.command.builder.toJSON();
-                return { body, definitions };
-            } catch (cause) {
-                const sources = definitions
-                    .map(definition => this.sources.get(definition))
-                    .filter(source => source !== undefined);
-                throw new Error(
-                    `Failed to serialize command builder${sources.length ? ` in ${sources.map(source => `"${source}"`).join(", ")}` : ""}.`,
-                    { cause },
-                );
-            }
-        });
+        const registrations = commandEntries({
+            commands: this,
+            parents: this.parents,
+            groups: this.groups,
+            metadata: this.metadata,
+        }).map(entry => serializeEntry(entry, this.metadata));
         const body = registrations.map(registration => registration.body);
         const rest = new REST({ version: "10" }).setToken(options.token);
         const routes = options.guildIds
@@ -596,7 +503,8 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                             if (!registration) continue;
 
                             for (const definition of registration.definitions) {
-                                const source = this.sources.get(definition);
+                                const source =
+                                    this.metadata.get(definition)?.source;
                                 sources.push(
                                     `body[${index}]: "${body[index]?.name}"${source ? ` (${source})` : ""}`,
                                 );

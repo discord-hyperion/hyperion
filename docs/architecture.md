@@ -46,11 +46,30 @@ Command parents, groups, and executable handlers must be replaced atomically tog
 Preserve original failures with `cause` and retain source-file context for builder
 failures and indexed Discord validation errors.
 
+Shared discovery returns flat module paths. General filename filtering has one
+implementation; the command-path classifier alone interprets folder conventions
+and decides which indexes define parents/groups. Ordinary barrels are skipped
+before import. Internal loading functions share module construction and the
+component staging pipeline while public registries remain concrete Collections.
+
+The live handler, parent, and group Collections remain authoritative. Loading and
+registration derive temporary command hierarchies through one grouping function;
+there is no persistent second hierarchy or cached registration payload. Current
+membership, ordering, and builder changes are read again for each registration.
+
 Use native builders and `toJSON()` for payload validation rather than duplicating
 Discord's schema. Keep framework checks for exported classes, executable
 handlers, routing names, and duplicates. See [command registration](command-registration.md)
 for deployment scope, empty-registry protection, and failure handling, and
 [command paths](command-paths.md) for composed parent validation and cleanup.
+
+Complete payload serialization uses `toJSON()` and respects the SDK's global
+validator setting, which is enabled by default. Consumers who disable validators
+also disable local payload validation; Hyperion does not duplicate those checks
+or override that setting. Partial discovery metadata reads use `toJSON(false)`.
+Builder-family suitability, routing-metadata consistency, explicit filesystem
+definitions, duplicate routes, and empty-deployment protection remain framework
+checks. Native payload errors retain their source context and original cause.
 
 ## Invocation boundaries
 

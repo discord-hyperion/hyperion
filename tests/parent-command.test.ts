@@ -4,6 +4,9 @@ import {
     ChatInputCommandBuilder,
     ChatInputCommandSubcommandBuilder,
     ChatInputCommandSubcommandGroupBuilder,
+    disableValidators,
+    enableValidators,
+    isValidationEnabled,
     UserContextCommandBuilder,
 } from "@discordjs/builders";
 import {
@@ -52,6 +55,28 @@ class Check extends Guard {
         return true;
     }
 }
+
+test("parent serialization respects SDK validation settings and explicit overrides", () => {
+    const enabled = isValidationEnabled();
+    const parent = new Parent();
+    const leaf = new Leaf(
+        new ChatInputCommandSubcommandBuilder()
+            .setName("invalid")
+            .setDescription(""),
+    );
+
+    try {
+        enableValidators();
+        assert.throws(() => parent.serialize("tools", [leaf]));
+        disableValidators();
+        assert.doesNotThrow(() => parent.serialize("tools", [leaf]));
+        assert.throws(() => parent.serialize("tools", [leaf], true));
+        assert.equal(parent.builder.options.length, 0);
+    } finally {
+        if (enabled) enableValidators();
+        else disableValidators();
+    }
+});
 
 test("parents and leaves retain native builders and separate executable roles", () => {
     const parentBuilder = new ChatInputCommandBuilder().setDescription("Tools");
