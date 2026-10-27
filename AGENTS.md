@@ -125,6 +125,21 @@ Database support is intentionally out of scope.
   Serialize through `toJSON()`
   and leave payload validation to the builder and Discord. Keep framework checks
   for exported classes, executable handlers, lookup names, and duplicate names.
+- Command folders use `(category)` for organization and `[parent]` for subcommands.
+  Plain legacy folders remain organizational. Direct `[parent]/index.ts` modules
+  default-export a `ParentCommand` subclass with a native `ChatInputCommandBuilder`
+  for metadata and shared guards, without `run()`. Require exactly one definition
+  per logical parent across categories. Reject empty parents, mismatched names, and
+  manually added parent options or children at runtime. Leaves extend `Subcommand`
+  with native `ChatInputCommandSubcommandBuilder`; do not convert ordinary commands.
+  Compose through native builders and validate the complete parent before REST;
+  clean up temporary child options even after failure. Preserve atomic replacement
+  of parent and handler collections. Reject standalone chat-input name conflicts.
+  Keep subcommand keys as `CommandRegistry.subcommandKey(parent, name)`; use
+  `resolveSubcommand(parent, name)` for lookup and `client.commands.parents.get(name)`
+  for parent definitions. Run parent guards before leaf guards, stopping on rejection
+  or error. Autocomplete uses only the selected leaf and bypasses both guard levels.
+  `{group}` syntax is parsed but group loading remains deferred.
 - Preserve original failures with `cause` and retain source-file context for
   builder failures and indexed Discord validation errors.
 - Use `client.logger` or the invocation's `ctx.logger` for structured logs.
@@ -189,8 +204,9 @@ Database support is intentionally out of scope.
 - Scan recursively with `node:fs/promises`. Skip barrels, declarations, test
   modules, hidden entries, and `node_modules`.
 - Command modules default-export a concrete `Command` subclass with a public,
-  zero-argument constructor. Stage loaded commands before replacing the registry
-  so failures preserve the previously loaded state.
+  zero-argument constructor, or the matching `Subcommand`/`ParentCommand` class in
+  parent folders. Index modules remain skipped except direct parent definitions.
+  Stage definitions before replacing registries so failures preserve loaded state.
 - Missing handler folders are optional and skipped. Other filesystem errors must
   propagate. Empty registries must not clear deployed commands.
 - Bulk registration replaces application commands in the selected scope. Guild

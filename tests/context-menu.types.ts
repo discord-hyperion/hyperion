@@ -11,6 +11,7 @@ import {
     type CommandOptions,
     type CommandRegistry,
     OwnerOnly,
+    type Subcommand,
 } from "../src/index.ts";
 
 export const contextMenuContracts = (
@@ -32,6 +33,16 @@ export const contextMenuContracts = (
         | Command<ApplicationCommandType.Message>
         | undefined;
     registry.resolve("inspect") satisfies Command | undefined;
+    registry.resolveSubcommand("tools", "ping") satisfies
+        | Subcommand
+        | undefined;
+    registry.resolve(
+        "tools",
+        ApplicationCommandType.ChatInput,
+        "ping",
+    ) satisfies Subcommand | undefined;
+    // @ts-expect-error Context-menu commands cannot resolve subcommands.
+    registry.resolve("Inspect", ApplicationCommandType.User, "ping");
     new UserContextCommandBuilder().toJSON(false)
         .type satisfies ApplicationCommandType.User;
     new MessageContextCommandBuilder().toJSON(false)
