@@ -7,7 +7,12 @@
     },
     "files": {
         "ignoreUnknown": false,
-        "includes": ["**", "!pnpm-lock.yaml"]
+        "includes": [
+            "**",
+            "!pnpm-lock.yaml",
+            "!.agents/skills",
+            "!skills-lock.json"
+        ]
     },
     "formatter": {
         "enabled": true,
