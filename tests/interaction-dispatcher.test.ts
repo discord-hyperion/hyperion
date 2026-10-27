@@ -72,7 +72,7 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
     await mkdir(path.join(root, "src", "commands"), { recursive: true });
     await writeFile(
         path.join(root, "src", "commands", "ping.mjs"),
-        `export { default } from ${JSON.stringify(new URL("../dev/bot/src/commands/ping.ts", import.meta.url).href)};`,
+        `export { default } from ${JSON.stringify(new URL("../dev/bot/src/commands/(general)/ping.ts", import.meta.url).href)};`,
     );
     const put = t.mock.method(REST.prototype, "put", async () => []);
     const client = await HyperionClient.create({

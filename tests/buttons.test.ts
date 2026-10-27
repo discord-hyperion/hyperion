@@ -362,16 +362,13 @@ test("button invocations keep async state separate and never auto-acknowledge", 
 test("development profile command and button complete the async refresh flow", async t => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-profile-"));
     t.after(() => rm(root, { recursive: true, force: true }));
-    for (const [folder, file] of [
-        ["commands", "profile"],
-        ["buttons", "refresh-profile"],
+    for (const [folder, file, modulePath] of [
+        ["commands", "profile", "commands/(components)/profile"],
+        ["buttons", "refresh-profile", "buttons/refresh-profile"],
     ] as const) {
         const directory = path.join(root, "src", folder);
         await mkdir(directory, { recursive: true });
-        const url = new URL(
-            `../dev/bot/src/${folder}/${file}.ts`,
-            import.meta.url,
-        );
+        const url = new URL(`../dev/bot/src/${modulePath}.ts`, import.meta.url);
         await writeFile(
             path.join(directory, `${file}.mjs`),
             `export { default } from ${JSON.stringify(url.href)};`,
