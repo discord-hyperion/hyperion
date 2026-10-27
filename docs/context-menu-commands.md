@@ -1,7 +1,7 @@
 # Context-menu commands
 
-User and message commands appear in Discord's Apps context menu when a user
-right-clicks a user or message. They use the same `Command` abstraction,
+For user and message command terminology, see the [command glossary](GLOSSARY.md#commands).
+Define context-menu handlers with the same `Command` abstraction,
 `<root>/src/commands` discovery, `client.commands` registry, deployment scope,
 guards, logging, and execution-error handling as slash commands.
 
@@ -75,9 +75,7 @@ export default class InspectMessage extends Command<ApplicationCommandType.Messa
 ```
 
 The context exposes `MessageContextMenuCommandInteraction.targetMessage`.
-These commands are not prefix/message-content commands: they are application
-commands invoked on a selected message, not text parsed by a `messageCreate`
-listener. The dev bot includes both examples as `inspect-user.ts` and
+The dev bot includes both examples as `inspect-user.ts` and
 `inspect-message.ts`; they intentionally share the display name `Inspect`.
 
 The installed v15 builders are `UserContextCommandBuilder` and

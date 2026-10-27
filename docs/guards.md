@@ -1,5 +1,8 @@
 # Command guards
 
+See the [execution glossary](GLOSSARY.md#execution) for guard and guard-provider
+terminology.
+
 `OwnerOnly` and `Cooldown` are built-in guards supplied by Hyperion, located in
 `src/guards/builtins` and exported from the public library entry point. Use them
 directly; custom guard subclasses are only needed for application-specific checks.

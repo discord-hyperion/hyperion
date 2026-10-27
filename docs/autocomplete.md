@@ -1,5 +1,8 @@
 # Autocomplete
 
+See the [execution glossary](GLOSSARY.md#execution) for the distinction between
+autocomplete, command invocation, and input validation.
+
 Commands can implement an optional `autocomplete(ctx)` method alongside `run()`.
 Hyperion routes autocomplete requests by command name using the existing command
 registry. There is no separate handler folder or registration step. Enable
@@ -108,6 +111,8 @@ Command guards and their factories do not run during autocomplete. Running them
 on each keystroke could consume cooldowns or attempt unsupported message replies.
 If suggestions expose private data, authorize access in the autocomplete hook
 before returning them. A command's execution guard is not a suggestion filter.
+For grouped subcommands, routing selects the leaf by parent, group, and leaf
+name; parent, group, and leaf guards are all bypassed.
 
 `AutocompleteContext` supplies `client`, `interaction`, and `logger`, with the
 interaction typed as `AutocompleteInteraction`. `AnyInteraction` includes this

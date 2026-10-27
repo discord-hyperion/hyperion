@@ -1,4 +1,5 @@
 import {
+    ApplicationCommandType,
     type AutocompleteInteraction,
     type ChatInputCommandInteraction,
     Events,
@@ -104,27 +105,66 @@ export class InteractionDispatcher {
             | UserContextMenuCommandInteraction
             | MessageContextMenuCommandInteraction,
     ) {
+        const subcommand =
+            interaction.commandType === ApplicationCommandType.ChatInput
+                ? this.subcommandName(interaction)
+                : undefined;
+        const group =
+            interaction.commandType === ApplicationCommandType.ChatInput &&
+            this.client.commands.hasSubcommands(interaction.commandName)
+                ? (interaction.options.getSubcommandGroup(false) ?? undefined)
+                : undefined;
         const logger = this.createLogger(interaction, {
             command: interaction.commandName,
             commandType: interaction.commandType,
+            ...(subcommand ? { subcommand } : {}),
+            ...(group ? { group } : {}),
         });
+
+        if (
+            interaction.commandType === ApplicationCommandType.ChatInput &&
+            this.client.commands.hasSubcommands(interaction.commandName)
+        ) {
+            const command = subcommand
+                ? this.client.commands.resolveSubcommand(
+                      interaction.commandName,
+                      subcommand,
+                      group,
+                  )
+                : undefined;
+            const parent = this.client.commands.parents.get(
+                interaction.commandName,
+            );
+
+            if (!command || !parent) {
+                await this.unavailableCommand(interaction, logger);
+                return;
+            }
+
+            await this.execute(
+                command,
+                { client: this.client, interaction, logger },
+                "command",
+                [
+                    ...parent.guards,
+                    ...(group
+                        ? (this.client.commands.resolveGroup(
+                              interaction.commandName,
+                              group,
+                          )?.guards ?? [])
+                        : []),
+                ],
+            );
+            return;
+        }
+
         const command = this.client.commands.resolve(
             interaction.commandName,
             interaction.commandType,
         );
 
         if (!command) {
-            logger.warn(
-                { event: "command.unavailable" },
-                "No handler found for command",
-            );
-
-            await this.respondWithError(
-                interaction,
-                "This command is no longer available. Please try again later.",
-                logger,
-                "command",
-            );
+            await this.unavailableCommand(interaction, logger);
             return;
         }
 
@@ -135,13 +175,57 @@ export class InteractionDispatcher {
         );
     }
 
+    private async unavailableCommand(
+        interaction:
+            | ChatInputCommandInteraction
+            | UserContextMenuCommandInteraction
+            | MessageContextMenuCommandInteraction,
+        logger: Logger,
+    ) {
+        logger.warn(
+            { event: "command.unavailable" },
+            "No handler found for command",
+        );
+        await this.respondWithError(
+            interaction,
+            "This command is no longer available. Please try again later.",
+            logger,
+            "command",
+        );
+    }
+
+    private subcommandName(
+        interaction: ChatInputCommandInteraction | AutocompleteInteraction,
+    ) {
+        if (!this.client.commands.hasSubcommands(interaction.commandName)) {
+            return undefined;
+        }
+
+        return interaction.options.getSubcommand(false) ?? undefined;
+    }
+
     private async dispatchAutocomplete(interaction: AutocompleteInteraction) {
         if (interaction.responded) return;
 
+        const subcommand = this.subcommandName(interaction);
+        const group = this.client.commands.hasSubcommands(
+            interaction.commandName,
+        )
+            ? (interaction.options.getSubcommandGroup(false) ?? undefined)
+            : undefined;
         const logger = this.createLogger(interaction, {
             command: interaction.commandName,
+            ...(subcommand ? { subcommand } : {}),
+            ...(group ? { group } : {}),
         });
-        const command = this.client.commands.resolve(interaction.commandName);
+        const command = subcommand
+            ? this.client.commands.resolveSubcommand(
+                  interaction.commandName,
+                  subcommand,
+                  group,
+              )
+            : this.client.commands.resolve(interaction.commandName);
+
         const started = performance.now();
 
         logger.debug({ event: "autocomplete.started" }, "Running autocomplete");
@@ -205,7 +289,12 @@ export class InteractionDispatcher {
     private createLogger(
         interaction: AnyInteraction,
         handler:
-            | { command: string; commandType?: CommandType }
+            | {
+                  command: string;
+                  commandType?: CommandType;
+                  subcommand?: string;
+                  group?: string;
+              }
             | { button: string }
             | { selectMenu: string }
             | { modal: string },
@@ -226,6 +315,7 @@ export class InteractionDispatcher {
         },
         ctx: Context,
         kind: HandlerKind,
+        parentGuards: readonly GuardProvider<Context>[] = [],
     ) {
         const { interaction, logger } = ctx;
         const started = performance.now();
@@ -235,7 +325,10 @@ export class InteractionDispatcher {
         let stage: "guards" | "handler" = "guards";
 
         try {
-            const result = await this.guards.run(handler.guards, ctx);
+            const result = await this.guards.run(
+                [...parentGuards, ...handler.guards],
+                ctx,
+            );
 
             if (!result.passed) {
                 logger.info(

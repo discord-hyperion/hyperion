@@ -5,6 +5,7 @@ import path from "node:path";
 export const discoverModules = async (
     directory: string,
     onMissing?: () => void,
+    options: { includeIndexes?: boolean } = {},
 ): Promise<string[]> => {
     const discover = async (
         current: string,
@@ -41,7 +42,7 @@ export const discoverModules = async (
                 entry.isFile() &&
                 /\.(?:[cm]?ts|[cm]?js)$/.test(entry.name) &&
                 !/\.d\.[cm]?ts$/.test(entry.name) &&
-                !/^index\./.test(entry.name) &&
+                (!/^index\./.test(entry.name) || options.includeIndexes) &&
                 !/\.(?:test|spec)\.[cm]?[jt]s$/.test(entry.name)
             ) {
                 files.push(entryPath);

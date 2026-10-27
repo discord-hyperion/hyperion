@@ -1,8 +1,9 @@
 # Buttons
 
-Components are stateless handlers. Hyperion stores their definitions for routing,
-but does not retain per-message state, callbacks, sessions, timers, or update
-queues. Durable application state belongs in an application-owned storage layer.
+Use a [component handler](GLOSSARY.md#components) to process button clicks.
+Hyperion stores handler definitions for routing, but does not retain per-message
+state, callbacks, sessions, timers, or update queues. Durable application state
+belongs in an application-owned storage layer.
 A future SQLite integration can provide persistence without tying it to the
 lifetime of a component handler. Database support is not implemented yet.
 
@@ -24,7 +25,8 @@ dev/bot/
 ├── index.ts
 └── src/
     ├── commands/
-    │   └── profile.ts
+    │   └── (components)/
+    │       └── profile.ts
     └── buttons/
         └── refresh-profile.ts
 ```

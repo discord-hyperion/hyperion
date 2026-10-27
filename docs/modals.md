@@ -1,5 +1,7 @@
 # Modals
 
+For form, handler, and custom-ID terminology, see the [component glossary](GLOSSARY.md#components).
+
 Hyperion discovers default-exported `Modal` subclasses recursively under
 `<root>/src/modals` and stores them in `client.modals`, keyed by exact custom ID.
 The directory is optional. Each handler needs a public zero-argument constructor,
