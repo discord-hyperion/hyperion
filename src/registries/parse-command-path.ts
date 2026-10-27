@@ -1,4 +1,5 @@
 import path from "node:path";
+import { isModuleFilename } from "../util/discover-modules.ts";
 
 export type CommandPath = {
     categories: readonly string[];
@@ -9,8 +10,8 @@ export type CommandPath = {
     groupDefinition?: true;
 };
 
-/** Parses a module path relative to src/commands; does not import or register it. */
-export const parseCommandPath = (relativePath: string): CommandPath => {
+/** Classifies command modules before import; ordinary barrels have no definition. */
+export const classifyCommandPath = (relativePath: string) => {
     const segments = relativePath.split(/[/\\]/);
 
     if (
@@ -36,11 +37,16 @@ export const parseCommandPath = (relativePath: string): CommandPath => {
         /^\[[^()[\]{}]+\]$/.test(segments.at(-1) ?? "");
 
     if (
+        filename &&
+        /^index\./.test(filename) &&
+        !parentDefinition &&
+        !groupDefinition
+    )
+        return undefined;
+
+    if (
         !filename ||
-        !/\.[cm]?[jt]s$/.test(filename) ||
-        /\.d\.[cm]?ts$/.test(filename) ||
-        (/^index\./.test(filename) && !parentDefinition && !groupDefinition) ||
-        /\.(?:test|spec)\.[cm]?[jt]s$/.test(filename) ||
+        !isModuleFilename(filename, true) ||
         /[()[\]{}]/.test(filename)
     ) {
         throw new TypeError("Expected a command module filename.");
@@ -85,7 +91,7 @@ export const parseCommandPath = (relativePath: string): CommandPath => {
         }
     }
 
-    return {
+    const commandPath: CommandPath = {
         categories,
         moduleName: filename.replace(/\.[cm]?[jt]s$/, ""),
         ...(parent ? { parent } : {}),
@@ -93,4 +99,23 @@ export const parseCommandPath = (relativePath: string): CommandPath => {
         ...(parentDefinition ? { parentDefinition: true as const } : {}),
         ...(groupDefinition ? { groupDefinition: true as const } : {}),
     };
+
+    return {
+        kind: groupDefinition
+            ? ("group" as const)
+            : parentDefinition
+              ? ("parent" as const)
+              : parent
+                ? ("subcommand" as const)
+                : ("command" as const),
+        path: commandPath,
+    };
+};
+
+/** Parses a module path relative to src/commands; rejects ignored barrels. */
+export const parseCommandPath = (relativePath: string): CommandPath => {
+    const classification = classifyCommandPath(relativePath);
+    if (!classification)
+        throw new TypeError("Expected a command module filename.");
+    return classification.path;
 };

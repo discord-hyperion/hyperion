@@ -52,9 +52,18 @@ const interaction = (phase = "new", ids = ["selected"]) => {
         ephemeral: phase === "defer-reply" ? true : null,
         isChatInputCommand: () => false,
         isButton: () => false,
+        isSelectMenu: () =>
+            [
+                value.isStringSelectMenu(),
+                value.isUserSelectMenu(),
+                value.isRoleSelectMenu(),
+                value.isMentionableSelectMenu(),
+                value.isChannelSelectMenu(),
+            ].some(Boolean),
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => true,
+        isChannelSelectMenu: () => false,
         isMentionableSelectMenu: () => false,
         reply,
         editReply,

@@ -109,6 +109,10 @@ during discovery. Before any request is sent, every builder is serialized with
 payload. Hyperion does not maintain its own payload schema. Builder errors include
 the source file and retain the original error as their cause. Discord performs
 the final server-side validation.
+Serialization respects the builders package's global validator setting. It is
+enabled by default; explicitly disabling it opts out of local SDK payload checks,
+including checks on composed parents and groups. Hyperion's routing and
+filesystem invariants still apply. See [architecture](architecture.md).
 Registration errors retain Discord's original error as their cause and include
 the target route. Indexed validation errors also identify the corresponding
 command name and source file, for example `body[2]: "ping" (/path/to/ping.ts)`.

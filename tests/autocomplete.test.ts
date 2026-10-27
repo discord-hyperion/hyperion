@@ -81,6 +81,7 @@ const interaction = (
         options: { getFocused },
         isChatInputCommand: () => false,
         isButton: () => false,
+        isSelectMenu: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,

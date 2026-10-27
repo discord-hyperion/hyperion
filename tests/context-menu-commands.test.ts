@@ -96,6 +96,7 @@ const interaction = (type: ContextType, phase = "new", caller = "caller") => {
         ephemeral: phase === "deferred" ? false : null,
         isChatInputCommand: () => false,
         isButton: () => false,
+        isSelectMenu: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,
@@ -103,6 +104,9 @@ const interaction = (type: ContextType, phase = "new", caller = "caller") => {
         isChannelSelectMenu: () => false,
         isModalSubmit: () => false,
         isAutocomplete: () => false,
+        isContextMenuCommand: () =>
+            type === ApplicationCommandType.User ||
+            type === ApplicationCommandType.Message,
         isUserContextMenuCommand: () => type === ApplicationCommandType.User,
         isMessageContextMenuCommand: () =>
             type === ApplicationCommandType.Message,

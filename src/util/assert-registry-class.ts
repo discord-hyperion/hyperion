@@ -1,8 +1,8 @@
-interface RegistryBaseClass<Instance> {
+export type RegistryBaseClass<Instance> = {
     readonly prototype: Instance;
     readonly name: string;
     [Symbol.hasInstance](value: unknown): boolean;
-}
+};
 
 export const assertRegistryClass: <Instance>(
     defaultExport: unknown,

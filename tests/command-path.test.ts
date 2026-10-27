@@ -3,7 +3,10 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { parseCommandPath } from "../src/registries/parse-command-path.ts";
+import {
+    classifyCommandPath,
+    parseCommandPath,
+} from "../src/registries/parse-command-path.ts";
 import { discoverModules } from "../src/util/index.ts";
 
 test("regular command files have no parent or group", () => {
@@ -11,6 +14,33 @@ test("regular command files have no parent or group", () => {
         categories: [],
         moduleName: "ping",
     });
+});
+
+test("classification owns executable kinds and ignores ordinary barrels before import", () => {
+    for (const [filename, kind] of [
+        ["ping.ts", "command"],
+        ["[tools]/index.ts", "parent"],
+        ["[tools]/{diagnostics}/index.ts", "group"],
+        ["[tools]/{diagnostics}/uptime.ts", "subcommand"],
+    ]) {
+        assert.ok(filename);
+        assert.equal(classifyCommandPath(filename)?.kind, kind);
+        assert.deepEqual(
+            classifyCommandPath(filename)?.path,
+            parseCommandPath(filename),
+        );
+    }
+    for (const filename of [
+        "index.ts",
+        "(general)/index.ts",
+        "[tools]/{diagnostics}/(helpers)/index.ts",
+    ]) {
+        assert.equal(classifyCommandPath(filename), undefined);
+        assert.throws(() => parseCommandPath(filename));
+    }
+    assert.throws(() =>
+        classifyCommandPath("[tools]/{diagnostics}/{nested}/uptime.ts"),
+    );
 });
 
 test("legacy plain folders remain organizational", () => {

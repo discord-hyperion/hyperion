@@ -68,6 +68,7 @@ const interaction = (phase = "new", message = "Private submitted text") => {
         ephemeral: phase === "defer-reply" ? true : null,
         isChatInputCommand: () => false,
         isButton: () => false,
+        isSelectMenu: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,

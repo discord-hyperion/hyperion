@@ -253,6 +253,7 @@ test("autocomplete and deployment do not invoke inherited guard factories", asyn
         user: { id: "user" },
         isChatInputCommand: () => false,
         isButton: () => false,
+        isSelectMenu: () => false,
         isStringSelectMenu: () => false,
         isUserSelectMenu: () => false,
         isRoleSelectMenu: () => false,

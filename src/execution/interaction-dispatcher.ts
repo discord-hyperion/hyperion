@@ -1,5 +1,4 @@
 import {
-    ApplicationCommandType,
     type AutocompleteInteraction,
     type ChatInputCommandInteraction,
     Events,
@@ -48,13 +47,7 @@ export class InteractionDispatcher {
                 { client: this.client, interaction, logger },
                 "button",
             );
-        } else if (
-            interaction.isStringSelectMenu() ||
-            interaction.isUserSelectMenu() ||
-            interaction.isRoleSelectMenu() ||
-            interaction.isMentionableSelectMenu() ||
-            interaction.isChannelSelectMenu()
-        ) {
+        } else if (interaction.isSelectMenu()) {
             const selectMenu = this.client.selectMenus.get(
                 interaction.customId,
             );
@@ -91,10 +84,7 @@ export class InteractionDispatcher {
             );
         } else if (interaction.isAutocomplete()) {
             await this.dispatchAutocomplete(interaction);
-        } else if (
-            interaction.isUserContextMenuCommand() ||
-            interaction.isMessageContextMenuCommand()
-        ) {
+        } else if (interaction.isContextMenuCommand()) {
             await this.dispatchCommand(interaction);
         }
     }
@@ -105,15 +95,16 @@ export class InteractionDispatcher {
             | UserContextMenuCommandInteraction
             | MessageContextMenuCommandInteraction,
     ) {
-        const subcommand =
-            interaction.commandType === ApplicationCommandType.ChatInput
-                ? this.subcommandName(interaction)
-                : undefined;
+        const subcommand = interaction.isChatInputCommand()
+            ? this.subcommandName(interaction)
+            : undefined;
+
         const group =
-            interaction.commandType === ApplicationCommandType.ChatInput &&
+            interaction.isChatInputCommand() &&
             this.client.commands.hasSubcommands(interaction.commandName)
                 ? (interaction.options.getSubcommandGroup(false) ?? undefined)
                 : undefined;
+
         const logger = this.createLogger(interaction, {
             command: interaction.commandName,
             commandType: interaction.commandType,
@@ -122,7 +113,7 @@ export class InteractionDispatcher {
         });
 
         if (
-            interaction.commandType === ApplicationCommandType.ChatInput &&
+            interaction.isChatInputCommand() &&
             this.client.commands.hasSubcommands(interaction.commandName)
         ) {
             const command = subcommand

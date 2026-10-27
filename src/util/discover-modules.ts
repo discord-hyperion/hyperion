@@ -1,6 +1,12 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 
+export const isModuleFilename = (filename: string, includeIndexes = false) =>
+    /\.[cm]?[jt]s$/.test(filename) &&
+    !/\.d\.[cm]?ts$/.test(filename) &&
+    (includeIndexes || !/^index\./.test(filename)) &&
+    !/\.(?:test|spec)\.[cm]?[jt]s$/.test(filename);
+
 /** A missing root is optional; filesystem failures below it still propagate. */
 export const discoverModules = async (
     directory: string,
@@ -40,10 +46,7 @@ export const discoverModules = async (
                 files.push(...(await discover(entryPath)));
             } else if (
                 entry.isFile() &&
-                /\.(?:[cm]?ts|[cm]?js)$/.test(entry.name) &&
-                !/\.d\.[cm]?ts$/.test(entry.name) &&
-                (!/^index\./.test(entry.name) || options.includeIndexes) &&
-                !/\.(?:test|spec)\.[cm]?[jt]s$/.test(entry.name)
+                isModuleFilename(entry.name, options.includeIndexes)
             ) {
                 files.push(entryPath);
             }
