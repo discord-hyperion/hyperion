@@ -2,12 +2,10 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { mock, type TestContext, test } from "node:test";
+import { type TestContext, test } from "node:test";
 import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
-    type AutocompleteInteraction,
-    type ChatInputCommandInteraction,
     DiscordAPIError,
     MessageFlags,
     REST,
@@ -17,6 +15,10 @@ import {
     HyperionClient,
     InteractionDispatcher,
 } from "../src/index.ts";
+import {
+    createAutocompleteInteraction,
+    createChatInputInteraction,
+} from "./fixtures/interactions.ts";
 
 const entryPoint = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
@@ -90,44 +92,19 @@ const interaction = (
     group: string | null = null,
     autocomplete = false,
 ) => {
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const respond = mock.fn(async (_payload: unknown) => {
-        value.responded = true;
-    });
-    const value = {
+    const data = {
         id: "subcommand-interaction",
         commandName: "tools",
-        commandType: ApplicationCommandType.ChatInput,
         user: { id: "allowed" },
         guildId: "guild",
-        responded: false,
-        deferred: false,
-        replied: false,
-        isChatInputCommand: () => !autocomplete,
-        isButton: () => false,
-        isSelectMenu: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => false,
-        isAutocomplete: () => autocomplete,
         options: {
-            getSubcommand: (_required: boolean) => subcommand,
-            getSubcommandGroup: (_required: boolean) => group,
-            getFocused: () => ({ name: "query", value: "private-query" }),
+            getSubcommand: () => subcommand,
+            getSubcommandGroup: () => group,
         },
-        reply,
-        respond,
     };
-    return {
-        value: value as unknown as
-            | ChatInputCommandInteraction
-            | AutocompleteInteraction,
-        reply,
-        respond,
-    };
+    return autocomplete
+        ? createAutocompleteInteraction(data)
+        : createChatInputInteraction(data);
 };
 
 test("subcommands use folder parents and builder leaf names, preserving ordinary lookups", async t => {
@@ -302,12 +279,12 @@ test("dispatch selects only the requested leaf and runs its guards", async t => 
     await client.commands.load(root);
     const dispatcher = new InteractionDispatcher(client);
     const allowed = interaction("ping");
-    await dispatcher.dispatch(allowed.value);
+    await dispatcher.dispatch(allowed.interaction);
     assert.equal(allowed.reply.mock.calls[0]?.arguments[0], "ping");
 
     const rejected = interaction("ping");
-    Object.assign(rejected.value, { user: { id: "denied" } });
-    await dispatcher.dispatch(rejected.value);
+    Object.assign(rejected.interaction, { user: { id: "denied" } });
+    await dispatcher.dispatch(rejected.interaction);
     assert.deepEqual(rejected.reply.mock.calls[0]?.arguments[0], {
         content: "Not allowed",
         flags: MessageFlags.Ephemeral,
@@ -318,7 +295,7 @@ test("dispatch selects only the requested leaf and runs its guards", async t => 
         interaction(null),
         interaction("ping", "group"),
     ]) {
-        await dispatcher.dispatch(item.value);
+        await dispatcher.dispatch(item.interaction);
         assert.deepEqual(item.reply.mock.calls[0]?.arguments[0], {
             content:
                 "This command is no longer available. Please try again later.",
@@ -349,7 +326,7 @@ test("autocomplete resolves the leaf, skips guards, and falls back to empty choi
     await client.commands.load(root);
     const dispatcher = new InteractionDispatcher(client);
     const search = interaction("search", null, true);
-    await dispatcher.dispatch(search.value);
+    await dispatcher.dispatch(search.interaction);
     assert.equal(search.respond.mock.callCount(), 1);
     assert.deepEqual(search.respond.mock.calls[0]?.arguments[0], [
         { name: "Result", value: "result" },
@@ -357,7 +334,7 @@ test("autocomplete resolves the leaf, skips guards, and falls back to empty choi
 
     for (const name of ["ping", "missing"]) {
         const item = interaction(name, null, true);
-        await dispatcher.dispatch(item.value);
+        await dispatcher.dispatch(item.interaction);
         assert.deepEqual(item.respond.mock.calls[0]?.arguments[0], []);
         assert.equal(item.reply.mock.callCount(), 0);
     }
@@ -464,7 +441,7 @@ test("development subcommands load and execute through the client listener", asy
     t.after(() => client.destroy());
     const ping = interaction("ping");
 
-    client.emit("interactionCreate", ping.value);
+    client.emit("interactionCreate", ping.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(put.mock.callCount(), 1);

@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { mock, type TestContext, test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { type ChatInputCommandInteraction, MessageFlags } from "discord.js";
+import { MessageFlags } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { Command, type CommandContext } from "../src/commands/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { Guard, type GuardProvider, OwnerOnly } from "../src/guards/index.ts";
+import { createChatInputInteraction } from "./fixtures/interactions.ts";
 
 class Check extends Guard {
     constructor(
@@ -63,23 +64,14 @@ const setup = async (t: TestContext) => {
 const interaction = (
     phase: "new" | "deferred" | "replied" = "new",
     userId = "owner",
-) => {
-    const reply = mock.fn(async (_options: unknown) => undefined);
-    const editReply = mock.fn(async (_options: unknown) => undefined);
-    const followUp = mock.fn(async (_options: unknown) => undefined);
-    const value = {
+) =>
+    createChatInputInteraction({
         id: userId,
         commandName: "test",
         user: { id: userId },
         deferred: phase === "deferred",
         replied: phase === "replied",
-        isChatInputCommand: () => true,
-        reply,
-        editReply,
-        followUp,
-    } as unknown as ChatInputCommandInteraction;
-    return { value, reply, editReply, followUp };
-};
+    });
 
 test("shared guards and lazy async factories run in order with the handler's context", async t => {
     const { client, dispatcher, records } = await setup(t);
@@ -111,7 +103,7 @@ test("shared guards and lazy async factories run in order with the handler's con
         ),
     );
     assert.equal(factory.mock.callCount(), 0);
-    await dispatcher.dispatch(interaction().value);
+    await dispatcher.dispatch(interaction().interaction);
     assert.deepEqual(order, ["first", "factory", "second", "handler"]);
     assert.equal(
         records.filter(record => record.event === "guard.passed").length,
@@ -130,7 +122,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
             new GuardedCommand([new Check(() => false), later], execute),
         );
         const fixture = interaction(phase);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
         assert.equal(later.mock.callCount(), 0);
         assert.equal(execute.mock.callCount(), 0);
         assert.equal(fixture.reply.mock.callCount(), phase === "new" ? 1 : 0);
@@ -180,7 +172,7 @@ test("custom onFail preserves its receiver and owns the response", async t => {
         new GuardedCommand([new CustomCheck(() => false)]),
     );
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
     assert.equal(failed, 1);
     assert.equal(fixture.reply.mock.callCount(), 1);
     assert.equal(fixture.reply.mock.calls[0]?.arguments[0], "Custom rejection");
@@ -188,7 +180,7 @@ test("custom onFail preserves its receiver and owns the response", async t => {
         "test",
         new GuardedCommand([new CustomCheck(() => true)]),
     );
-    await dispatcher.dispatch(interaction().value);
+    await dispatcher.dispatch(interaction().interaction);
     assert.equal(failed, 1);
 });
 
@@ -213,8 +205,8 @@ test("factories create independent instances for concurrent invocations", async 
         ]),
     );
     await Promise.all([
-        dispatcher.dispatch(interaction("new", "first").value),
-        dispatcher.dispatch(interaction("new", "second").value),
+        dispatcher.dispatch(interaction("new", "first").interaction),
+        dispatcher.dispatch(interaction("new", "second").interaction),
     ]);
     assert.deepEqual(users.sort(), ["first", "second"]);
     assert.equal(instances.length, 2);
@@ -245,7 +237,7 @@ for (const [name, provider] of Object.entries(brokenProviders)) {
         const execute = mock.fn(async (_ctx: CommandContext) => {});
         client.commands.set("test", new GuardedCommand([provider], execute));
         const fixture = interaction();
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
         assert.equal(execute.mock.callCount(), 0);
         assert.deepEqual(fixture.reply.mock.calls[0]?.arguments[0], {
             content: "Something went wrong while running this command.",
@@ -270,7 +262,7 @@ test("onFail errors and response delivery errors cannot reach the command", asyn
     fixture.reply.mock.mockImplementation(async () => {
         throw new Error("Expired");
     });
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
     assert.equal(execute.mock.callCount(), 0);
     assert.ok(records.some(record => record.event === "command.failed"));
     assert.ok(
@@ -293,8 +285,8 @@ test("OwnerOnly allows the API owner and denies others or failed lookups", async
     const { client, dispatcher } = await setup(t);
     const execute = mock.fn(async (_ctx: CommandContext) => {});
     client.commands.set("test", new GuardedCommand([new OwnerOnly()], execute));
-    await dispatcher.dispatch(interaction().value);
-    await dispatcher.dispatch(interaction("new", "other").value);
+    await dispatcher.dispatch(interaction().interaction);
+    await dispatcher.dispatch(interaction("new", "other").interaction);
     assert.equal(execute.mock.callCount(), 1);
     const empty = await setup(t);
     t.mock.method(empty.client, "getOwnerId", async () => {
@@ -304,6 +296,6 @@ test("OwnerOnly allows the API owner and denies others or failed lookups", async
         "test",
         new GuardedCommand([new OwnerOnly()], execute),
     );
-    await empty.dispatcher.dispatch(interaction().value);
+    await empty.dispatcher.dispatch(interaction().interaction);
     assert.equal(execute.mock.callCount(), 1);
 });

@@ -5,14 +5,7 @@ import {
     MessageContextCommandBuilder,
     UserContextCommandBuilder,
 } from "@discordjs/builders";
-import {
-    ApplicationCommandType,
-    type AutocompleteInteraction,
-    Events,
-    type MessageContextMenuCommandInteraction,
-    MessageFlags,
-    type UserContextMenuCommandInteraction,
-} from "discord.js";
+import { ApplicationCommandType, Events, MessageFlags } from "discord.js";
 import {
     Command,
     type CommandContext,
@@ -23,6 +16,11 @@ import {
     InteractionDispatcher,
     OwnerOnly,
 } from "../src/index.ts";
+
+import {
+    createMessageContextInteraction,
+    createUserContextInteraction,
+} from "./fixtures/interactions.ts";
 
 type ContextType = ApplicationCommandType.User | ApplicationCommandType.Message;
 type MenuContext = CommandContext<ContextType>;
@@ -66,58 +64,32 @@ class MessageCommand extends Command<ApplicationCommandType.Message> {
 }
 
 const interaction = (type: ContextType, phase = "new", caller = "caller") => {
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const editReply = mock.fn(async (_payload: unknown) => {});
-    const followUp = mock.fn(async (_payload: unknown) => {});
-    const showModal = mock.fn(async (_payload: unknown) => {});
-    const value = {
+    const data = {
         id: "context-command",
         commandName: "Inspect",
-        commandType: type,
         guildId: "guild",
         user: { id: caller },
-        ...(type === ApplicationCommandType.User
-            ? {
-                  targetUser: {
-                      id: "selected-user",
-                      username: "Private target user",
-                  },
-                  targetMember: null,
-              }
-            : {
-                  targetMessage: {
-                      id: "selected-message",
-                      content: "Private target content",
-                      author: { username: "Private target author" },
-                  },
-              }),
         deferred: phase === "deferred",
         replied: phase === "replied",
         ephemeral: phase === "deferred" ? false : null,
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => false,
-        isAutocomplete: () => false,
-        isContextMenuCommand: () =>
-            type === ApplicationCommandType.User ||
-            type === ApplicationCommandType.Message,
-        isUserContextMenuCommand: () => type === ApplicationCommandType.User,
-        isMessageContextMenuCommand: () =>
-            type === ApplicationCommandType.Message,
-        reply,
-        editReply,
-        followUp,
-        showModal,
-    } as unknown as
-        | UserContextMenuCommandInteraction
-        | MessageContextMenuCommandInteraction;
-    return { value, reply, editReply, followUp, showModal };
+    };
+    return type === ApplicationCommandType.User
+        ? createUserContextInteraction({
+              ...data,
+              targetUser: {
+                  id: "selected-user",
+                  username: "Private target user",
+              },
+              targetMember: null,
+          })
+        : createMessageContextInteraction({
+              ...data,
+              targetMessage: {
+                  id: "selected-message",
+                  content: "Private target content",
+                  author: { username: "Private target author" },
+              },
+          });
 };
 
 const setup = async (t: TestContext) => {
@@ -161,7 +133,7 @@ for (const type of [
                 : new MessageCommand(execute);
         client.commands.set(CommandRegistry.key("Inspect", type), command);
         const fixture = interaction(type);
-        client.emit(Events.InteractionCreate, fixture.value);
+        client.emit(Events.InteractionCreate, fixture.interaction);
         await client.waitForAllListenersToComplete();
 
         assert.equal(execute.mock.callCount(), 1);
@@ -203,7 +175,7 @@ for (const type of [
         client.commands.set(CommandRegistry.key("Inspect", type), command);
         assert.equal(factory.mock.callCount(), 0);
         const fixture = interaction(type);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.equal(factory.mock.callCount(), 1);
         assert.equal(later.mock.callCount(), 0);
@@ -225,10 +197,12 @@ for (const type of [
                 : new MessageCommand(execute, [new OwnerOnly()]),
         );
         const denied = interaction(type);
-        await dispatcher.dispatch(denied.value);
+        await dispatcher.dispatch(denied.interaction);
         assert.equal(execute.mock.callCount(), 0);
         assert.equal(denied.reply.mock.callCount(), 1);
-        await dispatcher.dispatch(interaction(type, "new", "owner").value);
+        await dispatcher.dispatch(
+            interaction(type, "new", "owner").interaction,
+        );
         assert.equal(execute.mock.callCount(), 1);
     });
 
@@ -247,7 +221,7 @@ for (const type of [
                         : new MessageCommand(fail, guards),
                 );
                 const fixture = interaction(type, phase);
-                await dispatcher.dispatch(fixture.value);
+                await dispatcher.dispatch(fixture.interaction);
                 const response =
                     phase === "new"
                         ? fixture.reply
@@ -296,7 +270,7 @@ for (const type of [
             other,
         );
         const fixture = interaction(type);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.equal(execute.mock.callCount(), 0);
         assert.deepEqual(fixture.reply.mock.calls[0]?.arguments[0], {
@@ -311,7 +285,7 @@ for (const type of [
         t.mock.method(client, "getOwnerId", async () => "owner");
         await client.commands.load(new URL("../dev/bot/", import.meta.url));
         const fixture = interaction(type, "new", "owner");
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.equal(fixture.reply.mock.callCount(), 1);
         assert.deepEqual(fixture.reply.mock.calls[0]?.arguments[0], {
@@ -345,8 +319,8 @@ test("shared context command names resolve independently and concurrent contexts
     const user = interaction(ApplicationCommandType.User);
     const message = interaction(ApplicationCommandType.Message);
     await Promise.all([
-        dispatcher.dispatch(user.value),
-        dispatcher.dispatch(message.value),
+        dispatcher.dispatch(user.interaction),
+        dispatcher.dispatch(message.interaction),
     ]);
 
     assert.notEqual(contexts[0], contexts[1]);
@@ -367,7 +341,7 @@ test("expired context command responses are contained and handlers can open a mo
         }),
     );
     const fixture = interaction(ApplicationCommandType.User);
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
     assert.equal(fixture.showModal.mock.callCount(), 1);
     assert.equal(fixture.reply.mock.callCount(), 0);
 
@@ -377,10 +351,11 @@ test("expired context command responses are contained and handlers can open a mo
             throw new Error("Failed");
         }),
     );
-    fixture.reply.mock.mockImplementation(async () => {
+    const expired = interaction(ApplicationCommandType.User);
+    expired.reply.mock.mockImplementation(async () => {
         throw new Error("Expired");
     });
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, expired.interaction);
     await client.waitForAllListenersToComplete();
     assert.ok(
         records.some(
@@ -398,14 +373,13 @@ test("autocomplete never invokes a same-named context-menu handler", async t => 
     );
     const fixture = interaction(ApplicationCommandType.User);
     const respond = mock.fn(async (_choices: unknown) => {});
-    Object.assign(fixture.value, {
+    // Deliberately contradictory predicates verify autocomplete dispatch priority.
+    Object.assign(fixture.interaction, {
         responded: false,
         isAutocomplete: () => true,
         respond,
     });
-    await dispatcher.dispatch(
-        fixture.value as unknown as AutocompleteInteraction,
-    );
+    await dispatcher.dispatch(fixture.interaction);
     assert.equal(execute.mock.callCount(), 0);
     assert.deepEqual(respond.mock.calls[0]?.arguments[0], []);
 });

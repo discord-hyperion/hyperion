@@ -1,20 +1,15 @@
 import assert from "node:assert/strict";
 import { mock, type TestContext, test } from "node:test";
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
-import {
-    type ChatInputCommandInteraction,
-    Collection,
-    ComponentType,
-    Events,
-    type MentionableSelectMenuInteraction,
-    MessageFlags,
-    type Role,
-    type User,
-} from "discord.js";
+import { Collection, ComponentType, Events, MessageFlags } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { SelectMenu, type SelectMenuContext } from "../src/components/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { Guard, type GuardProvider } from "../src/guards/index.ts";
+import {
+    createChatInputInteraction,
+    createSelectInteraction,
+} from "./fixtures/interactions.ts";
 
 type MentionableContext = SelectMenuContext<ComponentType.MentionableSelect>;
 
@@ -36,29 +31,19 @@ class MentionableMenu extends SelectMenu<ComponentType.MentionableSelect> {
     }
 }
 
-const interaction = (phase = "new", values = ["role", "person"]) => {
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const editReply = mock.fn(async (_payload: unknown) => {});
-    const followUp = mock.fn(async (_payload: unknown) => {});
-    const update = mock.fn(async (_payload: unknown) => {});
-    const value = {
+const interaction = (phase = "new", values = ["role", "person"]) =>
+    createSelectInteraction(ComponentType.MentionableSelect, {
         id: "mentionable-selection",
-        componentType: ComponentType.MentionableSelect,
         customId: "mentionable.choose",
         values,
         users: new Collection(
             values.includes("person")
-                ? [
-                      [
-                          "person",
-                          { id: "person", username: "Selected user" } as User,
-                      ],
-                  ]
+                ? [["person", { id: "person", username: "Selected user" }]]
                 : [],
         ),
         roles: new Collection(
             values.includes("role")
-                ? [["role", { id: "role", name: "Selected role" } as Role]]
+                ? [["role", { id: "role", name: "Selected role" }]]
                 : [],
         ),
         members: new Collection(),
@@ -66,29 +51,7 @@ const interaction = (phase = "new", values = ["role", "person"]) => {
         deferred: phase.startsWith("defer"),
         replied: phase === "replied",
         ephemeral: phase === "defer-reply" ? true : null,
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () =>
-            [
-                value.isStringSelectMenu(),
-                value.isUserSelectMenu(),
-                value.isRoleSelectMenu(),
-                value.isMentionableSelectMenu(),
-                value.isChannelSelectMenu(),
-            ].some(Boolean),
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isMentionableSelectMenu: () => true,
-        reply,
-        editReply,
-        followUp,
-        update,
-    } as unknown as MentionableSelectMenuInteraction;
-
-    return { value, reply, editReply, followUp, update };
-};
+    });
 
 const setup = async (t: TestContext) => {
     const records: Record<string, unknown>[] = [];
@@ -130,7 +93,7 @@ test("mentionable listener exposes mixed resolved data and scoped logs without l
     }
     client.selectMenus.set("mentionable.choose", new Inspect(async () => {}));
     const fixture = interaction();
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(fixture.reply.mock.callCount(), 1);
@@ -156,23 +119,21 @@ test("unknown IDs and string, user, and role type mismatches leave interactions 
         new MentionableMenu(execute, [factory]),
     );
 
-    for (const [predicate, componentType] of [
-        ["isStringSelectMenu", ComponentType.StringSelect],
-        ["isUserSelectMenu", ComponentType.UserSelect],
-        ["isRoleSelectMenu", ComponentType.RoleSelect],
+    for (const componentType of [
+        ComponentType.StringSelect,
+        ComponentType.UserSelect,
+        ComponentType.RoleSelect,
     ] as const) {
         const fixture = interaction();
-        Object.assign(fixture.value, {
+        Object.assign(fixture.interaction, {
             componentType,
-            isMentionableSelectMenu: () => false,
-            [predicate]: () => true,
         });
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
         assert.equal(fixture.reply.mock.callCount(), 0);
     }
     const unknown = interaction();
-    Object.assign(unknown.value, { customId: "unknown" });
-    await dispatcher.dispatch(unknown.value);
+    Object.assign(unknown.interaction, { customId: "unknown" });
+    await dispatcher.dispatch(unknown.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(factory.mock.callCount(), 0);
@@ -200,14 +161,14 @@ test("mentionable guard factories receive mixed resolved data and can reject a s
     );
     assert.equal(factory.mock.callCount(), 0);
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.deepEqual(fixture.reply.mock.calls[0]?.arguments[0], {
         content: "Choose users only.",
         flags: MessageFlags.Ephemeral,
     });
-    await dispatcher.dispatch(interaction("new", ["person"]).value);
+    await dispatcher.dispatch(interaction("new", ["person"]).interaction);
     assert.equal(execute.mock.callCount(), 1);
 });
 
@@ -221,7 +182,7 @@ for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
             }),
         );
         const fixture = interaction(phase);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         const response =
             phase === "new"
@@ -255,15 +216,14 @@ for (const [name, values, expected] of [
         });
         t.after(() => client.destroy());
         await client.commands.load(new URL("../dev/bot/", import.meta.url));
-        const reply = mock.fn(async (_payload: unknown) => {});
         const dispatcher = new InteractionDispatcher(client);
-        await dispatcher.dispatch({
-            id: "mentionable-command",
-            commandName: "mentionable",
-            user: { id: "caller" },
-            isChatInputCommand: () => true,
-            reply,
-        } as unknown as ChatInputCommandInteraction);
+        const { interaction: commandInteraction, reply } =
+            createChatInputInteraction({
+                id: "mentionable-command",
+                commandName: "mentionable",
+                user: { id: "caller" },
+            });
+        await dispatcher.dispatch(commandInteraction);
         const payload = reply.mock.calls[0]?.arguments[0] as {
             components: { toJSON(): unknown }[];
         };
@@ -276,7 +236,7 @@ for (const [name, values, expected] of [
         const template = client.selectMenus
             .get("mentionable.choose")
             ?.builder.toJSON();
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
             content: `Selected: ${expected}.`,

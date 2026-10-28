@@ -4,15 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { mock, test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import {
-    type ChatInputCommandInteraction,
-    Events,
-    MessageFlags,
-    REST,
-} from "discord.js";
+import { Events, InteractionType, MessageFlags, REST } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { Command, type CommandContext } from "../src/commands/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
+
+import { createChatInputInteraction } from "./fixtures/interactions.ts";
 
 class TestCommand extends Command {
     constructor(
@@ -31,42 +28,14 @@ class TestCommand extends Command {
 }
 
 const createInteraction = (
-    state: { deferred?: boolean; replied?: boolean; chatInput?: boolean } = {},
-) => {
-    const reply = mock.fn(async (_options: unknown) => undefined);
-    const editReply = mock.fn(async (_options: unknown) => undefined);
-    const followUp = mock.fn(async (_options: unknown) => undefined);
-    const deferReply = mock.fn(async () => undefined);
-    const showModal = mock.fn(async () => undefined);
-    // Only the interaction surface used by dispatch and these handlers is mocked.
-    const interaction = {
+    state: { deferred?: boolean; replied?: boolean } = {},
+) =>
+    createChatInputInteraction({
         id: "test-interaction",
         user: { id: "test-owner" },
         commandName: "ping",
-        deferred: state.deferred ?? false,
-        replied: state.replied ?? false,
-        isChatInputCommand: () => state.chatInput ?? true,
-        isButton: () => false,
-        isSelectMenu: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => false,
-        isAutocomplete: () => false,
-        isContextMenuCommand: () => false,
-        isUserContextMenuCommand: () => false,
-        isMessageContextMenuCommand: () => false,
-        reply,
-        editReply,
-        followUp,
-        deferReply,
-        showModal,
-    } as unknown as ChatInputCommandInteraction;
-
-    return { interaction, reply, editReply, followUp, deferReply, showModal };
-};
+        ...state,
+    });
 
 test("filesystem-loaded ping runs through the client's interaction listener", async t => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-ping-"));
@@ -140,7 +109,9 @@ test("ignores interactions other than slash commands and buttons", async t => {
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     const execute = mock.fn(async () => undefined);
     client.commands.set("ping", new TestCommand(execute));
-    const fixture = createInteraction({ chatInput: false });
+    const fixture = createInteraction();
+    // Deliberately unsupported interaction: leave every dispatch predicate false.
+    Object.assign(fixture.interaction, { type: InteractionType.Ping });
     await new InteractionDispatcher(client).dispatch(fixture.interaction);
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(fixture.reply.mock.callCount(), 0);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { mock, type TestContext, test } from "node:test";
+import { type TestContext, test } from "node:test";
 import {
     ChatInputCommandBuilder,
     ChatInputCommandSubcommandBuilder,
@@ -12,8 +12,6 @@ import {
 import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
-    type AutocompleteInteraction,
-    type ChatInputCommandInteraction,
     Collection,
     DiscordAPIError,
     MessageFlags,
@@ -27,6 +25,10 @@ import {
     SubcommandGroup,
 } from "../src/index.ts";
 import { parseCommandPath } from "../src/registries/parse-command-path.ts";
+import {
+    createAutocompleteInteraction,
+    createChatInputInteraction,
+} from "./fixtures/interactions.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
@@ -607,21 +609,18 @@ for (const failure of [
         const dispatcher = new InteractionDispatcher(client);
         for (let invocation = 0; invocation < 2; invocation++) {
             const events: string[] = [];
-            const reply = mock.fn(async (_payload: unknown) => {});
-            await dispatcher.dispatch({
+            const request = createChatInputInteraction({
                 id: "guard-test",
                 commandName: "tools",
-                commandType: ApplicationCommandType.ChatInput,
-                isChatInputCommand: () => true,
                 options: {
                     getSubcommand: () => "view",
                     getSubcommandGroup: () => "settings",
                 },
-                events,
-                failure,
-                reply,
                 user: { id: "user" },
-            } as unknown as ChatInputCommandInteraction);
+            });
+            Object.assign(request.interaction, { events, failure });
+            const { reply } = request;
+            await dispatcher.dispatch(request.interaction);
             const expected: string[] = [];
             for (const name of [
                 "parent1",
@@ -688,35 +687,20 @@ test("autocomplete selects the group, skips all guard levels, and never falls ba
     await client.commands.load(root);
     const dispatcher = new InteractionDispatcher(client);
     for (const group of ["settings", "archive", "missing", "no-hook"]) {
-        const respond = mock.fn(async (_payload: unknown) => {});
-        let responded = false;
-        await dispatcher.dispatch({
+        const request = createAutocompleteInteraction({
             id: "complete",
             commandName: "tools",
-            get responded() {
-                return responded;
-            },
             user: { id: "user" },
-            isChatInputCommand: () => false,
-            isButton: () => false,
-            isSelectMenu: () => false,
-            isStringSelectMenu: () => false,
-            isUserSelectMenu: () => false,
-            isRoleSelectMenu: () => false,
-            isMentionableSelectMenu: () => false,
-            isChannelSelectMenu: () => false,
-            isModalSubmit: () => false,
-            isAutocomplete: () => true,
             options: {
                 getSubcommand: () => "view",
                 getSubcommandGroup: () => group,
             },
-            respond: async (choices: unknown[]) => {
-                assert.equal(responded, false);
-                await respond(choices);
-                responded = true;
-            },
-        } as unknown as AutocompleteInteraction);
+        });
+        const { respond } = request;
+        respond.mock.mockImplementation(async () => {
+            assert.equal(request.interaction.responded, false);
+        });
+        await dispatcher.dispatch(request.interaction);
         assert.equal(respond.mock.callCount(), 1);
         assert.deepEqual(
             respond.mock.calls[0]?.arguments[0],
@@ -726,20 +710,18 @@ test("autocomplete selects the group, skips all guard levels, and never falls ba
         );
     }
     const events: string[] = [];
-    const reply = mock.fn(async (_payload: unknown) => {});
-    await dispatcher.dispatch({
+    const request = createChatInputInteraction({
         id: "unknown-group",
         commandName: "tools",
-        commandType: ApplicationCommandType.ChatInput,
-        isChatInputCommand: () => true,
         options: {
             getSubcommand: () => "view",
             getSubcommandGroup: () => "missing",
         },
-        events,
-        reply,
         user: { id: "user" },
-    } as unknown as ChatInputCommandInteraction);
+    });
+    Object.assign(request.interaction, { events });
+    const { reply } = request;
+    await dispatcher.dispatch(request.interaction);
     assert.deepEqual(events, []);
     assert.equal(reply.mock.callCount(), 1);
     assert.equal(

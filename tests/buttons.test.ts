@@ -5,10 +5,9 @@ import path from "node:path";
 import { mock, type TestContext, test } from "node:test";
 import { PrimaryButtonBuilder } from "@discordjs/builders";
 import {
-    type ButtonInteraction,
-    type ChatInputCommandInteraction,
     Collection,
     Events,
+    InteractionType,
     MessageFlags,
     type User,
 } from "discord.js";
@@ -22,14 +21,14 @@ import {
     OwnerOnly,
 } from "../src/guards/index.ts";
 
+import {
+    createButtonInteraction,
+    createChatInputInteraction,
+} from "./fixtures/interactions.ts";
+
 type Phase = "new" | "defer-update" | "defer-reply" | "replied";
-const interaction = (phase: Phase = "new", userId = "owner") => {
-    const reply = mock.fn(async (_options: unknown) => undefined);
-    const editReply = mock.fn(async (_options: unknown) => undefined);
-    const followUp = mock.fn(async (_options: unknown) => undefined);
-    const update = mock.fn(async (_options: unknown) => undefined);
-    const showModal = mock.fn(async (_options: unknown) => undefined);
-    const value = {
+const interaction = (phase: Phase = "new", userId = "owner") =>
+    createButtonInteraction({
         id: `click-${userId}`,
         customId: "refresh",
         guildId: "test-guild",
@@ -41,19 +40,7 @@ const interaction = (phase: Phase = "new", userId = "owner") => {
         deferred: phase.startsWith("defer"),
         replied: phase === "replied",
         ephemeral: phase === "defer-reply" ? true : null,
-        isChatInputCommand: () => false,
-        isButton: () => true,
-        reply,
-        editReply,
-        followUp,
-        update,
-        showModal,
-        deferUpdate: mock.fn(async () => {
-            value.deferred = true;
-        }),
-    } as unknown as ButtonInteraction;
-    return { value, reply, editReply, followUp, update, showModal };
-};
+    });
 
 class TestButton extends Button {
     constructor(
@@ -107,12 +94,12 @@ test("button listener preserves the receiver, awaits async data, and scopes logs
     }
     client.buttons.set("refresh", new Refresh(async () => {}));
     const fixture = interaction();
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
     assert.deepEqual(fixture.editReply.mock.calls[0]?.arguments[0], {
         content: "Ready",
     });
-    assert.equal(fixture.value.deferred, true);
+    assert.equal(fixture.interaction.deferred, true);
     assert.equal(fixture.reply.mock.callCount(), 0);
     const checkpoint = records.find(
         record => record.checkpoint === "data-loaded",
@@ -136,29 +123,17 @@ test("unmatched IDs and unsupported components remain available to collectors", 
     client.buttons.set("refresh", new TestButton(execute));
     for (const customId of ["refresh:unmatched", "hyperion:button:expired:0"]) {
         const unknown = interaction();
-        Object.assign(unknown.value, { customId });
-        await dispatcher.dispatch(unknown.value);
+        Object.assign(unknown.interaction, { customId });
+        await dispatcher.dispatch(unknown.interaction);
 
         assert.equal(unknown.reply.mock.callCount(), 0);
         assert.equal(unknown.followUp.mock.callCount(), 0);
-        assert.equal(unknown.value.deferred, false);
+        assert.equal(unknown.interaction.deferred, false);
     }
     const select = interaction();
-    Object.assign(select.value, {
-        isButton: () => false,
-        isSelectMenu: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => false,
-        isAutocomplete: () => false,
-        isContextMenuCommand: () => false,
-        isUserContextMenuCommand: () => false,
-        isMessageContextMenuCommand: () => false,
-    });
-    await dispatcher.dispatch(select.value);
+    // Deliberately unsupported interaction remains available to collectors.
+    Object.assign(select.interaction, { type: InteractionType.Ping });
+    await dispatcher.dispatch(select.interaction);
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(select.reply.mock.callCount(), 0);
 });
@@ -172,13 +147,13 @@ test("button guards run in order and reject before later factories or handlers",
         new TestButton(execute, [new OwnerOnly(), later]),
     );
     const fixture = interaction("new", "other");
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
     assert.equal(later.mock.callCount(), 0);
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(fixture.reply.mock.callCount(), 1);
     assert.ok(records.some(record => record.event === "button.rejected"));
     assert.ok(!records.some(record => record.event === "button.completed"));
-    await dispatcher.dispatch(interaction().value);
+    await dispatcher.dispatch(interaction().interaction);
     assert.equal(execute.mock.callCount(), 1);
 });
 
@@ -201,7 +176,7 @@ test("custom button guard onFail receives the invocation context", async t => {
         new TestButton(execute, [async () => new Deny()]),
     );
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(fixture.reply.mock.calls[0]?.arguments[0], "Custom rejection");
 });
@@ -225,12 +200,12 @@ test("Cooldown factories share state while selecting a separate key per user", a
     client.buttons.set("refresh", new TestButton(execute, [factory]));
     assert.equal(factory.mock.callCount(), 0);
 
-    await dispatcher.dispatch(interaction().value);
+    await dispatcher.dispatch(interaction().interaction);
     assert.equal(execute.mock.callCount(), 1);
     assert.equal(entries.get("refresh:owner"), 6_000);
 
     const repeated = interaction();
-    await dispatcher.dispatch(repeated.value);
+    await dispatcher.dispatch(repeated.interaction);
     assert.equal(execute.mock.callCount(), 1);
     assert.deepEqual(repeated.reply.mock.calls[0]?.arguments[0], {
         content: "Please wait before using this interaction again.",
@@ -238,11 +213,11 @@ test("Cooldown factories share state while selecting a separate key per user", a
     });
     assert.equal(entries.get("refresh:owner"), 6_000);
 
-    await dispatcher.dispatch(interaction("new", "another-user").value);
+    await dispatcher.dispatch(interaction("new", "another-user").interaction);
     assert.equal(execute.mock.callCount(), 2);
 
     now = 6_000;
-    await dispatcher.dispatch(interaction().value);
+    await dispatcher.dispatch(interaction().interaction);
     assert.equal(execute.mock.callCount(), 3);
     assert.equal(entries.get("refresh:owner"), 11_000);
     assert.equal(entries.has("refresh:another-user"), false);
@@ -282,7 +257,7 @@ for (const phase of [
             }),
         );
         const fixture = interaction(phase);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
         const response =
             phase === "new"
                 ? fixture.reply
@@ -320,7 +295,7 @@ test("factory errors fail closed and failed error deliveries are contained", asy
     fixture.reply.mock.mockImplementation(async () => {
         throw new Error("Expired");
     });
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(
@@ -350,15 +325,15 @@ test("button invocations keep async state separate and never auto-acknowledge", 
     const first = interaction("new", "first");
     const second = interaction("new", "second");
     await Promise.all([
-        dispatcher.dispatch(first.value),
-        dispatcher.dispatch(second.value),
+        dispatcher.dispatch(first.interaction),
+        dispatcher.dispatch(second.interaction),
     ]);
     assert.notEqual(contexts[0], contexts[1]);
     assert.equal(first.showModal.mock.callCount(), 1);
     assert.equal(second.showModal.mock.callCount(), 1);
     assert.equal(first.reply.mock.callCount(), 0);
-    assert.equal(first.value.deferred, false);
-    assert.equal(second.value.deferred, false);
+    assert.equal(first.interaction.deferred, false);
+    assert.equal(second.interaction.deferred, false);
 });
 
 test("development profile command and button complete the async refresh flow", async t => {
@@ -391,14 +366,13 @@ test("development profile command and button complete the async refresh flow", a
         async () => ({ username: "Refreshed user" }) as User,
     );
     const dispatcher = new InteractionDispatcher(client);
-    const reply = mock.fn(async (_options: unknown) => undefined);
-    await dispatcher.dispatch({
-        id: "profile-command",
-        commandName: "profile",
-        user: { id: "owner" },
-        isChatInputCommand: () => true,
-        reply,
-    } as unknown as ChatInputCommandInteraction);
+    const { interaction: commandInteraction, reply } =
+        createChatInputInteraction({
+            id: "profile-command",
+            commandName: "profile",
+            user: { id: "owner" },
+        });
+    await dispatcher.dispatch(commandInteraction);
     assert.equal(reply.mock.callCount(), 1);
     const payload = reply.mock.calls[0]?.arguments[0] as {
         flags: number;
@@ -413,8 +387,8 @@ test("development profile command and button complete the async refresh flow", a
     const button = client.buttons.get("profile.refresh");
     const template = button?.builder.toJSON();
     const fixture = interaction();
-    Object.assign(fixture.value, { customId: "profile.refresh" });
-    await dispatcher.dispatch(fixture.value);
+    Object.assign(fixture.interaction, { customId: "profile.refresh" });
+    await dispatcher.dispatch(fixture.interaction);
     assert.equal(fetch.mock.callCount(), 1);
     assert.deepEqual(fetch.mock.calls[0]?.arguments, [
         "owner",

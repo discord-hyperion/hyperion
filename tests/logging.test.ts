@@ -4,11 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { type ChatInputCommandInteraction, Client, REST } from "discord.js";
+import { Client, REST } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { Command, type CommandContext } from "../src/commands/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { LogManager } from "../src/logging/index.ts";
+import { createChatInputInteraction } from "./fixtures/interactions.ts";
 
 interface LogRecord {
     event?: string;
@@ -132,14 +133,12 @@ test("command context gets a correlated logger and completion timing", async t =
         }
     }
     client.commands.set("ping", new LoggedCommand());
-    const interaction = {
+    const { interaction } = createChatInputInteraction({
         id: "execution-123",
         commandName: "ping",
         guildId: "guild-123",
         user: { id: "user-123" },
-        isChatInputCommand: () => true,
-        reply: async () => undefined,
-    } as unknown as ChatInputCommandInteraction;
+    });
     await new InteractionDispatcher(client).dispatch(interaction);
     const records = capture.records();
     const checkpoint = records.find(record => record.checkpoint === "ready");
@@ -179,15 +178,14 @@ test("errors stay visible at error level and users still receive error responses
     }
     client.commands.set("ping", new BrokenCommand());
     let replies = 0;
-    const interaction = {
+    const fixture = createChatInputInteraction({
         id: "failure-123",
         commandName: "ping",
-        isChatInputCommand: () => true,
-        reply: async () => {
-            replies++;
-        },
-    } as unknown as ChatInputCommandInteraction;
-    await new InteractionDispatcher(client).dispatch(interaction);
+    });
+    fixture.reply.mock.mockImplementation(async () => {
+        replies++;
+    });
+    await new InteractionDispatcher(client).dispatch(fixture.interaction);
     assert.equal(replies, 1);
     assert.deepEqual(
         capture.records().map(record => record.event),

@@ -8,10 +8,7 @@ import {
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
 import {
-    type APIChannel,
-    type ChannelSelectMenuInteraction,
     ChannelType,
-    type ChatInputCommandInteraction,
     Collection,
     ComponentType,
     Events,
@@ -21,6 +18,10 @@ import { HyperionClient } from "../src/client/index.ts";
 import { SelectMenu, type SelectMenuContext } from "../src/components/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { Guard, type GuardProvider } from "../src/guards/index.ts";
+import {
+    createChatInputInteraction,
+    createSelectInteraction,
+} from "./fixtures/interactions.ts";
 
 type ChannelContext = SelectMenuContext<ComponentType.ChannelSelect>;
 
@@ -42,14 +43,9 @@ class ChannelMenu extends SelectMenu<ComponentType.ChannelSelect> {
     }
 }
 
-const interaction = (phase = "new", ids = ["selected"]) => {
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const editReply = mock.fn(async (_payload: unknown) => {});
-    const followUp = mock.fn(async (_payload: unknown) => {});
-    const update = mock.fn(async (_payload: unknown) => {});
-    const value = {
+const interaction = (phase = "new", ids = ["selected"]) =>
+    createSelectInteraction(ComponentType.ChannelSelect, {
         id: "channel-selection",
-        componentType: ComponentType.ChannelSelect,
         customId: "channel.choose",
         values: ids,
         channels: new Collection(
@@ -59,36 +55,14 @@ const interaction = (phase = "new", ids = ["selected"]) => {
                     id,
                     name: `name-${id}`,
                     type: ChannelType.GuildText,
-                } as APIChannel,
+                },
             ]),
         ),
         user: { id: "caller" },
         deferred: phase.startsWith("defer"),
         replied: phase === "replied",
         ephemeral: phase === "defer-reply" ? true : null,
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () =>
-            [
-                value.isStringSelectMenu(),
-                value.isUserSelectMenu(),
-                value.isRoleSelectMenu(),
-                value.isMentionableSelectMenu(),
-                value.isChannelSelectMenu(),
-            ].some(Boolean),
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isChannelSelectMenu: () => true,
-        isMentionableSelectMenu: () => false,
-        reply,
-        editReply,
-        followUp,
-        update,
-    } as unknown as ChannelSelectMenuInteraction;
-
-    return { value, reply, editReply, followUp, update };
-};
+    });
 
 const setup = async (t: TestContext) => {
     const records: Record<string, unknown>[] = [];
@@ -129,7 +103,7 @@ test("channel select listener provides resolved channels and scoped logs without
     }
     client.selectMenus.set("channel.choose", new Inspect(async () => {}));
     const fixture = interaction("new", ["first", "second"]);
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(fixture.reply.mock.callCount(), 1);
@@ -157,24 +131,22 @@ test("unknown IDs and type mismatches never run a handler or guard", async t => 
         new ChannelMenu(execute, [factory]),
     );
 
-    for (const [predicate, componentType] of [
-        ["isStringSelectMenu", ComponentType.StringSelect],
-        ["isUserSelectMenu", ComponentType.UserSelect],
-        ["isRoleSelectMenu", ComponentType.RoleSelect],
-        ["isMentionableSelectMenu", ComponentType.MentionableSelect],
+    for (const componentType of [
+        ComponentType.StringSelect,
+        ComponentType.UserSelect,
+        ComponentType.RoleSelect,
+        ComponentType.MentionableSelect,
     ] as const) {
         const wrongType = interaction();
-        Object.assign(wrongType.value, {
+        Object.assign(wrongType.interaction, {
             componentType,
-            isChannelSelectMenu: () => false,
-            [predicate]: () => true,
         });
-        await dispatcher.dispatch(wrongType.value);
+        await dispatcher.dispatch(wrongType.interaction);
         assert.equal(wrongType.reply.mock.callCount(), 0);
     }
     const unknown = interaction();
-    Object.assign(unknown.value, { customId: "unknown" });
-    await dispatcher.dispatch(unknown.value);
+    Object.assign(unknown.interaction, { customId: "unknown" });
+    await dispatcher.dispatch(unknown.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(factory.mock.callCount(), 0);
@@ -206,7 +178,7 @@ test("channel select guards resolve lazily with resolved channels and support cu
     assert.equal(factory.mock.callCount(), 0);
 
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(factory.mock.callCount(), 1);
     assert.equal(execute.mock.callCount(), 0);
@@ -280,7 +252,7 @@ test("channel interactions cannot invoke other select types with the same ID", a
     for (const menu of menus) {
         client.selectMenus.set("channel.choose", menu);
         const fixture = interaction();
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
         assert.equal(fixture.reply.mock.callCount(), 0);
         assert.equal(fixture.update.mock.callCount(), 0);
     }
@@ -312,7 +284,7 @@ test("channel guard rejection and exceptions use the shared private response pip
             ]),
         );
         const fixture = interaction("defer-update");
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.deepEqual(fixture.followUp.mock.calls[0]?.arguments[0], {
             content: fails
@@ -336,7 +308,7 @@ for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
             }),
         );
         const fixture = interaction(phase);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         const response =
             phase === "new"
@@ -370,15 +342,14 @@ for (const [label, ids, expected] of [
         });
         t.after(() => client.destroy());
         await client.commands.load(new URL("../dev/bot/", import.meta.url));
-        const reply = mock.fn(async (_payload: unknown) => {});
         const dispatcher = new InteractionDispatcher(client);
-        await dispatcher.dispatch({
-            id: "channel-command",
-            commandName: "channel",
-            user: { id: "caller" },
-            isChatInputCommand: () => true,
-            reply,
-        } as unknown as ChatInputCommandInteraction);
+        const { interaction: commandInteraction, reply } =
+            createChatInputInteraction({
+                id: "channel-command",
+                commandName: "channel",
+                user: { id: "caller" },
+            });
+        await dispatcher.dispatch(commandInteraction);
         const payload = reply.mock.calls[0]?.arguments[0] as {
             components: { toJSON(): unknown }[];
         };
@@ -396,16 +367,16 @@ for (const [label, ids, expected] of [
 
         const fixture = interaction("new", [...ids]);
         if (label === "unnamed") {
-            Object.assign(fixture.value.channels.get("unnamed") ?? {}, {
+            Object.assign(fixture.interaction.channels.get("unnamed") ?? {}, {
                 name: null,
             });
         } else if (label === "missing") {
-            fixture.value.channels.clear();
+            fixture.interaction.channels.clear();
         }
         const template = client.selectMenus
             .get("channel.choose")
             ?.builder.toJSON();
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
             content: `Selected channels: ${expected}.`,

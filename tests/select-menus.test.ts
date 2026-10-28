@@ -1,16 +1,15 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import {
-    ComponentType,
-    Events,
-    MessageFlags,
-    type StringSelectMenuInteraction,
-} from "discord.js";
+import { ComponentType, Events, MessageFlags } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { SelectMenu, type SelectMenuContext } from "../src/components/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { Guard, type GuardProvider } from "../src/guards/index.ts";
+import {
+    createChatInputInteraction,
+    createSelectInteraction,
+} from "./fixtures/interactions.ts";
 
 class Menu extends SelectMenu {
     constructor(
@@ -30,40 +29,16 @@ class Menu extends SelectMenu {
     }
 }
 
-const interaction = (phase = "new", customId = "colour.choose") => {
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const editReply = mock.fn(async (_payload: unknown) => {});
-    const followUp = mock.fn(async (_payload: unknown) => {});
-    const value = {
+const interaction = (phase = "new", customId = "colour.choose") =>
+    createSelectInteraction(ComponentType.StringSelect, {
         id: "selection",
-        componentType: ComponentType.StringSelect,
         customId,
         values: ["blue"],
         user: { id: "user" },
         deferred: phase.startsWith("defer"),
         replied: phase === "replied",
         ephemeral: phase === "defer-reply" ? true : null,
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () =>
-            [
-                value.isStringSelectMenu(),
-                value.isUserSelectMenu(),
-                value.isRoleSelectMenu(),
-                value.isMentionableSelectMenu(),
-                value.isChannelSelectMenu(),
-            ].some(Boolean),
-        isStringSelectMenu: () => true,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        reply,
-        editReply,
-        followUp,
-    } as unknown as StringSelectMenuInteraction;
-    return { value, reply, editReply, followUp };
-};
+    });
 
 const setup = async (t: { after: (callback: () => Promise<void>) => void }) => {
     const records: Record<string, unknown>[] = [];
@@ -96,7 +71,7 @@ test("select menu listener preserves the receiver, typed values, and scoped logs
     }
     client.selectMenus.set("colour.choose", new Colour(async () => {}));
     const fixture = interaction();
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(fixture.reply.mock.callCount(), 1);
@@ -114,21 +89,12 @@ test("unmatched IDs and unsupported selects are not acknowledged", async t => {
     const execute = mock.fn(async (_ctx: SelectMenuContext) => {});
     client.selectMenus.set("colour.choose", new Menu(execute));
     const unknown = interaction("new", "unknown");
-    await dispatcher.dispatch(unknown.value);
+    await dispatcher.dispatch(unknown.interaction);
     const unsupported = interaction();
-    Object.assign(unsupported.value, {
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => false,
-        isAutocomplete: () => false,
-        isContextMenuCommand: () => false,
-        isUserContextMenuCommand: () => false,
-        isMessageContextMenuCommand: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
+    Object.assign(unsupported.interaction, {
+        componentType: ComponentType.ActionRow,
     });
-    await dispatcher.dispatch(unsupported.value);
+    await dispatcher.dispatch(unsupported.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(unknown.reply.mock.callCount(), 0);
@@ -152,7 +118,7 @@ test("select menu guard rejection stops later factories and handlers", async t =
         new Menu(execute, [async () => new Deny(), later]),
     );
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(later.mock.callCount(), 0);
     assert.equal(execute.mock.callCount(), 0);
@@ -172,7 +138,7 @@ for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
             }),
         );
         const fixture = interaction(phase);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         const response =
             phase === "new"
@@ -206,7 +172,7 @@ test("guard factory errors fail closed and contain expired response failures", a
     fixture.reply.mock.mockImplementation(async () => {
         throw new Error("Expired");
     });
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(execute.mock.callCount(), 0);
@@ -236,10 +202,10 @@ test("concurrent selections receive separate contexts without automatic acknowle
     );
     const first = interaction();
     const second = interaction();
-    Object.assign(second.value, { values: ["green", "red"] });
+    Object.assign(second.interaction, { values: ["green", "red"] });
     await Promise.all([
-        dispatcher.dispatch(first.value),
-        dispatcher.dispatch(second.value),
+        dispatcher.dispatch(first.interaction),
+        dispatcher.dispatch(second.interaction),
     ]);
 
     assert.notEqual(contexts[0], contexts[1]);
@@ -258,15 +224,14 @@ test("development colour command and filesystem menu complete the selection flow
     await client.commands.load(new URL("../dev/bot/", import.meta.url));
     const command = client.commands.get("colour");
     assert.ok(command);
-    const reply = mock.fn(async (_payload: unknown) => {});
     const dispatcher = new InteractionDispatcher(client);
-    await dispatcher.dispatch({
-        id: "colour-command",
-        commandName: "colour",
-        user: { id: "user" },
-        isChatInputCommand: () => true,
-        reply,
-    } as unknown as import("discord.js").ChatInputCommandInteraction);
+    const { interaction: commandInteraction, reply } =
+        createChatInputInteraction({
+            id: "colour-command",
+            commandName: "colour",
+            user: { id: "user" },
+        });
+    await dispatcher.dispatch(commandInteraction);
     const payload = reply.mock.calls[0]?.arguments[0] as {
         components: { toJSON(): unknown }[];
     };
@@ -276,10 +241,9 @@ test("development colour command and filesystem menu complete the selection flow
     );
 
     const fixture = interaction();
-    const update = mock.fn(async (_payload: unknown) => {});
-    Object.assign(fixture.value, { update });
+    const { update } = fixture;
     const template = client.selectMenus.get("colour.choose")?.builder.toJSON();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.deepEqual(update.mock.calls[0]?.arguments[0], {
         content: "You chose blue.",

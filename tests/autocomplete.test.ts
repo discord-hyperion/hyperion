@@ -5,11 +5,8 @@ import path from "node:path";
 import { mock, type TestContext, test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import {
-    type ApplicationCommandOptionChoiceData,
     ApplicationCommandOptionType,
     type AutocompleteFocusedOption,
-    type AutocompleteInteraction,
-    type ChatInputCommandInteraction,
     Events,
     REST,
 } from "discord.js";
@@ -22,6 +19,11 @@ import {
     HyperionClient,
     InteractionDispatcher,
 } from "../src/index.ts";
+
+import {
+    createAutocompleteInteraction,
+    createChatInputInteraction,
+} from "./fixtures/interactions.ts";
 
 class TestCommand extends Command {
     readonly executeCommand = mock.fn(async (_ctx: CommandContext) => {});
@@ -58,44 +60,22 @@ const interaction = (
     name = "query",
     type: AutocompleteFocusedOption["type"] = ApplicationCommandOptionType.String,
 ) => {
-    const respond = mock.fn(
-        async (_choices: readonly ApplicationCommandOptionChoiceData[]) => {
-            value.responded = true;
-        },
-    );
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const deferReply = mock.fn(async () => {});
-    const followUp = mock.fn(async (_payload: unknown) => {});
     const getFocused = mock.fn(() => ({
         name,
         value: input,
         type,
         focused: true as const,
     }));
-    const value = {
-        id: "autocomplete-request",
-        commandName: "search",
-        guildId: "guild",
-        user: { id: "caller" },
-        responded: false,
-        options: { getFocused },
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => false,
-        isAutocomplete: () => true,
-        respond,
-        reply,
-        deferReply,
-        followUp,
-    } as unknown as AutocompleteInteraction;
-
-    return { value, respond, reply, deferReply, followUp, getFocused };
+    return {
+        ...createAutocompleteInteraction({
+            id: "autocomplete-request",
+            commandName: "search",
+            guildId: "guild",
+            user: { id: "caller" },
+            options: { getFocused },
+        }),
+        getFocused,
+    };
 };
 
 const setup = async (t: TestContext, level: "debug" | "info" = "debug") => {
@@ -136,7 +116,7 @@ test("autocomplete listener preserves the receiver, skips command execution and 
     const command = new Inspect(async () => {}, [guard]);
     client.commands.set("search", command);
     const fixture = interaction();
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(fixture.respond.mock.callCount(), 1);
@@ -186,7 +166,7 @@ for (const missing of ["command", "hook", "response"]) {
             client.commands.set("search", new TestCommand(async () => {}));
         }
         const fixture = interaction();
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.equal(fixture.respond.mock.callCount(), 1);
         assert.deepEqual(fixture.respond.mock.calls[0]?.arguments[0], []);
@@ -206,7 +186,7 @@ for (const asynchronous of [false, true]) {
             new TestCommand(asynchronous ? async () => fail() : fail),
         );
         const fixture = interaction();
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.deepEqual(fixture.respond.mock.calls[0]?.arguments[0], []);
         assert.equal(fixture.respond.mock.callCount(), 1);
@@ -225,8 +205,8 @@ test("already-responded autocomplete requests do not run handlers or respond twi
     const complete = mock.fn(async (_ctx: AutocompleteContext) => {});
     client.commands.set("search", new TestCommand(complete));
     const fixture = interaction();
-    Object.assign(fixture.value, { responded: true });
-    await dispatcher.dispatch(fixture.value);
+    Object.assign(fixture.interaction, { responded: true });
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(complete.mock.callCount(), 0);
     assert.equal(fixture.respond.mock.callCount(), 0);
@@ -242,7 +222,7 @@ test("a failure after responding does not attempt another autocomplete response"
         }),
     );
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(fixture.respond.mock.callCount(), 1);
     assert.ok(records.some(record => record.event === "autocomplete.failed"));
@@ -263,7 +243,7 @@ for (const hasHandler of [false, true]) {
         fixture.respond.mock.mockImplementation(async () => {
             throw new Error("Expired interaction");
         });
-        client.emit(Events.InteractionCreate, fixture.value);
+        client.emit(Events.InteractionCreate, fixture.interaction);
         await client.waitForAllListenersToComplete();
 
         assert.equal(fixture.respond.mock.callCount(), 1);
@@ -289,9 +269,8 @@ test("a rejected suggestion response falls back to empty choices", async t => {
     const fixture = interaction();
     fixture.respond.mock.mockImplementation(async choices => {
         if (choices.length) throw new Error("Response rejected");
-        fixture.value.responded = true;
     });
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(fixture.respond.mock.callCount(), 2);
     assert.deepEqual(fixture.respond.mock.calls[1]?.arguments[0], []);
@@ -321,7 +300,7 @@ for (const type of [
             }),
         );
         const fixture = interaction("1", "amount", type);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.equal(
             typeof fixture.respond.mock.calls[0]?.arguments[0]?.[0]?.value,
@@ -352,14 +331,14 @@ test("autocomplete retains subcommand options and creates separate concurrent co
     const first = interaction("first");
     const second = interaction("second");
     for (const fixture of [first, second]) {
-        Object.assign(fixture.value.options, {
+        Object.assign(fixture.interaction.options, {
             getSubcommand: () => "items",
             getSubcommandGroup: () => "catalog",
         });
     }
     await Promise.all([
-        dispatcher.dispatch(first.value),
-        dispatcher.dispatch(second.value),
+        dispatcher.dispatch(first.interaction),
+        dispatcher.dispatch(second.interaction),
     ]);
 
     assert.notEqual(contexts[0], contexts[1]);
@@ -379,7 +358,7 @@ test("autocomplete success is quiet at info level while failures remain visible"
             await ctx.interaction.respond([]);
         }),
     );
-    await dispatcher.dispatch(interaction().value);
+    await dispatcher.dispatch(interaction().interaction);
     assert.ok(
         !records.some(record =>
             String(record.event).startsWith("autocomplete."),
@@ -392,7 +371,7 @@ test("autocomplete success is quiet at info level while failures remain visible"
             throw new Error("Unavailable");
         }),
     );
-    await dispatcher.dispatch(interaction().value);
+    await dispatcher.dispatch(interaction().interaction);
     assert.ok(records.some(record => record.event === "autocomplete.failed"));
 });
 
@@ -454,22 +433,21 @@ for (const [query, expected] of [
         const { client, dispatcher } = await setup(t);
         await client.commands.load(new URL("../dev/bot/", import.meta.url));
         const fixture = interaction(query);
-        Object.assign(fixture.value, { commandName: "topic" });
-        await dispatcher.dispatch(fixture.value);
+        Object.assign(fixture.interaction, { commandName: "topic" });
+        await dispatcher.dispatch(fixture.interaction);
 
         assert.equal(fixture.respond.mock.callCount(), 1);
         assert.deepEqual(fixture.respond.mock.calls[0]?.arguments[0], expected);
         assert.equal(fixture.reply.mock.callCount(), 0);
-        const reply = mock.fn(async (_payload: unknown) => {});
         const selected = expected[0]?.value ?? "not-a-topic";
-        await dispatcher.dispatch({
-            id: "topic-command",
-            commandName: "topic",
-            user: { id: "caller" },
-            isChatInputCommand: () => true,
-            options: { getString: () => selected },
-            reply,
-        } as unknown as ChatInputCommandInteraction);
+        const { interaction: commandInteraction, reply } =
+            createChatInputInteraction({
+                id: "topic-command",
+                commandName: "topic",
+                user: { id: "caller" },
+                options: { getString: () => selected },
+            });
+        await dispatcher.dispatch(commandInteraction);
 
         assert.equal(reply.mock.callCount(), 1);
         const payload = reply.mock.calls[0]?.arguments[0] as {
@@ -487,8 +465,8 @@ test("development topic autocomplete returns initial suggestions and handles une
     const { client, dispatcher } = await setup(t);
     await client.commands.load(new URL("../dev/bot/", import.meta.url));
     const initial = interaction("");
-    Object.assign(initial.value, { commandName: "topic" });
-    await dispatcher.dispatch(initial.value);
+    Object.assign(initial.interaction, { commandName: "topic" });
+    await dispatcher.dispatch(initial.interaction);
     const choices = initial.respond.mock.calls[0]?.arguments[0];
     assert.ok(choices?.length);
     assert.ok(choices.length <= 25);
@@ -501,8 +479,8 @@ test("development topic autocomplete returns initial suggestions and handles une
     );
 
     const unexpected = interaction("", "other");
-    Object.assign(unexpected.value, { commandName: "topic" });
-    await dispatcher.dispatch(unexpected.value);
+    Object.assign(unexpected.interaction, { commandName: "topic" });
+    await dispatcher.dispatch(unexpected.interaction);
     assert.deepEqual(unexpected.respond.mock.calls[0]?.arguments[0], []);
 });
 
