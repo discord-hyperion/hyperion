@@ -6,13 +6,7 @@ import {
     StringSelectMenuBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import {
-    type ChatInputCommandInteraction,
-    Events,
-    MessageFlags,
-    type ModalSubmitInteraction,
-    TextInputStyle,
-} from "discord.js";
+import { Events, MessageFlags, TextInputStyle } from "discord.js";
 import {
     Guard,
     type GuardProvider,
@@ -23,6 +17,11 @@ import {
     OwnerOnly,
     SelectMenu,
 } from "../src/index.ts";
+
+import {
+    createChatInputInteraction,
+    createModalInteraction,
+} from "./fixtures/interactions.ts";
 
 class TestModal extends Modal {
     constructor(
@@ -52,37 +51,23 @@ class TestModal extends Modal {
 }
 
 const interaction = (phase = "new", message = "Private submitted text") => {
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const editReply = mock.fn(async (_payload: unknown) => {});
-    const followUp = mock.fn(async (_payload: unknown) => {});
-    const update = mock.fn(async (_payload: unknown) => {});
     const getTextInputValue = mock.fn((_customId: string) => message);
-    const value = {
-        id: "modal-submission",
-        customId: "feedback.submit",
-        components: { getTextInputValue },
-        user: { id: "caller" },
-        guildId: "guild",
-        deferred: phase.startsWith("defer"),
-        replied: phase === "replied",
-        ephemeral: phase === "defer-reply" ? true : null,
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => true,
-        isFromMessage: () => false,
-        reply,
-        editReply,
-        followUp,
-        update,
-    } as unknown as ModalSubmitInteraction;
-
-    return { value, reply, editReply, followUp, update, getTextInputValue };
+    return {
+        ...createModalInteraction({
+            id: "modal-submission",
+            customId: "feedback.submit",
+            components: { getTextInputValue },
+            user: { id: "caller" },
+            guildId: "guild",
+            deferred: phase.startsWith("defer"),
+            replied: phase === "replied",
+            ephemeral: phase === "defer-reply" ? true : null,
+            ...(phase === "defer-update"
+                ? { message: { id: "source-message" } }
+                : {}),
+        }),
+        getTextInputValue,
+    };
 };
 
 const setup = async (t: TestContext) => {
@@ -121,7 +106,7 @@ test("modal listener runs once with its receiver, v15 components, and scoped log
     }
     client.modals.set("feedback.submit", new Inspect(async () => {}));
     const fixture = interaction();
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(fixture.reply.mock.callCount(), 1);
@@ -145,14 +130,14 @@ test("unmatched modal IDs leave submissions to collectors without running guards
     });
     client.modals.set("feedback.submit", new TestModal(execute, [factory]));
     const fixture = interaction();
-    Object.assign(fixture.value, { customId: "feedback.submit:other" });
-    await dispatcher.dispatch(fixture.value);
+    Object.assign(fixture.interaction, { customId: "feedback.submit:other" });
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(factory.mock.callCount(), 0);
     assert.equal(fixture.reply.mock.callCount(), 0);
     assert.equal(fixture.followUp.mock.callCount(), 0);
-    assert.equal(fixture.value.deferred, false);
+    assert.equal(fixture.interaction.deferred, false);
 });
 
 test("embedded selects are resolved by the modal without invoking message select handlers", async t => {
@@ -196,8 +181,8 @@ test("embedded selects are resolved by the modal without invoking message select
     client.modals.set(modal.customId, modal);
     const fixture = interaction();
     const getStringSelectValues = mock.fn((_customId: string) => ["blue"]);
-    Object.assign(fixture.value.components, { getStringSelectValues });
-    await dispatcher.dispatch(fixture.value);
+    Object.assign(fixture.interaction.components, { getStringSelectValues });
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.deepEqual(getStringSelectValues.mock.calls[0]?.arguments, [
@@ -226,7 +211,7 @@ test("modal guards run lazily in order and shared OwnerOnly guards work", async 
     assert.equal(factory.mock.callCount(), 0);
 
     const denied = interaction();
-    await dispatcher.dispatch(denied.value);
+    await dispatcher.dispatch(denied.interaction);
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(later.mock.callCount(), 0);
     assert.equal(denied.reply.mock.callCount(), 1);
@@ -240,8 +225,8 @@ test("modal guards run lazily in order and shared OwnerOnly guards work", async 
     );
 
     const allowed = interaction();
-    Object.assign(allowed.value, { user: { id: "owner" } });
-    await dispatcher.dispatch(allowed.value);
+    Object.assign(allowed.interaction, { user: { id: "owner" } });
+    await dispatcher.dispatch(allowed.interaction);
     assert.equal(factory.mock.callCount(), 2);
     assert.equal(later.mock.callCount(), 1);
     assert.equal(execute.mock.callCount(), 1);
@@ -268,7 +253,7 @@ test("modal custom rejection owns the response and guards are snapshotted", asyn
     assert.ok(Object.isFrozen(modal.guards));
     client.modals.set(modal.customId, modal);
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(fixture.reply.mock.calls[0]?.arguments[0], "Custom rejection");
@@ -286,10 +271,7 @@ for (const stage of ["handler", "guards"] as const) {
                 new TestModal(fail, stage === "guards" ? [fail] : []),
             );
             const fixture = interaction(phase);
-            if (phase === "defer-update") {
-                Object.assign(fixture.value, { isFromMessage: () => true });
-            }
-            await dispatcher.dispatch(fixture.value);
+            await dispatcher.dispatch(fixture.interaction);
 
             const response =
                 phase === "new"
@@ -326,7 +308,7 @@ test("failed modal error delivery is contained by the interaction listener", asy
     fixture.reply.mock.mockImplementation(async () => {
         throw new Error("Expired");
     });
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.ok(
@@ -352,16 +334,16 @@ test("concurrent modal submissions receive independent contexts without automati
     const first = interaction("new", "first");
     const second = interaction("new", "second");
     await Promise.all([
-        dispatcher.dispatch(first.value),
-        dispatcher.dispatch(second.value),
+        dispatcher.dispatch(first.interaction),
+        dispatcher.dispatch(second.interaction),
     ]);
 
     assert.notEqual(contexts[0], contexts[1]);
     assert.equal(first.reply.mock.calls[0]?.arguments[0], "first");
     assert.equal(second.reply.mock.calls[0]?.arguments[0], "second");
     assert.equal(first.reply.mock.callCount(), 1);
-    assert.equal(first.value.deferred, false);
-    assert.equal(second.value.deferred, false);
+    assert.equal(first.interaction.deferred, false);
+    assert.equal(second.interaction.deferred, false);
 });
 
 test("development feedback command opens the modal and its filesystem handler processes submission", async t => {
@@ -374,17 +356,17 @@ test("development feedback command opens the modal and its filesystem handler pr
     });
     t.after(() => client.destroy());
     await client.commands.load(root);
-    const showModal = mock.fn(async (_payload: unknown) => {});
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const dispatcher = new InteractionDispatcher(client);
-    await dispatcher.dispatch({
+    const {
+        interaction: commandInteraction,
+        showModal,
+        reply,
+    } = createChatInputInteraction({
         id: "feedback-command",
         commandName: "feedback",
         user: { id: "caller" },
-        isChatInputCommand: () => true,
-        showModal,
-        reply,
-    } as unknown as ChatInputCommandInteraction);
+    });
+    const dispatcher = new InteractionDispatcher(client);
+    await dispatcher.dispatch(commandInteraction);
 
     assert.equal(showModal.mock.callCount(), 1);
     assert.equal(reply.mock.callCount(), 0);
@@ -394,7 +376,7 @@ test("development feedback command opens the modal and its filesystem handler pr
     const template = modal.builder.toJSON();
     assert.match(JSON.stringify(template), /feedback.message/);
     const fixture = interaction("new", "Hello");
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.deepEqual(fixture.getTextInputValue.mock.calls[0]?.arguments, [
         "feedback.message",

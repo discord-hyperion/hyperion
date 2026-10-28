@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { mock, type TestContext, test } from "node:test";
+import { type TestContext, test } from "node:test";
 import { pathToFileURL } from "node:url";
 import {
     ChatInputCommandBuilder,
@@ -10,12 +10,7 @@ import {
     ChatInputCommandSubcommandGroupBuilder,
     UserContextCommandBuilder,
 } from "@discordjs/builders";
-import {
-    ApplicationCommandType,
-    type ChatInputCommandInteraction,
-    Collection,
-    REST,
-} from "discord.js";
+import { ApplicationCommandType, Collection, REST } from "discord.js";
 import {
     Command,
     type CommandContext,
@@ -27,6 +22,7 @@ import {
     Subcommand,
     SubcommandGroup,
 } from "../src/index.ts";
+import { createChatInputInteraction } from "./fixtures/interactions.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
@@ -276,20 +272,18 @@ test("replacement parent and group definitions are used by registration and disp
     );
     assert.deepEqual(events, []);
 
-    const reply = mock.fn(async (_payload: unknown) => {});
-    await new InteractionDispatcher(client).dispatch({
+    const request = createChatInputInteraction({
         id: "mutation",
         commandName: "ticket",
-        commandType: ApplicationCommandType.ChatInput,
-        isChatInputCommand: () => true,
         options: {
             getSubcommand: () => "view",
             getSubcommandGroup: () => "settings",
         },
-        events,
-        reply,
         user: { id: "user" },
-    } as unknown as ChatInputCommandInteraction);
+    });
+    Object.assign(request.interaction, { events });
+    const { reply } = request;
+    await new InteractionDispatcher(client).dispatch(request.interaction);
     assert.deepEqual(events, [
         "parent factory",
         "parent guard",

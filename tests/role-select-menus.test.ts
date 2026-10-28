@@ -1,19 +1,15 @@
 import assert from "node:assert/strict";
 import { mock, type TestContext, test } from "node:test";
 import { RoleSelectMenuBuilder } from "@discordjs/builders";
-import {
-    type ChatInputCommandInteraction,
-    Collection,
-    ComponentType,
-    Events,
-    MessageFlags,
-    type Role,
-    type RoleSelectMenuInteraction,
-} from "discord.js";
+import { Collection, ComponentType, Events, MessageFlags } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { SelectMenu, type SelectMenuContext } from "../src/components/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { Guard, type GuardProvider } from "../src/guards/index.ts";
+import {
+    createChatInputInteraction,
+    createSelectInteraction,
+} from "./fixtures/interactions.ts";
 
 type RoleContext = SelectMenuContext<ComponentType.RoleSelect>;
 
@@ -33,46 +29,17 @@ class RoleMenu extends SelectMenu<ComponentType.RoleSelect> {
     }
 }
 
-const interaction = (phase = "new", ids = ["selected"]) => {
-    const reply = mock.fn(async (_payload: unknown) => {});
-    const editReply = mock.fn(async (_payload: unknown) => {});
-    const followUp = mock.fn(async (_payload: unknown) => {});
-    const update = mock.fn(async (_payload: unknown) => {});
-    const value = {
+const interaction = (phase = "new", ids = ["selected"]) =>
+    createSelectInteraction(ComponentType.RoleSelect, {
         id: "role-selection",
-        componentType: ComponentType.RoleSelect,
         customId: "role.choose",
         values: ids,
-        roles: new Collection(
-            ids.map(id => [id, { id, name: `name-${id}` } as Role]),
-        ),
+        roles: new Collection(ids.map(id => [id, { id, name: `name-${id}` }])),
         user: { id: "caller" },
         deferred: phase.startsWith("defer"),
         replied: phase === "replied",
         ephemeral: phase === "defer-reply" ? true : null,
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () =>
-            [
-                value.isStringSelectMenu(),
-                value.isUserSelectMenu(),
-                value.isRoleSelectMenu(),
-                value.isMentionableSelectMenu(),
-                value.isChannelSelectMenu(),
-            ].some(Boolean),
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => true,
-        isChannelSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        reply,
-        editReply,
-        followUp,
-        update,
-    } as unknown as RoleSelectMenuInteraction;
-
-    return { value, reply, editReply, followUp, update };
-};
+    });
 
 const setup = async (t: TestContext) => {
     const records: Record<string, unknown>[] = [];
@@ -111,7 +78,7 @@ test("role select listener provides resolved roles and scoped logs without loggi
     }
     client.selectMenus.set("role.choose", new Inspect(async () => {}));
     const fixture = interaction("new", ["first", "second"]);
-    client.emit(Events.InteractionCreate, fixture.value);
+    client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(fixture.reply.mock.callCount(), 1);
@@ -137,17 +104,13 @@ test("unknown IDs and type mismatches never run a handler or guard", async t => 
     client.selectMenus.set("role.choose", new RoleMenu(execute, [factory]));
 
     const wrongType = interaction();
-    Object.assign(wrongType.value, {
+    Object.assign(wrongType.interaction, {
         componentType: ComponentType.StringSelect,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isStringSelectMenu: () => true,
     });
     const unknown = interaction();
-    Object.assign(unknown.value, { customId: "unknown" });
-    await dispatcher.dispatch(wrongType.value);
-    await dispatcher.dispatch(unknown.value);
+    Object.assign(unknown.interaction, { customId: "unknown" });
+    await dispatcher.dispatch(wrongType.interaction);
+    await dispatcher.dispatch(unknown.interaction);
 
     assert.equal(execute.mock.callCount(), 0);
     assert.equal(factory.mock.callCount(), 0);
@@ -177,7 +140,7 @@ test("role select guards resolve lazily with resolved roles and support custom r
     assert.equal(factory.mock.callCount(), 0);
 
     const fixture = interaction();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.equal(factory.mock.callCount(), 1);
     assert.equal(execute.mock.callCount(), 0);
@@ -197,7 +160,7 @@ for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
             }),
         );
         const fixture = interaction(phase);
-        await dispatcher.dispatch(fixture.value);
+        await dispatcher.dispatch(fixture.interaction);
 
         const response =
             phase === "new"
@@ -225,15 +188,14 @@ test("development role command and filesystem menu complete the selection flow",
     });
     t.after(() => client.destroy());
     await client.commands.load(new URL("../dev/bot/", import.meta.url));
-    const reply = mock.fn(async (_payload: unknown) => {});
     const dispatcher = new InteractionDispatcher(client);
-    await dispatcher.dispatch({
-        id: "role-command",
-        commandName: "role",
-        user: { id: "caller" },
-        isChatInputCommand: () => true,
-        reply,
-    } as unknown as ChatInputCommandInteraction);
+    const { interaction: commandInteraction, reply } =
+        createChatInputInteraction({
+            id: "role-command",
+            commandName: "role",
+            user: { id: "caller" },
+        });
+    await dispatcher.dispatch(commandInteraction);
     const payload = reply.mock.calls[0]?.arguments[0] as {
         components: { toJSON(): unknown }[];
     };
@@ -244,7 +206,7 @@ test("development role command and filesystem menu complete the selection flow",
 
     const fixture = interaction();
     const template = client.selectMenus.get("role.choose")?.builder.toJSON();
-    await dispatcher.dispatch(fixture.value);
+    await dispatcher.dispatch(fixture.interaction);
 
     assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
         content: "Selected roles: name-selected.",

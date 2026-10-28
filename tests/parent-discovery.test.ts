@@ -2,18 +2,17 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { mock, type TestContext, test } from "node:test";
-import {
-    type AutocompleteInteraction,
-    type ChatInputCommandInteraction,
-    MessageFlags,
-    REST,
-} from "discord.js";
+import { type TestContext, test } from "node:test";
+import { MessageFlags, REST } from "discord.js";
 import {
     CommandRegistry,
     HyperionClient,
     InteractionDispatcher,
 } from "../src/index.ts";
+import {
+    createAutocompleteInteraction,
+    createChatInputInteraction,
+} from "./fixtures/interactions.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
@@ -179,22 +178,18 @@ for (const failure of [
         t.after(() => client.destroy());
         await client.commands.load(root);
         const events: string[] = [];
-        const reply = mock.fn(async (_payload: unknown) => {});
-
-        await new InteractionDispatcher(client).dispatch({
+        const request = createChatInputInteraction({
             id: "guard-test",
             commandName: "tools",
-            commandType: 1,
-            isChatInputCommand: () => true,
             options: {
                 getSubcommand: () => "run",
                 getSubcommandGroup: () => null,
             },
-            events,
-            failure,
-            reply,
             user: { id: "user" },
-        } as unknown as ChatInputCommandInteraction);
+        });
+        Object.assign(request.interaction, { events, failure });
+        const { reply } = request;
+        await new InteractionDispatcher(client).dispatch(request.interaction);
 
         const expected = ["parent factory", "parent guard"];
         if (!failure?.startsWith("parent"))
@@ -241,37 +236,20 @@ test("autocomplete and deployment do not invoke inherited guard factories", asyn
         applicationId: "123",
         token: "fake-token",
     });
-    const respond = mock.fn(async (_payload: unknown) => {});
-    let responded = false;
-
-    await new InteractionDispatcher(client).dispatch({
+    const request = createAutocompleteInteraction({
         id: "complete",
         commandName: "tools",
-        get responded() {
-            return responded;
-        },
         user: { id: "user" },
-        isChatInputCommand: () => false,
-        isButton: () => false,
-        isSelectMenu: () => false,
-        isStringSelectMenu: () => false,
-        isUserSelectMenu: () => false,
-        isRoleSelectMenu: () => false,
-        isMentionableSelectMenu: () => false,
-        isChannelSelectMenu: () => false,
-        isModalSubmit: () => false,
-        isAutocomplete: () => true,
         options: {
             getSubcommand: () => "search",
             getSubcommandGroup: () => null,
         },
-        respond: async (choices: unknown[]) => {
-            if (respond.mock.callCount() > 0)
-                throw new Error("Double response");
-            await respond(choices);
-            responded = true;
-        },
-    } as unknown as AutocompleteInteraction);
+    });
+    const { respond } = request;
+    respond.mock.mockImplementation(async () => {
+        if (respond.mock.callCount() > 0) throw new Error("Double response");
+    });
+    await new InteractionDispatcher(client).dispatch(request.interaction);
 
     assert.equal(put.mock.callCount(), 1);
     assert.deepEqual(respond.mock.calls[0]?.arguments[0], [

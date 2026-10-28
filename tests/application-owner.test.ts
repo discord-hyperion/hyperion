@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { type TestContext, test } from "node:test";
 import { Client, ClientApplication, Events, Routes } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
-import type { InteractionContext } from "../src/contexts/index.ts";
 import { OwnerOnly } from "../src/guards/index.ts";
+import { createChatInputInteraction } from "./fixtures/interactions.ts";
 
 const applicationId = "100000000000000001";
 const personalOwnerId = "200000000000000001";
@@ -39,12 +39,12 @@ const setup = async (t: TestContext) => {
     return client;
 };
 
-const context = (client: HyperionClient, userId: string) =>
-    ({
-        client,
-        logger: client.logger,
-        interaction: { user: { id: userId } },
-    }) as unknown as InteractionContext;
+const context = (client: HyperionClient, userId: string) => ({
+    client,
+    logger: client.logger,
+    interaction: createChatInputInteraction({ user: { id: userId } })
+        .interaction,
+});
 
 test("creating a client does not fetch ownership and pre-login lookup fails closed", async t => {
     const client = await HyperionClient.create({
