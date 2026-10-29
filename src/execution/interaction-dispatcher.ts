@@ -9,11 +9,12 @@ import {
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
-import type { CommandType } from "../commands/index.ts";
+import { Command, type CommandType, Subcommand } from "../commands/index.ts";
 import type { SelectMenu, SelectMenuType } from "../components/index.ts";
 import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
+import { resolveCommandInput } from "./resolve-command-input.ts";
 
 type HandlerKind = "command" | "button" | "select-menu" | "modal";
 
@@ -199,16 +200,19 @@ export class InteractionDispatcher {
         if (interaction.responded) return;
 
         const subcommand = this.subcommandName(interaction);
+
         const group = this.client.commands.hasSubcommands(
             interaction.commandName,
         )
             ? (interaction.options.getSubcommandGroup(false) ?? undefined)
             : undefined;
+
         const logger = this.createLogger(interaction, {
             command: interaction.commandName,
             ...(subcommand ? { subcommand } : {}),
             ...(group ? { group } : {}),
         });
+
         const command = subcommand
             ? this.client.commands.resolveSubcommand(
                   interaction.commandName,
@@ -313,7 +317,7 @@ export class InteractionDispatcher {
 
         logger.debug({ event: `${kind}.started` }, `Running ${kind}`);
 
-        let stage: "guards" | "handler" = "guards";
+        let stage: "guards" | "input" | "handler" = "guards";
 
         try {
             const result = await this.guards.run(
@@ -343,8 +347,22 @@ export class InteractionDispatcher {
                 return;
             }
 
+            let handlerContext = ctx;
+            if (
+                (handler instanceof Command || handler instanceof Subcommand) &&
+                interaction.isChatInputCommand() &&
+                handler.input
+            ) {
+                stage = "input";
+                const input = await resolveCommandInput(handler, {
+                    ...ctx,
+                    interaction,
+                });
+                handlerContext = { ...ctx, input };
+            }
+
             stage = "handler";
-            await handler.run(ctx);
+            await handler.run(handlerContext);
 
             logger.info(
                 {

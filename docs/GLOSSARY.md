@@ -65,6 +65,23 @@ A context-menu command whose target is a selected message, rather than text pars
 from a newly sent message.
 _Avoid_: Message-content command, user context-menu command
 
+### Command input
+
+**Command option**:
+A named parameter offered by a chat-input command or subcommand, with a Discord
+value type and an indication of whether the user must supply it.
+_Avoid_: Validated command input
+
+**Command input resolver**:
+An application-defined operation that receives validated command option values
+and returns the application values supplied to the command handler.
+_Avoid_: Validator, guard
+
+**Validated command input**:
+The application values supplied to one command handler after option validation
+and any application resolution have completed.
+_Avoid_: Command options, raw option values
+
 ### Components
 
 **Component handler**:

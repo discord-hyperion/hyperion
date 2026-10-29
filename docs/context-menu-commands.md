@@ -7,7 +7,9 @@ guards, logging, and execution-error handling as slash commands.
 
 Existing `Command` and `CommandContext` declarations still default to chat-input
 commands. Context-menu handlers specify the application-command type as a generic
-for context typing; the builder is the runtime source of truth. There is no
+for context typing; the builder is the runtime source of truth. Chat-input
+commands with [typed input](input-validation.md) can instead use a complete
+`defineInput` definition as their generic. There is no
 separate `type` option. The generic requires the matching builder at compile time:
 passing a user builder to `Command<ApplicationCommandType.Message>` is a type
 error, and vice versa. Hyperion refines the pinned SDK's broad context-menu
