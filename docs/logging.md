@@ -64,7 +64,9 @@ No global console interception or background formatting worker is installed.
 - Guards: debug `guard.started` and `guard.passed`, info `guard.rejected` and
   `command.rejected`. Guard outcomes include the guard name and check duration.
   Guard errors emit `command.failed` with `stage: "guards"`; handler errors use
-  `stage: "handler"`. Guard logs carry the command's invocation metadata.
+  `stage: "handler"`. Input resolver, schema, and automatic-deferral exceptions
+  use `stage: "input"`. Expected schema issues are passed to the handler without
+  being logged. Guard logs carry the command's invocation metadata.
 
 Progress indicators cover command, button, select menu, and modal loading, application-command registration, and
 login. Runtime handlers do not display spinners automatically.

@@ -7,6 +7,7 @@ import {
     type Channel,
     type ChatInputCommandInteraction,
     Collection,
+    type CommandInteractionOption,
     type CommandInteractionOptionResolver,
     ComponentType,
     type Guild,
@@ -51,9 +52,10 @@ type CommonData = {
 type OptionsData = Partial<
     Omit<
         CommandInteractionOptionResolver,
-        "getSubcommand" | "getSubcommandGroup"
+        "get" | "getSubcommand" | "getSubcommandGroup"
     >
 > & {
+    get?: (name: string, required?: boolean) => CommandInteractionOption | null;
     getSubcommand?: (required?: boolean) => string | null;
     getSubcommandGroup?: (required?: boolean) => string | null;
 };

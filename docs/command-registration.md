@@ -145,10 +145,19 @@ Optional command `guards` run in order before the handler. They accept shared
 instances or lazy per-invocation factories. The first rejection or error stops
 execution; see [Command guards](./guards.md) for configuration and custom responses.
 
-Handlers control acknowledgment themselves. Reply, defer, or open a modal as
-appropriate; Hyperion does not automatically defer before calling `run()`.
-For example, slow handlers can call `deferReply()` before awaiting their work,
-then `editReply()` to deliver the result.
+Handlers control acknowledgment by default. Reply, defer, or open a modal as
+appropriate. Commands with an [input schema](input-validation.md) can set
+`input: { schema, defer: true }` to defer privately after guards and before input processing,
+unless a guard already acknowledged the interaction. Otherwise, slow handlers
+can call `deferReply()` before awaiting their work, then `editReply()` to deliver
+the result.
+
+Schema validation runs after guards; an optional whole-input resolver then
+receives the validated values and returns the complete handler input. Expected
+schema issues reach the handler as `[issues, undefined]`; success supplies
+`[null, input]` through `ctx.input`. Handlers decide how to present issues.
+Resolver and schema exceptions stop execution and use the generic error
+response below. Commands without schemas retain the original context.
 
 Handler failures are reported through Pino with the command and interaction ID.
 Users receive a generic error message without internal exception details:

@@ -59,8 +59,8 @@ Guards are runtime checks and do not change Discord command visibility or comman
 permission settings.
 
 The factory above illustrates the API; because its configuration is constant,
-`new AllowedGuild("YOUR_SERVER_ID")` is also suitable. A factory receives the same
-`CommandContext` as `run()`, `onFail()`, and the command handler. For example,
+`new AllowedGuild("YOUR_SERVER_ID")` is also suitable. A factory receives the original
+`CommandContext`, shared with guard `run()` and `onFail()`. For example,
 `ctx => new AccessCheck(ctx.interaction.user.id)` can bind per-invocation state.
 Factories can also return a promise. They execute once each time an invocation
 reaches them, never during command discovery or deployment. Later factories are
@@ -141,10 +141,16 @@ default response when it succeeds. The callback is responsible for acknowledging
 the interaction, including checking `replied` / `deferred` if earlier guards may
 already have acknowledged it. A passing guard never runs `onFail()`.
 
-Hyperion does not automatically defer. Async guards and factories must acknowledge
+Hyperion does not automatically defer before guards. Async guards and factories must acknowledge
 within Discord's interaction deadline if they perform slow work. Deferring changes
 what later handlers can do: a handler cannot open a modal after acknowledgment.
 Coordinate that policy across the guard chain and the command.
+
+For commands with [input schemas](input-validation.md), guards and their
+factories still receive the original context without `ctx.input`. Input
+validation and subsequent whole-input resolution run only after every guard passes. Optional
+`input: { schema, defer: true }` also takes effect after guards, preserving any acknowledgment
+already made by a guard. A later schema failure does not refund a cooldown.
 
 ## Errors and logging
 

@@ -13,6 +13,11 @@ import {
 } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
+import type {
+    CommandInputDefinition,
+    CommandInputResult,
+} from "./command-input.ts";
+import { validateCommandInput } from "./validate-command-input.ts";
 
 type ContextMenuCommandData<
     Type extends ApplicationCommandType.User | ApplicationCommandType.Message,
@@ -49,30 +54,47 @@ type CommandInteractions = {
     [ApplicationCommandType.Message]: MessageContextMenuCommandInteraction;
 };
 
+type CommandDefinition = CommandType | CommandInputDefinition;
+
+type DefinitionCommandType<Definition extends CommandDefinition> =
+    Definition extends CommandType
+        ? Definition
+        : ApplicationCommandType.ChatInput;
+
 export type CommandOptions<
-    Type extends CommandType = ApplicationCommandType.ChatInput,
+    Definition extends CommandDefinition = ApplicationCommandType.ChatInput,
 > = {
-    builder: CommandBuilders[Type];
-    guards?: readonly GuardProvider<CommandContext<Type>>[];
-};
+    builder: CommandBuilders[DefinitionCommandType<Definition>];
+    guards?: readonly GuardProvider<
+        CommandContext<DefinitionCommandType<Definition>>
+    >[];
+} & (Definition extends CommandInputDefinition
+    ? { input: Definition }
+    : { input?: never });
 
 export type CommandContext<
-    Type extends CommandType = ApplicationCommandType.ChatInput,
-> = InteractionContext<CommandInteractions[Type]>;
+    Definition extends CommandDefinition = ApplicationCommandType.ChatInput,
+> = InteractionContext<CommandInteractions[DefinitionCommandType<Definition>]> &
+    (Definition extends CommandInputDefinition
+        ? { readonly input: CommandInputResult<Definition> }
+        : unknown);
 
 export type AutocompleteContext = InteractionContext<AutocompleteInteraction>;
 
 export abstract class Command<
-    Type extends CommandType = ApplicationCommandType.ChatInput,
+    Definition extends CommandDefinition = ApplicationCommandType.ChatInput,
 > {
-    readonly builder: CommandBuilders[Type];
-    readonly commandType: Type;
-    readonly guards: readonly GuardProvider<CommandContext<Type>>[];
+    readonly builder: CommandBuilders[DefinitionCommandType<Definition>];
+    readonly commandType: DefinitionCommandType<Definition>;
+    readonly guards: readonly GuardProvider<
+        CommandContext<DefinitionCommandType<Definition>>
+    >[];
+    readonly input: CommandInputDefinition | undefined;
 
-    protected constructor(options: CommandOptions<Type>) {
+    protected constructor(options: CommandOptions<Definition>) {
         this.builder = options.builder;
-        const type =
-            this.builder.toJSON(false).type ?? ApplicationCommandType.ChatInput;
+        const data = this.builder.toJSON(false);
+        const type = data.type ?? ApplicationCommandType.ChatInput;
 
         if (
             type !== ApplicationCommandType.ChatInput &&
@@ -84,7 +106,13 @@ export abstract class Command<
             );
         }
 
-        this.commandType = type as Type;
+        this.commandType = type as DefinitionCommandType<Definition>;
+
+        this.input = validateCommandInput(
+            options.input,
+            type === ApplicationCommandType.ChatInput,
+        );
+
         this.guards = Object.freeze([...(options.guards ?? [])]);
 
         for (const provider of this.guards) {
@@ -100,7 +128,7 @@ export abstract class Command<
         }
     }
 
-    abstract run(ctx: CommandContext<Type>): Promise<void>;
+    abstract run(ctx: CommandContext<Definition>): Promise<void>;
 
     autocomplete?(ctx: AutocompleteContext): Promise<void>;
 }

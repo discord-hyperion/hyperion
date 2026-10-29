@@ -6,6 +6,14 @@ export {
     type CommandOptions,
     type CommandType,
 } from "./command.ts";
+export {
+    type CommandInputOptions,
+    type CommandInputOutput,
+    type CommandInputResolver,
+    type CommandInputResult,
+    type CommandInputSchema,
+    defineInput,
+} from "./command-input.ts";
 export { ParentCommand, type ParentCommandOptions } from "./parent-command.ts";
 export { Subcommand, type SubcommandOptions } from "./subcommand.ts";
 export {
