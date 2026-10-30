@@ -54,3 +54,36 @@ The initial published contract is ESM on Node 24.17.0 or newer, with a TypeScrip
 7.x verification baseline and exact compatible Discord prerelease peers. CommonJS
 callers can use dynamic import. Minimum supported versions must be checked before
 release; the local verification only establishes the versions actually used.
+
+## Turbo tasks and CI
+
+Turbo is pinned to 2.11.10. Root `typecheck`, `test`, and `build` scripts run Turbo
+with `--cache=local:rw`; no remote cache service is configured. Cache files and
+task logs live under ignored `.turbo` directories. CI runners initially use only
+their local cache, without sharing task artifacts across runs.
+
+Source checks depend on a scriptless `transit` task. Transit edges carry dependency
+hashes from core to the bot while allowing their real typecheck/test tasks to run
+in parallel. Source checks have no build dependency. Shared TypeScript settings
+and workspace configuration are global inputs; shared interaction mocks are
+explicit check inputs. Default package inputs are retained, excluding environment
+files and generated output, logs, and temporary consumers.
+
+`build` caches `dist/**`. The package's `prepack` script still performs a fresh
+build directly, so `verify:package` proves the source-without-dist and packed
+artifact contracts every time. Packed verification runs outside Turbo, uncached;
+do not run it concurrently with a build that writes the same `dist` directory.
+
+`pnpm verify:cache` copies the controlled source/configuration inputs into a
+disposable workspace and installs offline with a frozen lockfile. It verifies:
+- Cold source checks without `dist`, followed by unchanged-run cache replay.
+- Framework edits invalidate both packages; bot edits invalidate only bot checks.
+- Shared fixture/config edits invalidate both packages.
+- Dependency-manifest edits invalidate the owning package and its consumers.
+- A cached build restores JavaScript and declarations after `dist` is removed.
+
+The mutations affect only the disposable workspace, which is removed afterward.
+CI runs all package type checks and tests together, cache acceptance and packed
+consumers, and one direct root Biome check. No affected-only filtering or live bot
+tasks are used. For an uncached source run, use the direct commands documented in
+`AGENTS.md`, or `pnpm exec turbo run typecheck test --cache=local:`.

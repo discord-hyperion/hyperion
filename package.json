@@ -10,10 +10,11 @@
         "check:fix": "biome check --write .",
         "lint": "biome lint .",
         "format": "biome format --write .",
-        "test": "pnpm -r test",
-        "typecheck": "pnpm -r typecheck",
-        "build": "pnpm --filter @hyperion/core build",
-        "verify:package": "node scripts/verify-package.mjs"
+        "test": "turbo run test --cache=local:rw",
+        "typecheck": "turbo run typecheck --cache=local:rw",
+        "build": "turbo run build --cache=local:rw",
+        "verify:package": "node scripts/verify-package.mjs",
+        "verify:cache": "node scripts/verify-cache.mjs"
     },
     "keywords": [],
     "author": "",
@@ -29,11 +30,12 @@
     "type": "module",
     "devDependencies": {
         "@biomejs/biome": "2.6.2",
+        "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54",
         "@types/node": "^26.6.5",
-        "tsx": "^4.23.15",
-        "typescript": "^7.0.2",
         "discord.js": "15.0.0-dev.1792497873-5050a3b54",
-        "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54"
+        "tsx": "^4.23.15",
+        "turbo": "2.11.10",
+        "typescript": "^7.0.2"
     },
     "private": true
 }

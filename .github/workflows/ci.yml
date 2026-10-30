@@ -35,11 +35,14 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Type check
-              run: pnpm exec tsc --noEmit
+            - name: Type check and test all packages
+              run: pnpm exec turbo run typecheck test --cache=local:rw
 
-            - name: Test
-              run: pnpm test
+            - name: Verify cache correctness
+              run: pnpm verify:cache
+
+            - name: Verify packed package consumers
+              run: pnpm verify:package
 
             - name: Lint and format check
               run: pnpm check

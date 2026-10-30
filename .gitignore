@@ -5,3 +5,6 @@ node_modules/
 
 # Generated publication artifacts
 packages/core/dist/
+
+# Local Turbo cache and task logs
+.turbo/

@@ -1,0 +1,71 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalDependencies": [
+        "tsconfig.base.json",
+        "tsconfig.json",
+        "pnpm-workspace.yaml"
+    ],
+    "tasks": {
+        "transit": {
+            "dependsOn": ["^transit"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "!.env",
+                "!.env.*",
+                "!**/.env",
+                "!**/.env.*",
+                "!dist/**",
+                "!.turbo/**",
+                "!.consumer-*/**"
+            ]
+        },
+        "typecheck": {
+            "dependsOn": ["transit"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "!.env",
+                "!.env.*",
+                "!**/.env",
+                "!**/.env.*",
+                "!dist/**",
+                "!.turbo/**",
+                "!.consumer-*/**",
+                "$TURBO_ROOT$/tests/fixtures/**/*.ts",
+                "!$TURBO_ROOT$/tests/fixtures/**/.env",
+                "!$TURBO_ROOT$/tests/fixtures/**/.env.*"
+            ],
+            "outputs": []
+        },
+        "test": {
+            "dependsOn": ["transit"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "!.env",
+                "!.env.*",
+                "!**/.env",
+                "!**/.env.*",
+                "!dist/**",
+                "!.turbo/**",
+                "!.consumer-*/**",
+                "$TURBO_ROOT$/tests/fixtures/**/*.ts",
+                "!$TURBO_ROOT$/tests/fixtures/**/.env",
+                "!$TURBO_ROOT$/tests/fixtures/**/.env.*"
+            ],
+            "outputs": []
+        },
+        "build": {
+            "dependsOn": ["^build"],
+            "inputs": [
+                "$TURBO_DEFAULT$",
+                "!.env",
+                "!.env.*",
+                "!**/.env",
+                "!**/.env.*",
+                "!dist/**",
+                "!.turbo/**",
+                "!.consumer-*/**"
+            ],
+            "outputs": ["dist/**"]
+        }
+    }
+}
