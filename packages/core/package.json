@@ -1,0 +1,53 @@
+{
+    "name": "@hyperion/core",
+    "version": "0.1.0",
+    "type": "module",
+    "license": "ISC",
+    "engines": {
+        "node": ">=24.17.0"
+    },
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "test": "node --import tsx --test tests/*.test.ts",
+        "build": "node --input-type=module -e \"import { rm } from 'node:fs/promises'; await rm('dist', { recursive: true, force: true });\" && tsc -p tsconfig.build.json",
+        "prepack": "pnpm build"
+    },
+    "peerDependencies": {
+        "discord.js": "15.0.0-dev.1792497873-5050a3b54",
+        "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54"
+    },
+    "dependencies": {
+        "@standard-schema/spec": "^1.1.0",
+        "ora": "^9.4.1",
+        "pino": "^10.4.0",
+        "pino-pretty": "^13.2.0"
+    },
+    "devDependencies": {
+        "discord.js": "15.0.0-dev.1792497873-5050a3b54",
+        "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54",
+        "valibot": "^1.5.0"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.js",
+                "default": "./dist/index.js"
+            }
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/favylicious/discord-hyperion.git",
+        "directory": "packages/core"
+    }
+}

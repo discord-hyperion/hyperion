@@ -9,7 +9,7 @@ Place commands in `<bot root>/src/commands` and pass registration credentials to
 `HyperionClient.create()`. Individual handler paths are fixed by convention.
 
 ```ts
-import { HyperionClient } from "@hyperion";
+import { HyperionClient } from "@hyperion/core";
 
 const token = process.env.DISCORD_TOKEN;
 const applicationId = process.env.DISCORD_APPLICATION_ID;
@@ -35,13 +35,13 @@ const client = await HyperionClient.create({
 await client.login(token);
 ```
 
-This example belongs in `dev/bot/index.ts`. Supply environment variables through
+This example belongs in `apps/dev-bot/index.ts`. Supply environment variables through
 your startup environment. Hyperion does not read environment files itself.
 
 The bot layout is:
 
 ```text
-dev/bot/
+apps/dev-bot/
 ├── index.ts
 └── src/
     └── commands/
@@ -85,7 +85,7 @@ Commands accept a `ChatInputCommandBuilder` from the v15-compatible
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion";
+import { Command, type CommandContext } from "@hyperion/core";
 
 export default class PingCommand extends Command {
     constructor() {
@@ -185,7 +185,7 @@ demonstrates autocomplete and validates submitted values in its normal handler.
 
 ## Development bot
 
-The startup scripts now target `dev/bot/index.ts`:
+The root startup scripts delegate to the bot package and target `apps/dev-bot/index.ts`:
 
 ```sh
 pnpm dev          # Restart on source changes
@@ -194,7 +194,7 @@ pnpm start:debug  # Run with the Node inspector
 ```
 
 Configure `DISCORD_TOKEN`, `DISCORD_APPLICATION_ID`, and `DISCORD_DEV_GUILD_ID`
-yourself in the startup environment or your private root `.env` file. All three
+yourself in the startup environment or your private `apps/dev-bot/.env` file. All three
 are required by the development bot. Startup deploys commands to that development
 guild before logging in; it does not perform global registration. Invite the
 application to your test guild, start the bot, wait for the ready message, and

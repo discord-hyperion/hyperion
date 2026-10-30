@@ -73,7 +73,7 @@ Read the relevant reference before implementation or review:
 For code changes, run:
 
 ```sh
-pnpm exec tsc --noEmit
+pnpm typecheck
 pnpm test
 pnpm check
 ```
@@ -82,8 +82,8 @@ If the package-manager wrapper is unavailable, use:
 
 ```sh
 ./node_modules/.bin/tsc --noEmit
-node --import tsx --test tests/*.test.ts
-./node_modules/.bin/biome check src dev docs tests biome.json package.json tsconfig.json
+node --import tsx --test packages/core/tests/*.test.ts apps/dev-bot/tests/*.test.ts
+./node_modules/.bin/biome check .
 ```
 
 Tests use Node's test runner, temporary handler modules, and mocked REST methods.

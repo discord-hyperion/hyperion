@@ -12,7 +12,7 @@ localizations, and optional shared guards. It has no `run()` method.
 
 ```ts
 import { ChatInputCommandSubcommandGroupBuilder } from "@discordjs/builders";
-import { SubcommandGroup } from "@hyperion";
+import { SubcommandGroup } from "@hyperion/core";
 
 export default class Settings extends SubcommandGroup {
     constructor() {

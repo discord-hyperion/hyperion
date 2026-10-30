@@ -1,0 +1,71 @@
+name: Publish package
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: Exact reviewed @hyperion/core version to publish
+                required: true
+                type: string
+            channel:
+                description: npm dist-tag
+                required: true
+                default: latest
+                type: choice
+                options: [latest, beta]
+
+permissions:
+    contents: read
+
+concurrency:
+    group: npm-publish
+    cancel-in-progress: false
+
+jobs:
+    publish:
+        if: vars.NPM_PUBLISH_ENABLED == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/beta')
+        environment: npm
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - name: Check out reviewed commit
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up pnpm and Node.js
+              uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+              with:
+                  runtime: node@24
+                  cache: true
+                  install: false
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Validate reviewed release and channel
+              env:
+                  EXPECTED_VERSION: ${{ inputs.version }}
+                  RELEASE_CHANNEL: ${{ inputs.channel }}
+              run: node scripts/check-release.mjs --version "$EXPECTED_VERSION" --channel "$RELEASE_CHANNEL" --ref "$GITHUB_REF"
+
+            - name: Type check and test all packages
+              run: pnpm exec turbo run typecheck test --cache=local:rw
+
+            - name: Check release tooling
+              run: pnpm verify:release
+
+            - name: Lint and format check
+              run: pnpm check
+
+            - name: Verify and retain the publication tarball
+              run: pnpm verify:package --pack-destination "$RUNNER_TEMP/hyperion-release"
+
+            - name: Publish verified tarball with npm trusted publishing
+              env:
+                  EXPECTED_VERSION: ${{ inputs.version }}
+                  RELEASE_CHANNEL: ${{ inputs.channel }}
+              run: pnpm --package=npm@11.21.0 dlx npm publish "$RUNNER_TEMP/hyperion-release/hyperion-core-$EXPECTED_VERSION.tgz" --access public --tag "$RELEASE_CHANNEL" --provenance --ignore-scripts

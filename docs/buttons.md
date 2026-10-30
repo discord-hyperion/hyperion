@@ -21,7 +21,7 @@ handlers fail initialization with their source file. All command and button
 modules load before application commands are deployed.
 
 ```text
-dev/bot/
+apps/dev-bot/
 ├── index.ts
 └── src/
     ├── commands/
@@ -40,7 +40,7 @@ interactions and cannot be Hyperion handlers.
 
 ```ts
 import { PrimaryButtonBuilder } from "@discordjs/builders";
-import { Button, type ButtonContext } from "@hyperion";
+import { Button, type ButtonContext } from "@hyperion/core";
 
 export default class RefreshButton extends Button {
     constructor() {

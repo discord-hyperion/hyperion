@@ -1,0 +1,56 @@
+name: Version packages
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: version-packages-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    version:
+        if: github.ref == 'refs/heads/main'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            contents: write
+            pull-requests: write
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up pnpm and Node.js
+              uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+              with:
+                  runtime: node@24
+                  cache: true
+                  install: false
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Reject prerelease state on main
+              run: test ! -f .changeset/pre.json
+
+            - name: Create or update reviewed version PR
+              id: version
+              if: hashFiles('.changeset/*.md', '!.changeset/README.md') != ''
+              uses: changesets/action/version@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2; Changesets v3
+              with:
+                  script: pnpm version-packages
+                  commit-message: "chore(release): version packages"
+                  pr-title: "chore(release): version packages"
+
+            - name: Apply repository PR description
+              if: steps.version.outputs.pr-number != ''
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ steps.version.outputs.pr-number }}
+              run: gh pr edit "$PR_NUMBER" --body-file .github/version-pr.md

@@ -7,16 +7,24 @@ indicate that a feature is implemented.
 
 ## Package boundaries
 
-Keep one package with shared root dependencies until a concrete multi-package
-requirement arises. Framework source lives in `src`; the consuming development
-bot lives in `dev/bot` and sets that directory as its root.
+The pnpm workspace contains `@hyperion/core` in `packages/core` and the private
+`@hyperion/dev-bot` in `apps/dev-bot`. Shared tooling, documentation, and interaction
+mocks stay at the root. Add future utility or plugin packages when they have a
+concrete responsibility.
 
-Framework responsibilities are split across `client`, `commands`, `components`,
+Framework responsibilities remain split across `client`, `commands`, `components`,
 `contexts`, `guards`, `events`, `registries`, `execution`, `logging`, and `util`.
-Each framework folder has an `index.ts` barrel; expose public APIs through
-`src/index.ts`. Examples consume the public `@hyperion` entry point. Internal
-relative imports avoid making consumers depend on repository-only aliases.
-Keep `tsconfig.json` folder aliases synchronized with the layout.
+Each folder has an `index.ts` barrel; expose public APIs through
+`packages/core/src/index.ts`. The bot consumes the public `@hyperion/core` export
+through a workspace dependency. Local exports resolve source directly, so tsx
+development requires no compilation. Internal imports use relative `.ts` paths;
+repository-only TypeScript path aliases are unnecessary.
+
+Framework tests live in `packages/core/tests`; real development-bot flows live in
+`apps/dev-bot/tests`. Shared interaction mocks live in `tests/fixtures`. Root
+TypeScript settings are inherited by package configs. Run `pnpm typecheck`,
+`pnpm test`, and `pnpm check` from the root. See [package development](package-development.md)
+for release builds, publication exports, and isolated consumer verification.
 
 ## Client lifecycle
 

@@ -80,7 +80,7 @@ Opening a modal acknowledges the originating interaction. Do not reply or defer
 that interaction before calling `showModal()`. Submission is a separate
 interaction routed to `Modal.run()`. Modal submissions cannot open another modal.
 The development bot's `/feedback` command demonstrates opening and submitting
-the filesystem modal in `dev/bot/src/modals/submit-feedback.ts`.
+the filesystem modal in `apps/dev-bot/src/modals/submit-feedback.ts`.
 
 Unmatched modal IDs remain untouched for application-owned collectors and
 listeners. Avoid acknowledging the same submission in both a filesystem handler
