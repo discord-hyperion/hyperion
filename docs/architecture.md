@@ -23,7 +23,8 @@ repository-only TypeScript path aliases are unnecessary.
 Framework tests live in `packages/core/tests`; real development-bot flows live in
 `apps/dev-bot/tests`. Shared interaction mocks live in `tests/fixtures`. Root
 TypeScript settings are inherited by package configs. Run `pnpm typecheck`,
-`pnpm test`, and `pnpm check` from the root.
+`pnpm test`, and `pnpm check` from the root. See [package development](package-development.md)
+for release builds, publication exports, and isolated consumer verification.
 
 ## Client lifecycle
 

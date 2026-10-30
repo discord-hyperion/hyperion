@@ -11,7 +11,9 @@
         "lint": "biome lint .",
         "format": "biome format --write .",
         "test": "pnpm -r test",
-        "typecheck": "pnpm -r typecheck"
+        "typecheck": "pnpm -r typecheck",
+        "build": "pnpm --filter @hyperion/core build",
+        "verify:package": "node scripts/verify-package.mjs"
     },
     "keywords": [],
     "author": "",
