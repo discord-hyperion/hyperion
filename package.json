@@ -14,7 +14,10 @@
         "typecheck": "turbo run typecheck --cache=local:rw",
         "build": "turbo run build --cache=local:rw",
         "verify:package": "node scripts/verify-package.mjs",
-        "verify:cache": "node scripts/verify-cache.mjs"
+        "verify:cache": "node scripts/verify-cache.mjs",
+        "changeset": "changeset",
+        "version-packages": "node scripts/version-packages.mjs",
+        "verify:release": "node scripts/verify-release.mjs"
     },
     "keywords": [],
     "author": "",
@@ -30,6 +33,7 @@
     "type": "module",
     "devDependencies": {
         "@biomejs/biome": "2.6.2",
+        "@changesets/cli": "3.0.3",
         "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54",
         "@types/node": "^26.6.5",
         "discord.js": "15.0.0-dev.1792497873-5050a3b54",

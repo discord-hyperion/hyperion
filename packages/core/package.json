@@ -44,5 +44,10 @@
                 "default": "./dist/index.js"
             }
         }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/favylicious/discord-hyperion.git",
+        "directory": "packages/core"
     }
 }

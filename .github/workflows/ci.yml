@@ -38,6 +38,9 @@ jobs:
             - name: Type check and test all packages
               run: pnpm exec turbo run typecheck test --cache=local:rw
 
+            - name: Verify release tooling
+              run: pnpm verify:release
+
             - name: Verify cache correctness
               run: pnpm verify:cache
 

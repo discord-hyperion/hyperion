@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import {
     cp,
+    mkdir,
     mkdtemp,
     readdir,
     readFile,
@@ -12,6 +13,13 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+const options = process.argv.slice(2);
+assert.ok(
+    options.length === 0 ||
+        (options.length === 2 && options[0] === "--pack-destination"),
+    "Usage: verify-package.mjs [--pack-destination directory]",
+);
+const destination = options.length ? path.resolve(options[1]) : undefined;
 const root = fileURLToPath(new URL("../", import.meta.url));
 const core = path.join(root, "packages/core");
 const fixture = path.join(root, "scripts/fixtures/package-consumer");
@@ -120,6 +128,11 @@ try {
     run(process.execPath, [path.join(consumer, "smoke.mjs")], consumer);
     run("pnpm", ["exec", "tsc", "--noEmit"], consumer);
     run("pnpm", ["exec", "tsx", "consumer.ts"], consumer);
+    if (destination) {
+        await mkdir(destination, { recursive: true });
+        await cp(archive, path.join(destination, path.basename(archive)));
+        console.log(`Verified tarball retained in ${destination}`);
+    }
     console.log(
         "PASS artifact allowlist, published exports, plain ESM, NodeNext types, tsx, discovery and constructor identity",
     );

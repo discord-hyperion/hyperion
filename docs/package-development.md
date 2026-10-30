@@ -87,3 +87,6 @@ CI runs all package type checks and tests together, cache acceptance and packed
 consumers, and one direct root Biome check. No affected-only filtering or live bot
 tasks are used. For an uncached source run, use the direct commands documented in
 `AGENTS.md`, or `pnpm exec turbo run typecheck test --cache=local:`.
+
+See [release operations](releases.md) for changesets, reviewed version PRs, beta
+cycles, and maintainer setup for manual trusted publication.
