@@ -1,43 +1,4 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "lib": ["ES2022"],
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "types": ["node"],
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "exactOptionalPropertyTypes": true,
-        "forceConsistentCasingInFileNames": true,
-        "verbatimModuleSyntax": true,
-        "isolatedModules": true,
-        "allowImportingTsExtensions": true,
-        "noEmit": true,
-        "skipLibCheck": true,
-        "paths": {
-            "@hyperion": ["./src/index.ts"],
-            "@hyperion/*": ["./src/*"],
-            "@client": ["./src/client/index.ts"],
-            "@client/*": ["./src/client/*"],
-            "@commands": ["./src/commands/index.ts"],
-            "@commands/*": ["./src/commands/*"],
-            "@components": ["./src/components/index.ts"],
-            "@components/*": ["./src/components/*"],
-            "@contexts": ["./src/contexts/index.ts"],
-            "@contexts/*": ["./src/contexts/*"],
-            "@guards": ["./src/guards/index.ts"],
-            "@guards/*": ["./src/guards/*"],
-            "@events": ["./src/events/index.ts"],
-            "@events/*": ["./src/events/*"],
-            "@registries": ["./src/registries/index.ts"],
-            "@registries/*": ["./src/registries/*"],
-            "@execution": ["./src/execution/index.ts"],
-            "@execution/*": ["./src/execution/*"],
-            "@logging": ["./src/logging/index.ts"],
-            "@logging/*": ["./src/logging/*"],
-            "@util": ["./src/util/index.ts"],
-            "@util/*": ["./src/util/*"]
-        }
-    },
-    "include": ["src/**/*.ts", "dev/**/*.ts", "tests/**/*.ts"]
+    "extends": "./tsconfig.base.json",
+    "include": ["packages/**/*.ts", "apps/**/*.ts", "tests/**/*.ts"]
 }

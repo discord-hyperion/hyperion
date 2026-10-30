@@ -16,7 +16,7 @@ invocation-specific state. Both forms can appear in the same array:
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext, Guard, OwnerOnly } from "@hyperion";
+import { Command, type CommandContext, Guard, OwnerOnly } from "@hyperion/core";
 
 class AllowedGuild extends Guard {
     constructor(private readonly guildId: string) {
@@ -84,7 +84,7 @@ guards: [
 ],
 ```
 
-Import `Cooldown` from `@hyperion`. The application chooses the cooldown namespace,
+Import `Cooldown` from `@hyperion/core`. The application chooses the cooldown namespace,
 key, duration, and backing collection. The factory binds the key for each user, while the
 collection survives across invocations. A fixed key with a shared guard instance would
 apply one cooldown to all callers. A factory is useful for this per-user policy;
@@ -136,7 +136,7 @@ class GuildOnly extends Guard {
 ```
 
 Import `MessageFlags` from `discord.js` and `Guard` / `CommandContext` from
-`@hyperion` for this example. Hyperion awaits `onFail()` exactly once and adds no
+`@hyperion/core` for this example. Hyperion awaits `onFail()` exactly once and adds no
 default response when it succeeds. The callback is responsible for acknowledging
 the interaction, including checking `replied` / `deferred` if earlier guards may
 already have acknowledged it. A passing guard never runs `onFail()`.
