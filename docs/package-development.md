@@ -35,14 +35,18 @@ Run `pnpm verify:package` from the root. This uncached check:
 1. Removes generated `dist`, then checks source imports and types without path
    aliases or a development build.
 2. Packs the core package and checks its manifest exports and artifact allowlist.
-3. Installs the tarball and its dependencies offline into a temporary directory
-   outside the workspace, with lifecycle scripts disabled.
+3. Installs the tarball and its dependencies into a temporary directory outside
+   the workspace, with fresh metadata and lifecycle scripts disabled. This first
+   install permits registry resolution and creates the consumer's own lockfile.
+   It then removes `node_modules` and reconstructs the consumer with a frozen,
+   offline install.
 4. Checks plain Node ESM imports, NodeNext declaration inference (including
    negative type assertions), tsx consumption, offline command discovery, and
    framework/Discord builder constructor identity.
 
-The check needs the dependencies populated by the normal workspace installation;
-its offline consumer install deliberately fails if the pnpm store is incomplete.
+The source check uses the normal workspace installation. The isolated consumer
+seeds its own metadata cache and dependency lockfile before proving offline
+reinstallation, so it does not rely on a warmed workstation metadata cache.
 It cleans temporary consumers on completion. It does not start the bot, load
 private environment files, log in, deploy commands, or publish a package.
 

@@ -123,11 +123,33 @@ try {
             },
         }),
     );
-    // A real install outside the workspace: no linked source or dependency fallbacks.
-    run("pnpm", ["install", "--offline", "--ignore-scripts"], consumer);
+    const consumerPnpm = args =>
+        execFileSync("pnpm", args, {
+            cwd: consumer,
+            stdio: "inherit",
+            timeout: 120_000,
+            env: {
+                ...process.env,
+                XDG_CACHE_HOME: path.join(temporary, "cache"),
+            },
+        });
+    // Seed this new project and its tool lock with normal resolution first. A
+    // frozen workspace install does not populate another project's registry metadata.
+    consumerPnpm(["install", "--ignore-scripts"]);
+    await rm(path.join(consumer, "node_modules"), {
+        recursive: true,
+        force: true,
+    });
+    // Prove the locked consumer can be reconstructed offline, not just reused.
+    consumerPnpm([
+        "install",
+        "--offline",
+        "--frozen-lockfile",
+        "--ignore-scripts",
+    ]);
     run(process.execPath, [path.join(consumer, "smoke.mjs")], consumer);
-    run("pnpm", ["exec", "tsc", "--noEmit"], consumer);
-    run("pnpm", ["exec", "tsx", "consumer.ts"], consumer);
+    consumerPnpm(["exec", "tsc", "--noEmit"]);
+    consumerPnpm(["exec", "tsx", "consumer.ts"]);
     if (destination) {
         await mkdir(destination, { recursive: true });
         await cp(archive, path.join(destination, path.basename(archive)));
