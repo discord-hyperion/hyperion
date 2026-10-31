@@ -1,21 +1,48 @@
-import { type ModalContext, Modal as ModalHandler } from "@hyperion/core";
+import {
+    defineInput,
+    type ModalContext,
+    Modal as ModalHandler,
+} from "@hyperion/core";
 import { renderModal } from "@hyperion/jsx";
-import { MessageFlags } from "discord.js";
+import * as v from "valibot";
 import { TodoForm } from "../views/todo-form.tsx";
 
-export default class extends ModalHandler {
+const input = defineInput({
+    schema: v.object({
+        name: v.pipe(
+            v.string(),
+            v.trim(),
+            v.minLength(1, "Name must not be blank."),
+        ),
+        description: v.optional(v.string(), ""),
+    }),
+    defer: true,
+});
+
+export default class extends ModalHandler<typeof input> {
     constructor() {
-        super({ builder: renderModal(<TodoForm />) });
+        super({
+            builder: renderModal(<TodoForm />),
+            input,
+        });
     }
 
-    async run(ctx: ModalContext) {
-        const name = ctx.interaction.components.getTextInputValue("name");
-        const description =
-            ctx.interaction.components.getTextInputValue("description");
+    async run(ctx: ModalContext<typeof input>) {
+        const [issues, value] = ctx.input;
 
-        await ctx.interaction.reply({
+        if (issues) {
+            await ctx.interaction.editReply({
+                content: issues.map(issue => issue.message).join("\n"),
+                allowedMentions: { parse: [] },
+            });
+
+            return;
+        }
+
+        const { name, description } = value;
+
+        await ctx.interaction.editReply({
             content: `Received a todo name of ${name.length} characters and description of ${description.length} characters. This demo does not store submissions.`,
-            flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
     }

@@ -120,6 +120,16 @@ A form presented in response to an interaction, with its submitted values delive
 in a separate interaction.
 _Avoid_: Modal handler
 
+**Modal input resolver**:
+An application-defined operation that receives validated form values and returns
+the application values supplied to the modal handler.
+_Avoid_: Validator, guard
+
+**Validated modal input**:
+The application values supplied to one modal handler after submission validation
+and any application resolution have completed.
+_Avoid_: Raw submitted values, form controls
+
 **Text input**:
 A form control for entering a short or multiline text value.
 _Avoid_: Command option, submitted value
