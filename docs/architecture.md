@@ -7,10 +7,15 @@ indicate that a feature is implemented.
 
 ## Package boundaries
 
-The pnpm workspace contains `@hyperion/core` in `packages/core` and the private
+The pnpm workspace contains `@hyperion/core` in `packages/core`, the independent
+`@hyperion/jsx` authoring package in `packages/jsx`, and the private
 `@hyperion/dev-bot` in `apps/dev-bot`. Shared tooling, documentation, and interaction
 mocks stay at the root. Add future utility or plugin packages when they have a
 concrete responsibility.
+
+JSX implementation lives in `packages/jsx/lib`, with its own public root and
+compiler runtime exports. It depends on native builders rather than core; see
+[JSX authoring](jsx.md). The dev bot consumes both packages.
 
 Framework responsibilities remain split across `client`, `commands`, `components`,
 `contexts`, `guards`, `events`, `registries`, `execution`, `logging`, and `util`.

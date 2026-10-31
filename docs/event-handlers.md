@@ -95,6 +95,9 @@ Within an event occurrence, await handlers sequentially:
 1. Numbered filenames in ascending numeric priority.
 2. Unnumbered files in deterministic relative-path order.
 
+Handlers may also use `.tsx` or `.jsx`; the numeric priority rules are identical.
+See [JSX authoring](jsx.md) for compiler configuration.
+
 Use ordinary nonnegative integer prefixes such as `10-startup-message.ts` and
 `20-details.ts`; gaps permit insertion at `15-check-status.ts`. Compare numbers
 rather than digit strings. Duplicate numeric priorities for the same event fail

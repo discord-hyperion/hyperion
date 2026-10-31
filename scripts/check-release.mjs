@@ -4,6 +4,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
+export const releasePackage = name => {
+    const packages = { "@hyperion/core": "core", "@hyperion/jsx": "jsx" };
+    assert.ok(
+        Object.hasOwn(packages, name),
+        "Select a supported public package.",
+    );
+
+    return packages[name];
+};
+
 export const validateRelease = ({
     version,
     expectedVersion,
@@ -69,13 +79,17 @@ if (
 ) {
     const { values } = parseArgs({
         options: {
+            package: { type: "string", default: "@hyperion/core" },
             version: { type: "string" },
             channel: { type: "string" },
             ref: { type: "string" },
         },
     });
     const manifest = JSON.parse(
-        await readFile("packages/core/package.json", "utf8"),
+        await readFile(
+            `packages/${releasePackage(values.package)}/package.json`,
+            "utf8",
+        ),
     );
     let pre;
     try {

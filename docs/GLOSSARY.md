@@ -125,6 +125,20 @@ An application-defined identifier attached to an interactive control or form to
 identify its associated interaction.
 _Avoid_: Message ID, command name
 
+### JSX authoring
+
+**JSX view**:
+A composable description of content that can be rendered for Discord.
+_Avoid_: Component handler, rendered embed
+
+**Authoring component**:
+A reusable function that describes part of a JSX view from supplied properties.
+_Avoid_: Component handler, interactive control
+
+**Rendering**:
+Evaluating a JSX view to produce the content supplied to Discord.
+_Avoid_: Sending, handler execution
+
 ### Execution
 
 **Invocation**:

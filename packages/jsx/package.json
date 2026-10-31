@@ -1,0 +1,60 @@
+{
+    "name": "@hyperion/jsx",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "ISC",
+    "engines": {
+        "node": ">=24.17.0"
+    },
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "test": "node --import tsx --test tests/*.test.tsx",
+        "build": "node --input-type=module -e \"import { rm } from 'node:fs/promises'; await rm('dist', { recursive: true, force: true });\" && tsc -p tsconfig.build.json",
+        "prepack": "pnpm build",
+        "benchmark": "tsx benchmarks/embeds.tsx"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "peerDependencies": {
+        "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54"
+    },
+    "devDependencies": {
+        "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54"
+    },
+    "exports": {
+        ".": "./lib/index.ts",
+        "./jsx-runtime": "./lib/jsx-runtime.ts",
+        "./jsx-dev-runtime": "./lib/jsx-dev-runtime.ts"
+    },
+    "publishConfig": {
+        "access": "public",
+        "exports": {
+            ".": {
+                "types": "./dist/index.d.ts",
+                "import": "./dist/index.js",
+                "default": "./dist/index.js"
+            },
+            "./jsx-runtime": {
+                "types": "./dist/jsx-runtime.d.ts",
+                "import": "./dist/jsx-runtime.js",
+                "default": "./dist/jsx-runtime.js"
+            },
+            "./jsx-dev-runtime": {
+                "types": "./dist/jsx-dev-runtime.d.ts",
+                "import": "./dist/jsx-dev-runtime.js",
+                "default": "./dist/jsx-dev-runtime.js"
+            }
+        }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/favylicious/discord-hyperion.git",
+        "directory": "packages/jsx"
+    },
+    "dependencies": {
+        "@discordjs/formatters": "1.0.0-dev.1792497873-5050a3b54"
+    }
+}
