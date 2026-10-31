@@ -1,6 +1,6 @@
 # JSX authoring design
 
-`@hyperion/jsx` is an independent JSX runtime for native Discord embeds. It has
+`@hyperion/jsx` is an independent JSX runtime for native Discord embeds and modals. It has
 no dependency on `@hyperion/core` or React. Implementation lives in
 `packages/jsx/lib`; local workspace imports resolve source, and published imports
 resolve JavaScript and declarations in `dist`.
@@ -10,10 +10,9 @@ resolve JavaScript and declarations in `dist`.
 - Publish JSX authoring as a separate workspace package, `@hyperion/jsx`. This
   supersedes the earlier proposal to keep it inside `@hyperion/core`.
 - Use namespaced structural components such as `Embed.Title` and `Embed.Field`.
-- Limit this PR to embed authoring and the runtime/text composition needed for
-  embeds. Defer standalone text rendering and modal rendering.
-- Later modal authoring will initially cover text inputs and informational text;
-  embedded selects and other controls remain deferred.
+- Embed authoring uses `renderEmbed()`. Modal authoring uses `renderModal()` with
+  text inputs and informational text; see [JSX modals](jsx-modals.md). Other modal
+  controls and standalone text rendering are outside the current API.
 
 - Export `renderEmbed()` from `@hyperion/jsx`; each call returns a fresh native
   `EmbedBuilder`, validated with `toJSON()` and available for customization.
@@ -25,7 +24,7 @@ resolve JavaScript and declarations in `dist`.
 
 - Support `Bold`, `Italic`, `Underline`, `Strikethrough`, `Spoiler`, `Br`, `Code`,
   `CodeBlock`, `Link`, `Raw`, `UserMention`, `RoleMention`, and `ChannelMention`
-  inside embeds. Keep standalone `renderText()` deferred.
+  inside embeds and modal text displays. No standalone `renderText()` is exported.
 - Allow fragments and reusable components at the render root, provided they
   resolve to exactly one embed. Reject empty roots, multiple embeds, and text
   outside the embed. Allow composed/mapped fields inside an embed.
@@ -77,8 +76,8 @@ resolve JavaScript and declarations in `dist`.
   supported.
 - Support synchronous reusable function components, props, children, fragments,
   conditionals, and array mapping. Fetch asynchronous data before composition.
-- Evaluate components at explicit render time. This PR returns fresh native embed
-  builders; standalone string and modal output remain future work.
+- Evaluate components at explicit render time. Renderers return fresh native
+  embed or modal builders; standalone string rendering is not provided.
 - Flatten nested children; omit nullish values and booleans; preserve zero. Use
   normal JSX whitespace handling and explicit line breaks.
 - Escape literal Markdown by default; expose explicit formatting, raw text, and

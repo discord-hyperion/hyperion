@@ -2,8 +2,8 @@
 
 ## Implemented
 
-- [x] Independent `@hyperion/jsx` package for native embed authoring, text composition,
-  automatic JSX runtimes, and TSX/JSX handler discovery. See [JSX authoring](jsx.md).
+- [x] Independent `@hyperion/jsx` package for native embed and modal authoring, text
+  composition, automatic JSX runtimes, and TSX/JSX handler discovery. See [JSX authoring](jsx.md).
 
 - [x] Filesystem event handlers with typed contexts, filename ordering, per-event
   FIFO queues, one-shot handlers, reloads, and bounded shutdown draining. See
@@ -28,8 +28,8 @@
   - Describe embed content, fields, and styling with a typed API that reduces builder boilerplate.
   - Support reusable defaults and templates while retaining access to native Discord builders.
 - [ ] Further JSX authoring through `@hyperion/jsx`.
-  - Native embed rendering, escaped text composition, reusable function components, and TSX/JSX handler discovery are implemented; see the [JSX guide](jsx.md).
-  - Standalone text rendering and modal authoring remain deferred. Future modals initially cover text inputs and informational text.
+  - Native embeds, modal labels/text inputs/informational text, escaped text composition, reusable components, and TSX/JSX handlers are implemented; see the [JSX guide](jsx.md) and [JSX modals](jsx-modals.md).
+  - Additional modal controls remain deferred. Standalone text formatting was dropped.
 - [ ] Managed interactive collectors.
   - Provide a simple abstraction for creating, tracking, stopping, and cleaning up collectors.
   - Make ownership, timeouts, completion, cancellation, and shutdown cleanup explicit.

@@ -120,6 +120,18 @@ A form presented in response to an interaction, with its submitted values delive
 in a separate interaction.
 _Avoid_: Modal handler
 
+**Text input**:
+A form control for entering a short or multiline text value.
+_Avoid_: Command option, submitted value
+
+**Label**:
+The visible name and optional explanatory text associated with a form control.
+_Avoid_: Custom ID, placeholder
+
+**Text display**:
+Informational formatted text presented alongside interactive controls.
+_Avoid_: Text input, submitted value
+
 **Custom ID**:
 An application-defined identifier attached to an interactive control or form to
 identify its associated interaction.

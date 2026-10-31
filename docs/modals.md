@@ -13,6 +13,14 @@ initialization with source-file context and the original cause. Reloads are
 atomic: a failure preserves the previously loaded registry. Modals have no REST
 registration and loading them does not log the bot in.
 
+## JSX authoring
+
+`@hyperion/jsx` can author the native builder with `Modal`, `Modal.Label`,
+`Modal.TextInput`, `Modal.TextDisplay`, and `renderModal()`. Alias core's handler
+class as `ModalHandler` when importing both APIs. See [JSX modals](jsx-modals.md)
+for defaults, validation, and fresh per-user initial values. JSX does not change
+this guide's submission, guard, acknowledgment, or exact-ID routing contract.
+
 ## Define a modal
 
 ```ts
@@ -21,7 +29,7 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { Modal, type ModalContext } from "discord-hyperion";
+import { Modal, type ModalContext } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
 export default class SubmitFeedback extends Modal {

@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { HyperionClient } from "@hyperion/core";
-import { Embed, renderEmbed } from "@hyperion/jsx";
-import { Events, type InteractionReplyOptions } from "discord.js";
+import { Embed, Modal, renderEmbed, renderModal } from "@hyperion/jsx";
+import {
+    type ChatInputCommandInteraction,
+    Events,
+    type InteractionReplyOptions,
+    TextInputStyle,
+} from "discord.js";
 
 // Establish Discord response compatibility from the public declaration exports.
 const response: InteractionReplyOptions = {
@@ -13,6 +18,15 @@ const response: InteractionReplyOptions = {
         ),
     ],
 };
+const modalResponse: Parameters<ChatInputCommandInteraction["showModal"]>[0] =
+    renderModal(
+        <Modal customId="typed.modal" title="Typed modal">
+            <Modal.Label text="Name">
+                <Modal.TextInput customId="name" style={TextInputStyle.Short} />
+            </Modal.Label>
+        </Modal>,
+    );
+void modalResponse;
 void response;
 const failures: unknown[] = [];
 const client = await HyperionClient.create({
@@ -32,6 +46,9 @@ const client = await HyperionClient.create({
 try {
     await client.commands.load(new URL("./jsx-handlers/", import.meta.url));
     assert.equal(client.commands.parents.size, 1);
+    const modal = client.modals.get("consumer.modal");
+    assert.ok(modal);
+    assert.equal(modal.builder.toJSON().custom_id, modal.customId);
     assert.ok(client.commands.resolveSubcommand("jsx", "show", "manage"));
     const calls: unknown[] = [];
     client.on("consumer:jsx", value => calls.push(value));
@@ -46,4 +63,7 @@ try {
 }
 console.log(
     "PASS TSX/JSX command parent/group discovery, module names, event priorities and response types",
+);
+console.log(
+    "PASS public modal response types and JSX-authored ModalBuilder discovery through core",
 );
