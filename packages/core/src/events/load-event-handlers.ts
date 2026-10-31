@@ -40,7 +40,9 @@ export const loadEventHandlers = async (root: string | URL, logger: Logger) => {
             );
         }
 
-        const match = /^(\d+)-(.+)\.[cm]?[jt]s$/.exec(path.basename(file));
+        const match = /^(\d+)-(.+)\.(?:[cm]?[jt]s|[jt]sx)$/.exec(
+            path.basename(file),
+        );
         const priority = match ? Number(match[1]) : undefined;
 
         if (priority !== undefined && !Number.isSafeInteger(priority)) {
