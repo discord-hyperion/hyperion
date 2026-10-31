@@ -35,6 +35,7 @@ const createInteraction = (
 
 test("passes a fresh context and preserves the command receiver", async t => {
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         logging: false as const,
         discord: { intents: [] },
@@ -62,6 +63,7 @@ test("passes a fresh context and preserves the command receiver", async t => {
 
 test("ignores interactions other than slash commands and buttons", async t => {
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         logging: false as const,
         discord: { intents: [] },
@@ -80,6 +82,7 @@ test("ignores interactions other than slash commands and buttons", async t => {
 
 test("acknowledges a stale command with a private unavailable response", async t => {
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         logging: false as const,
         discord: { intents: [] },
@@ -97,6 +100,7 @@ test("acknowledges a stale command with a private unavailable response", async t
 for (const phase of ["new", "deferred", "replied"] as const) {
     test(`handles a command failure after the ${phase} acknowledgment state`, async t => {
         const client = await HyperionClient.create({
+            root: new URL("./fixtures/empty-bot/", import.meta.url),
             name: "Test",
             logging: false as const,
             discord: { intents: [] },
@@ -151,6 +155,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
 
 test("contains synchronous throws and failed error responses in the event listener", async t => {
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         logging: false as const,
         discord: { intents: [] },
@@ -179,6 +184,7 @@ test("contains synchronous throws and failed error responses in the event listen
 
 test("does not acknowledge before a handler opens a modal", async t => {
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         logging: false as const,
         discord: { intents: [] },

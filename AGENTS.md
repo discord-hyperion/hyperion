@@ -20,6 +20,7 @@ context, not the current API.
 Read the relevant reference before implementation or review:
 - Client lifecycle, registry discovery, or package boundaries:
   [Architecture](docs/architecture.md).
+- Event discovery, ordering, reloads, or shutdown draining: [Event handlers](docs/event-handlers.md).
 - Command loading, deployment, or execution:
   [Command registration](docs/command-registration.md).
 - Command folders, parent definitions, subcommands, or future groups:
@@ -50,7 +51,8 @@ Read the relevant reference before implementation or review:
 - Use Biome for formatting, linting, and import organization; follow `biome.json`.
   Do not add ESLint or Prettier or manually format generated lockfiles.
 - Use kebab-case files/directories, PascalCase classes/types, and camelCase
-  functions/variables. Command folder delimiters follow the command-path guide.
+  functions/variables. Command folder delimiters follow the command-path guide. Event folders use
+  Discord event-name casing as described in the event-handler guide.
 - Prefer `type` over `interface` unless interface semantics such as declaration
   merging are required.
 - Prefer arrow functions for standalone functions, callbacks, and type signatures

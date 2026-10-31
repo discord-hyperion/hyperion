@@ -2,9 +2,11 @@ import { Client, Events, Team } from "discord.js";
 import type { Logger } from "pino";
 import { InteractionDispatcher } from "../execution/index.ts";
 import { LogManager } from "../logging/index.ts";
+import { validateEventOptions } from "../registries/event-registry.ts";
 import {
     ButtonRegistry,
     CommandRegistry,
+    EventRegistry,
     ModalRegistry,
     SelectMenuRegistry,
 } from "../registries/index.ts";
@@ -17,9 +19,11 @@ export class HyperionClient extends Client {
     public readonly buttons: ButtonRegistry;
     public readonly selectMenus: SelectMenuRegistry;
     readonly modals: ModalRegistry;
+    readonly events: EventRegistry;
     public readonly logger: Logger;
     private readonly logging: LogManager;
     private readonly dispatcher: InteractionDispatcher;
+    private destruction: Promise<void> | undefined;
     private ownerLookup: Promise<string> | undefined;
 
     private constructor(options: HyperionClientOptions) {
@@ -43,6 +47,7 @@ export class HyperionClient extends Client {
         this.modals = new ModalRegistry(
             this.logger.child({ component: "modals" }),
         );
+        this.events = new EventRegistry(this, options.root, options.events);
         this.dispatcher = new InteractionDispatcher(this);
 
         this.once(Events.ClientReady, async client => {
@@ -58,6 +63,7 @@ export class HyperionClient extends Client {
     }
 
     public static async create(options: HyperionClientOptions) {
+        validateEventOptions(options.events);
         const client = new HyperionClient(options);
 
         try {
@@ -117,6 +123,9 @@ export class HyperionClient extends Client {
         }
 
         this.dispatcher.attach();
+        await this.logging.step("Loading events", "events.load", () =>
+            this.events.load(),
+        );
 
         this.logger.info(
             {
@@ -125,6 +134,7 @@ export class HyperionClient extends Client {
                 buttonCount: this.buttons.size,
                 selectMenuCount: this.selectMenus.size,
                 modalCount: this.modals.size,
+                eventHandlerCount: this.events.size,
                 durationMs: Math.round(performance.now() - started),
             },
             "Hyperion initialized",
@@ -176,7 +186,16 @@ export class HyperionClient extends Client {
     }
 
     public override async destroy() {
+        this.destruction ??= this.cleanup();
+        await this.destruction;
+    }
+
+    private async cleanup() {
         this.ownerLookup = undefined;
-        await super.destroy();
+        try {
+            await this.events.shutdown();
+        } finally {
+            await super.destroy();
+        }
     }
 }

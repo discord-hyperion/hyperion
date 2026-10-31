@@ -1,5 +1,11 @@
 # Feature list
 
+## Implemented
+
+- [x] Filesystem event handlers with typed contexts, filename ordering, per-event
+  FIFO queues, one-shot handlers, reloads, and bounded shutdown draining. See
+  [event handlers](event-handlers.md).
+
 ## Planned
 
 - [ ] Typed custom-ID data exposed through interaction handlers (deferred).
