@@ -24,6 +24,7 @@ const personalApplication = (id = personalOwnerId) => ({
 
 const setup = async (t: TestContext) => {
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: false,
@@ -48,6 +49,7 @@ const context = (client: HyperionClient, userId: string) => ({
 
 test("creating a client does not fetch ownership and pre-login lookup fails closed", async t => {
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: false,

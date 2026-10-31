@@ -31,7 +31,12 @@ No global console interception or background formatting worker is installed.
   includes discovered source paths and skipped missing command directories.
 - Command registration: start, completion, or failure, plus each deployment's
   route, count, and duration. Empty registries emit a skipped event.
-- Initialization: final command, button, select menu, and modal counts and duration.
+- Initialization: final command, button, select menu, modal, and event-handler counts and duration.
+- Event handlers: `events.load` startup steps and `events.loaded` definition counts;
+  `event.failed` failures scoped to `eventName`, source path, and optional priority.
+  `event.queue.full` discards the newest occurrence with an event name and queue
+  count. `events.shutdown.timeout` records active/waiting counts. Raw event
+  argument tuples and payloads are excluded.
 - Button loading: start, completion, count, duration, or failure. Debug level
   includes discovered source paths and skipped missing button directories.
 - Button execution: debug start, info completion or rejection, and error failure.
@@ -68,7 +73,7 @@ No global console interception or background formatting worker is installed.
   use `stage: "input"`. Expected schema issues are passed to the handler without
   being logged. Guard logs carry the command's invocation metadata.
 
-Progress indicators cover command, button, select menu, and modal loading, application-command registration, and
+Progress indicators cover command, button, select menu, modal, and event-handler loading, application-command registration, and
 login. Runtime handlers do not display spinners automatically.
 
 ## Handler logging

@@ -82,6 +82,23 @@ The application values supplied to one command handler after option validation
 and any application resolution have completed.
 _Avoid_: Command options, raw option values
 
+### Events
+
+**Client event**:
+A notification emitted by the Discord client, with the arguments associated with
+that event.
+_Avoid_: Application command, custom-ID interaction
+
+**Event occurrence**:
+One emission of a client event, carrying the arguments supplied to its matching
+event handlers.
+_Avoid_: Event handler, handler invocation
+
+**Event handler**:
+An application definition that responds to a selected client event. Several event
+handlers may respond independently to the same client event.
+_Avoid_: Client event, component handler
+
 ### Components
 
 **Component handler**:
@@ -111,8 +128,7 @@ _Avoid_: Message ID, command name
 ### Execution
 
 **Invocation**:
-A single request to execute a command or component handler for a Discord
-interaction.
+A single request to execute a command, component handler, or event handler.
 _Avoid_: Handler definition
 
 **Guard**:

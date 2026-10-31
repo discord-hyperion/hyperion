@@ -40,7 +40,7 @@ activity must be an explicit part of the relevant operation.
 ## Discovery and registration
 
 Resolve fixed handler directories under `<root>/src`, including `commands`,
-`buttons`, `select-menus`, and `modals`; do not add arbitrary per-handler paths.
+`buttons`, `select-menus`, `modals`, and `events`; do not add arbitrary per-handler paths.
 The root defaults to the working directory and accepts a path or file URL.
 
 Scan recursively with `node:fs/promises`. Skip declarations, test modules, hidden
@@ -58,7 +58,10 @@ Shared discovery returns flat module paths. General filename filtering has one
 implementation; the command-path classifier alone interprets folder conventions
 and decides which indexes define parents/groups. Ordinary barrels are skipped
 before import. Internal loading functions share module construction and the
-component staging pipeline while public registries remain concrete Collections.
+component staging pipeline while command/component registries remain concrete Collections. Event handlers
+use a managed registry with private Collections so mutations cannot bypass queue
+and listener ownership. See [event handlers](event-handlers.md) for folder names,
+priorities, per-event FIFO, one-shot definitions, reloads, and shutdown deadlines.
 
 The live handler, parent, and group Collections remain authoritative. Loading and
 registration derive temporary command hierarchies through one grouping function;

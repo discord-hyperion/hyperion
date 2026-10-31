@@ -38,5 +38,10 @@
                 "organizeImports": "on"
             }
         }
+    },
+    "markdown": {
+        "parser": {
+            "frontmatter": true
+        }
     }
 }

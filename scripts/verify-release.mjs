@@ -131,6 +131,12 @@ try {
     ]);
 
     await changeset("patch");
+    // Exercise the real formatting seam before Changesets parses the note.
+    run(path.join(root, "node_modules/.bin/biome"), [
+        "check",
+        "--write",
+        ".changeset/verification.md",
+    ]);
     cli("version");
     assert.equal((await read("packages/core/package.json")).version, "0.1.1");
     assert.equal(

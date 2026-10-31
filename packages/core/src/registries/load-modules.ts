@@ -8,7 +8,12 @@ import {
 } from "../util/assert-registry-class.ts";
 import { discoverModules } from "../util/discover-modules.ts";
 
-type HandlerFolder = "commands" | "buttons" | "select-menus" | "modals";
+type HandlerFolder =
+    | "commands"
+    | "buttons"
+    | "select-menus"
+    | "modals"
+    | "events";
 
 export const discoverHandlerFiles = async (
     root: string | URL,
@@ -43,8 +48,9 @@ export const discoverHandlerFiles = async (
 export const loadHandler = async <Instance>(
     file: string,
     baseClass: RegistryBaseClass<Instance>,
+    url = pathToFileURL(file),
 ) => {
-    const module = await import(pathToFileURL(file).href);
+    const module = await import(url.href);
     const HandlerClass = module.default;
 
     assertRegistryClass(HandlerClass, baseClass);
@@ -62,7 +68,7 @@ type ComponentHandler = {
 export const loadComponentHandlers = async <Instance extends ComponentHandler>(
     registry: Collection<string, Instance>,
     root: string | URL,
-    folder: Exclude<HandlerFolder, "commands">,
+    folder: Exclude<HandlerFolder, "commands" | "events">,
     baseClass: RegistryBaseClass<Instance>,
     validate: (handler: Instance, data: ComponentData) => void,
     logger?: Logger,

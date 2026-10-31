@@ -1,5 +1,12 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext, defineInput } from "@hyperion/core";
+import {
+    Command,
+    type CommandContext,
+    defineInput,
+    type EventContext,
+    EventHandler,
+} from "@hyperion/core";
+import type { Events } from "discord.js";
 import * as v from "valibot";
 
 const input = defineInput({
@@ -26,3 +33,14 @@ export class TypedCommand extends Command<typeof input> {
         const _wrong: number = value.todo.id;
     }
 }
+
+class ReadyHandler extends EventHandler<Events.ClientReady> {
+    async run(ctx: EventContext<Events.ClientReady>) {
+        ctx.args[0].user.id satisfies string;
+        // @ts-expect-error Readiness provides one argument, not an arbitrary tuple.
+        ctx.args[1];
+        // @ts-expect-error Managed event registries do not permit raw mutation.
+        ctx.client.events.clear();
+    }
+}
+void ReadyHandler;

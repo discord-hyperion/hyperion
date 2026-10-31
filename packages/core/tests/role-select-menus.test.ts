@@ -41,6 +41,7 @@ const interaction = (phase = "new", ids = ["selected"]) =>
 const setup = async (t: TestContext) => {
     const records: Record<string, unknown>[] = [];
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: {

@@ -114,6 +114,7 @@ test("supports silent logging and a pretty output destination", async () => {
 test("command context gets a correlated logger and completion timing", async t => {
     const capture = captureLogs();
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: capture.logging,
@@ -159,6 +160,7 @@ test("command context gets a correlated logger and completion timing", async t =
 test("errors stay visible at error level and users still receive error responses", async t => {
     const capture = captureLogs();
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: { ...capture.logging, level: "error" },
@@ -224,6 +226,7 @@ test("initialization reports missing directories and skips deployment", async t 
 test("login logs outcome without recording the token or returned credentials", async t => {
     const capture = captureLogs();
     const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: capture.logging,

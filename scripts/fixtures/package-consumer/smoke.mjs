@@ -11,7 +11,7 @@ import {
     HyperionClient,
     Modal,
 } from "@hyperion/core";
-import { Client } from "discord.js";
+import { Client, Events } from "discord.js";
 
 class ExampleButton extends Button {
     constructor() {
@@ -41,4 +41,30 @@ assert.ok(command instanceof Command);
 assert.ok(command.builder instanceof ChatInputCommandBuilder);
 console.log(
     "public imports, discovered Command, command/button/modal builders, Discord Client identity: PASS",
+);
+
+const client = await HyperionClient.create({
+    name: "Consumer",
+    root: new URL("./handlers/", import.meta.url),
+    discord: { intents: [] },
+    logging: false,
+});
+try {
+    const calls = [];
+    client.on("consumer:event", (label, count) => calls.push([label, count]));
+    client.emit(Events.Invalidated);
+    await client.waitForAllListenersToComplete();
+    assert.deepEqual(calls, [
+        ["first", 0],
+        ["second", 0],
+    ]);
+    assert.equal(client.events.size, 2);
+    await client.events.load();
+    assert.equal(client.listenerCount(Events.Invalidated), 1);
+} finally {
+    await client.destroy();
+}
+assert.equal(client.listenerCount(Events.Invalidated), 0);
+console.log(
+    "public event exports, discovery, ordered execution, reload and cleanup: PASS",
 );
