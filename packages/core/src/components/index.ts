@@ -1,5 +1,12 @@
 export { Button, type ButtonContext, type ButtonOptions } from "./button.ts";
-export { Modal, type ModalContext, type ModalOptions } from "./modal.ts";
+export {
+    Modal,
+    type ModalContext,
+    type ModalInputDefinition,
+    type ModalInputOptions,
+    type ModalInputResolver,
+    type ModalOptions,
+} from "./modal.ts";
 export {
     type AnySelectMenu,
     SelectMenu,

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
-import { mock, test } from "node:test";
+import { test } from "node:test";
 import { ModalBuilder } from "@discordjs/builders";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 import {
     createChatInputInteraction,
     createModalInteraction,
@@ -58,21 +59,43 @@ test("JSX modal discovery, personalized opening and exact-ID submission preserve
     );
     assert.deepEqual(handler.builder.toJSON(), template);
 
-    const getTextInputValue = mock.fn((id: string) =>
-        id === "name" ? "Private submitted name" : "Private description",
-    );
     const submitted = createModalInteraction({
         customId: "todo.create",
-        components: { getTextInputValue },
+        components: {
+            data: [
+                {
+                    id: 1,
+                    type: ComponentType.Label,
+                    component: {
+                        id: 2,
+                        type: ComponentType.TextInput,
+                        customId: "name",
+                        value: "Private submitted name",
+                    },
+                },
+                {
+                    id: 3,
+                    type: ComponentType.Label,
+                    component: {
+                        id: 4,
+                        type: ComponentType.TextInput,
+                        customId: "description",
+                        value: "Private description",
+                    },
+                },
+            ],
+        },
         user: { id: "test-user" },
     });
     await dispatcher.dispatch(submitted.interaction);
 
-    assert.deepEqual(
-        getTextInputValue.mock.calls.map(call => call.arguments[0]),
-        ["name", "description"],
-    );
-    assert.equal(submitted.reply.mock.callCount(), 1);
+    assert.equal(submitted.reply.mock.callCount(), 0);
+    assert.equal(submitted.deferReply.mock.callCount(), 1);
+    assert.deepEqual(submitted.editReply.mock.calls[0]?.arguments[0], {
+        content:
+            "Received a todo name of 22 characters and description of 19 characters. This demo does not store submissions.",
+        allowedMentions: { parse: [] },
+    });
     assert.deepEqual(handler.builder.toJSON(), template);
     assert.ok(
         records.every(

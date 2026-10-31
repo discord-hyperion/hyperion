@@ -21,9 +21,11 @@
   - Apply the design across buttons, select menus, and modals without retaining per-message handler state.
 - [ ] Reusable typed input validation and transformation.
   - Chat-input commands and subcommands now support optional Standard Schema-compatible schemas, whole-input resolution after validation, inferred handler input through `defineInput`, and handler-owned validation responses. See [typed command input](input-validation.md).
-  - Resolve slash-command options, modal fields, and custom-ID parameters into validated values.
+  - Modal handlers now support text-input schemas, optional whole-input resolution,
+    and inferred submission results; see [modal input validation](modal-input-validation.md).
+  - Extend validation to additional modal control types and custom-ID parameters.
   - Support application-defined resolvers, including asynchronous validation.
-  - Extend the command-input pipeline to the deferred input sources above, keeping expected validation failures separate from unexpected errors.
+  - Keep expected validation failures separate from unexpected errors across input sources.
 - [ ] Intuitive, declarative embed creation API.
   - Describe embed content, fields, and styling with a typed API that reduces builder boilerplate.
   - Support reusable defaults and templates while retaining access to native Discord builders.

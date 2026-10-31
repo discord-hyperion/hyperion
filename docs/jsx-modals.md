@@ -35,7 +35,7 @@ modal is distinct from adding a public standalone text-render API.
   discord.js consumers.
 - Limit this feature to form authoring. Keep submission parsing, schema
   validation/resolution, handler contexts, and routing unchanged. Modal input
-  schemas remain a separate extension of the existing input pipeline.
+  schemas are supported separately by core; see [modal input validation](modal-input-validation.md).
 
 - Require explicit `customId` props on the modal and every text input. Do not
   derive IDs from labels, ordering, or component positions.
@@ -126,8 +126,8 @@ await ctx.interaction.showModal(
 );
 ```
 
-The submission still routes to the handler registered as `todo.create`. Continue
-reading fields through `ctx.interaction.components.getTextInputValue("name")`.
+The submission still routes to the handler registered as `todo.create`. Read fields directly through `ctx.interaction.components.getTextInputValue("name")`
+or configure core input validation to receive typed values through `ctx.input`.
 Do not acknowledge the originating interaction before opening its modal; opening
 and submission remain separate interactions under the existing modal guide.
 

@@ -10,11 +10,16 @@ import {
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
 import { Command, type CommandType, Subcommand } from "../commands/index.ts";
-import type { SelectMenu, SelectMenuType } from "../components/index.ts";
+import {
+    Modal,
+    type SelectMenu,
+    type SelectMenuType,
+} from "../components/index.ts";
 import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
 import { resolveCommandInput } from "./resolve-command-input.ts";
+import { resolveModalInput } from "./resolve-modal-input.ts";
 
 type HandlerKind = "command" | "button" | "select-menu" | "modal";
 
@@ -355,6 +360,18 @@ export class InteractionDispatcher {
             ) {
                 stage = "input";
                 const input = await resolveCommandInput(handler, {
+                    ...ctx,
+                    interaction,
+                });
+                handlerContext = { ...ctx, input };
+            } else if (
+                handler instanceof Modal &&
+                interaction.isModalSubmit() &&
+                handler.input
+            ) {
+                stage = "input";
+
+                const input = await resolveModalInput(handler, {
                     ...ctx,
                     interaction,
                 });

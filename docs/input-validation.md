@@ -138,5 +138,16 @@ the base class. No class factory or `CommandContextFor` helper is introduced.
 - Definitions and schemas are shared; invocation input and contexts are fresh.
   Constructors copy/freeze the input configuration without freezing application
   schema objects or executing validation and resolution.
-- Discovery and deployment never execute schemas or resolvers. Modal submissions
-  and custom-ID parameters remain deferred extensions.
+- Discovery and deployment never execute schemas or resolvers. Modal submissions support the same policy with text-input extraction; see
+  [modal input validation](modal-input-validation.md). Custom-ID parameters remain
+  deferred.
+
+## Modal reuse
+
+Modal handlers also accept `input` and use `Modal<typeof input>` with
+`ModalContext<typeof input>`. Use the same `defineInput` helper. When a modal
+resolver uses context, annotate its second parameter as `ctx: ModalContext`;
+schema values and resolver results remain inferred. Unannotated resolver context
+continues to default to the chat-input command context for compatibility.
+See [modal input validation](modal-input-validation.md) for submission extraction,
+empty/missing fields, and an example.

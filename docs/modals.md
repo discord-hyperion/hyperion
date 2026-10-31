@@ -104,7 +104,7 @@ guards and the handler. A custom `onFail(ctx)` owns the rejection response.
 Guards on the originating command or component do not automatically apply to
 the modal submission; declare submission guards on the `Modal` itself.
 
-Hyperion does not automatically acknowledge submissions. Use `reply()` or
+Without `input.defer: true`, Hyperion does not automatically acknowledge submissions. Use `reply()` or
 `deferReply()` followed by `editReply()` for a separate response. For a modal
 opened from a message component, narrow with `ctx.interaction.isFromMessage()`
 before using `update()` to change the source message. A deferred message update
@@ -116,6 +116,20 @@ deferred message updates receive ephemeral follow-ups. An error after
 `deferUpdate()` never overwrites the source message. Failed error responses are
 logged and contained.
 
+## Typed submission input
+
+Modal handlers can optionally configure `input` with a Standard Schema-compatible
+schema, private deferral, and whole-input resolution. Use `defineInput`,
+`Modal<typeof input>`, and `ModalContext<typeof input>` to infer handler values.
+The builder remains required and supplies the routing ID and shared default form.
+
+Processing runs after guards. Expected validation issues reach the handler through
+`ctx.input`; schema/resolver exceptions and extraction failures use the existing
+error pipeline with `stage: "input"`. Input values and expected issues are not
+logged. Schema-free handlers retain their existing contexts and acknowledgment
+behavior. See [modal input validation](modal-input-validation.md) for extraction
+rules and a complete example.
+
 ## State and logging
 
 Handlers and builders are shared definitions, not per-user sessions. Do not
@@ -125,6 +139,6 @@ authorization again when processing the submission. The feedback demo only
 reports the submitted character count; it does not persist feedback.
 
 `ctx.logger` carries `modal`, `interactionId`, `guildId`, and `userId`. Framework
-logs include execution duration and guard/handler failure stage, but not raw
+logs include execution duration and guard/input/handler failure stage, but not raw
 interactions or submitted values. Do not put private form contents in logs or
 error messages yourself.

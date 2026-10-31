@@ -1,10 +1,14 @@
 import assert from "node:assert/strict";
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
 import { Embed, Modal, renderEmbed, renderModal } from "@hyperion/jsx";
 import {
+    BaseInteraction,
     type ChatInputCommandInteraction,
+    ComponentType,
     Events,
     type InteractionReplyOptions,
+    InteractionType,
+    type ModalSubmitInteraction,
     TextInputStyle,
 } from "discord.js";
 
@@ -49,6 +53,44 @@ try {
     const modal = client.modals.get("consumer.modal");
     assert.ok(modal);
     assert.equal(modal.builder.toJSON().custom_id, modal.customId);
+    const replies: unknown[] = [];
+    const submission = {
+        type: InteractionType.ModalSubmit,
+        customId: "consumer.modal",
+        id: "consumer-submission",
+        guildId: null,
+        user: { id: "consumer-user" },
+        deferred: false,
+        replied: false,
+        ephemeral: null,
+        components: {
+            data: [
+                {
+                    id: 1,
+                    type: ComponentType.Label,
+                    component: {
+                        id: 2,
+                        type: ComponentType.TextInput,
+                        customId: "name",
+                        value: "Typed todo",
+                    },
+                },
+            ],
+        },
+        isChatInputCommand: BaseInteraction.prototype.isChatInputCommand,
+        isButton: BaseInteraction.prototype.isButton,
+        isSelectMenu: BaseInteraction.prototype.isSelectMenu,
+        isModalSubmit: BaseInteraction.prototype.isModalSubmit,
+        async reply(value: unknown) {
+            replies.push(value);
+        },
+    };
+    // The isolated consumer supplies only the SDK interaction surface it uses.
+    await new InteractionDispatcher(client).dispatch(
+        submission as unknown as ModalSubmitInteraction,
+    );
+    assert.deepEqual(replies, ["consumer-user: Typed todo"]);
+
     assert.ok(client.commands.resolveSubcommand("jsx", "show", "manage"));
     const calls: unknown[] = [];
     client.on("consumer:jsx", value => calls.push(value));
@@ -65,5 +107,5 @@ console.log(
     "PASS TSX/JSX command parent/group discovery, module names, event priorities and response types",
 );
 console.log(
-    "PASS public modal response types and JSX-authored ModalBuilder discovery through core",
+    "PASS public modal response types, JSX discovery, and typed submission resolution through core",
 );
