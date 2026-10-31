@@ -1,8 +1,8 @@
 # @hyperion/jsx
 
-Synchronous JSX authoring for Discord embeds, without React or a dependency on
-`@hyperion/core`. Returns fresh native `EmbedBuilder` instances from the pinned
-compatible `@discordjs/builders` peer.
+Synchronous JSX authoring for Discord embeds and modals, without React or a dependency on
+`@hyperion/core`. Returns fresh native `EmbedBuilder` or `ModalBuilder` instances
+from the pinned compatible `@discordjs/builders` peer.
 
 ```tsx
 import { Bold, Embed, renderEmbed } from "@hyperion/jsx";
@@ -34,8 +34,32 @@ nesting and props, and calls native `toJSON()` without overriding global validat
 settings. Invalid content throws `JSXRenderError`, with structural context and an
 original cause when available. It does not log automatically.
 
-This release supports embeds only. No standalone text rendering, modal rendering,
-React lifecycle, automatic updates, or insertion of existing builders is provided.
+`Modal` and `renderModal()` also support labels, text inputs, and informational
+text displays. Input style defaults to short (`"paragraph"` and native style enum
+values are supported); inputs default to required. Custom IDs are explicit and
+duplicate input IDs within a form are rejected. Each render creates a fresh native
+`ModalBuilder`, suitable for personalized values without mutating shared handler
+definitions. Submission parsing and routing stay application-owned.
+
+```tsx
+import { Modal, renderModal } from "@hyperion/jsx";
+
+const form = renderModal(
+    <Modal customId="todo.create" title="Create todo">
+        <Modal.Label text="Name">
+            <Modal.TextInput customId="name" maxLength={100} />
+        </Modal.Label>
+    </Modal>,
+);
+```
+
+Supply `form` to `interaction.showModal()`. The caller owns acknowledgment and
+submission handling. Use a fresh render for per-user initial values and preserve
+the registered handler's custom ID when using core. Never mutate a shared
+registered builder with user-specific values.
+
+No standalone text rendering, additional modal controls, React lifecycle,
+automatic updates, or insertion of existing builders is provided.
 Validate your complete response separately: Discord's aggregate embed limits apply
 across the entire message. Native causes can include supplied values; treat them
 appropriately when logging errors.
