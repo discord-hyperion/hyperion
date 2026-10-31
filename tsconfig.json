@@ -1,4 +1,14 @@
 {
     "extends": "./tsconfig.base.json",
-    "include": ["packages/**/*.ts", "apps/**/*.ts", "tests/**/*.ts"]
+    "include": [
+        "packages/**/*.ts",
+        "apps/**/*.ts",
+        "tests/**/*.ts",
+        "packages/**/*.tsx",
+        "apps/**/*.tsx"
+    ],
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "jsxImportSource": "@hyperion/jsx"
+    }
 }

@@ -29,11 +29,11 @@ export const classifyCommandPath = (relativePath: string) => {
     const filename = segments.pop();
     const groupDefinition =
         !!filename &&
-        /^index\.[cm]?[jt]s$/.test(filename) &&
+        /^index\.(?:[cm]?[jt]s|[jt]sx)$/.test(filename) &&
         /^\{[^()[\]{}]+\}$/.test(segments.at(-1) ?? "");
     const parentDefinition =
         !!filename &&
-        /^index\.[cm]?[jt]s$/.test(filename) &&
+        /^index\.(?:[cm]?[jt]s|[jt]sx)$/.test(filename) &&
         /^\[[^()[\]{}]+\]$/.test(segments.at(-1) ?? "");
 
     if (
@@ -93,7 +93,7 @@ export const classifyCommandPath = (relativePath: string) => {
 
     const commandPath: CommandPath = {
         categories,
-        moduleName: filename.replace(/\.[cm]?[jt]s$/, ""),
+        moduleName: filename.replace(/\.(?:[cm]?[jt]s|[jt]sx)$/, ""),
         ...(parent ? { parent } : {}),
         ...(group ? { group } : {}),
         ...(parentDefinition ? { parentDefinition: true as const } : {}),

@@ -3,8 +3,14 @@ name: Publish package
 on:
     workflow_dispatch:
         inputs:
+            package:
+                description: Public package to publish
+                required: true
+                default: "@hyperion/core"
+                type: choice
+                options: ["@hyperion/core", "@hyperion/jsx"]
             version:
-                description: Exact reviewed @hyperion/core version to publish
+                description: Exact reviewed version of the selected package
                 required: true
                 type: string
             channel:
@@ -48,9 +54,10 @@ jobs:
 
             - name: Validate reviewed release and channel
               env:
+                  RELEASE_PACKAGE: ${{ inputs.package }}
                   EXPECTED_VERSION: ${{ inputs.version }}
                   RELEASE_CHANNEL: ${{ inputs.channel }}
-              run: node scripts/check-release.mjs --version "$EXPECTED_VERSION" --channel "$RELEASE_CHANNEL" --ref "$GITHUB_REF"
+              run: node scripts/check-release.mjs --package "$RELEASE_PACKAGE" --version "$EXPECTED_VERSION" --channel "$RELEASE_CHANNEL" --ref "$GITHUB_REF"
 
             - name: Type check and test all packages
               run: pnpm exec turbo run typecheck test --cache=local:rw
@@ -66,6 +73,13 @@ jobs:
 
             - name: Publish verified tarball with npm trusted publishing
               env:
+                  RELEASE_PACKAGE: ${{ inputs.package }}
                   EXPECTED_VERSION: ${{ inputs.version }}
                   RELEASE_CHANNEL: ${{ inputs.channel }}
-              run: pnpm --package=npm@11.21.0 dlx npm publish "$RUNNER_TEMP/hyperion-release/hyperion-core-$EXPECTED_VERSION.tgz" --access public --tag "$RELEASE_CHANNEL" --provenance --ignore-scripts
+              run: |
+                  case "$RELEASE_PACKAGE" in
+                      @hyperion/core) PACKAGE_KEY=core ;;
+                      @hyperion/jsx) PACKAGE_KEY=jsx ;;
+                      *) exit 1 ;;
+                  esac
+                  pnpm --package=npm@11.21.0 dlx npm publish "$RUNNER_TEMP/hyperion-release/hyperion-$PACKAGE_KEY-$EXPECTED_VERSION.tgz" --access public --tag "$RELEASE_CHANNEL" --provenance --ignore-scripts

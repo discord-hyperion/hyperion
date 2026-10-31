@@ -12,7 +12,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { validateRelease } from "./check-release.mjs";
+import { releasePackage, validateRelease } from "./check-release.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const stable = {
@@ -28,6 +28,11 @@ const beta = {
     ref: "refs/heads/release/beta",
     pre: { mode: "pre", tag: "beta" },
 };
+assert.equal(releasePackage("@hyperion/core"), "core");
+assert.equal(releasePackage("@hyperion/jsx"), "jsx");
+assert.throws(() => releasePackage("@hyperion/dev-bot"));
+assert.throws(() => releasePackage("../../private"));
+assert.throws(() => releasePackage("toString"));
 validateRelease(stable);
 validateRelease(beta);
 for (const invalid of [
@@ -51,6 +56,7 @@ const run = (command, args) =>
     execFileSync(command, args, {
         cwd: temporary,
         encoding: "utf8",
+        stdio: "pipe",
         timeout: 120_000,
     });
 const cli = (...args) =>
@@ -65,14 +71,15 @@ const write = (relative, data) =>
     );
 const read = async relative =>
     JSON.parse(await readFile(path.join(temporary, relative), "utf8"));
-const changeset = bump =>
+const changeset = (bump, name = "@hyperion/core") =>
     write(
         ".changeset/verification.md",
-        `---\n"@hyperion/core": ${bump}\n---\n\nVerify ${bump} version planning.\n`,
+        `---\n"${name}": ${bump}\n---\n\nVerify ${bump} version planning.\n`,
     );
 try {
     await mkdir(path.join(temporary, ".changeset"));
     await mkdir(path.join(temporary, "packages/core"), { recursive: true });
+    await mkdir(path.join(temporary, "packages/jsx"));
     await mkdir(path.join(temporary, "packages/consumer"));
     await mkdir(path.join(temporary, "packages/peer-consumer"));
     await mkdir(path.join(temporary, "apps/dev-bot"), { recursive: true });
@@ -100,6 +107,10 @@ try {
     await write("packages/core/package.json", {
         name: "@hyperion/core",
         version: "0.1.0",
+    });
+    await write("packages/jsx/package.json", {
+        name: "@hyperion/jsx",
+        version: "0.0.0",
     });
     await write("packages/consumer/package.json", {
         name: "@hyperion/consumer",
@@ -157,6 +168,39 @@ try {
     );
     console.log(
         "PASS patch release: changelog generated, compatible dependents and private bot unchanged",
+    );
+
+    await changeset("minor", "@hyperion/jsx");
+    cli("version");
+    assert.equal((await read("packages/jsx/package.json")).version, "0.1.0");
+    assert.equal((await read("packages/core/package.json")).version, "0.1.1");
+    assert.equal((await read("apps/dev-bot/package.json")).version, "0.0.0");
+    run(process.execPath, [
+        path.join(root, "scripts/check-release.mjs"),
+        "--package",
+        "@hyperion/jsx",
+        "--version",
+        "0.1.0",
+        "--channel",
+        "latest",
+        "--ref",
+        stable.ref,
+    ]);
+    assert.throws(() =>
+        run(process.execPath, [
+            path.join(root, "scripts/check-release.mjs"),
+            "--package",
+            "@hyperion/jsx",
+            "--version",
+            "0.1.1",
+            "--channel",
+            "latest",
+            "--ref",
+            stable.ref,
+        ]),
+    );
+    console.log(
+        "PASS independent JSX release and manifest guard leave core/private bot versions unchanged",
     );
 
     await changeset("minor");

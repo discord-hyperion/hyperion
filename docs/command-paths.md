@@ -32,7 +32,9 @@ Category folders can appear at any depth. A group requires a parent, and parents
 and groups cannot nest within another of the same kind. Folder delimiters must
 match and names must not be empty. Legacy unmarked folders remain organizational
 for compatibility. The parser expects relative module paths and rejects traversal,
-unsupported extensions, declarations, and test modules. Both slash styles are
+unsupported extensions, declarations, and test modules. Supported extensions
+include `.tsx` and `.jsx`; these preserve parent/group index rules and module-name
+extraction. Configure the JSX compiler as described in [JSX authoring](jsx.md). Both slash styles are
 supported. A direct `[parent]/index.ts` (or supported JS/TS equivalent) is a parent
 definition. A direct `{group}/index.ts` is a group definition; other index files
 remain ignored barrels.

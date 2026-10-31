@@ -1,7 +1,9 @@
 # Package development and publication artifacts
 
 The workspace resolves `@hyperion/core` to `packages/core/src/index.ts`. The dev
-bot uses this public export through its workspace dependency. Run source checks
+bot uses this public export through its workspace dependency. `@hyperion/jsx`
+resolves to `packages/jsx/lib/index.ts` and has production/development automatic
+runtime subpaths; it has no dependency on core. Run source checks
 and tests without compiling first:
 
 ```sh
@@ -13,7 +15,8 @@ pnpm check
 ## Build and pack
 
 `pnpm build` cleans `packages/core/dist` and emits unbundled ESM JavaScript and
-TypeScript declarations from the framework source. Relative `.ts` imports are
+TypeScript declarations from each package's implementation (`core/src` and
+`jsx/lib`). Relative `.ts` imports are
 rewritten for the emitted files. The build excludes tests, source maps, and
 declaration maps.
 
@@ -25,16 +28,19 @@ pnpm --filter @hyperion/core pack --pack-destination /tmp/hyperion-artifacts
 
 pnpm applies `publishConfig.exports` to the tarball manifest: published consumers
 resolve `dist/index.js` and `dist/index.d.ts`, while local workspace consumers
-continue to resolve source. Only the root export is public. Package contents are
+continue to resolve source. Core exposes its root; JSX exposes its root plus
+`jsx-runtime` and `jsx-dev-runtime`. Package contents are
 limited to `dist`, README, license, and the required package manifest. Use pnpm
 for packing so the publication overrides are applied.
 
 ## Verify consumers
 
-Run `pnpm verify:package` from the root. This uncached check:
+Run `pnpm verify:package` from the root. This uncached check verifies both packages,
+including standalone JSX without core and TSX/JSX core integration. It:
 1. Removes generated `dist`, then checks source imports and types without path
    aliases or a development build.
-2. Packs the core package and checks its manifest exports and artifact allowlist.
+2. Packs each public package and checks every published runtime/declaration export
+   and the artifact allowlist.
 3. Installs the tarball and its dependencies into a temporary directory outside
    the workspace, with fresh metadata and lifecycle scripts disabled. This first
    install permits registry resolution and creates the consumer's own lockfile.
@@ -42,7 +48,9 @@ Run `pnpm verify:package` from the root. This uncached check:
    offline install.
 4. Checks plain Node ESM imports, NodeNext declaration inference (including
    negative type assertions), tsx consumption, offline command discovery, and
-   framework/Discord builder constructor identity.
+   framework/Discord builder constructor identity. JSX checks include both automatic
+   runtime subpaths, standalone TSX, Discord response types, and TSX/JSX command
+   parent/group definitions and numeric event priorities.
 
 The source check uses the normal workspace installation. The isolated consumer
 seeds its own metadata cache and dependency lockfile before proving offline
@@ -81,10 +89,12 @@ do not run it concurrently with a build that writes the same `dist` directory.
 `pnpm verify:cache` copies the controlled source/configuration inputs into a
 disposable workspace and installs offline with a frozen lockfile. It verifies:
 - Cold source checks without `dist`, followed by unchanged-run cache replay.
-- Framework edits invalidate both packages; bot edits invalidate only bot checks.
-- Shared fixture/config edits invalidate both packages.
+- Framework edits invalidate core and bot checks; JSX edits invalidate JSX and bot
+  checks. Bot edits invalidate only bot checks.
+- Shared fixture/config edits invalidate all three packages.
 - Dependency-manifest edits invalidate the owning package and its consumers.
-- A cached build restores JavaScript and declarations after `dist` is removed.
+- Cached builds restore both public packages and JSX runtime subpaths after
+  `dist` is removed.
 
 The mutations affect only the disposable workspace, which is removed afterward.
 CI runs all package type checks and tests together, cache acceptance and packed

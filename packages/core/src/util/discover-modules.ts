@@ -2,10 +2,10 @@ import { readdir } from "node:fs/promises";
 import path from "node:path";
 
 export const isModuleFilename = (filename: string, includeIndexes = false) =>
-    /\.[cm]?[jt]s$/.test(filename) &&
-    !/\.d\.[cm]?ts$/.test(filename) &&
+    /\.(?:[cm]?[jt]s|[jt]sx)$/.test(filename) &&
+    !/\.d\.(?:[cm]?ts|tsx)$/.test(filename) &&
     (includeIndexes || !/^index\./.test(filename)) &&
-    !/\.(?:test|spec)\.[cm]?[jt]s$/.test(filename);
+    !/\.(?:test|spec)\.(?:[cm]?[jt]s|[jt]sx)$/.test(filename);
 
 /** A missing root is optional; filesystem failures below it still propagate. */
 export const discoverModules = async (

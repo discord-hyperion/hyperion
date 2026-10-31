@@ -241,6 +241,9 @@ importers:
       '@hyperion/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@hyperion/jsx':
+        specifier: workspace:*
+        version: link:../../packages/jsx
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
@@ -275,6 +278,16 @@ importers:
       valibot:
         specifier: ^1.5.0
         version: 1.5.0(typescript@7.0.2)
+
+  packages/jsx:
+    dependencies:
+      '@discordjs/formatters':
+        specifier: 1.0.0-dev.1792497873-5050a3b54
+        version: 1.0.0-dev.1792497873-5050a3b54
+    devDependencies:
+      '@discordjs/builders':
+        specifier: 2.0.0-dev.1792497873-5050a3b54
+        version: 2.0.0-dev.1792497873-5050a3b54
 
 packages:
 

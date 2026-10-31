@@ -20,6 +20,7 @@ context, not the current API.
 Read the relevant reference before implementation or review:
 - Client lifecycle, registry discovery, or package boundaries:
   [Architecture](docs/architecture.md).
+- JSX runtime, embed authoring, or TSX/JSX handlers: [JSX authoring](docs/jsx.md).
 - Event discovery, ordering, reloads, or shutdown draining: [Event handlers](docs/event-handlers.md).
 - Command loading, deployment, or execution:
   [Command registration](docs/command-registration.md).
@@ -84,7 +85,7 @@ If the package-manager wrapper is unavailable, use:
 
 ```sh
 ./node_modules/.bin/tsc --noEmit
-node --import tsx --test packages/core/tests/*.test.ts apps/dev-bot/tests/*.test.ts
+node --import tsx --test packages/core/tests/*.test.ts packages/jsx/tests/*.test.tsx apps/dev-bot/tests/*.test.ts
 ./node_modules/.bin/biome check .
 ```
 

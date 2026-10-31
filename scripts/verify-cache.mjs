@@ -13,9 +13,14 @@ const checks = [
     "@hyperion/core#test",
     "@hyperion/dev-bot#typecheck",
     "@hyperion/dev-bot#test",
+    "@hyperion/jsx#typecheck",
+    "@hyperion/jsx#test",
 ];
 const coreChecks = checks.slice(0, 2);
-const botChecks = checks.slice(2);
+const botChecks = checks.slice(2, 4);
+const jsxChecks = checks.slice(4);
+const coreAndBotChecks = [...coreChecks, ...botChecks];
+const jsxAndBotChecks = [...jsxChecks, ...botChecks];
 const run = (command, args) =>
     execFileSync(command, args, {
         cwd: directory,
@@ -86,6 +91,12 @@ try {
         "packages/core/tsconfig.build.json",
         "packages/core/src",
         "packages/core/tests",
+        "packages/jsx/package.json",
+        "packages/jsx/tsconfig.json",
+        "packages/jsx/tsconfig.build.json",
+        "packages/jsx/lib",
+        "packages/jsx/tests",
+        "packages/jsx/benchmarks",
         "apps/dev-bot/package.json",
         "apps/dev-bot/tsconfig.json",
         "apps/dev-bot/index.ts",
@@ -129,7 +140,7 @@ try {
     });
     cached(dry(), checks, "HIT");
     const replay = execute(sourceTasks);
-    assert.match(replay, /4 cached, 4 total/);
+    assert.match(replay, /6 cached, 6 total/);
     console.log(
         "PASS cold source checks without dist, parallel graph, unchanged-run cache replay",
     );
@@ -138,7 +149,7 @@ try {
         "framework edit",
         "packages/core/src/index.ts",
         text => `${text}\n// Cache verification.\n`,
-        checks,
+        coreAndBotChecks,
         baseline,
     );
     await mutate(
@@ -170,7 +181,7 @@ try {
             manifest.devDependencies.valibot = "1.5.0";
             return JSON.stringify(manifest);
         },
-        checks,
+        coreAndBotChecks,
         baseline,
     );
     await mutate(
@@ -184,18 +195,54 @@ try {
         botChecks,
         baseline,
     );
+    await mutate(
+        "JSX edit",
+        "packages/jsx/lib/index.ts",
+        text => `${text}\n// Cache verification.\n`,
+        jsxAndBotChecks,
+        baseline,
+    );
+    await mutate(
+        "JSX manifest edit",
+        "packages/jsx/package.json",
+        text => {
+            const manifest = JSON.parse(text);
+            manifest.description = "Cache verification";
+
+            return JSON.stringify(manifest);
+        },
+        jsxAndBotChecks,
+        baseline,
+    );
     cached(dry(), coreChecks, "HIT");
 
     execute(["build"]);
-    const output = path.join(directory, "packages/core/dist/index.js");
-    const emitted = await readFile(output, "utf8");
-    await rm(path.join(directory, "packages/core/dist"), { recursive: true });
+    const emitted = [];
+
+    for (const name of ["core", "jsx"]) {
+        const directoryName = path.join(directory, "packages", name, "dist");
+        emitted.push(
+            await readFile(path.join(directoryName, "index.js"), "utf8"),
+        );
+        await rm(directoryName, { recursive: true });
+    }
+
     const restored = execute(["build"]);
-    assert.match(restored, /1 cached, 1 total/);
-    assert.equal(await readFile(output, "utf8"), emitted);
-    await access(path.join(directory, "packages/core/dist/index.d.ts"));
+    assert.match(restored, /2 cached, 2 total/);
+
+    for (const [index, name] of ["core", "jsx"].entries()) {
+        const directoryName = path.join(directory, "packages", name, "dist");
+        assert.equal(
+            await readFile(path.join(directoryName, "index.js"), "utf8"),
+            emitted[index],
+        );
+        await access(path.join(directoryName, "index.d.ts"));
+    }
+
+    await access(path.join(directory, "packages/jsx/dist/jsx-runtime.d.ts"));
+    await access(path.join(directory, "packages/jsx/dist/jsx-dev-runtime.js"));
     console.log(
-        "PASS cached build restores JavaScript and declarations after dist deletion",
+        "PASS cached builds restore both packages and JSX runtime subpaths",
     );
 } finally {
     await rm(directory, { recursive: true, force: true });
