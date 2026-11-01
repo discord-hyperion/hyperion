@@ -110,6 +110,10 @@ _Avoid_: Button, select menu, modal
 An interactive message control that a user clicks to trigger an action.
 _Avoid_: Button handler
 
+**Action row**:
+A horizontal group of interactive controls within a message or form.
+_Avoid_: Handler group, command group
+
 **Select menu**:
 An interactive control for choosing one or more values, users, roles, mentionable
 entities, or channels.

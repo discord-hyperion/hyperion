@@ -1,7 +1,7 @@
 # @hyperion/jsx
 
-Synchronous JSX authoring for Discord embeds and modals, without React or a dependency on
-`@hyperion/core`. Returns fresh native `EmbedBuilder` or `ModalBuilder` instances
+Synchronous JSX authoring for Discord embeds, modals, and message buttons, without React or a dependency on
+`@hyperion/core`. Returns fresh native embed, modal, button, or action-row builders
 from the pinned compatible `@discordjs/builders` peer.
 
 ```tsx
@@ -66,3 +66,57 @@ appropriately when logging errors.
 
 Run `pnpm --filter @hyperion/jsx benchmark` for the equivalent-output native-builder
 comparison. Measurements describe local overhead, not a speed guarantee.
+
+## Message buttons
+
+```tsx
+import {
+    ActionRow,
+    Button,
+    renderButton,
+    renderComponents,
+} from "@hyperion/jsx";
+
+// A native custom-ID builder, suitable for a core Button handler.
+const handlerBuilder = renderButton(
+    <Button customId="profile.refresh" style="primary">
+        Refresh
+    </Button>,
+);
+
+// Native rows, suitable for interaction reply/update components.
+const components = renderComponents(
+    <ActionRow>
+        <Button
+            customId="profile.refresh"
+            style="primary"
+            emoji={{ name: "🔄" }}
+        >
+            Refresh
+        </Button>
+        <Button url="https://example.com/profile">Open profile</Button>
+    </ActionRow>,
+);
+```
+
+Interactive buttons require an explicit custom ID and style (`primary`,
+`secondary`, `success`, `danger`, or corresponding native enum values). Link
+buttons use `url` instead of style/custom ID. Both support native emoji objects,
+plain label children, and optional `disabled`. Omitted disabled stays omitted;
+false is preserved. Labels are literal, with no Markdown escaping or formatting
+components. Numeric IDs, premium buttons, selects, and existing builder children
+are unsupported.
+
+`renderComponents()` requires explicit rows and returns an empty array for an
+empty root. Duplicate interactive IDs are rejected across one rendered set of
+rows; separate renders may reuse IDs. `renderButton()` accepts one interactive
+button and rejects links. Each render creates independent builders. Native row
+validation respects the global validator setting; JSX structure and duplicate
+checks remain active. Validate whole-message constraints separately, including
+the five-row limit for legacy messages.
+
+Rendering adds no handlers, collectors, state, or authorization. Core handlers
+continue routing by exact ID. Clone or freshly render per-user views, and check
+current authorization when handling clicks. See the
+[complete message component guide](https://github.com/favylicious/discord-hyperion/blob/main/docs/jsx-message-components.md)
+for handler and message examples, limits, and the `/jsx-buttons` development demo.

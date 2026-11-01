@@ -1,19 +1,38 @@
 import assert from "node:assert/strict";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
-import { Embed, Modal, renderEmbed, renderModal } from "@hyperion/jsx";
+import {
+    ActionRow,
+    Button,
+    Embed,
+    Modal,
+    renderComponents,
+    renderEmbed,
+    renderModal,
+} from "@hyperion/jsx";
 import {
     BaseInteraction,
+    type ButtonInteraction,
     type ChatInputCommandInteraction,
     ComponentType,
     Events,
     type InteractionReplyOptions,
     InteractionType,
+    type InteractionUpdateOptions,
     type ModalSubmitInteraction,
     TextInputStyle,
 } from "discord.js";
 
 // Establish Discord response compatibility from the public declaration exports.
+const controls = renderComponents(
+    <ActionRow>
+        <Button customId="consumer.refresh" style="primary">
+            Refresh
+        </Button>
+        <Button url="https://example.com">Open</Button>
+    </ActionRow>,
+);
 const response: InteractionReplyOptions = {
+    components: controls,
     embeds: [
         renderEmbed(
             <Embed>
@@ -30,6 +49,7 @@ const modalResponse: Parameters<ChatInputCommandInteraction["showModal"]>[0] =
             </Modal.Label>
         </Modal>,
     );
+({ components: controls }) satisfies InteractionUpdateOptions;
 void modalResponse;
 void response;
 const failures: unknown[] = [];
@@ -53,6 +73,30 @@ try {
     const modal = client.modals.get("consumer.modal");
     assert.ok(modal);
     assert.equal(modal.builder.toJSON().custom_id, modal.customId);
+    const buttonHandler = client.buttons.get("consumer.refresh");
+    assert.ok(buttonHandler);
+    assert.equal(buttonHandler.builder.toJSON().custom_id, "consumer.refresh");
+    const updates: unknown[] = [];
+    const click = {
+        type: InteractionType.MessageComponent,
+        componentType: ComponentType.Button,
+        id: "consumer-click",
+        guildId: null,
+        user: { id: "consumer-user" },
+        customId: "consumer.refresh",
+        deferred: false,
+        replied: false,
+        isChatInputCommand: BaseInteraction.prototype.isChatInputCommand,
+        isButton: BaseInteraction.prototype.isButton,
+        async update(value: unknown) {
+            updates.push(value);
+        },
+    };
+    await new InteractionDispatcher(client).dispatch(
+        click as unknown as ButtonInteraction,
+    );
+    assert.deepEqual(updates, [{ content: "Refreshed" }]);
+
     const replies: unknown[] = [];
     const submission = {
         type: InteractionType.ModalSubmit,
@@ -108,4 +152,7 @@ console.log(
 );
 console.log(
     "PASS public modal response types, JSX discovery, and typed submission resolution through core",
+);
+console.log(
+    "PASS JSX button handler identity, exact-ID dispatch and reply/update types",
 );

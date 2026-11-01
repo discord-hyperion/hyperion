@@ -1,6 +1,21 @@
 import assert from "node:assert/strict";
-import { EmbedBuilder, ModalBuilder } from "@discordjs/builders";
-import { Bold, Embed, Modal, renderEmbed, renderModal } from "@hyperion/jsx";
+import {
+    ActionRowBuilder,
+    CustomIdButtonBuilder,
+    EmbedBuilder,
+    ModalBuilder,
+} from "@discordjs/builders";
+import {
+    ActionRow,
+    Bold,
+    Button,
+    Embed,
+    Modal,
+    renderButton,
+    renderComponents,
+    renderEmbed,
+    renderModal,
+} from "@hyperion/jsx";
 import { jsxDEV } from "@hyperion/jsx/jsx-dev-runtime";
 import { Fragment, jsx, jsxs } from "@hyperion/jsx/jsx-runtime";
 
@@ -40,4 +55,23 @@ assert.notEqual(secondModal, modal);
 assert.notEqual(secondModal.components[0], modal.components[0]);
 console.log(
     "PASS standalone modal renderer, native identity and fresh nested builders",
+);
+
+const buttonView = jsx(Button, {
+    customId: "standalone.refresh",
+    style: "primary",
+    children: "Refresh",
+});
+const button = renderButton(buttonView);
+assert.ok(button instanceof CustomIdButtonBuilder);
+const rowsView = jsx(ActionRow, { children: buttonView });
+const rows = renderComponents(rowsView);
+assert.ok(rows[0] instanceof ActionRowBuilder);
+assert.ok(rows[0].components[0] instanceof CustomIdButtonBuilder);
+const devRows = renderComponents(jsxDEV(Fragment, { children: rowsView }));
+assert.notEqual(rows[0], devRows[0]);
+assert.notEqual(rows[0].components[0], devRows[0].components[0]);
+assert.deepEqual(renderComponents(null), []);
+console.log(
+    "PASS standalone button/row renderers, runtime exports and native identity",
 );

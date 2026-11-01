@@ -2,7 +2,7 @@
 
 ## Implemented
 
-- [x] Independent `@hyperion/jsx` package for native embed and modal authoring, text
+- [x] Independent `@hyperion/jsx` package for native embed, modal, and message button authoring, text
   composition, automatic JSX runtimes, and TSX/JSX handler discovery. See [JSX authoring](jsx.md).
 
 - [x] Filesystem event handlers with typed contexts, filename ordering, per-event
@@ -31,7 +31,10 @@
   - Support reusable defaults and templates while retaining access to native Discord builders.
 - [ ] Further JSX authoring through `@hyperion/jsx`.
   - Native embeds, modal labels/text inputs/informational text, escaped text composition, reusable components, and TSX/JSX handlers are implemented; see the [JSX guide](jsx.md) and [JSX modals](jsx-modals.md).
-  - Additional modal controls remain deferred. Standalone text formatting was dropped.
+  - Action rows, interactive buttons, and link buttons are implemented; see
+    [JSX message components](jsx-message-components.md). Select menus, premium
+    buttons, Components V2 layouts, and additional modal controls remain deferred.
+    Standalone text formatting was dropped.
 - [ ] Managed interactive collectors.
   - Provide a simple abstraction for creating, tracking, stopping, and cleaning up collectors.
   - Make ownership, timeouts, completion, cancellation, and shutdown cleanup explicit.
