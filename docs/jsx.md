@@ -1,6 +1,6 @@
 # JSX authoring design
 
-`@hyperion/jsx` is an independent JSX runtime for native Discord embeds and modals. It has
+`@hyperion/jsx` is an independent JSX runtime for native Discord embeds, modals, and message buttons. It has
 no dependency on `@hyperion/core` or React. Implementation lives in
 `packages/jsx/lib`; local workspace imports resolve source, and published imports
 resolve JavaScript and declarations in `dist`.
@@ -13,6 +13,8 @@ resolve JavaScript and declarations in `dist`.
 - Embed authoring uses `renderEmbed()`. Modal authoring uses `renderModal()` with
   text inputs and informational text; see [JSX modals](jsx-modals.md). Other modal
   controls and standalone text rendering are outside the current API.
+- Message authoring uses `ActionRow`, `Button`, and `renderComponents()`.
+  `renderButton()` supplies interactive handler builders; see [JSX message components](jsx-message-components.md).
 
 - Export `renderEmbed()` from `@hyperion/jsx`; each call returns a fresh native
   `EmbedBuilder`, validated with `toJSON()` and available for customization.
@@ -77,7 +79,7 @@ resolve JavaScript and declarations in `dist`.
 - Support synchronous reusable function components, props, children, fragments,
   conditionals, and array mapping. Fetch asynchronous data before composition.
 - Evaluate components at explicit render time. Renderers return fresh native
-  embed or modal builders; standalone string rendering is not provided.
+  embed, modal, button, or action-row builders; standalone string rendering is not provided.
 - Flatten nested children; omit nullish values and booleans; preserve zero. Use
   normal JSX whitespace handling and explicit line breaks.
 - Escape literal Markdown by default; expose explicit formatting, raw text, and
@@ -86,7 +88,7 @@ resolve JavaScript and declarations in `dist`.
   validation while respecting the SDK validator setting. Report invalid output.
 - Preserve shared modal definitions and existing handler routing. Inserting
   prebuilt builders, React lifecycle behavior, automatic rerendering, complete
-  message layouts, buttons, and standalone select-menu authoring remain deferred.
+  Components V2 layouts, and standalone select-menu authoring remain deferred.
 - Verify automatic-runtime source and published consumption, opt-in TSX handlers,
   and performance before making compatibility or speed claims.
 

@@ -1,9 +1,13 @@
 import type { EmbedBuilder, ModalBuilder } from "@discordjs/builders";
 import {
+    ActionRow,
     Bold,
+    Button,
     type Component,
     Embed,
     Modal,
+    renderButton,
+    renderComponents,
     renderEmbed,
     renderModal,
 } from "@hyperion/jsx";
@@ -47,3 +51,39 @@ const negativeTypes = () => {
     void [invalid, asynchronous, intrinsic, missingId, badStyle];
 };
 void negativeTypes;
+
+const interactiveButton: import("@discordjs/builders").CustomIdButtonBuilder =
+    renderButton(
+        <Button customId="standalone.refresh" style="primary">
+            Refresh
+        </Button>,
+    );
+const rows: import("@discordjs/builders").ActionRowBuilder[] = renderComponents(
+    <ActionRow>
+        <Button
+            customId="standalone.refresh"
+            style="secondary"
+            emoji={{ name: "🔄" }}
+        />
+        <Button url="https://example.com">Open</Button>
+    </ActionRow>,
+);
+if (
+    interactiveButton.toJSON().custom_id !== "standalone.refresh" ||
+    rows.length !== 1
+) {
+    throw new Error("Unexpected button output.");
+}
+const invalidButtonTypes = () => {
+    // @ts-expect-error Interactive styles are required in published types.
+    const missingStyle = <Button customId="missing">Missing</Button>;
+    const conflicting = {
+        url: "https://example.com",
+        customId: "bad",
+        children: "Bad",
+    };
+    // @ts-expect-error Link/custom-ID variants cannot be combined.
+    conflicting satisfies Parameters<typeof Button>[0];
+    void [missingStyle, conflicting];
+};
+void invalidButtonTypes;

@@ -145,3 +145,17 @@ Button logs include the registered button ID and `interactionId`, `guildId`, and
 `button.rejected` (info), and `button.failed` (error). Failures identify the
 `guards` or `handler` stage. Raw interactions, message contents, and fetched
 application data are not logged automatically.
+
+## JSX authoring
+
+`@hyperion/jsx` provides `Button` and `renderButton()` for native interactive
+handler builders, and `ActionRow` with `renderComponents()` for message controls.
+Alias core's class as `ButtonHandler` when both APIs are imported. Link buttons
+belong in message rows and cannot define core handlers. Rendering does not
+register callbacks or change exact-ID routing, guards, or acknowledgment.
+
+See [JSX message components](jsx-message-components.md) for complete examples,
+plain-label rules, native validation, emoji data, and the distinction between
+shared handler builders and fresh per-message controls. `/jsx-buttons` demonstrates
+both renderers in the development bot. Native collectors continue to work with
+rendered message controls; avoid competing ownership of the same interactions.

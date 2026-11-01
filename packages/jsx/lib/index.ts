@@ -15,7 +15,9 @@ export {
     UserMention,
 } from "./components.ts";
 export { JSXRenderError } from "./error.ts";
+export { ActionRow, Button } from "./message-components.ts";
 export { Modal } from "./modal-components.ts";
+export { renderButton, renderComponents } from "./render-components.ts";
 export { renderEmbed } from "./render-embed.ts";
 export { renderModal } from "./render-modal.ts";
 export type { Child, Component, Element } from "./runtime.ts";
