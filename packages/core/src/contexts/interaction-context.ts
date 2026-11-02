@@ -19,13 +19,13 @@ export type AnyInteraction =
     | SelectMenuInteraction
     | ModalSubmitInteraction;
 
-export interface InteractionContext<
+export type InteractionContext<
     InteractionType extends AnyInteraction = Exclude<
         AnyInteraction,
         AutocompleteInteraction
     >,
-> {
+> = {
     readonly client: HyperionClient;
     readonly interaction: InteractionType;
     readonly logger: Logger;
-}
+};

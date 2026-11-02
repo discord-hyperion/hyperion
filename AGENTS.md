@@ -35,6 +35,8 @@ Read the relevant reference before implementation or review:
 - Component discovery, routing, state, or acknowledgment: the relevant
   [button](docs/buttons.md), [select-menu](docs/select-menus.md), or
   [modal](docs/modals.md) guide.
+- Writing or changing tests, fixtures, or shared test helpers:
+  [Test fixtures](docs/test-fixtures.md).
 - Logging, sensitive data handling, or startup indicators:
   [Logging](docs/logging.md).
 - Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
@@ -47,20 +49,20 @@ Read the relevant reference before implementation or review:
   separate. Do not add a required development compilation step.
 - Use the installed v15 types and APIs. Keep the separately pinned
   `@discordjs/builders` prerelease compatible with discord.js.
-- Use ESM, NodeNext resolution, `.ts` relative imports, and `import type` for
-  type-only imports.
+- Use ESM and NodeNext resolution.
 - Use Biome for formatting, linting, and import organization; follow `biome.json`.
-  Do not add ESLint or Prettier or manually format generated lockfiles.
+  It enforces `.ts` relative imports, `import type`, `type` over `interface`,
+  arrow function expressions, and omitted `public`. Suppress a rule with a stated
+  reason only where semantics require it, such as declaration merging. Do not add
+  ESLint or Prettier or manually format generated lockfiles.
 - Use kebab-case files/directories, PascalCase classes/types, and camelCase
   functions/variables. Command folder delimiters follow the command-path guide. Event folders use
   Discord event-name casing as described in the event-handler guide.
-- Prefer `type` over `interface` unless interface semantics such as declaration
-  merging are required.
 - Prefer arrow functions for standalone functions, callbacks, and type signatures
   such as `run: (ctx: Context) => Promise<void>`. Keep normal class methods.
   Use function declarations only when their semantics are required.
-- Omit redundant `public` and `override` on constructors and implemented methods.
-  Retain modifiers expressing required semantics; keep `noImplicitOverride` off.
+- Omit redundant `override` on implemented methods. Retain modifiers expressing
+  required semantics; keep `noImplicitOverride` off.
 - Infer implemented method return types. Keep explicit return types on abstract
   methods and other declarations defining contracts without implementations.
 - Avoid one-off aliases for clear expressions such as `options.commands`; keep

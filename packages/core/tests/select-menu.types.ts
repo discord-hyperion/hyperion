@@ -9,7 +9,24 @@ import type { ComponentType } from "discord.js";
 import type {
     SelectMenuContext,
     SelectMenuOptions,
+    SelectMenuType,
 } from "../src/components/index.ts";
+
+type Builder<Type extends SelectMenuType> = SelectMenuOptions<Type>["builder"];
+type Expect<Condition extends true> = Condition;
+
+// Every select handler type rejects the builders of the other four select types.
+type CrossKindBuilders = {
+    [Into in SelectMenuType]: {
+        [From in Exclude<
+            SelectMenuType,
+            Into
+        >]: Builder<From> extends Builder<Into> ? From : never;
+    }[Exclude<SelectMenuType, Into>];
+};
+export type NoCrossKindBuilders = Expect<
+    CrossKindBuilders[SelectMenuType] extends never ? true : false
+>;
 
 // Checked by tsc; this function is never invoked at runtime.
 export const selectMenuContracts = (
@@ -61,14 +78,6 @@ export const selectMenuContracts = (
     const stringOptions: SelectMenuOptions = {
         builder: new StringSelectMenuBuilder().setCustomId("string"),
     };
-    const wrongUser: SelectMenuOptions<ComponentType.UserSelect> = {
-        // @ts-expect-error A user handler requires a user builder.
-        builder: stringOptions.builder,
-    };
-    const wrongString: SelectMenuOptions = {
-        // @ts-expect-error Default string handlers require a string builder.
-        builder: userOptions.builder,
-    };
 
     const roleOptions: SelectMenuOptions<ComponentType.RoleSelect> = {
         builder: new RoleSelectMenuBuilder().setCustomId("role"),
@@ -78,14 +87,6 @@ export const selectMenuContracts = (
                 throw new Error("Type contract only");
             },
         ],
-    };
-    const wrongRole: SelectMenuOptions<ComponentType.RoleSelect> = {
-        // @ts-expect-error A role handler requires a role builder.
-        builder: userOptions.builder,
-    };
-    const roleAsUser: SelectMenuOptions<ComponentType.UserSelect> = {
-        // @ts-expect-error A user handler cannot accept a role builder.
-        builder: roleOptions.builder,
     };
 
     const mentionableOptions: SelectMenuOptions<ComponentType.MentionableSelect> =
@@ -101,15 +102,6 @@ export const selectMenuContracts = (
                 },
             ],
         };
-    const wrongMentionable: SelectMenuOptions<ComponentType.MentionableSelect> =
-        {
-            // @ts-expect-error A mentionable handler requires a mentionable builder.
-            builder: userOptions.builder,
-        };
-    const mentionableAsRole: SelectMenuOptions<ComponentType.RoleSelect> = {
-        // @ts-expect-error A role handler cannot accept a mentionable builder.
-        builder: mentionableOptions.builder,
-    };
 
     const channelOptions: SelectMenuOptions<ComponentType.ChannelSelect> = {
         builder: new ChannelSelectMenuBuilder().setCustomId("channel"),
@@ -120,14 +112,6 @@ export const selectMenuContracts = (
             },
         ],
     };
-    const wrongChannel: SelectMenuOptions<ComponentType.ChannelSelect> = {
-        // @ts-expect-error A channel handler requires a channel builder.
-        builder: mentionableOptions.builder,
-    };
-    const channelAsString: SelectMenuOptions = {
-        // @ts-expect-error String handlers cannot accept a channel builder.
-        builder: channelOptions.builder,
-    };
     // @ts-expect-error Channel selects do not expose resolved users.
     channelCtx.interaction.users;
     // @ts-expect-error Channel selects do not expose resolved roles.
@@ -135,17 +119,9 @@ export const selectMenuContracts = (
 
     return {
         channelOptions,
-        wrongChannel,
-        channelAsString,
         mentionableOptions,
-        wrongMentionable,
-        mentionableAsRole,
         userOptions,
         stringOptions,
         roleOptions,
-        wrongUser,
-        wrongString,
-        wrongRole,
-        roleAsUser,
     };
 };

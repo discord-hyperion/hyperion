@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -8,6 +7,7 @@ import {
     parseCommandPath,
 } from "../src/registries/parse-command-path.ts";
 import { discoverModules } from "../src/util/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 test("regular command files have no parent or group", () => {
     assert.deepEqual(parseCommandPath("ping.ts"), {
@@ -143,10 +143,7 @@ test("paths must name an executable module inside the command directory", () => 
 });
 
 test("filesystem discovery preserves convention folders without importing modules", async t => {
-    const root = await mkdtemp(
-        path.join(os.tmpdir(), "hyperion-command-paths-"),
-    );
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-command-paths-");
     const paths = [
         "(support)/[ticket]/create.ts",
         "(support)/[ticket]/{settings}/view.ts",

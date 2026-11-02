@@ -16,32 +16,32 @@ export type SelectMenuType =
     | ComponentType.MentionableSelect
     | ComponentType.ChannelSelect;
 
-interface SelectMenuBuilders {
+type SelectMenuBuilders = {
     [ComponentType.ChannelSelect]: ChannelSelectMenuBuilder;
     [ComponentType.StringSelect]: StringSelectMenuBuilder;
     [ComponentType.UserSelect]: UserSelectMenuBuilder;
     [ComponentType.RoleSelect]: RoleSelectMenuBuilder;
     [ComponentType.MentionableSelect]: MentionableSelectMenuBuilder;
-}
+};
 
-export interface SelectMenuContext<
+export type SelectMenuContext<
     Type extends SelectMenuType = ComponentType.StringSelect,
-> extends InteractionContext<MappedInteractionTypes[Type]> {}
+> = InteractionContext<MappedInteractionTypes[Type]>;
 
-export interface SelectMenuOptions<
+export type SelectMenuOptions<
     Type extends SelectMenuType = ComponentType.StringSelect,
-> {
+> = {
     builder: SelectMenuBuilders[Type];
     guards?: readonly GuardProvider<SelectMenuContext<Type>>[];
-}
+};
 
 export abstract class SelectMenu<
     Type extends SelectMenuType = ComponentType.StringSelect,
 > {
-    public readonly builder: SelectMenuBuilders[Type];
-    public readonly componentType: Type;
-    public readonly customId: string;
-    public readonly guards: readonly GuardProvider<SelectMenuContext<Type>>[];
+    readonly builder: SelectMenuBuilders[Type];
+    readonly componentType: Type;
+    readonly customId: string;
+    readonly guards: readonly GuardProvider<SelectMenuContext<Type>>[];
 
     protected constructor(options: SelectMenuOptions<Type>) {
         this.builder = options.builder;
@@ -65,7 +65,7 @@ export abstract class SelectMenu<
         }
     }
 
-    public abstract run(ctx: SelectMenuContext<Type>): Promise<void>;
+    abstract run(ctx: SelectMenuContext<Type>): Promise<void>;
 }
 
 export type AnySelectMenu =

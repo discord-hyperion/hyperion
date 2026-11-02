@@ -3,17 +3,17 @@ import type { ButtonInteraction } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
 
-export interface ButtonContext extends InteractionContext<ButtonInteraction> {}
+export type ButtonContext = InteractionContext<ButtonInteraction>;
 
-export interface ButtonOptions {
+export type ButtonOptions = {
     builder: CustomIdButtonBuilder;
     guards?: readonly GuardProvider<ButtonContext>[];
-}
+};
 
 export abstract class Button {
-    public readonly builder: CustomIdButtonBuilder;
-    public readonly customId: string;
-    public readonly guards: readonly GuardProvider<ButtonContext>[];
+    readonly builder: CustomIdButtonBuilder;
+    readonly customId: string;
+    readonly guards: readonly GuardProvider<ButtonContext>[];
 
     protected constructor(options: ButtonOptions) {
         this.builder = options.builder;
@@ -33,5 +33,5 @@ export abstract class Button {
         }
     }
 
-    public abstract run(ctx: ButtonContext): Promise<void>;
+    abstract run(ctx: ButtonContext): Promise<void>;
 }

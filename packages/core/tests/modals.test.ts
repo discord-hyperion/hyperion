@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mock, type TestContext, test } from "node:test";
+import { mock, test } from "node:test";
 import {
     LabelBuilder,
     ModalBuilder,
@@ -11,13 +11,13 @@ import { createModalInteraction } from "../../../tests/fixtures/interactions.ts"
 import {
     Guard,
     type GuardProvider,
-    HyperionClient,
-    InteractionDispatcher,
     Modal,
     type ModalContext,
     OwnerOnly,
     SelectMenu,
 } from "../src/index.ts";
+import { assertPrivateFailure, phases } from "./support/acknowledgment.ts";
+import { createTestClient } from "./support/test-client.ts";
 
 class TestModal extends Modal {
     constructor(
@@ -66,28 +66,8 @@ const interaction = (phase = "new", message = "Private submitted text") => {
     };
 };
 
-const setup = async (t: TestContext) => {
-    const records: Record<string, unknown>[] = [];
-    const client = await HyperionClient.create({
-        root: new URL("./fixtures/empty-bot/", import.meta.url),
-        name: "Test",
-        discord: { intents: [] },
-        logging: {
-            level: "debug",
-            pretty: false,
-            progress: false,
-            destination: {
-                write: line => records.push(JSON.parse(line)),
-            },
-        },
-    });
-    t.after(() => client.destroy());
-
-    return { client, records, dispatcher: new InteractionDispatcher(client) };
-};
-
 test("modal listener runs once with its receiver, v15 components, and scoped logs", async t => {
-    const { client, records } = await setup(t);
+    const { client, records } = await createTestClient(t);
     class Inspect extends TestModal {
         async run(ctx: ModalContext) {
             assert.equal(this.customId, "feedback.submit");
@@ -120,7 +100,7 @@ test("modal listener runs once with its receiver, v15 components, and scoped log
 });
 
 test("unmatched modal IDs leave submissions to collectors without running guards", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const execute = mock.fn(async (_ctx: ModalContext) => {});
     const factory = mock.fn(() => {
         throw new Error("Must not run");
@@ -138,7 +118,7 @@ test("unmatched modal IDs leave submissions to collectors without running guards
 });
 
 test("embedded selects are resolved by the modal without invoking message select handlers", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const builder = new StringSelectMenuBuilder()
         .setCustomId("colour.choose")
         .addOptions({ label: "Blue", value: "blue" });
@@ -190,7 +170,7 @@ test("embedded selects are resolved by the modal without invoking message select
 });
 
 test("modal guards run lazily in order and shared OwnerOnly guards work", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     t.mock.method(client, "getOwnerId", async () => "owner");
     const execute = mock.fn(async (_ctx: ModalContext) => {});
     const factory = mock.fn(async (ctx: ModalContext) => {
@@ -231,7 +211,7 @@ test("modal guards run lazily in order and shared OwnerOnly guards work", async 
 });
 
 test("modal custom rejection owns the response and guards are snapshotted", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     class Deny extends Guard<ModalContext> {
         constructor() {
             super({ description: "Denied" });
@@ -257,44 +237,36 @@ test("modal custom rejection owns the response and guards are snapshotted", asyn
 });
 
 for (const stage of ["handler", "guards"] as const) {
-    for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
-        test(`modal ${stage} failures respect ${phase} acknowledgment`, async t => {
-            const { client, dispatcher, records } = await setup(t);
-            const fail = async () => {
-                throw new Error("Private failure");
-            };
-            client.modals.set(
-                "feedback.submit",
-                new TestModal(fail, stage === "guards" ? [fail] : []),
-            );
+    test(`modal ${stage} failures respect every acknowledgment phase`, async t => {
+        const { client, dispatcher, records } = await createTestClient(t);
+        const fail = async () => {
+            throw new Error("Private failure");
+        };
+        client.modals.set(
+            "feedback.submit",
+            new TestModal(fail, stage === "guards" ? [fail] : []),
+        );
+
+        for (const phase of phases) {
             const fixture = interaction(phase);
             await dispatcher.dispatch(fixture.interaction);
 
-            const response =
-                phase === "new"
-                    ? fixture.reply
-                    : phase === "defer-reply"
-                      ? fixture.editReply
-                      : fixture.followUp;
-            assert.equal(response.mock.callCount(), 1);
-            assert.deepEqual(response.mock.calls[0]?.arguments[0], {
-                content: "Something went wrong while running this modal.",
-                ...(phase === "defer-reply"
-                    ? {}
-                    : { flags: MessageFlags.Ephemeral }),
-            });
-            if (phase === "defer-update")
-                assert.equal(fixture.editReply.mock.callCount(), 0);
-            assert.equal(
-                records.find(record => record.event === "modal.failed")?.stage,
-                stage,
+            assertPrivateFailure(
+                fixture,
+                phase,
+                "Something went wrong while running this modal.",
             );
-        });
-    }
+        }
+
+        assert.equal(
+            records.find(record => record.event === "modal.failed")?.stage,
+            stage,
+        );
+    });
 }
 
 test("failed modal error delivery is contained by the interaction listener", async t => {
-    const { client, records } = await setup(t);
+    const { client, records } = await createTestClient(t);
     client.modals.set(
         "feedback.submit",
         new TestModal(async () => {
@@ -314,7 +286,7 @@ test("failed modal error delivery is contained by the interaction listener", asy
 });
 
 test("concurrent modal submissions receive independent contexts without automatic acknowledgment", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const contexts: ModalContext[] = [];
     client.modals.set(
         "feedback.submit",

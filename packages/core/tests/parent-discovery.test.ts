@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
 import { MessageFlags, REST } from "discord.js";
@@ -13,11 +12,13 @@ import {
     HyperionClient,
     InteractionDispatcher,
 } from "../src/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
 const imports = `import { Command, ParentCommand, Subcommand, Guard } from ${JSON.stringify(library)};
 import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder } from ${JSON.stringify(builders)};`;
+
 const parentSource = (extra = "", guards = "", tail = "") => `${imports}
 export default class extends ParentCommand {
     constructor() { super({ builder: new ChatInputCommandBuilder().setDescription("Manage tickets")${extra}, ${guards} }); ${tail} }
@@ -30,8 +31,7 @@ export default class extends Subcommand {
 }`;
 
 const fixture = async (t: TestContext) => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-parents-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-parents-");
     const add = async (file: string, source: string) => {
         const filename = path.join(root, "src", "commands", file);
         await mkdir(path.dirname(filename), { recursive: true });

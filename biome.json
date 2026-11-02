@@ -22,7 +22,26 @@
     "linter": {
         "enabled": true,
         "rules": {
-            "preset": "recommended"
+            "preset": "recommended",
+            "complexity": {
+                "useArrowFunction": "error"
+            },
+            "correctness": {
+                "noUnusedImports": "error",
+                "noUnusedVariables": "error",
+                "useImportExtensions": "error"
+            },
+            "style": {
+                "useConsistentMemberAccessibility": {
+                    "level": "error",
+                    "options": { "accessibility": "noPublic" }
+                },
+                "useConsistentTypeDefinitions": {
+                    "level": "error",
+                    "options": { "style": "type" }
+                },
+                "useImportType": "error"
+            }
         }
     },
     "javascript": {

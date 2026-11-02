@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
 import {
@@ -19,6 +18,7 @@ import {
     HyperionClient,
     InteractionDispatcher,
 } from "../src/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 const entryPoint = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
@@ -49,8 +49,7 @@ const parentSource = (extra = "", guards = "") => `
 `;
 
 const fixture = async (t: TestContext) => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-subcommands-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-subcommands-");
     const definedParents = new Set<string>();
     const add = async (relativePath: string, source: string) => {
         const segments = relativePath.split("/");

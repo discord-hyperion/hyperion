@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { mock, type TestContext, test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
@@ -16,9 +15,9 @@ import {
     type CommandContext,
     CommandRegistry,
     type GuardProvider,
-    HyperionClient,
-    InteractionDispatcher,
 } from "../src/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
+import { createTestClient } from "./support/test-client.ts";
 
 class TestCommand extends Command {
     readonly executeCommand = mock.fn(async (_ctx: CommandContext) => {});
@@ -73,24 +72,8 @@ const interaction = (
     };
 };
 
-const setup = async (t: TestContext, level: "debug" | "info" = "debug") => {
-    const records: Record<string, unknown>[] = [];
-    const client = await HyperionClient.create({
-        root: new URL("./fixtures/empty-bot/", import.meta.url),
-        name: "Test",
-        discord: { intents: [] },
-        logging: {
-            level,
-            pretty: false,
-            progress: false,
-            destination: { write: line => records.push(JSON.parse(line)) },
-        },
-    });
-    t.after(() => client.destroy());
-
-    return { client, records, dispatcher: new InteractionDispatcher(client) };
-};
-
+const setup = (t: TestContext, level: "debug" | "info" = "debug") =>
+    createTestClient(t, { level });
 test("autocomplete listener preserves the receiver, skips command execution and guards, and scopes logs", async t => {
     const { client, records } = await setup(t);
     const guard = mock.fn(() => {
@@ -372,10 +355,7 @@ test("autocomplete success is quiet at info level while failures remain visible"
 });
 
 test("malformed optional autocomplete hooks retain source context and the previous command registry", async t => {
-    const root = await mkdtemp(
-        path.join(os.tmpdir(), "hyperion-autocomplete-invalid-"),
-    );
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-autocomplete-invalid-");
     await mkdir(path.join(root, "src", "commands"), { recursive: true });
     const commandModule = new URL("../src/commands/command.ts", import.meta.url)
         .href;

@@ -24,12 +24,14 @@ type ContextMenuCommandData<
 > = ReturnType<ContextMenuCommandBuilder["toJSON"]> & { type: Type };
 
 declare module "@discordjs/builders" {
+    // biome-ignore lint/style/useConsistentTypeDefinitions: merges into the builders package declaration.
     interface UserContextCommandBuilder {
         toJSON(
             validationOverride?: boolean,
         ): ContextMenuCommandData<ApplicationCommandType.User>;
     }
 
+    // biome-ignore lint/style/useConsistentTypeDefinitions: merges into the builders package declaration.
     interface MessageContextCommandBuilder {
         toJSON(
             validationOverride?: boolean,

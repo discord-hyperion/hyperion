@@ -52,3 +52,23 @@ Keep intentionally malformed doubles local when their shape is the subject of
 the test. Client setup, temporary filesystem helpers, and log capture remain
 separate from interaction construction. The fixture contract tests verify shared
 predicate/state behavior; framework tests retain their routing and guard assertions.
+
+## Core test helpers
+
+Framework tests in `packages/core/tests` share helpers from `tests/support/`.
+Reuse them before writing a local setup:
+- `test-client.ts`: `createTestClient(t, { level? })` creates a client on the
+  empty-bot root, captures structured log `records`, returns a dispatcher, and
+  destroys the client when the test ends.
+- `temp-root.ts`: `createTempRoot(t, prefix)` and
+  `createHandlerRoot(t, prefix, folder)` create temporary bot roots that are
+  removed when the test ends.
+- `acknowledgment.ts`: `phases` and `assertPrivateFailure` check the private
+  failure reply for each acknowledgment state.
+- `select-kinds.ts` and `component-kinds.ts`: tables describing the five select
+  kinds and the button, modal, and select-menu registry kinds.
+
+When several handler kinds share a behaviour, add the case to the table-driven
+suite (`select-menu-kinds.test.ts` for dispatch, `component-registry.test.ts`
+for discovery) and keep kind-specific cases in the kind's own file. Extend a
+kind's table entry instead of copying a test file.
