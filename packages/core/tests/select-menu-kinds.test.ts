@@ -2,11 +2,10 @@ import assert from "node:assert/strict";
 import { describe, mock, test } from "node:test";
 import { ComponentType, Events, MessageFlags } from "discord.js";
 import { Guard } from "../src/guards/index.ts";
+import { assertPrivateFailure, phases } from "./support/acknowledgment.ts";
 import {
     type AnySelectContext,
     createMenu,
-    failureResponse,
-    phases,
     resolvedEntries,
     selectKinds,
 } from "./support/select-kinds.ts";
@@ -197,20 +196,11 @@ for (const kind of selectKinds) {
                 const fixture = kind.interaction({ phase });
                 await dispatcher.dispatch(fixture.interaction);
 
-                assert.deepEqual(
-                    failureResponse(fixture, phase).mock.calls[0]?.arguments[0],
-                    {
-                        content:
-                            "Something went wrong while running this select menu.",
-                        ...(phase === "defer-reply"
-                            ? {}
-                            : { flags: MessageFlags.Ephemeral }),
-                    },
+                assertPrivateFailure(
+                    fixture,
                     phase,
+                    "Something went wrong while running this select menu.",
                 );
-                if (phase === "defer-update") {
-                    assert.equal(fixture.editReply.mock.callCount(), 0, phase);
-                }
             }
         });
 

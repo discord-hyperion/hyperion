@@ -16,6 +16,7 @@ import {
     OwnerOnly,
     SelectMenu,
 } from "../src/index.ts";
+import { assertPrivateFailure, phases } from "./support/acknowledgment.ts";
 import { createTestClient } from "./support/test-client.ts";
 
 class TestModal extends Modal {
@@ -236,40 +237,32 @@ test("modal custom rejection owns the response and guards are snapshotted", asyn
 });
 
 for (const stage of ["handler", "guards"] as const) {
-    for (const phase of ["new", "defer-update", "defer-reply", "replied"]) {
-        test(`modal ${stage} failures respect ${phase} acknowledgment`, async t => {
-            const { client, dispatcher, records } = await createTestClient(t);
-            const fail = async () => {
-                throw new Error("Private failure");
-            };
-            client.modals.set(
-                "feedback.submit",
-                new TestModal(fail, stage === "guards" ? [fail] : []),
-            );
+    test(`modal ${stage} failures respect every acknowledgment phase`, async t => {
+        const { client, dispatcher, records } = await createTestClient(t);
+        const fail = async () => {
+            throw new Error("Private failure");
+        };
+        client.modals.set(
+            "feedback.submit",
+            new TestModal(fail, stage === "guards" ? [fail] : []),
+        );
+
+        for (const phase of phases) {
             const fixture = interaction(phase);
             await dispatcher.dispatch(fixture.interaction);
 
-            const response =
-                phase === "new"
-                    ? fixture.reply
-                    : phase === "defer-reply"
-                      ? fixture.editReply
-                      : fixture.followUp;
-            assert.equal(response.mock.callCount(), 1);
-            assert.deepEqual(response.mock.calls[0]?.arguments[0], {
-                content: "Something went wrong while running this modal.",
-                ...(phase === "defer-reply"
-                    ? {}
-                    : { flags: MessageFlags.Ephemeral }),
-            });
-            if (phase === "defer-update")
-                assert.equal(fixture.editReply.mock.callCount(), 0);
-            assert.equal(
-                records.find(record => record.event === "modal.failed")?.stage,
-                stage,
+            assertPrivateFailure(
+                fixture,
+                phase,
+                "Something went wrong while running this modal.",
             );
-        });
-    }
+        }
+
+        assert.equal(
+            records.find(record => record.event === "modal.failed")?.stage,
+            stage,
+        );
+    });
 }
 
 test("failed modal error delivery is contained by the interaction listener", async t => {

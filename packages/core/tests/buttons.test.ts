@@ -10,9 +10,13 @@ import {
     type GuardProvider,
     OwnerOnly,
 } from "../src/guards/index.ts";
+import {
+    assertPrivateFailure,
+    type Phase,
+    phases,
+} from "./support/acknowledgment.ts";
 import { createTestClient } from "./support/test-client.ts";
 
-type Phase = "new" | "defer-update" | "defer-reply" | "replied";
 const interaction = (phase: Phase = "new", userId = "owner") =>
     createButtonInteraction({
         id: `click-${userId}`,
@@ -213,43 +217,31 @@ test("Cooldown rejects invalid durations", () => {
     }
 });
 
-for (const phase of [
-    "new",
-    "defer-update",
-    "defer-reply",
-    "replied",
-] as const) {
-    test(`button failure after ${phase} uses the correct response without overwriting a deferred update`, async t => {
-        const { client, dispatcher, records } = await setup(t);
-        client.buttons.set(
-            "refresh",
-            new TestButton(async () => {
-                throw new Error("Private failure");
-            }),
-        );
+test("button failures use the correct response for every acknowledgment phase", async t => {
+    const { client, dispatcher, records } = await setup(t);
+    client.buttons.set(
+        "refresh",
+        new TestButton(async () => {
+            throw new Error("Private failure");
+        }),
+    );
+
+    for (const phase of phases) {
         const fixture = interaction(phase);
         await dispatcher.dispatch(fixture.interaction);
-        const response =
-            phase === "new"
-                ? fixture.reply
-                : phase === "defer-reply"
-                  ? fixture.editReply
-                  : fixture.followUp;
-        assert.equal(response.mock.callCount(), 1);
-        assert.deepEqual(response.mock.calls[0]?.arguments[0], {
-            content: "Something went wrong while running this button.",
-            ...(phase === "defer-reply"
-                ? {}
-                : { flags: MessageFlags.Ephemeral }),
-        });
-        if (phase === "defer-update")
-            assert.equal(fixture.editReply.mock.callCount(), 0);
-        assert.equal(
-            records.find(record => record.event === "button.failed")?.stage,
-            "handler",
+
+        assertPrivateFailure(
+            fixture,
+            phase,
+            "Something went wrong while running this button.",
         );
-    });
-}
+    }
+
+    assert.equal(
+        records.find(record => record.event === "button.failed")?.stage,
+        "handler",
+    );
+});
 
 test("factory errors fail closed and failed error deliveries are contained", async t => {
     const { client, records } = await setup(t);

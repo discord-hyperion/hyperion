@@ -14,13 +14,12 @@ import {
     type SelectMenuType,
 } from "../../src/components/index.ts";
 import type { GuardProvider } from "../../src/guards/index.ts";
+import type { Phase } from "./acknowledgment.ts";
 
 export type AnySelectContext = SelectMenuContext<SelectMenuType>;
 export type SelectFixture = ReturnType<
     typeof createSelectInteraction<SelectMenuType>
 >;
-
-export type Phase = "new" | "defer-update" | "defer-reply" | "replied";
 
 export type FixtureOptions = {
     phase?: Phase;
@@ -220,23 +219,3 @@ export const createMenu = (
         }
     })();
 };
-
-type Spy = { mock: { calls: { arguments: unknown[] }[] } };
-
-/** Failures reply to the interaction differently depending on how it was acknowledged. */
-export const failureResponse = (
-    fixture: { reply: Spy; editReply: Spy; followUp: Spy },
-    phase: Phase,
-) =>
-    phase === "new"
-        ? fixture.reply
-        : phase === "defer-reply"
-          ? fixture.editReply
-          : fixture.followUp;
-
-export const phases: readonly Phase[] = [
-    "new",
-    "defer-update",
-    "defer-reply",
-    "replied",
-];
