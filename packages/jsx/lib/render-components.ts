@@ -5,11 +5,14 @@ import {
     LinkButtonBuilder,
     PrimaryButtonBuilder,
     SecondaryButtonBuilder,
+    StringSelectMenuBuilder,
     SuccessButtonBuilder,
 } from "@discordjs/builders";
 import { JSXRenderError } from "./error.ts";
+import { buildStringSelect } from "./render-string-select.ts";
 import { type Child, expand, type Node, type Value } from "./runtime.ts";
 import { renderTextContent } from "./text.ts";
+import { validateComponent } from "./validate-component.ts";
 
 const buttonNode = (value: Value | undefined, path: string): Node => {
     if (typeof value !== "object" || value.name !== "Button") {
@@ -110,18 +113,6 @@ const buildButton = (node: Node) => {
     }
 };
 
-const validate = (builder: { toJSON: () => unknown }, path: string) => {
-    try {
-        builder.toJSON();
-    } catch (cause) {
-        throw new JSXRenderError(
-            path,
-            "Native component builder validation failed.",
-            { cause },
-        );
-    }
-};
-
 /** Render one interactive button suitable for a registered core handler. */
 export const renderButton = (view: Child): CustomIdButtonBuilder => {
     const roots = expand(view, "root");
@@ -140,7 +131,7 @@ export const renderButton = (view: Child): CustomIdButtonBuilder => {
         );
     }
 
-    validate(builder, "Button");
+    validateComponent(builder, "Button");
 
     return builder;
 };
@@ -161,26 +152,43 @@ export const renderComponents = (view: Child): ActionRowBuilder[] => {
         const children = expand(root.props.children, path, root.depth);
 
         for (const [childIndex, child] of children.entries()) {
-            const location = `${path}.children[${childIndex}].Button`;
-            const node = buttonNode(child, location);
-            const button = buildButton(node);
-            if (button instanceof CustomIdButtonBuilder) {
+            const childPath = `${path}.children[${childIndex}]`;
+            if (
+                typeof child !== "object" ||
+                (child.name !== "Button" && child.name !== "StringSelect")
+            ) {
+                throw new JSXRenderError(
+                    childPath,
+                    "Expected a Button or StringSelect.",
+                );
+            }
+
+            const location = `${childPath}.${child.name}`;
+            const node = { ...child, path: location };
+            const control =
+                node.name === "StringSelect"
+                    ? buildStringSelect(node)
+                    : buildButton(node);
+            if (
+                control instanceof CustomIdButtonBuilder ||
+                control instanceof StringSelectMenuBuilder
+            ) {
                 const id = node.props.customId as string;
                 const duplicate = ids.find(entry => entry.id === id);
                 if (duplicate) {
                     throw new JSXRenderError(
                         location,
-                        `Duplicate button custom ID; first declared at ${duplicate.path}.`,
+                        `Duplicate component custom ID; first declared at ${duplicate.path}.`,
                     );
                 }
 
                 ids.push({ id, path: location });
             }
 
-            row.addComponents(button);
+            row.addComponents(control);
         }
 
-        validate(row, path);
+        validateComponent(row, path);
         rows.push(row);
     }
 

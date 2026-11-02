@@ -119,6 +119,11 @@ An interactive control for choosing one or more values, users, roles, mentionabl
 entities, or channels.
 _Avoid_: Select-menu handler
 
+**Select option**:
+A selectable entry in a string select menu, with a visible label and a value
+returned when selected.
+_Avoid_: Command option, selected value
+
 **Modal**:
 A form presented in response to an interaction, with its submitted values delivered
 in a separate interaction.

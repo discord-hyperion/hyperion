@@ -1,7 +1,8 @@
 # JSX message component design
 
 `@hyperion/jsx` supports native action-row and button authoring through
-`ActionRow`, `Button`, `renderComponents()`, and `renderButton()`.
+`ActionRow`, `Button`, `renderComponents()`, and `renderButton()`. Message string
+selects also compose within rows; see [JSX select menus](jsx-select-menus.md).
 
 ## Existing foundation
 
@@ -21,7 +22,8 @@ does not revive either feature or the deferred custom-ID data feature.
 ## Scope
 
 - Initially support action rows, interactive buttons, and link buttons.
-- Defer select menus, premium purchase buttons, and Components V2 layouts.
+- String selects are supported separately; defer entity selects, premium purchase
+  buttons, and Components V2 layouts.
 - Produce native builders without changing handler builders, routing, guards,
   acknowledgment, or native collectors. Do not add click callbacks or automatic
   registration.
@@ -53,7 +55,7 @@ Reject conflicting variant props rather than silently ignoring them.
 Accept the native emoji object (`name`, `id`, `animated`) and delegate emoji
 validation to builders. Do not add an emoji-string parser.
 
-Reject duplicate interactive custom IDs across all rows within one
+Reject duplicate interactive custom IDs across buttons and selects in all rows within one
 `renderComponents()` call, identifying both structural paths without echoing
 supplied values. Separate renders may reuse IDs. Do not generate IDs or impose
 global uniqueness.
@@ -74,7 +76,8 @@ Omit numeric component `id` props. Keep routing custom IDs explicit. Both varian
 accept optional boolean `disabled`; skip its setter for omitted/undefined values,
 preserve explicit false, and let native validation reject malformed values.
 
-Accept only action rows at the message-render root and buttons within each row.
+Accept only action rows at the message-render root and buttons or string selects
+within each row. A select occupies a row by itself under native row validation.
 Reject bare buttons, nested rows, text outside buttons, unsupported controls,
 prebuilt builders, and promises. Continue supporting fragments, synchronous
 reusable components, arrays, conditional omissions, ignored keys, and the existing

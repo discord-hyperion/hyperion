@@ -10,6 +10,8 @@ import {
     renderComponents,
     renderEmbed,
     renderModal,
+    renderStringSelect,
+    StringSelect,
 } from "@hyperion/jsx";
 
 const View: Component<{ name: string }> = ({ name }) => (
@@ -87,3 +89,45 @@ const invalidButtonTypes = () => {
     void [missingStyle, conflicting];
 };
 void invalidButtonTypes;
+
+const select: import("@discordjs/builders").StringSelectMenuBuilder =
+    renderStringSelect(
+        <StringSelect
+            customId="standalone.priority"
+            minValues={0}
+            maxValues={1}
+            disabled={false}
+        >
+            <StringSelect.Option label="Low" value="low" default={false} />
+            <StringSelect.Option
+                label="High"
+                value="high"
+                default
+                emoji={{ name: "🔴" }}
+            />
+        </StringSelect>,
+    );
+const selectRows: import("@discordjs/builders").ActionRowBuilder[] =
+    renderComponents(
+        <ActionRow>
+            <StringSelect customId="standalone.priority">
+                <StringSelect.Option label="Low" value="low" />
+            </StringSelect>
+        </ActionRow>,
+    );
+if (select.toJSON().options.length !== 2 || selectRows.length !== 1) {
+    throw new Error("Unexpected string select output.");
+}
+const invalidSelectTypes = () => {
+    const missingId = { children: [] };
+    // @ts-expect-error Select IDs remain required in published declarations.
+    missingId satisfies Parameters<typeof StringSelect>[0];
+    const optionChildren = { label: "Low", value: "low", children: "text" };
+    // @ts-expect-error Options do not accept text children.
+    optionChildren satisfies Parameters<typeof StringSelect.Option>[0];
+    // @ts-expect-error Message selects do not expose modal-only required.
+    ({ customId: "priority", required: true }) satisfies Parameters<
+        typeof StringSelect
+    >[0];
+};
+void invalidSelectTypes;

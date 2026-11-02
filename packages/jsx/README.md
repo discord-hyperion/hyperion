@@ -1,6 +1,6 @@
 # @hyperion/jsx
 
-Synchronous JSX authoring for Discord embeds, modals, and message buttons, without React or a dependency on
+Synchronous JSX authoring for Discord embeds, modals, and message controls, without React or a dependency on
 `@hyperion/core`. Returns fresh native embed, modal, button, or action-row builders
 from the pinned compatible `@discordjs/builders` peer.
 
@@ -104,7 +104,7 @@ Interactive buttons require an explicit custom ID and style (`primary`,
 buttons use `url` instead of style/custom ID. Both support native emoji objects,
 plain label children, and optional `disabled`. Omitted disabled stays omitted;
 false is preserved. Labels are literal, with no Markdown escaping or formatting
-components. Numeric IDs, premium buttons, selects, and existing builder children
+components. Numeric IDs, premium buttons, entity selects, and existing builder children
 are unsupported.
 
 `renderComponents()` requires explicit rows and returns an empty array for an
@@ -120,3 +120,61 @@ continue routing by exact ID. Clone or freshly render per-user views, and check
 current authorization when handling clicks. See the
 [complete message component guide](https://github.com/favylicious/discord-hyperion/blob/main/docs/jsx-message-components.md)
 for handler and message examples, limits, and the `/jsx-buttons` development demo.
+
+## Message string selects
+
+```tsx
+import {
+    ActionRow,
+    StringSelect,
+    renderComponents,
+    renderStringSelect,
+} from "@hyperion/jsx";
+
+const Priority = () => (
+    <StringSelect
+        customId="todo.priority"
+        placeholder="Choose priority"
+        minValues={0}
+        maxValues={1}
+    >
+        <StringSelect.Option label="Low" value="low" default={false} />
+        <StringSelect.Option
+            label="High"
+            value="high"
+            description="Needs attention"
+        />
+    </StringSelect>
+);
+
+// Native StringSelectMenuBuilder for a core string-select handler.
+const handlerBuilder = renderStringSelect(<Priority />);
+// Native action rows for reply/update payloads.
+const components = renderComponents(
+    <ActionRow>
+        <Priority />
+    </ActionRow>,
+);
+```
+
+Options require plain-string labels and values; description, native emoji data,
+and boolean `default` are optional. Menus require custom IDs and optionally accept
+placeholder, min/max values, and disabled state. Omitted/undefined props retain
+native omissions; false booleans, zero minimums, and empty placeholders survive.
+Option children, formatting primitives, raw options arrays, numeric IDs, and
+modal-only `required` are unsupported.
+
+Duplicate option values are rejected within one menu. Interactive IDs must be
+unique across both buttons and selects within one `renderComponents()` call.
+Separate renders may reuse IDs. Native row validation requires a select to occupy
+its own row. Native validation owns payload/count limits and respects its global
+setting; JSX structural and uniqueness checks remain active independently.
+
+The pinned native validator does not enforce integer counts, maximum-versus-option
+count, implicit-default consistency, or default-selection count. JSX adds no
+stricter replacement schema. Defaults describe presentation, not persisted state;
+handlers still receive string values and must check current authorization.
+
+See the [complete JSX select guide](https://github.com/favylicious/discord-hyperion/blob/main/docs/jsx-select-menus.md)
+for native limits, handler/message examples, and the `/jsx-select` demo. Entity
+selects and modal select authoring remain deferred.
