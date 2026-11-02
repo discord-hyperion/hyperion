@@ -1,6 +1,6 @@
 import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
 import { renderStringSelect } from "@hyperion/jsx";
-import { JsxPriority } from "../jsx-priority.tsx";
+import { JsxPriority } from "../views/jsx-priority.tsx";
 
 export default class extends SelectMenu {
     constructor() {
