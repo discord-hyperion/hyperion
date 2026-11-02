@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { StringSelectMenuBuilder } from "@discordjs/builders";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
 import {
     ActionRow,
@@ -8,6 +9,7 @@ import {
     renderComponents,
     renderEmbed,
     renderModal,
+    StringSelect,
 } from "@hyperion/jsx";
 import {
     BaseInteraction,
@@ -19,6 +21,7 @@ import {
     InteractionType,
     type InteractionUpdateOptions,
     type ModalSubmitInteraction,
+    type StringSelectMenuInteraction,
     TextInputStyle,
 } from "discord.js";
 
@@ -50,6 +53,16 @@ const modalResponse: Parameters<ChatInputCommandInteraction["showModal"]>[0] =
         </Modal>,
     );
 ({ components: controls }) satisfies InteractionUpdateOptions;
+const selectComponents = renderComponents(
+    <ActionRow>
+        <StringSelect customId="consumer.priority">
+            <StringSelect.Option label="Low" value="low" />
+        </StringSelect>
+    </ActionRow>,
+);
+({ components: selectComponents }) satisfies InteractionReplyOptions;
+({ components: selectComponents }) satisfies InteractionUpdateOptions;
+
 void modalResponse;
 void response;
 const failures: unknown[] = [];
@@ -96,6 +109,31 @@ try {
         click as unknown as ButtonInteraction,
     );
     assert.deepEqual(updates, [{ content: "Refreshed" }]);
+    const selectHandler = client.selectMenus.get("consumer.priority");
+    assert.ok(selectHandler?.builder instanceof StringSelectMenuBuilder);
+    assert.equal(selectHandler.componentType, ComponentType.StringSelect);
+    const selections: unknown[] = [];
+    const selection = {
+        type: InteractionType.MessageComponent,
+        componentType: ComponentType.StringSelect,
+        id: "consumer-select",
+        guildId: null,
+        user: { id: "consumer-user" },
+        customId: "consumer.priority",
+        deferred: false,
+        replied: false,
+        values: ["high"],
+        isChatInputCommand: BaseInteraction.prototype.isChatInputCommand,
+        isButton: BaseInteraction.prototype.isButton,
+        isSelectMenu: BaseInteraction.prototype.isSelectMenu,
+        async update(value: unknown) {
+            selections.push(value);
+        },
+    };
+    await new InteractionDispatcher(client).dispatch(
+        selection as unknown as StringSelectMenuInteraction,
+    );
+    assert.deepEqual(selections, [{ content: "Priority: high" }]);
 
     const replies: unknown[] = [];
     const submission = {
@@ -155,4 +193,7 @@ console.log(
 );
 console.log(
     "PASS JSX button handler identity, exact-ID dispatch and reply/update types",
+);
+console.log(
+    "PASS JSX string-select handler identity, dispatch and response types",
 );

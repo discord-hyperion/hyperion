@@ -4,6 +4,7 @@ import {
     CustomIdButtonBuilder,
     EmbedBuilder,
     ModalBuilder,
+    StringSelectMenuBuilder,
 } from "@discordjs/builders";
 import {
     ActionRow,
@@ -15,6 +16,8 @@ import {
     renderComponents,
     renderEmbed,
     renderModal,
+    renderStringSelect,
+    StringSelect,
 } from "@hyperion/jsx";
 import { jsxDEV } from "@hyperion/jsx/jsx-dev-runtime";
 import { Fragment, jsx, jsxs } from "@hyperion/jsx/jsx-runtime";
@@ -74,4 +77,28 @@ assert.notEqual(rows[0].components[0], devRows[0].components[0]);
 assert.deepEqual(renderComponents(null), []);
 console.log(
     "PASS standalone button/row renderers, runtime exports and native identity",
+);
+
+const selectView = jsx(StringSelect, {
+    customId: "standalone.priority",
+    minValues: 0,
+    disabled: false,
+    children: jsx(StringSelect.Option, {
+        label: "Low",
+        value: "low",
+        default: false,
+    }),
+});
+const select = renderStringSelect(selectView);
+assert.ok(select instanceof StringSelectMenuBuilder);
+assert.equal(select.toJSON().options[0].default, false);
+const selectRows = renderComponents(jsx(ActionRow, { children: selectView }));
+assert.ok(selectRows[0].components[0] instanceof StringSelectMenuBuilder);
+const devSelect = renderStringSelect(
+    jsxDEV(Fragment, { children: selectView }),
+);
+assert.notEqual(select, devSelect);
+assert.notEqual(select.options[0], devSelect.options[0]);
+console.log(
+    "PASS standalone string selects, native identity and automatic runtimes",
 );

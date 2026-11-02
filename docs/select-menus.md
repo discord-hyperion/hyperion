@@ -17,7 +17,7 @@ the submission's components resolver, not dispatched to message select handlers.
 
 ```ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
 
 export default class ChooseColour extends SelectMenu {
     constructor() {
@@ -56,7 +56,7 @@ user has a cached guild member.
 
 ```ts
 import { UserSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
 export default class ChooseUser extends SelectMenu<ComponentType.UserSelect> {
@@ -98,7 +98,7 @@ depending on guild cache state; `.name` is available on either. Narrow with
 
 ```ts
 import { RoleSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
 import type { ComponentType } from "discord.js";
 
 export default class ChooseRole extends SelectMenu<ComponentType.RoleSelect> {
@@ -138,7 +138,7 @@ the selection and guild data; a role selection does not have a user entry.
 
 ```ts
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
 import type { ComponentType } from "discord.js";
 
 export default class ChooseMentionable extends SelectMenu<ComponentType.MentionableSelect> {
@@ -182,7 +182,7 @@ channel type before using cache-specific methods.
 
 ```ts
 import { ChannelSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "discord-hyperion";
+import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
 import { ChannelType, type ComponentType } from "discord.js";
 
 export default class ChooseChannel extends SelectMenu<ComponentType.ChannelSelect> {
@@ -266,3 +266,15 @@ state in application-owned storage rather than fields on a shared handler.
 The dev bot includes `/colour`, `/user`, `/role`, `/mentionable`, and `/channel`, with matching
 handlers in `src/select-menus/choose-colour.ts`, `choose-user.ts`, `choose-role.ts`,
 `choose-mentionable.ts`, and `choose-channel.ts`.
+
+## JSX string-select authoring
+
+`@hyperion/jsx` can author a native string-select handler builder with
+`renderStringSelect()` and `StringSelect.Option` children. Use the same view inside
+an `ActionRow` with `renderComponents()` for a fresh message instance. Existing
+exact-ID/type routing, guards, selected string values, acknowledgment, and native
+collectors remain unchanged; JSX does not introduce handler callbacks or schemas.
+
+See [JSX select menus](jsx-select-menus.md) for complete handler/message examples,
+props, defaults, uniqueness scopes, native validator gaps, and `/jsx-select`.
+Entity selects and modal select authoring remain outside the JSX API.
