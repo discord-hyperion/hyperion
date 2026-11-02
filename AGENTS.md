@@ -35,6 +35,8 @@ Read the relevant reference before implementation or review:
 - Component discovery, routing, state, or acknowledgment: the relevant
   [button](docs/buttons.md), [select-menu](docs/select-menus.md), or
   [modal](docs/modals.md) guide.
+- Writing or changing tests, fixtures, or shared test helpers:
+  [Test fixtures](docs/test-fixtures.md).
 - Logging, sensitive data handling, or startup indicators:
   [Logging](docs/logging.md).
 - Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
