@@ -2,22 +2,56 @@ import type { CustomIdButtonBuilder } from "@discordjs/builders";
 import type { ButtonInteraction } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
+import {
+    type ParamsDefinition,
+    type ParamsResult,
+    validateParams,
+} from "./custom-id-params.ts";
 
-export type ButtonContext = InteractionContext<ButtonInteraction>;
+export type ButtonContext<
+    Params extends ParamsDefinition | undefined = undefined,
+> = InteractionContext<ButtonInteraction> &
+    (Params extends ParamsDefinition
+        ? { readonly params: ParamsResult<Params> }
+        : unknown);
 
-export type ButtonOptions = {
-    builder: CustomIdButtonBuilder;
-    guards?: readonly GuardProvider<ButtonContext>[];
-};
+export type ButtonOptions<
+    Params extends ParamsDefinition | undefined = undefined,
+> = {
+    guards?: readonly GuardProvider<ButtonContext<Params>>[];
+} & (Params extends ParamsDefinition
+    ? { params: Params; builder?: never }
+    : { builder: CustomIdButtonBuilder; params?: never });
 
-export abstract class Button {
-    readonly builder: CustomIdButtonBuilder;
+export abstract class Button<
+    Params extends ParamsDefinition | undefined = undefined,
+> {
+    /** Literal handlers only; params handlers build their controls per call. */
+    readonly builder: Params extends ParamsDefinition
+        ? undefined
+        : CustomIdButtonBuilder;
+    readonly params: ParamsDefinition | undefined;
+    /** The exact custom ID, or the route for a params handler. */
     readonly customId: string;
-    readonly guards: readonly GuardProvider<ButtonContext>[];
+    readonly guards: readonly GuardProvider<ButtonContext<Params>>[];
 
-    protected constructor(options: ButtonOptions) {
-        this.builder = options.builder;
-        this.customId = this.builder.toJSON(false).custom_id;
+    protected constructor(options: ButtonOptions<Params>) {
+        if (options.builder !== undefined && options.params !== undefined) {
+            throw new TypeError(
+                "Button handlers accept either a builder or params, not both.",
+            );
+        }
+
+        this.builder = options.builder as this["builder"];
+        this.params = validateParams(options.params);
+
+        const customId =
+            this.params?.id ?? options.builder?.toJSON(false).custom_id;
+        if (customId === undefined) {
+            throw new TypeError("Button handlers require a builder or params.");
+        }
+
+        this.customId = customId;
         this.guards = Object.freeze([...(options.guards ?? [])]);
 
         for (const provider of this.guards) {
@@ -33,5 +67,5 @@ export abstract class Button {
         }
     }
 
-    abstract run(ctx: ButtonContext): Promise<void>;
+    abstract run(ctx: ButtonContext<Params>): Promise<void>;
 }

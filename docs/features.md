@@ -11,7 +11,7 @@
 
 ## Planned
 
-- [ ] Typed custom-ID data exposed through interaction handlers (deferred).
+- [ ] Typed custom-ID data exposed through interaction handlers. Buttons are implemented; select menus, modals, and a JSX encoder helper remain. See [custom-ID params](custom-id-params.md).
   - Separate handler definitions from visible button builders; handlers must not require a template button.
   - Let commands or shared views create multiple controls, with each custom ID carrying its own data.
   - Declare parameter contracts through handlers and expose validated invocation-local values through `ctx.params`.

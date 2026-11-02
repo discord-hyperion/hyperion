@@ -1,0 +1,222 @@
+# Custom-ID params (proposal)
+
+Status: proposal, not implemented. This guide specifies typed custom-ID data
+exposed through `ctx.params`. It implements the deferred backlog entry in
+[features](features.md) and reuses the pipeline described in
+[input validation](input-validation.md).
+
+## Goals
+
+- A handler declares a Standard Schema for the data carried in its custom ID and
+  receives the validated value as `ctx.params`.
+- A command builds the visible component with a typed encoder, without
+  depending on a handler instance.
+- Values keep their types through the schema, never through base64 or JSON.
+- Literal custom IDs keep working. Unmatched IDs stay unmatched so application
+  collectors and listeners can coexist.
+- Components stay stateless. No per-message handler state is introduced.
+
+## Definition
+
+`defineParams` mirrors `defineInput`: an identity-style helper that exists for
+type inference, validates its config once, and returns a frozen definition.
+
+```ts
+export const todoDoneId = defineParams({
+    id: "todo.done",
+    keys: ["owner", "page", "todoId"],
+    schema: v.object({
+        owner: v.string(),
+        page: v.pipe(v.string(), v.toNumber()),
+        todoId: v.string(),
+    }),
+});
+```
+
+- `id` is the route: the first custom-ID segment. It must be non-empty, contain
+  no `:` or `%`, and be unique across handlers.
+- `keys` lists the value names in wire order. Standard Schema cannot expose a
+  schema's shape and Hyperion does not inspect validator internals, so the order
+  is declared. Keys must be unique strings. Reordering or removing keys changes
+  the wire format and invalidates messages that are already sent.
+- `schema` is any Standard Schema v1 value. It receives a record of strings.
+- There is no `resolve` or `defer` in v1. `defer` does not apply to components,
+  and an application lookup must not run before authorization.
+
+The returned value is a function with the definition attached
+(`Object.assign(encode, { id, keys, schema })`, frozen). Calling it encodes a
+custom ID:
+
+```ts
+todoDoneId({ owner: user.id, page: 2, todoId: todo.id });
+// "todo.done:123456:2:abc"
+```
+
+Encoder values are typed from `keys` as `string | number | boolean` and are
+stringified. Schema input is wire text, so it cannot type the encoder. The
+attached field names must not collide with function properties (`name`,
+`length`, `prototype`). Name exports for what they return (`todoDoneId`), not
+as if they ran the handler.
+
+## Wire format
+
+```
+<id>:<value>:<value>
+```
+
+- Segments are separated by `:`. `:` and `%` inside values are percent-escaped
+  (`%3A`, `%25`). Nothing else is encoded.
+- Values are positional, in `keys` order.
+- The encoder throws when the result exceeds 100 characters, so the failure
+  surfaces in the command rather than as a Discord API error. Nothing is
+  truncated, clamped, or given a fallback.
+- Decoding requires exactly `keys.length` value segments and valid escapes.
+  Anything else is treated as unmatched and ignored.
+
+## Handler
+
+```ts
+export default class TodoDone extends Button<typeof todoDoneId> {
+    constructor() {
+        super({ params: todoDoneId });
+    }
+
+    async run(ctx: ButtonContext<typeof todoDoneId>) {
+        const [issues, value] = ctx.params;
+        if (issues) {
+            await ctx.interaction.reply({
+                content: "This button is out of date.",
+                flags: MessageFlags.Ephemeral,
+            });
+            return;
+        }
+
+        value.page satisfies number;
+    }
+}
+```
+
+- One generic carries the definition, as with `Subcommand<typeof input>`.
+- `ctx.params` is `readonly [issues: null, value: Output] | readonly [issues:
+  readonly Issue[], value: undefined]`, the same tuple as `ctx.input`. The
+  handler chooses the response to a schema failure.
+- `ctx.params` is separate from `ctx.input` because a modal has both: params
+  from its custom ID and `input` from its fields.
+- Handlers without `params` keep literal custom-ID routing and expose no
+  `ctx.params`.
+- A handler supplies either `builder` (literal custom ID) or `params`, never
+  both. A params handler has no template component, so commands build the
+  component with the encoder.
+
+## Pipeline
+
+```
+match → decode → schema validate → guards → handler
+```
+
+This intentionally differs from command and modal input
+(`guards → extract → validate → resolve → handler`):
+- Guards can read `ctx.params`, so one reusable ownership guard (for example
+  `ParamOwner("owner")`) can compare the clicker with a forged-able ID value.
+- Validation is pure and cheap. Because `resolve` is excluded, no application
+  lookup runs before authorization.
+- Guard contexts for params handlers carry `params`. Guards for other handlers
+  are unchanged.
+
+Steps:
+1. **Match.** Exact custom-ID match against literal handlers first. Otherwise
+   split on the first `:` and look the route up in the params index. No match
+   means return without replying.
+2. **Decode.** Split, unescape, and zip with `keys` into a record of strings.
+   A wrong segment count or invalid escape is unmatched.
+3. **Validate.** `schema["~standard"].validate(record)` through the shared
+   extract/validate helper that `resolveInput` also uses. Issues produce
+   `[issues, undefined]` and the pipeline continues.
+4. **Guards, then handler.** Existing guard and error behavior applies.
+   Exceptions use the generic error pipeline with `stage: "params"` for decode
+   or validation exceptions.
+
+Schema failure is not an automatic reply: guards still run and the handler
+decides. An ownership guard should therefore reject when `ctx.params` carries
+issues.
+
+## Registration
+
+- Registries gain a route index for `id` alongside the exact-ID `Collection`,
+  exposed as `registry.resolve(customId)`.
+- Load-time checks reject: duplicate routes, a route that equals a literal
+  custom ID, a route containing `:`, duplicate keys, and a handler that supplies
+  both `builder` and `params`.
+- There is no runtime check that the schema agrees with `keys`. Typing both
+  through `typeof todoDoneId` ties the encoder and `ctx.params` together, and a
+  mismatch shows up as a validation failure.
+- Replacement stays atomic with the rest of the registry.
+
+## Routing rules
+
+- Handlers without `params` keep exact-match routing on the full custom ID. The
+  "no suffixes, wildcards, or regex" statement in [buttons](buttons.md) stays true
+  for them.
+- A handler that declares `params` owns its whole `<route>:` namespace. The route
+  lookup applies only to these handlers and only after exact match fails.
+- Loading fails when a literal custom ID equals a params route, so a bare
+  `todo.done` can never be ambiguous. Update the routing paragraph in
+  [buttons](buttons.md) when this ships.
+
+## Guards and invalid params
+
+- Guards on a params handler receive `ctx.params`. Guards on other handlers keep
+  their current context types.
+- A schema failure does not stop guards. A guard that reads `ctx.params` must
+  handle the issues case itself and reject; the framework does not reject on its
+  behalf, so handlers keep control of the response.
+- The built-in `ParamOwner` guard will reject whenever `ctx.params` carries issues.
+
+## Stale controls
+
+Messages outlive code. Changing `keys`, their order, or their meaning requires a
+new `id`. An old `id` may stay registered so that old controls fail gracefully
+(for example with an "out of date" reply). The wire format carries no automatic
+version segment.
+
+## Logging
+
+Never log params, decoded values, issues, or the full custom ID. Log the route
+`id` and counts only, following [logging](logging.md).
+
+## Scope
+
+1. Shared codec (`defineParams`, encode, decode) and the route index.
+2. Buttons.
+3. Follow-ups: select menus and modals, then a JSX helper for the encoder.
+
+The first PR covers the codec, the route index, and buttons only. The codec and
+context typing are kind-agnostic so the follow-ups need no redesign.
+
+## Select menus (follow-up)
+
+Select menus reuse the codec, route lookup, pipeline, and `ctx.params` tuple.
+- Params are decided when the bot sends the menu; the selection is decided at
+  click time. They stay separate: `ctx.params` carries the former and
+  `ctx.interaction.values` (or the resolved collections) carries the latter.
+- A params handler has no template builder, so it declares its select type
+  explicitly (`super({ type: ComponentType.UserSelect, params })`). The
+  dispatcher keeps rejecting a click whose `componentType` differs.
+- Typing gains a second generic: `SelectMenu<Type, Params>` and
+  `SelectMenuContext<Type, Params>`. `Params` defaults to none, so existing
+  `SelectMenu<Type>` code is unchanged.
+- Routes are unique per registry, as literal custom IDs are today. A button and a
+  select menu may share a route.
+
+Modals follow separately, since they carry both `ctx.params` and `ctx.input`.
+
+## Guard typing
+
+Guards that read `ctx.params` are typed through the same definition, for example
+`Guard<ButtonContext<typeof todoDoneId>>`, so a guard written for one params
+handler cannot be attached to a handler with different params.
+
+## Open items
+
+- A reusable `ParamOwner` guard, generic over its key name, deferred until the
+  base feature lands.

@@ -11,6 +11,7 @@ import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
 import { Command, type CommandType, Subcommand } from "../commands/index.ts";
 import {
+    Button,
     Modal,
     type SelectMenu,
     type SelectMenuType,
@@ -20,6 +21,7 @@ import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";
 import { resolveCommandInput } from "./resolve-command-input.ts";
 import { resolveModalInput } from "./resolve-modal-input.ts";
+import { resolveParams } from "./resolve-params.ts";
 
 type HandlerKind = "command" | "button" | "select-menu" | "modal";
 
@@ -40,9 +42,11 @@ export class InteractionDispatcher {
         if (interaction.isChatInputCommand()) {
             await this.dispatchCommand(interaction);
         } else if (interaction.isButton()) {
-            const button = this.client.buttons.get(interaction.customId);
+            const match = this.client.buttons.resolve(interaction.customId);
             // Unmatched IDs may belong to application-owned collectors/listeners.
-            if (!button) return;
+            if (!match) return;
+
+            const { button, raw } = match;
 
             const logger = this.createLogger(interaction, {
                 button: button.customId,
@@ -52,6 +56,8 @@ export class InteractionDispatcher {
                 button,
                 { client: this.client, interaction, logger },
                 "button",
+                [],
+                raw,
             );
         } else if (interaction.isSelectMenu()) {
             const selectMenu = this.client.selectMenus.get(
@@ -316,18 +322,33 @@ export class InteractionDispatcher {
         ctx: Context,
         kind: HandlerKind,
         parentGuards: readonly GuardProvider<Context>[] = [],
+        rawParams?: Readonly<Record<string, string>>,
     ) {
         const { interaction, logger } = ctx;
         const started = performance.now();
 
         logger.debug({ event: `${kind}.started` }, `Running ${kind}`);
 
-        let stage: "guards" | "input" | "handler" = "guards";
+        let stage: "params" | "guards" | "input" | "handler" = "guards";
 
         try {
+            // Params are decoded and schema-validated before guards so guards
+            // can read them; no application code runs at this stage.
+            let current = ctx;
+            if (rawParams !== undefined && handler instanceof Button) {
+                if (handler.params) {
+                    stage = "params";
+                    current = {
+                        ...ctx,
+                        params: await resolveParams(handler.params, rawParams),
+                    };
+                    stage = "guards";
+                }
+            }
+
             const result = await this.guards.run(
                 [...parentGuards, ...handler.guards],
-                ctx,
+                current,
             );
 
             if (!result.passed) {
@@ -340,7 +361,7 @@ export class InteractionDispatcher {
                     `${kind} rejected by guard`,
                 );
                 if (result.guard.onFail) {
-                    await result.guard.onFail(ctx);
+                    await result.guard.onFail(current);
                 } else {
                     await this.respondWithError(
                         interaction,
@@ -352,7 +373,7 @@ export class InteractionDispatcher {
                 return;
             }
 
-            let handlerContext = ctx;
+            let handlerContext = current;
             if (
                 (handler instanceof Command || handler instanceof Subcommand) &&
                 interaction.isChatInputCommand() &&
