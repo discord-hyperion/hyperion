@@ -14,7 +14,7 @@ const bot = await HyperionClient.create({
     name: "HyperionDev",
     root: new URL("./", import.meta.url),
     discord: {
-        intents: ["Guilds"],
+        intents: ["Guilds", "GuildMessages"],
     },
     description: "Developer bot for the Hyperion framework",
     commands: {

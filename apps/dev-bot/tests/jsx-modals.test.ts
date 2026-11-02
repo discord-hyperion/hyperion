@@ -8,7 +8,7 @@ import {
     createModalInteraction,
 } from "../../../tests/fixtures/interactions.ts";
 
-test("JSX modal discovery, personalized opening and exact-ID submission preserve the shared definition", async t => {
+test("JSX modal discovery, fresh opening and exact-ID submission preserve the shared definition", async t => {
     const root = new URL("../", import.meta.url);
     const records: string[] = [];
     const client = await HyperionClient.create({
@@ -29,14 +29,10 @@ test("JSX modal discovery, personalized opening and exact-ID submission preserve
     const template = handler.builder.toJSON();
     const opened: ModalBuilder[] = [];
 
-    for (const name of [
-        "First private initial value",
-        "Second private initial value",
-    ]) {
+    for (let attempt = 0; attempt < 2; attempt++) {
         const fixture = createChatInputInteraction({
             commandName: "jsx-modal",
             user: { id: "test-user" },
-            options: { getString: () => name },
         });
         await dispatcher.dispatch(fixture.interaction);
 
@@ -47,16 +43,10 @@ test("JSX modal discovery, personalized opening and exact-ID submission preserve
         assert.ok(builder instanceof ModalBuilder);
         assert.notEqual(builder, handler.builder);
         assert.equal(builder.toJSON().custom_id, handler.customId);
-        assert.ok(JSON.stringify(builder.toJSON()).includes(name));
         opened.push(builder);
     }
 
     assert.notEqual(opened[0], opened[1]);
-    assert.ok(
-        !JSON.stringify(opened[0]?.toJSON()).includes(
-            "Second private initial value",
-        ),
-    );
     assert.deepEqual(handler.builder.toJSON(), template);
 
     const submitted = createModalInteraction({
@@ -101,8 +91,7 @@ test("JSX modal discovery, personalized opening and exact-ID submission preserve
         records.every(
             line =>
                 !line.includes("Private submitted name") &&
-                !line.includes("Private description") &&
-                !line.includes("private initial value"),
+                !line.includes("Private description"),
         ),
     );
 });

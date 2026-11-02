@@ -8,21 +8,11 @@ export default class extends Command {
         super({
             builder: new ChatInputCommandBuilder()
                 .setName("jsx-modal")
-                .setDescription("Open a personalized JSX todo form.")
-                .addStringOptions(option =>
-                    option
-                        .setName("name")
-                        .setDescription("Initial todo name.")
-                        .setMaxLength(100),
-                ),
+                .setDescription("Open a personalized JSX todo form."),
         });
     }
 
     async run(ctx: CommandContext) {
-        const initialName = ctx.interaction.options.getString("name") ?? "";
-
-        await ctx.interaction.showModal(
-            renderModal(<TodoForm initialName={initialName} />),
-        );
+        await ctx.interaction.showModal(renderModal(<TodoForm />));
     }
 }
