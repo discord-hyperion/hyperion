@@ -1,7 +1,4 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
 import { test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { Client, REST } from "discord.js";
@@ -10,6 +7,7 @@ import { HyperionClient } from "../src/client/index.ts";
 import { Command, type CommandContext } from "../src/commands/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { LogManager } from "../src/logging/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 interface LogRecord {
     event?: string;
@@ -196,8 +194,7 @@ test("errors stay visible at error level and users still receive error responses
 });
 
 test("initialization reports missing directories and skips deployment", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-logging-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-logging-");
     const capture = captureLogs();
     const put = t.mock.method(REST.prototype, "put", async () => []);
     const client = await HyperionClient.create({

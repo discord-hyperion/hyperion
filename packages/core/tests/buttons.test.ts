@@ -3,15 +3,14 @@ import { mock, type TestContext, test } from "node:test";
 import { PrimaryButtonBuilder } from "@discordjs/builders";
 import { Collection, Events, InteractionType, MessageFlags } from "discord.js";
 import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts";
-import { HyperionClient } from "../src/client/index.ts";
 import { Button, type ButtonContext } from "../src/components/index.ts";
-import { InteractionDispatcher } from "../src/execution/index.ts";
 import {
     Cooldown,
     Guard,
     type GuardProvider,
     OwnerOnly,
 } from "../src/guards/index.ts";
+import { createTestClient } from "./support/test-client.ts";
 
 type Phase = "new" | "defer-update" | "defer-reply" | "replied";
 const interaction = (phase: Phase = "new", userId = "owner") =>
@@ -47,27 +46,11 @@ class TestButton extends Button {
 }
 
 const setup = async (t: TestContext) => {
-    const records: Record<string, unknown>[] = [];
-    const client = await HyperionClient.create({
-        root: new URL("./fixtures/empty-bot/", import.meta.url),
-        name: "Test",
-        discord: { intents: [] },
-        logging: {
-            level: "debug",
-            pretty: false,
-            progress: false,
-            destination: {
-                write: line => {
-                    records.push(JSON.parse(line));
-                },
-            },
-        },
-    });
-    t.after(() => client.destroy());
-    t.mock.method(client, "getOwnerId", async () => "owner");
-    return { client, records, dispatcher: new InteractionDispatcher(client) };
-};
+    const result = await createTestClient(t);
+    t.mock.method(result.client, "getOwnerId", async () => "owner");
 
+    return result;
+};
 test("button listener preserves the receiver, awaits async data, and scopes logs", async t => {
     const { client, records } = await setup(t);
     class Refresh extends TestButton {

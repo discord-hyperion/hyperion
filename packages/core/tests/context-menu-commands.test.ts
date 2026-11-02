@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mock, type TestContext, test } from "node:test";
+import { mock, test } from "node:test";
 import {
     ChatInputCommandBuilder,
     MessageContextCommandBuilder,
@@ -16,10 +16,9 @@ import {
     CommandRegistry,
     Guard,
     type GuardProvider,
-    HyperionClient,
-    InteractionDispatcher,
     OwnerOnly,
 } from "../src/index.ts";
+import { createTestClient } from "./support/test-client.ts";
 
 type ContextType = ApplicationCommandType.User | ApplicationCommandType.Message;
 type MenuContext = CommandContext<ContextType>;
@@ -91,29 +90,12 @@ const interaction = (type: ContextType, phase = "new", caller = "caller") => {
           });
 };
 
-const setup = async (t: TestContext) => {
-    const records: Record<string, unknown>[] = [];
-    const client = await HyperionClient.create({
-        root: new URL("./fixtures/empty-bot/", import.meta.url),
-        name: "Test",
-        discord: { intents: [] },
-        logging: {
-            level: "debug",
-            pretty: false,
-            progress: false,
-            destination: { write: line => records.push(JSON.parse(line)) },
-        },
-    });
-    t.after(() => client.destroy());
-    return { client, records, dispatcher: new InteractionDispatcher(client) };
-};
-
 for (const type of [
     ApplicationCommandType.User,
     ApplicationCommandType.Message,
 ] as const) {
     test(`context command type ${type} receives resolved targets once with scoped logs`, async t => {
-        const { client, records } = await setup(t);
+        const { client, records } = await createTestClient(t);
         const execute = mock.fn(async (ctx: MenuContext) => {
             assert.equal(ctx.client, client);
             if (ctx.interaction.isUserContextMenuCommand()) {
@@ -150,7 +132,7 @@ for (const type of [
     });
 
     test(`context command type ${type} supports ordered target-aware guard factories and custom rejection`, async t => {
-        const { client, dispatcher } = await setup(t);
+        const { client, dispatcher } = await createTestClient(t);
         class Deny extends Guard<MenuContext> {
             constructor() {
                 super({ description: "Denied" });
@@ -187,7 +169,7 @@ for (const type of [
     });
 
     test(`OwnerOnly authorizes the context-menu caller rather than the selected user for type ${type}`, async t => {
-        const { client, dispatcher } = await setup(t);
+        const { client, dispatcher } = await createTestClient(t);
         t.mock.method(client, "getOwnerId", async () => "owner");
         const execute = mock.fn(async (_ctx: MenuContext) => {});
         client.commands.set(
@@ -209,7 +191,8 @@ for (const type of [
     for (const stage of ["handler", "guards"]) {
         for (const phase of ["new", "deferred", "replied"]) {
             test(`context command type ${type} ${stage} failures respect ${phase} replies`, async t => {
-                const { client, dispatcher, records } = await setup(t);
+                const { client, dispatcher, records } =
+                    await createTestClient(t);
                 const fail = async () => {
                     throw new Error("Private failure");
                 };
@@ -246,7 +229,7 @@ for (const type of [
     }
 
     test(`unknown context command type ${type} never executes same-named handlers of other types`, async t => {
-        const { client, dispatcher } = await setup(t);
+        const { client, dispatcher } = await createTestClient(t);
         const execute = mock.fn(async (_ctx: MenuContext) => {});
         const other =
             type === ApplicationCommandType.User
@@ -282,7 +265,7 @@ for (const type of [
 }
 
 test("shared context command names resolve independently and concurrent contexts remain isolated", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const contexts: MenuContext[] = [];
     const execute = async (ctx: MenuContext) => {
         contexts.push(ctx);
@@ -311,7 +294,7 @@ test("shared context command names resolve independently and concurrent contexts
 });
 
 test("expired context command responses are contained and handlers can open a modal without automatic acknowledgment", async t => {
-    const { client, dispatcher, records } = await setup(t);
+    const { client, dispatcher, records } = await createTestClient(t);
     client.commands.set(
         CommandRegistry.key("Inspect", ApplicationCommandType.User),
         new UserCommand(async ctx => {
@@ -347,7 +330,7 @@ test("expired context command responses are contained and handlers can open a mo
 });
 
 test("autocomplete never invokes a same-named context-menu handler", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const execute = mock.fn(async (_ctx: MenuContext) => {});
     client.commands.set(
         CommandRegistry.key("Inspect", ApplicationCommandType.User),

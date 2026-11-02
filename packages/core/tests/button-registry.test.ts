@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { test } from "node:test";
+import { type TestContext, test } from "node:test";
 import { REST } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { ButtonRegistry } from "../src/registries/index.ts";
+import { createHandlerRoot } from "./support/temp-root.ts";
 
 const buttonModule = new URL("../src/components/button.ts", import.meta.url)
     .href;
@@ -22,13 +22,8 @@ const source = (id: string, extra = "") => `
     }
 `;
 
-const fixture = async (t: { after: (task: () => Promise<void>) => void }) => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-buttons-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
-    const directory = path.join(root, "src", "buttons");
-    await mkdir(directory, { recursive: true });
-    return { root, directory };
-};
+const fixture = (t: TestContext) =>
+    createHandlerRoot(t, "hyperion-buttons-", "buttons");
 
 test("discovers nested buttons deterministically and skips helpers", async t => {
     const { root, directory } = await fixture(t);

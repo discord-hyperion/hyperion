@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
 import { pathToFileURL } from "node:url";
@@ -23,6 +22,7 @@ import {
     Subcommand,
     SubcommandGroup,
 } from "../src/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
@@ -53,8 +53,7 @@ export default class extends Subcommand {
 }`;
 
 const fixture = async (t: TestContext) => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-mutations-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-mutations-");
     const files = new Collection<string, string>([
         ["[ticket]/index.mjs", parentSource],
         ["[ticket]/close.mjs", leafSource("close")],

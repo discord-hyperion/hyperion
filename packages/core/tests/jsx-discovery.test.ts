@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 import {
@@ -11,13 +10,11 @@ import {
     discoverModules,
     isModuleFilename,
 } from "../src/util/discover-modules.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 for (const extension of ["tsx", "jsx"]) {
     test(`discovers ${extension} while excluding declarations, tests, specs and barrels`, async t => {
-        const root = await mkdtemp(
-            path.join(os.tmpdir(), "hyperion-jsx-discovery-"),
-        );
-        t.after(() => rm(root, { recursive: true, force: true }));
+        const root = await createTempRoot(t, "hyperion-jsx-discovery-");
 
         for (const name of [
             `handler.${extension}`,

@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { mock, type TestContext, test } from "node:test";
+import { mock, test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
@@ -26,9 +25,9 @@ import {
     defineInput,
     Guard,
     type GuardProvider,
-    HyperionClient,
-    InteractionDispatcher,
 } from "../src/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
+import { createTestClient } from "./support/test-client.ts";
 
 class Check extends Guard {
     constructor(
@@ -72,27 +71,6 @@ const schema = (
     "~standard": { version: 1, vendor: "test", validate },
 });
 
-const setup = async (t: TestContext) => {
-    const records: Record<string, unknown>[] = [];
-    const client = await HyperionClient.create({
-        root: new URL("./fixtures/empty-bot/", import.meta.url),
-        name: "InputTest",
-        discord: { intents: [] },
-        logging: {
-            level: "debug",
-            pretty: false,
-            progress: false,
-            destination: {
-                write: line => {
-                    records.push(JSON.parse(line));
-                },
-            },
-        },
-    });
-    t.after(() => client.destroy());
-    return { client, records, dispatcher: new InteractionDispatcher(client) };
-};
-
 const interaction = (values: CommandInteractionOption[] = []) => {
     const options = new Collection(values.map(value => [value.name, value]));
     return createChatInputInteraction({
@@ -108,7 +86,7 @@ const todoOption = (value: string): CommandInteractionOption => ({
 });
 
 test("guards precede private deferral, async schema, whole-input resolution, and handler", async t => {
-    const { client, dispatcher, records } = await setup(t);
+    const { client, dispatcher, records } = await createTestClient(t);
     const order: string[] = [];
     const fixture = interaction([
         todoOption("a"),
@@ -198,7 +176,7 @@ test("guards precede private deferral, async schema, whole-input resolution, and
 
 for (const issues of [[{ message: "Todo not found", path: ["todo"] }], []]) {
     test(`schema failure reaches the handler with ${issues.length} issues and no automatic response`, async t => {
-        const { client, dispatcher, records } = await setup(t);
+        const { client, dispatcher, records } = await createTestClient(t);
         const run = mock.fn(
             async (ctx: CommandContext<CommandInputOptions>) => {
                 assert.equal(ctx.input[0], issues);
@@ -234,7 +212,7 @@ for (const issues of [[{ message: "Todo not found", path: ["todo"] }], []]) {
 }
 
 test("a guard rejection skips deferral, resolvers, schema, and handler", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const never = () => assert.fail("Must be skipped");
     client.commands.set(
         "test",
@@ -258,7 +236,7 @@ test("a guard rejection skips deferral, resolvers, schema, and handler", async t
 for (const phase of ["new", "deferred", "replied"] as const) {
     for (const failing of ["resolver", "schema"] as const) {
         test(`${failing} exception stops execution and uses the ${phase} error response`, async t => {
-            const { client, dispatcher, records } = await setup(t);
+            const { client, dispatcher, records } = await createTestClient(t);
             const validate = mock.fn(() => {
                 if (failing === "schema") throw new Error("Lookup failed");
                 return { value: null };
@@ -309,7 +287,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
 
 for (const phase of ["deferred", "replied"] as const) {
     test(`automatic deferral skips an interaction already ${phase} by a guard`, async t => {
-        const { client, dispatcher } = await setup(t);
+        const { client, dispatcher } = await createTestClient(t);
         const run = mock.fn(async () => {});
         client.commands.set(
             "test",
@@ -341,7 +319,7 @@ for (const phase of ["deferred", "replied"] as const) {
 }
 
 test("failed automatic deferral stops input processing", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const validate = mock.fn(() => ({ value: null }));
     const run = mock.fn(async () => {});
     client.commands.set(
@@ -358,7 +336,7 @@ test("failed automatic deferral stops input processing", async t => {
 });
 
 test("option extraction preserves falsy values, entity IDs, and resolved attachments", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const attachment: Attachment = Reflect.construct(Attachment, [
         {
             id: "1",
@@ -435,7 +413,7 @@ test("option extraction preserves falsy values, entity IDs, and resolved attachm
 });
 
 test("concurrent invocations keep resolved values and handler contexts separate", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     let release: (() => void) | undefined;
     const gate = new Promise<void>(resolve => {
         release = resolve;
@@ -472,9 +450,8 @@ test("concurrent invocations keep resolved values and handler contexts separate"
 });
 
 test("grouped subcommands run inherited guards before their own input pipeline", async t => {
-    const { client, dispatcher } = await setup(t);
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-input-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const { client, dispatcher } = await createTestClient(t);
+    const root = await createTempRoot(t, "hyperion-input-");
     const directory = path.join(root, "src/commands/[tools]/{items}");
     await mkdir(directory, { recursive: true });
     const entry = JSON.stringify(
@@ -523,7 +500,7 @@ test("grouped subcommands run inherited guards before their own input pipeline",
 });
 
 test("schema-free commands keep the original context and do not extract options", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     let guarded: CommandContext | undefined;
     class PlainCommand extends Command {
         constructor() {
@@ -555,7 +532,7 @@ test("schema-free commands keep the original context and do not extract options"
 });
 
 test("autocomplete skips configured input processing and deferral", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const never = () => assert.fail("Autocomplete must not process input");
     client.commands.set(
         "test",
@@ -575,7 +552,7 @@ test("autocomplete skips configured input processing and deferral", async t => {
 });
 
 test("an async resolver rejection stops the handler after validation", async t => {
-    const { client, dispatcher, records } = await setup(t);
+    const { client, dispatcher, records } = await createTestClient(t);
     const validate = mock.fn(async () => ({ value: null }));
     const builder = new ChatInputCommandBuilder()
         .setName("test")
@@ -620,7 +597,7 @@ test("an async resolver rejection stops the handler after validation", async t =
 });
 
 test("async schema rejection uses the unexpected-error pipeline", async t => {
-    const { client, dispatcher, records } = await setup(t);
+    const { client, dispatcher, records } = await createTestClient(t);
     const run = mock.fn(async () => {});
     client.commands.set(
         "test",
@@ -645,7 +622,7 @@ test("async schema rejection uses the unexpected-error pipeline", async t => {
 });
 
 test("option names matching object properties remain ordinary input fields", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const builder = new ChatInputCommandBuilder()
         .setName("test")
         .setDescription("Test")
@@ -699,7 +676,7 @@ for (const resolved of [
     },
 ]) {
     test(`resolver results are passed directly without a second validation: ${JSON.stringify(resolved)}`, async t => {
-        const { client, dispatcher } = await setup(t);
+        const { client, dispatcher } = await createTestClient(t);
         const validate = mock.fn(() => ({
             value: { id: "missing", name: "Default name" },
         }));
@@ -727,7 +704,7 @@ for (const resolved of [
 }
 
 test("defineInput infers a concrete handler's output without running callbacks during definition", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const validate = mock.fn((value: unknown) => {
         assert.ok(value && typeof value === "object" && "todo" in value);
         assert.equal(typeof value.todo, "string");

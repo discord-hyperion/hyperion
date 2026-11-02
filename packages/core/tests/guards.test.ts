@@ -3,10 +3,9 @@ import { mock, type TestContext, test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { MessageFlags } from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
-import { HyperionClient } from "../src/client/index.ts";
 import { Command, type CommandContext } from "../src/commands/index.ts";
-import { InteractionDispatcher } from "../src/execution/index.ts";
 import { Guard, type GuardProvider, OwnerOnly } from "../src/guards/index.ts";
+import { createTestClient } from "./support/test-client.ts";
 
 class Check extends Guard {
     constructor(
@@ -41,27 +40,11 @@ class GuardedCommand extends Command {
 }
 
 const setup = async (t: TestContext) => {
-    const records: Record<string, unknown>[] = [];
-    const client = await HyperionClient.create({
-        root: new URL("./fixtures/empty-bot/", import.meta.url),
-        name: "Test",
-        discord: { intents: [] },
-        logging: {
-            level: "debug",
-            pretty: false,
-            progress: false,
-            destination: {
-                write: line => {
-                    records.push(JSON.parse(line));
-                },
-            },
-        },
-    });
-    t.after(() => client.destroy());
-    t.mock.method(client, "getOwnerId", async () => "owner");
-    return { client, records, dispatcher: new InteractionDispatcher(client) };
-};
+    const result = await createTestClient(t);
+    t.mock.method(result.client, "getOwnerId", async () => "owner");
 
+    return result;
+};
 const interaction = (
     phase: "new" | "deferred" | "replied" = "new",
     userId = "owner",

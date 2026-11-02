@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { mock, type TestContext, test } from "node:test";
+import { mock, test } from "node:test";
 import {
     LabelBuilder,
     ModalBuilder,
@@ -21,12 +20,12 @@ import {
     defineInput,
     Guard,
     type GuardProvider,
-    HyperionClient,
-    InteractionDispatcher,
     Modal,
     type ModalContext,
     type ModalInputOptions,
 } from "../src/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
+import { createTestClient } from "./support/test-client.ts";
 
 type Submitted = ModalComponentResolver["data"][number];
 const text = (customId: string, value = ""): Submitted => ({
@@ -78,31 +77,12 @@ class Check extends Guard<ModalContext> {
         return this.check(ctx);
     }
 }
-const setup = async (t: TestContext) => {
-    const records: Record<string, unknown>[] = [];
-    const client = await HyperionClient.create({
-        root: new URL("./fixtures/empty-bot/", import.meta.url),
-        name: "ModalInputTest",
-        discord: { intents: [] },
-        logging: {
-            level: "debug",
-            pretty: false,
-            progress: false,
-            destination: {
-                write: line => records.push(JSON.parse(line)),
-            },
-        },
-    });
-    t.after(() => client.destroy());
-
-    return { client, records, dispatcher: new InteractionDispatcher(client) };
-};
 const submission = (
     data: readonly Submitted[] = [text("name", "Private text")],
 ) => createModalInteraction({ customId: "todo.create", components: { data } });
 
 test("modal guards precede private deferral, async schema, resolver, and handler", async t => {
-    const { client, dispatcher, records } = await setup(t);
+    const { client, dispatcher, records } = await createTestClient(t);
     const order: string[] = [];
     const fixture = submission();
     const originalContexts: ModalContext[] = [];
@@ -167,7 +147,7 @@ test("modal guards precede private deferral, async schema, resolver, and handler
 });
 
 test("extracts submitted labels/legacy rows, preserves literal keys and empties, and ignores other controls", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const data: Submitted[] = [
         text("todo.name", ""),
         text("__proto__", "safe"),
@@ -235,7 +215,7 @@ test("extracts submitted labels/legacy rows, preserves literal keys and empties,
 });
 
 test("schemas own missing-field defaults, trimming, and successful output without a resolver", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const input = defineInput({
         schema: v.object({
             name: v.pipe(v.string(), v.trim()),
@@ -263,7 +243,7 @@ test("schemas own missing-field defaults, trimming, and successful output withou
 });
 
 test("schema issues reach the handler unchanged and skip resolution and automatic responses", async t => {
-    const { client, dispatcher, records } = await setup(t);
+    const { client, dispatcher, records } = await createTestClient(t);
     const issues = [{ message: "Private validation detail", path: ["name"] }];
     const resolve = mock.fn(async () => "must not run");
     const run = mock.fn(async (ctx: ModalContext<ModalInputOptions>) => {
@@ -286,7 +266,7 @@ test("schema issues reach the handler unchanged and skip resolution and automati
 
 for (const phase of ["schema", "resolve"] as const) {
     test(`modal ${phase} exceptions use the input error stage and skip the handler`, async t => {
-        const { client, dispatcher, records } = await setup(t);
+        const { client, dispatcher, records } = await createTestClient(t);
         const run = mock.fn(async () => {});
         const failure = new Error("Application failure");
         client.modals.set(
@@ -322,7 +302,7 @@ for (const phase of ["schema", "resolve"] as const) {
 
 for (const kind of ["duplicate", "missing", "null", "number"] as const) {
     test(`rejects ${kind} text-input data before validation without logging values`, async t => {
-        const { client, dispatcher, records } = await setup(t);
+        const { client, dispatcher, records } = await createTestClient(t);
         const validate = mock.fn(values => ({ value: values }));
         const run = mock.fn(async () => {});
         client.modals.set(
@@ -368,7 +348,7 @@ for (const kind of ["duplicate", "missing", "null", "number"] as const) {
 }
 
 test("guard rejection skips extraction, deferral, schemas, and resolvers", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const validate = mock.fn(values => ({ value: values }));
     const resolve = mock.fn(async () => null);
     const run = mock.fn(async () => {});
@@ -392,7 +372,7 @@ test("guard rejection skips extraction, deferral, schemas, and resolvers", async
 
 for (const acknowledgment of ["reply", "deferReply", "deferUpdate"] as const) {
     test(`preserves ${acknowledgment} from a guard and uses the correct error response`, async t => {
-        const { client, dispatcher } = await setup(t);
+        const { client, dispatcher } = await createTestClient(t);
         client.modals.set(
             "todo.create",
             new InputModal({
@@ -434,7 +414,7 @@ for (const acknowledgment of ["reply", "deferReply", "deferUpdate"] as const) {
 }
 
 test("configuration is snapshotted while schemas remain shared and invocation inputs are fresh", async t => {
-    const { client, dispatcher } = await setup(t);
+    const { client, dispatcher } = await createTestClient(t);
     const contexts: ModalContext<ModalInputOptions>[] = [];
     const originalSchema = schema(values => ({ value: values }));
     const options = { schema: originalSchema, defer: false };
@@ -461,9 +441,8 @@ test("configuration is snapshotted while schemas remain shared and invocation in
 });
 
 test("modal discovery does not execute schemas or resolvers and failed reload preserves definitions", async t => {
-    const { client } = await setup(t);
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-modal-input-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const { client } = await createTestClient(t);
+    const root = await createTempRoot(t, "hyperion-modal-input-");
     const directory = path.join(root, "src/modals");
     await mkdir(directory, { recursive: true });
     const core = new URL("../src/index.ts", import.meta.url).href;
@@ -508,7 +487,7 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
 });
 
 test("failed modal deferral skips extraction, schema, resolver, and handler", async t => {
-    const { client, dispatcher, records } = await setup(t);
+    const { client, dispatcher, records } = await createTestClient(t);
     const validate = mock.fn(values => ({ value: values }));
     const resolve = mock.fn(async () => null);
     const run = mock.fn(async () => {});

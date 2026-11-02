@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import os from "node:os";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
 import { pathToFileURL } from "node:url";
@@ -11,6 +10,7 @@ import {
     type EventRegistryOptions,
     HyperionClient,
 } from "../src/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const source = (label: string, body = "", options = "{}", async = true) => `
@@ -32,8 +32,7 @@ const deferred = () => {
 };
 
 const fixture = async (t: TestContext) => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-events-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-events-");
     const write = async (file: string, contents: string) => {
         const target = path.join(root, "src/events", file);
         await mkdir(path.dirname(target), { recursive: true });

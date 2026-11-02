@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
 import {
@@ -13,6 +12,7 @@ import {
     type CommandType,
     HyperionClient,
 } from "../src/index.ts";
+import { createHandlerRoot } from "./support/temp-root.ts";
 
 const commandModule = new URL("../src/commands/command.ts", import.meta.url)
     .href;
@@ -56,15 +56,8 @@ const source = (type: CommandType, name = "inspect", extra = "") => {
     `;
 };
 
-const fixture = async (t: TestContext) => {
-    const root = await mkdtemp(
-        path.join(os.tmpdir(), "hyperion-context-menus-"),
-    );
-    t.after(() => rm(root, { recursive: true, force: true }));
-    const directory = path.join(root, "src", "commands");
-    await mkdir(directory, { recursive: true });
-    return { root, directory };
-};
+const fixture = (t: TestContext) =>
+    createHandlerRoot(t, "hyperion-context-menus-", "commands");
 
 test("discovers all command types in the conventional folder and permits shared names", async t => {
     const { root, directory } = await fixture(t);

@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { test } from "node:test";
+import { type TestContext, test } from "node:test";
 import { REST } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { ModalRegistry } from "../src/registries/index.ts";
+import { createHandlerRoot } from "./support/temp-root.ts";
 
 const modalModule = new URL("../src/components/modal.ts", import.meta.url).href;
 const buildersModule = import.meta.resolve("@discordjs/builders");
@@ -21,13 +21,8 @@ const source = (id: string, extra = "") => `
     }
 `;
 
-const fixture = async (t: { after: (task: () => Promise<void>) => void }) => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-modals-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
-    const directory = path.join(root, "src", "modals");
-    await mkdir(directory, { recursive: true });
-    return { root, directory };
-};
+const fixture = (t: TestContext) =>
+    createHandlerRoot(t, "hyperion-modals-", "modals");
 
 test("discovers nested modals deterministically and skips helpers", async t => {
     const { root, directory } = await fixture(t);

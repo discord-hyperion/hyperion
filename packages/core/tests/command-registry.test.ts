@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { DiscordAPIError, REST } from "discord.js";
 import { HyperionClient } from "../src/client/index.ts";
 import { CommandRegistry } from "../src/registries/index.ts";
+import { createTempRoot } from "./support/temp-root.ts";
 
 const commandModule = new URL("../src/commands/command.ts", import.meta.url)
     .href;
@@ -35,8 +35,7 @@ const commandSource = (name: string) => {
 };
 
 test("command discovery and deployment leave guard factories unevaluated", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-lazy-guards-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-lazy-guards-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     const source = commandSource("guarded").replace(
@@ -62,9 +61,7 @@ test("command discovery and deployment leave guard factories unevaluated", async
 });
 
 test("discovers nested commands and skips non-command files", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-commands-"));
-
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-commands-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
 
@@ -93,8 +90,7 @@ test("discovers nested commands and skips non-command files", async t => {
 });
 
 test("rejects duplicate names without replacing the loaded registry", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-duplicate-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-duplicate-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     await writeFile(path.join(directory, "first.mjs"), commandSource("ping"));
@@ -107,8 +103,7 @@ test("rejects duplicate names without replacing the loaded registry", async t =>
 });
 
 test("rejects invalid exports and skips missing command directories without REST calls", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-invalid-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-invalid-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     const put = t.mock.method(REST.prototype, "put", async () => []);
@@ -124,8 +119,7 @@ test("rejects invalid exports and skips missing command directories without REST
 });
 
 test("initializes commands and bulk registers once per unique guild without login", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-init-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-init-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     await writeFile(path.join(directory, "ping.mjs"), commandSource("ping"));
@@ -170,8 +164,7 @@ test("initializes commands and bulk registers once per unique guild without logi
 });
 
 test("supports global registration and rejects unsafe empty configuration", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-global-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-global-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     const put = t.mock.method(REST.prototype, "put", async () => []);
@@ -196,8 +189,7 @@ test("supports global registration and rejects unsafe empty configuration", asyn
 });
 
 test("initialization rejects when deployment fails", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-failure-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-failure-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     await writeFile(path.join(directory, "ping.mjs"), commandSource("ping"));
@@ -217,8 +209,7 @@ test("initialization rejects when deployment fails", async t => {
 });
 
 test("maps indexed Discord errors to builder command source files", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-api-error-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-api-error-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     await writeFile(path.join(directory, "a.mjs"), commandSource("ping"));
@@ -283,8 +274,7 @@ test("maps indexed Discord errors to builder command source files", async t => {
 });
 
 test("still rejects commands without an executable run method", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-no-handler-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-no-handler-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     await writeFile(
@@ -295,8 +285,7 @@ test("still rejects commands without an executable run method", async t => {
 });
 
 test("initialization skips absent or empty conventional folders and ignores other locations", async t => {
-    const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-conventions-"));
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-conventions-");
     const put = t.mock.method(REST.prototype, "put", async () => []);
     await mkdir(path.join(root, "commands"));
     await writeFile(
@@ -336,20 +325,14 @@ test("initialization skips absent or empty conventional folders and ignores othe
 });
 
 test("does not suppress filesystem errors other than a missing folder", async t => {
-    const root = await mkdtemp(
-        path.join(os.tmpdir(), "hyperion-not-directory-"),
-    );
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-not-directory-");
     await mkdir(path.join(root, "src"));
     await writeFile(path.join(root, "src", "commands"), "not a directory");
     await assert.rejects(new CommandRegistry().load(root), /ENOTDIR/);
 });
 
 test("builder validation errors identify the source and prevent deployment", async t => {
-    const root = await mkdtemp(
-        path.join(os.tmpdir(), "hyperion-builder-error-"),
-    );
-    t.after(() => rm(root, { recursive: true, force: true }));
+    const root = await createTempRoot(t, "hyperion-builder-error-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     const file = path.join(directory, "invalid.mjs");
