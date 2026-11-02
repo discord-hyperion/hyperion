@@ -61,7 +61,8 @@ export const loadHandler = async <Instance>(
 type ComponentData = { custom_id?: string; type?: number };
 type ComponentHandler = {
     readonly customId: string;
-    readonly builder: { toJSON: () => ComponentData };
+    readonly builder?: { toJSON: () => ComponentData } | undefined;
+    readonly params?: { readonly id: string } | undefined;
     run: unknown;
 };
 
@@ -72,6 +73,7 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
     baseClass: RegistryBaseClass<Instance>,
     validate: (handler: Instance, data: ComponentData) => void,
     logger?: Logger,
+    routes?: Collection<string, Instance>,
 ) => {
     const { files } = await discoverHandlerFiles(root, folder, logger);
     const name = folder.slice(0, -1).replaceAll("-", " ");
@@ -79,6 +81,7 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
     const event = folder.slice(0, -1);
     const key = folder === "select-menus" ? "selectMenu" : event;
     const handlers = new Collection<string, Instance>();
+    const routed = new Collection<string, Instance>();
 
     for (const file of files) {
         let handler: Instance;
@@ -92,12 +95,24 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
                 );
             }
 
-            const data = handler.builder.toJSON();
-            validate(handler, data);
+            if (handler.params === undefined) {
+                const data = handler.builder?.toJSON();
+                if (!data) {
+                    throw new TypeError(
+                        `${baseClass.name} handlers require a builder.`,
+                    );
+                }
 
-            if (data.custom_id !== handler.customId) {
-                throw new Error(
-                    `${baseClass.name} builder custom ID must match its handler's custom ID.`,
+                validate(handler, data);
+
+                if (data.custom_id !== handler.customId) {
+                    throw new Error(
+                        `${baseClass.name} builder custom ID must match its handler's custom ID.`,
+                    );
+                }
+            } else if (!routes) {
+                throw new TypeError(
+                    `${baseClass.name} handlers do not support params.`,
                 );
             }
         } catch (cause) {
@@ -106,13 +121,23 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
             });
         }
 
-        if (handlers.has(handler.customId)) {
-            throw new Error(
-                `Duplicate ${name} custom ID "${handler.customId}" in "${file}".`,
-            );
-        }
+        if (handler.params !== undefined) {
+            if (routed.has(handler.customId)) {
+                throw new Error(
+                    `Duplicate ${name} route "${handler.customId}" in "${file}".`,
+                );
+            }
 
-        handlers.set(handler.customId, handler);
+            routed.set(handler.customId, handler);
+        } else {
+            if (handlers.has(handler.customId)) {
+                throw new Error(
+                    `Duplicate ${name} custom ID "${handler.customId}" in "${file}".`,
+                );
+            }
+
+            handlers.set(handler.customId, handler);
+        }
 
         logger?.debug(
             { event: `${event}.loaded`, [key]: handler.customId, source: file },
@@ -120,10 +145,23 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
         );
     }
 
+    for (const route of routed.keys()) {
+        if (handlers.has(route)) {
+            throw new Error(
+                `${title} route "${route}" collides with a literal custom ID.`,
+            );
+        }
+    }
+
     registry.clear();
+    routes?.clear();
 
     for (const [customId, handler] of handlers) {
         registry.set(customId, handler);
+    }
+
+    for (const [route, handler] of routed) {
+        routes?.set(route, handler);
     }
 
     logger?.info(
