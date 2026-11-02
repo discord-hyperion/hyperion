@@ -156,6 +156,16 @@ An application-defined identifier attached to an interactive control or form to
 identify its associated interaction.
 _Avoid_: Message ID, command name
 
+**Custom-ID params**:
+The validated values a component handler declares in its custom ID, available only
+to that invocation.
+_Avoid_: Payload, state
+
+**Route**:
+The first segment of a custom ID that carries params, identifying the component
+handler that processes it.
+_Avoid_: Handler ID, prefix
+
 ### JSX authoring
 
 **JSX view**:

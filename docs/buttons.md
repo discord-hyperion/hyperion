@@ -71,6 +71,48 @@ cloning builders. Unmatched buttons are ignored so application-owned collectors
 and listeners can handle them. Avoid having a collector and a Hyperion handler
 both acknowledge the same ID.
 
+## Carry data in the custom ID
+
+To give one handler many controls, each carrying its own values, declare typed
+params instead of a template builder. The command builds the visible button
+with the encoder; see [custom-ID params](custom-id-params.md) for the wire
+format, guard ordering, and stale-button rules.
+
+```ts
+export const todoDone = defineParams({
+    id: "todo.done",
+    keys: ["owner", "todoId"],
+    schema: v.object({ owner: v.string(), todoId: v.string() }),
+});
+
+export default class TodoDone extends Button<typeof todoDone> {
+    constructor() {
+        super({ params: todoDone });
+    }
+
+    async run(ctx: ButtonContext<typeof todoDone>) {
+        const [issues, params] = ctx.params;
+        if (issues) {
+            await ctx.interaction.reply({
+                content: "Out of date.",
+                flags: MessageFlags.Ephemeral,
+            });
+            return;
+        }
+
+        await markDone(params.todoId);
+    }
+}
+
+// In a command: new PrimaryButtonBuilder().setCustomId(todoDone({ owner, todoId }))
+```
+
+A params handler owns its whole `<id>:` namespace, is stored in
+`client.buttons.routes`, and never has a `builder`. Exact-match routing for
+literal handlers is unchanged. Params are decoded and schema-validated before
+guards, so guards can read `ctx.params`; a schema failure reaches the handler as
+`issues` rather than as an automatic reply.
+
 ## Send the button
 
 Inside a command's `run(ctx)`:
