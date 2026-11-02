@@ -6,7 +6,7 @@ import pino, {
 } from "pino";
 import pretty from "pino-pretty";
 
-export interface LoggingOptions {
+export type LoggingOptions = {
     level?: LevelWithSilent;
     /** Defaults to coloured output in interactive terminals, JSON elsewhere. */
     pretty?: boolean;
@@ -14,14 +14,14 @@ export interface LoggingOptions {
     progress?: boolean;
     /** Override the output stream, for example for tests or log collection. */
     destination?: DestinationStream;
-}
+};
 
 export class LogManager {
-    public readonly logger: Logger;
+    readonly logger: Logger;
     private readonly progressEnabled: boolean;
     private spinner: Ora | undefined;
 
-    public constructor(name: string, options: LoggingOptions | false = {}) {
+    constructor(name: string, options: LoggingOptions | false = {}) {
         const config = options === false ? {} : options;
         const interactive = process.stderr.isTTY && !process.env.CI;
 
@@ -71,7 +71,7 @@ export class LogManager {
         );
     }
 
-    public async step<T>(label: string, event: string, task: () => Promise<T>) {
+    async step<T>(label: string, event: string, task: () => Promise<T>) {
         const started = performance.now();
         this.logger.info({ event: `${event}.started` }, label);
 

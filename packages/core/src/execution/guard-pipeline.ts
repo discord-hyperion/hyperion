@@ -8,7 +8,7 @@ export type GuardResult<Context = CommandContext> =
     | { passed: false; guard: Guard<Context> };
 
 export class GuardPipeline {
-    public async run<Context extends { readonly logger: Logger }>(
+    async run<Context extends { readonly logger: Logger }>(
         providers: readonly GuardProvider<Context>[],
         ctx: Context,
     ) {

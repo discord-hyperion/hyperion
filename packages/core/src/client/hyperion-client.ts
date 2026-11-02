@@ -13,14 +13,14 @@ import {
 import type { HyperionClientOptions } from "./options.ts";
 
 export class HyperionClient extends Client {
-    public readonly name: string;
-    public readonly description: string;
-    public readonly commands: CommandRegistry;
-    public readonly buttons: ButtonRegistry;
-    public readonly selectMenus: SelectMenuRegistry;
+    readonly name: string;
+    readonly description: string;
+    readonly commands: CommandRegistry;
+    readonly buttons: ButtonRegistry;
+    readonly selectMenus: SelectMenuRegistry;
     readonly modals: ModalRegistry;
     readonly events: EventRegistry;
-    public readonly logger: Logger;
+    readonly logger: Logger;
     private readonly logging: LogManager;
     private readonly dispatcher: InteractionDispatcher;
     private destruction: Promise<void> | undefined;
@@ -62,7 +62,7 @@ export class HyperionClient extends Client {
         });
     }
 
-    public static async create(options: HyperionClientOptions) {
+    static async create(options: HyperionClientOptions) {
         validateEventOptions(options.events);
         const client = new HyperionClient(options);
 
@@ -141,7 +141,7 @@ export class HyperionClient extends Client {
         );
     }
 
-    public override async login(token?: string) {
+    override async login(token?: string) {
         this.ownerLookup = undefined;
 
         return this.logging.step("Connecting to Discord", "client.login", () =>
@@ -185,7 +185,7 @@ export class HyperionClient extends Client {
         return this.ownerLookup;
     }
 
-    public override async destroy() {
+    override async destroy() {
         this.destruction ??= this.cleanup();
         await this.destruction;
     }

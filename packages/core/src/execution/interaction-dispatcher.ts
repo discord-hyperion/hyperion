@@ -28,15 +28,15 @@ export type { AnyInteraction } from "../contexts/index.ts";
 export class InteractionDispatcher {
     private readonly guards = new GuardPipeline();
 
-    public constructor(private readonly client: HyperionClient) {}
+    constructor(private readonly client: HyperionClient) {}
 
-    public attach() {
+    attach() {
         this.client.on(Events.InteractionCreate, interaction =>
             this.dispatch(interaction),
         );
     }
 
-    public async dispatch(interaction: Interaction) {
+    async dispatch(interaction: Interaction) {
         if (interaction.isChatInputCommand()) {
             await this.dispatchCommand(interaction);
         } else if (interaction.isButton()) {

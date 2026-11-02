@@ -9,12 +9,12 @@ import { InteractionDispatcher } from "../src/execution/index.ts";
 import { LogManager } from "../src/logging/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
 
-interface LogRecord {
+type LogRecord = {
     event?: string;
     level: number;
     msg: string;
     [key: string]: unknown;
-}
+};
 
 const captureLogs = () => {
     const lines: string[] = [];

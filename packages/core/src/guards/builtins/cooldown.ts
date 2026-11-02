@@ -1,12 +1,12 @@
 import type { InteractionContext } from "../../contexts/index.ts";
 import { Guard } from "../guard.ts";
 
-export interface CooldownOptions {
+export type CooldownOptions = {
     key: string;
     durationMs: number;
     /** Share this collection across invocations; values are expiry timestamps in milliseconds. */
     entries: Collection<string, number>;
-}
+};
 
 export class Cooldown extends Guard<InteractionContext> {
     private readonly key: string;
