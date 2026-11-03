@@ -55,33 +55,12 @@ never contradict the reference docs.
 - Use pnpm, preserve `pnpm-lock.yaml`, and keep the package-manager version pinned
   in `package.json`. Development runs TypeScript through `tsx`; type checking is
   separate. Do not add a required development compilation step.
-- Use the installed v15 types and APIs. Keep the separately pinned
-  `@discordjs/builders` prerelease compatible with discord.js.
-- Use ESM and NodeNext resolution.
-- Use Biome for formatting, linting, and import organization; follow `biome.json`.
-  It enforces `.ts` relative imports, `import type`, `type` over `interface`,
-  arrow function expressions, and omitted `public`. Suppress a rule with a stated
-  reason only where semantics require it, such as declaration merging. Do not add
-  ESLint or Prettier or manually format generated lockfiles.
-- Use kebab-case files/directories, PascalCase classes/types, and camelCase
-  functions/variables. Command folder delimiters follow the command-path guide. Event folders use
-  Discord event-name casing as described in the event-handler guide.
-- Prefer arrow functions for standalone functions, callbacks, and type signatures
-  such as `run: (ctx: Context) => Promise<void>`. Keep normal class methods.
-  Use function declarations only when their semantics are required.
-- Omit redundant `override` on implemented methods. Retain modifiers expressing
-  required semantics; keep `noImplicitOverride` off.
-- Infer implemented method return types. Keep explicit return types on abstract
-  methods and other declarations defining contracts without implementations.
-- Avoid one-off aliases for clear expressions such as `options.commands`; keep
-  locals when they improve clarity, avoid repeated work, or provide type safety.
-- Group related statements, separating validation, mutations, logging, and later
-  operations with blank lines. Follow the registry loaders' spacing.
-- Keep the class-based structure for handlers; prefer shared implementations or generic
-  types over empty `Base<X>` subclasses. Guards are execution checks, not handlers:
-  define them with `defineGuard()` and closures, not classes (see
-  [ADR 0003](docs/adr/0003-guards-are-definitions-not-classes.md)). Use Discord's `Collection` for keyed stores, including
-  tests and examples; arrays, sets, and weak maps suit their respective purposes.
+- Use the installed discord.js v15 types and APIs, not v14 habits. Keep the
+  separately pinned `@discordjs/builders` prerelease compatible with discord.js.
+- Biome formats and lints (`biome.json`); suppress a rule only with a stated
+  reason, such as declaration merging. Format your changes with `pnpm check:fix`,
+  which touches only files changed on the branch.
+- Code style and structure rules live in [coding standards](CODING_STANDARDS.md).
 
 ## Verification
 
@@ -99,12 +78,14 @@ If the package-manager wrapper is unavailable, use:
 ./node_modules/.bin/tsc --noEmit
 node --import tsx --test packages/core/tests/*.test.ts packages/jsx/tests/*.test.tsx apps/dev-bot/tests/*.test.ts
 ./node_modules/.bin/biome check .
+node scripts/check-docs.mjs
 ```
 
 Tests use Node's test runner, temporary handler modules, and mocked REST methods.
 Cover discovery, failures, and deployment behavior without Discord login, real
 tokens, external requests, or command deployment. For documentation-only changes,
-check formatting, links, and consistency with the implementation.
+run `pnpm check` (formatting, links, and example imports) and confirm the text
+matches the implementation.
 
 ## Git
 
@@ -115,6 +96,4 @@ check formatting, links, and consistency with the implementation.
   `refactor`, `chore`, `docs`, or `test` as appropriate. Add a body when useful.
 - Before committing, inspect staged filenames and run relevant checks. Exclude
   private environment files and generated dependencies.
-- Use GitHub CLI (`gh`) for GitHub operations. PR descriptions use these headings
-  in order: `## Title` (repeat the title exactly), `## Changes` (concrete bullets),
-  `## Description` (overview, choices, validation, and limitations).
+- Use GitHub CLI (`gh`) for GitHub operations. Write PR bodies with the `pr` skill.

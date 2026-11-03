@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { TestContext } from "node:test";
@@ -25,4 +25,23 @@ export const createHandlerRoot = async (
     await mkdir(directory, { recursive: true });
 
     return { root, directory };
+};
+
+let written = 0;
+
+/**
+ * Write a handler module under a fresh filename and return its path. Node caches
+ * ES modules by URL, so rewriting an existing path would reload the old module.
+ */
+export const writeHandler = async (
+    directory: string,
+    source: string,
+    name = "handler",
+) => {
+    written++;
+
+    const file = path.join(directory, `${name}-${written}.mjs`);
+    await writeFile(file, source);
+
+    return file;
 };

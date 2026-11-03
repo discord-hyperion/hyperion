@@ -1,0 +1,7 @@
+#!/bin/sh
+# Fast checks on what is being committed. Tests and package verification run in CI.
+set -e
+
+./node_modules/.bin/biome check --staged --no-errors-on-unmatched --files-ignore-unknown=true
+node scripts/check-docs.mjs
+./node_modules/.bin/tsc --noEmit

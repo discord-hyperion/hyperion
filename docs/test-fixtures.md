@@ -62,7 +62,9 @@ Reuse them before writing a local setup:
   destroys the client when the test ends.
 - `temp-root.ts`: `createTempRoot(t, prefix)` and
   `createHandlerRoot(t, prefix, folder)` create temporary bot roots that are
-  removed when the test ends.
+  removed when the test ends. `writeHandler(directory, source, name?)` writes a
+  handler module under a fresh filename; use it whenever a test changes a module
+  between loads, because Node caches ES modules by path.
 - `acknowledgment.ts`: `phases` and `assertPrivateFailure` check the private
   failure reply for each acknowledgment state.
 - `select-kinds.ts` and `component-kinds.ts`: tables describing the five select
