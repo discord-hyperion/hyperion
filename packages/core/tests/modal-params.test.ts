@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
-import { rm, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { rm } from "node:fs/promises";
 import { describe, mock, test } from "node:test";
 import {
     LabelBuilder,
@@ -35,7 +34,7 @@ import {
     SelectMenuRegistry,
 } from "../src/registries/index.ts";
 import { modalKind } from "./support/component-kinds.ts";
-import { createHandlerRoot } from "./support/temp-root.ts";
+import { createHandlerRoot, writeHandler } from "./support/temp-root.ts";
 import { createTestClient } from "./support/test-client.ts";
 
 const rename = defineParams({
@@ -303,10 +302,7 @@ describe("modal params loading", () => {
             "modals",
         );
         const registry = new ModalRegistry();
-        await writeFile(
-            path.join(directory, "params.mjs"),
-            source("{ params }"),
-        );
+        const params = await writeHandler(directory, source("{ params }"));
         await registry.load(root);
         const original = registry.routes.get("a.route");
 
@@ -327,8 +323,7 @@ describe("modal params loading", () => {
         ];
 
         for (const [name, contents, error] of cases) {
-            const file = path.join(directory, `${name}.mjs`);
-            await writeFile(file, contents);
+            const file = await writeHandler(directory, contents, name);
 
             await assert.rejects(registry.load(root), error);
             assert.equal(registry.routes.get("a.route"), original);
@@ -336,10 +331,9 @@ describe("modal params loading", () => {
             await rm(file);
         }
 
-        // A new file: re-importing a rewritten path would hit the ESM cache.
-        await rm(path.join(directory, "params.mjs"));
-        await writeFile(
-            path.join(directory, "templated.mjs"),
+        await rm(params);
+        await writeHandler(
+            directory,
             source(
                 '{ params, builder: new ModalBuilder().setCustomId("other").setTitle("T").addLabelComponents(new LabelBuilder().setLabel("L").setTextInputComponent(new TextInputBuilder().setCustomId("x").setStyle(1))) }',
             ),
