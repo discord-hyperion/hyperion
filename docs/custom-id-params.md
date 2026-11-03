@@ -189,7 +189,9 @@ Never log params, decoded values, issues, or the full custom ID. Log the route
 1. Shared codec (`defineParams`, encode, decode) and the route index.
 2. Buttons.
 3. Select menus, all five types, and the `ParamOwner` guard.
-4. Follow-ups: modals, then a JSX helper for the encoder.
+4. Follow-ups: modals, then a JSX helper for the encoder. Modal params also add
+   a compile-time check that `keys` names exactly the schema's input keys, in any
+   order, skipped when the schema's keys cannot be known.
 
 The codec, route lookup, and context typing are kind-agnostic, so each kind
 reuses them without redesign.
