@@ -20,8 +20,8 @@ import {
     defineInput,
     Guard,
     type GuardProvider,
-    Modal,
     type ModalContext,
+    ModalHandler,
     type ModalInputOptions,
 } from "../src/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
@@ -49,7 +49,7 @@ const schema = (
 ): StandardSchemaV1 => ({
     "~standard": { version: 1, vendor: "test", validate },
 });
-class InputModal extends Modal<ModalInputOptions> {
+class InputModal extends ModalHandler<ModalInputOptions> {
     constructor(
         input: ModalInputOptions,
         private readonly execute: (
@@ -57,7 +57,12 @@ class InputModal extends Modal<ModalInputOptions> {
         ) => Promise<void>,
         guards: readonly GuardProvider<ModalContext>[] = [],
     ) {
-        super({ builder: builder(), input, guards });
+        super({
+            customId: "todo.create",
+            builder: builder(),
+            input,
+            guards,
+        });
     }
 
     run(ctx: ModalContext<ModalInputOptions>) {
@@ -222,9 +227,9 @@ test("schemas own missing-field defaults, trimming, and successful output withou
             description: v.optional(v.string(), "Default"),
         }),
     });
-    class Typed extends Modal<typeof input> {
+    class Typed extends ModalHandler<typeof input> {
         constructor() {
-            super({ builder: builder(), input });
+            super({ customId: "todo.create", builder: builder(), input });
         }
         async run(ctx: ModalContext<typeof input>) {
             assert.deepEqual(ctx.input, [
@@ -450,10 +455,10 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
     await writeFile(
         path.join(directory, "valid.mjs"),
         `
-        import { Modal } from ${JSON.stringify(core)};
+        import { ModalHandler } from ${JSON.stringify(core)};
         import { ModalBuilder, TextDisplayBuilder } from ${JSON.stringify(builders)};
-        export default class extends Modal {
-            constructor() { super({ builder: new ModalBuilder().setCustomId('registered').setTitle('Form').addTextDisplayComponents(new TextDisplayBuilder().setContent('Info')),
+        export default class extends ModalHandler {
+            constructor() { super({ customId: 'registered', builder: new ModalBuilder().setCustomId('registered').setTitle('Form').addTextDisplayComponents(new TextDisplayBuilder().setContent('Info')),
                 input: { schema: { '~standard': { version: 1, validate() { throw new Error('Must not execute'); } } }, resolve() { throw new Error('Must not execute'); } }
             }); }
             async run() {}
@@ -466,10 +471,10 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
     await writeFile(
         path.join(directory, "invalid.mjs"),
         `
-        import { Modal } from ${JSON.stringify(core)};
+        import { ModalHandler } from ${JSON.stringify(core)};
         import { ModalBuilder } from ${JSON.stringify(builders)};
-        export default class extends Modal {
-            constructor() { super({ builder: new ModalBuilder(), input: { schema: {} } }); }
+        export default class extends ModalHandler {
+            constructor() { super({ customId: 'invalid', builder: new ModalBuilder(), input: { schema: {} } }); }
             async run() {}
         }
     `,

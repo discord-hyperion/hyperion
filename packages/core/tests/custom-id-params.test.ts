@@ -7,8 +7,8 @@ import { MessageFlags } from "discord.js";
 import * as v from "valibot";
 import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
-    Button,
     type ButtonContext,
+    ButtonHandler,
     defineParams,
 } from "../src/components/index.ts";
 import { Guard } from "../src/guards/index.ts";
@@ -29,10 +29,10 @@ const todoDone = defineParams({
 
 type TodoContext = ButtonContext<typeof todoDone>;
 
-class TodoButton extends Button<typeof todoDone> {
+class TodoButton extends ButtonHandler<typeof todoDone> {
     constructor(
         private readonly execute: (ctx: TodoContext) => Promise<void>,
-        guards: Button<typeof todoDone>["guards"] = [],
+        guards: ButtonHandler<typeof todoDone>["guards"] = [],
     ) {
         super({ params: todoDone, guards });
     }
@@ -130,9 +130,10 @@ describe("button params routing", () => {
 
     test("exact literal IDs win and keep their own routing", () => {
         const registry = new ButtonRegistry();
-        const literal = new (class extends Button {
+        const literal = new (class extends ButtonHandler {
             constructor() {
                 super({
+                    customId: "todo.done:1:2:3",
                     builder: new PrimaryButtonBuilder()
                         .setCustomId("todo.done:1:2:3")
                         .setLabel("Literal"),
@@ -153,9 +154,9 @@ describe("button params routing", () => {
 
 describe("button params loading", () => {
     const paramsSource = (route: string) => `
-        import { Button, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
+        import { ButtonHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
         const params = defineParams({ id: ${JSON.stringify(route)}, keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: v => ({ value: v }) } } });
-        export default class extends Button {
+        export default class extends ButtonHandler {
             constructor() { super({ params }); }
             async run() {}
         }
@@ -218,21 +219,16 @@ describe("button params loading", () => {
         }
     });
 
-    test("a handler cannot supply both a builder and params", () => {
+    test("a handler cannot declare both a customId and params", () => {
         assert.throws(
             () =>
-                new (class extends Button<typeof todoDone> {
+                new (class extends ButtonHandler<typeof todoDone> {
                     constructor() {
-                        super({
-                            params: todoDone,
-                            builder: new PrimaryButtonBuilder()
-                                .setCustomId("x")
-                                .setLabel("x"),
-                        } as never);
+                        super({ params: todoDone, customId: "x" } as never);
                     }
                     async run() {}
                 })(),
-            /either a builder or params/,
+            /either a customId or params/,
         );
     });
 });
@@ -363,7 +359,7 @@ describe("button params dispatch", () => {
         const execute = mock.fn(async () => {});
         client.buttons.routes.set(
             "boom",
-            new (class extends Button<typeof boom> {
+            new (class extends ButtonHandler<typeof boom> {
                 constructor() {
                     super({ params: boom });
                 }

@@ -13,14 +13,14 @@ export default class MentionableCommand extends Command {
     }
 
     async run(ctx: CommandContext) {
-        const menu = ctx.client.selectMenus.get("mentionable.choose");
-
-        if (!menu) throw new Error("The mentionable menu was not loaded.");
-
         await ctx.interaction.reply({
             content: "Choose up to five users or roles.",
             flags: MessageFlags.Ephemeral,
-            components: [new ActionRowBuilder().addComponents(menu.builder)],
+            components: [
+                new ActionRowBuilder().addComponents(
+                    ctx.client.selectMenus.build("mentionable.choose"),
+                ),
+            ],
         });
     }
 }

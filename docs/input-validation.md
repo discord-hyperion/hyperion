@@ -144,7 +144,7 @@ the base class. No class factory or `CommandContextFor` helper is introduced.
 
 ## Modal reuse
 
-Modal handlers also accept `input` and use `Modal<typeof input>` with
+Modal handlers also accept `input` and use `ModalHandler<typeof input>` with
 `ModalContext<typeof input>`. Use the same `defineInput` helper. When a modal
 resolver uses context, annotate its second parameter as `ctx: ModalContext`;
 schema values and resolver results remain inferred. Unannotated resolver context

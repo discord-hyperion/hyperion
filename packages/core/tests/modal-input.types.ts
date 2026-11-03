@@ -4,10 +4,10 @@ import type { ModalSubmitInteraction } from "discord.js";
 import {
     Command,
     defineInput,
-    Modal,
     type ModalContext,
+    ModalHandler,
+    type ModalHandlerOptions,
     type ModalInputOptions,
-    type ModalOptions,
     type ModalRegistry,
 } from "../src/index.ts";
 
@@ -38,9 +38,10 @@ export const modalInputContracts = (
     });
     input satisfies ModalInputOptions<typeof schema>;
 
-    class CreateTodo extends Modal<typeof input> {
+    class CreateTodo extends ModalHandler<typeof input> {
         constructor() {
             super({
+                customId: "todo.create",
                 builder: new ModalBuilder(),
                 input,
                 guards: [
@@ -83,14 +84,14 @@ export const modalInputContracts = (
     };
     const missingInput = { builder: new ModalBuilder() };
     // @ts-expect-error Typed modals require input configuration.
-    missingInput satisfies ModalOptions<typeof input>;
+    missingInput satisfies ModalHandlerOptions<typeof input>;
     const configured = { builder: new ModalBuilder(), input };
     // @ts-expect-error Schema-free modal definitions cannot configure input.
-    configured satisfies ModalOptions;
+    configured satisfies ModalHandlerOptions;
     // @ts-expect-error Schema-free contexts have no input.
     plain.input;
     // @ts-expect-error Command resolvers cannot serve modal submissions.
-    type _WrongContext = Modal<ReturnType<typeof commandInput>>;
+    type _WrongContext = ModalHandler<ReturnType<typeof commandInput>>;
     const wrongCommand = { builder: new ChatInputCommandBuilder(), input };
     // @ts-expect-error Modal resolvers cannot serve chat-input commands.
     wrongCommand satisfies ConstructorParameters<typeof InputCommand>[0];
@@ -126,9 +127,13 @@ export const contextFreeModalResolver = (
         schema,
         resolve: async ({ name }) => ({ todo: { name } }),
     });
-    class ContextFree extends Modal<typeof input> {
+    class ContextFree extends ModalHandler<typeof input> {
         constructor() {
-            super({ builder: new ModalBuilder(), input });
+            super({
+                customId: "todo.create",
+                builder: new ModalBuilder(),
+                input,
+            });
         }
         async run(ctx: ModalContext<typeof input>) {
             const [issues, value] = ctx.input;

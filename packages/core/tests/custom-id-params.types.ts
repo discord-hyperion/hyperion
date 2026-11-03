@@ -1,8 +1,8 @@
 import { PrimaryButtonBuilder } from "@discordjs/builders";
 import * as v from "valibot";
 import {
-    Button,
     type ButtonContext,
+    ButtonHandler,
     defineParams,
     type ParamsDefinition,
 } from "../src/index.ts";
@@ -28,7 +28,7 @@ export const encoderContracts = () => {
     params satisfies ParamsDefinition;
 };
 
-class WithParams extends Button<typeof params> {
+class WithParams extends ButtonHandler<typeof params> {
     constructor() {
         super({ params });
     }
@@ -48,17 +48,18 @@ class WithParams extends Button<typeof params> {
 }
 
 export const handlerContracts = (plain: ButtonContext) => {
-    new WithParams() satisfies Button<typeof params>;
+    new WithParams() satisfies ButtonHandler<typeof params>;
     // @ts-expect-error Literal handler contexts carry no params.
     plain.params;
-    // @ts-expect-error A params handler has no template builder.
+    // @ts-expect-error A template is optional, so it may be undefined.
     new WithParams().builder.toJSON();
 };
 
-export class Literal extends Button {
+export class Literal extends ButtonHandler {
     constructor() {
         super({
-            builder: new PrimaryButtonBuilder().setCustomId("x").setLabel("x"),
+            customId: "x",
+            builder: new PrimaryButtonBuilder().setLabel("x"),
         });
     }
 
@@ -66,12 +67,12 @@ export class Literal extends Button {
 }
 
 export const exclusiveOptions = () => {
-    class Both extends Button<typeof params> {
+    class Both extends ButtonHandler<typeof params> {
         constructor() {
             super({
                 params,
-                // @ts-expect-error Params handlers cannot supply a builder.
-                builder: new PrimaryButtonBuilder().setCustomId("x"),
+                // @ts-expect-error Params handlers cannot also declare a literal custom ID.
+                customId: "x",
             });
         }
 

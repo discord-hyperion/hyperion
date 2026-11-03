@@ -8,9 +8,9 @@ import {
 import { ChannelType, Collection, ComponentType } from "discord.js";
 import { createSelectInteraction } from "../../../../tests/fixtures/interactions.ts";
 import {
-    type AnySelectMenu,
-    SelectMenu,
+    type AnySelectMenuHandler,
     type SelectMenuContext,
+    SelectMenuHandler,
     type SelectMenuType,
 } from "../../src/components/index.ts";
 import type { GuardProvider } from "../../src/guards/index.ts";
@@ -33,7 +33,7 @@ export type SelectKind = {
     customId: string;
     /** Display name the fixtures give a resolved (or, for strings, selected) entry. */
     label: (id: string) => string;
-    builder: () => AnySelectMenu["builder"];
+    builder: () => AnySelectMenuHandler["builder"];
     interaction: (options?: FixtureOptions) => SelectFixture;
 };
 
@@ -189,7 +189,7 @@ export const resolvedEntries = (
                   : []),
           ];
 
-type Run = (this: AnySelectMenu, ctx: AnySelectContext) => Promise<void>;
+type Run = (this: AnySelectMenuHandler, ctx: AnySelectContext) => Promise<void>;
 
 /**
  * Builds a menu for a kind whose `run` calls `execute` with the menu as the
@@ -199,14 +199,16 @@ export const createMenu = (
     kind: SelectKind,
     execute: Run,
     guards: readonly GuardProvider<AnySelectContext>[] = [],
-): AnySelectMenu => {
+): AnySelectMenuHandler => {
     const builder = kind.builder();
 
     // The kind table pairs each builder with its matching select type, which a
     // union-typed table entry cannot express to the compiler.
-    return new (class extends SelectMenu<ComponentType.StringSelect> {
+    return new (class extends SelectMenuHandler<ComponentType.StringSelect> {
         constructor() {
             super({
+                customId: kind.customId,
+                componentType: kind.type as ComponentType.StringSelect,
                 builder: builder as StringSelectMenuBuilder,
                 guards: guards as readonly GuardProvider<
                     SelectMenuContext<ComponentType.StringSelect>

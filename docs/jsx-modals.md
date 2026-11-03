@@ -64,8 +64,9 @@ modal is distinct from adding a public standalone text-render API.
   Builder acceptance is not a claim of verified Discord server acceptance.
 
 - Support personalized initial values by rendering a fresh form when opening it,
-  using the registered handler's exact custom ID. Keep the registered builder as
-  a shared default definition. Do not mutate it or add a builder-factory API.
+  using the registered handler's exact custom ID. Keep the registered template as
+  a shared default definition; `client.modals.build()` returns copies of it. Do
+  not mutate it or add a per-user builder-factory API.
   Application state and authorization remain application-owned.
 
 ## Retained runtime and validation policies
@@ -113,9 +114,9 @@ const TodoForm = ({ initialName = "" }: { initialName?: string }) => (
 const builder = renderModal(<TodoForm />);
 ```
 
-Use this builder in the existing core `Modal` handler's `super({ builder })`.
-Alias that handler class when needed to distinguish it from the JSX component:
-`import { Modal as ModalHandler } from "@hyperion/core"`.
+Use this builder as the template in a core `ModalHandler`'s
+`super({ customId: "todo.create", builder })`. Core's `ModalHandler` and JSX's
+`Modal` can be imported together.
 
 A command/button can open a personalized instance without changing the shared
 registered builder:

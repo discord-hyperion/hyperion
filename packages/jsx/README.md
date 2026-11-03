@@ -56,7 +56,7 @@ const form = renderModal(
 Supply `form` to `interaction.showModal()`. The caller owns acknowledgment and
 submission handling. Use a fresh render for per-user initial values and preserve
 the registered handler's custom ID when using core. Never mutate a shared
-registered builder with user-specific values.
+registered template with user-specific values.
 
 No standalone text rendering, additional modal controls, React lifecycle,
 automatic updates, or insertion of existing builders is provided.
@@ -77,7 +77,7 @@ import {
     renderComponents,
 } from "@hyperion/jsx";
 
-// A native custom-ID builder, suitable for a core Button handler.
+// A native custom-ID builder, suitable as a core ButtonHandler template.
 const handlerBuilder = renderButton(
     <Button customId="profile.refresh" style="primary">
         Refresh

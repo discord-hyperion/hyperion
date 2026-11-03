@@ -1,12 +1,13 @@
 import { UserSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
-import type { ComponentType } from "discord.js";
+import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 
-export default class ChooseUser extends SelectMenu<ComponentType.UserSelect> {
+export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSelect> {
     constructor() {
         super({
+            customId: "user.choose",
+            componentType: ComponentType.UserSelect,
             builder: new UserSelectMenuBuilder()
-                .setCustomId("user.choose")
                 .setPlaceholder("Choose a user")
                 .setMinValues(1)
                 .setMaxValues(1),

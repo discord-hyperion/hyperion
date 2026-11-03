@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
+import type { ModalBuilder } from "@discordjs/builders";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
@@ -54,8 +55,11 @@ test("development feedback command opens the modal and its filesystem handler pr
     assert.equal(reply.mock.callCount(), 0);
     const modal = client.modals.get("feedback.submit");
     assert.ok(modal);
-    assert.equal(showModal.mock.calls[0]?.arguments[0], modal.builder);
-    const template = modal.builder.toJSON();
+    const shown = showModal.mock.calls[0]?.arguments[0] as ModalBuilder;
+    // The command shows a fresh copy of the form, never the shared template.
+    assert.notEqual(shown, modal.builder);
+    assert.equal(shown.toJSON().custom_id, "feedback.submit");
+    const template = modal.builder?.toJSON(false);
     assert.match(JSON.stringify(template), /feedback.message/);
     const fixture = interaction("new", "Hello");
     await dispatcher.dispatch(fixture.interaction);
@@ -69,5 +73,5 @@ test("development feedback command opens the modal and its filesystem handler pr
         flags: MessageFlags.Ephemeral,
         allowedMentions: { parse: [] },
     });
-    assert.deepEqual(modal.builder.toJSON(), template);
+    assert.deepEqual(modal.builder?.toJSON(false), template);
 });

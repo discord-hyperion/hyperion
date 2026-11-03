@@ -1,8 +1,8 @@
 import {
     defineParams,
     ParamOwner,
-    SelectMenu,
     type SelectMenuContext,
+    SelectMenuHandler,
 } from "@hyperion/core";
 import { ComponentType, MessageFlags } from "discord.js";
 import { ticketSchema } from "../buttons/close-ticket.ts";
@@ -19,7 +19,7 @@ export type AssignTicketContext = SelectMenuContext<
     typeof assignTicket
 >;
 
-export default class AssignTicketMenu extends SelectMenu<
+export default class AssignTicketMenu extends SelectMenuHandler<
     ComponentType.UserSelect,
     typeof assignTicket
 > {

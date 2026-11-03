@@ -1,11 +1,13 @@
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
+import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 
-export default class ChooseColour extends SelectMenu {
+export default class ChooseColour extends SelectMenuHandler {
     constructor() {
         super({
+            customId: "colour.choose",
+            componentType: ComponentType.StringSelect,
             builder: new StringSelectMenuBuilder()
-                .setCustomId("colour.choose")
                 .setPlaceholder("Choose a colour")
                 .addOptions(
                     { label: "Blue", value: "blue" },

@@ -2,13 +2,17 @@
 
 For form, handler, and custom-ID terminology, see the [component glossary](GLOSSARY.md#components).
 
-Hyperion discovers default-exported `Modal` subclasses recursively under
+Hyperion discovers default-exported `ModalHandler` subclasses recursively under
 `<root>/src/modals` and stores them in `client.modals`, keyed by exact custom ID.
 The directory is optional. Each handler needs a public zero-argument constructor,
-a `ModalBuilder` from `@discordjs/builders`, and `run(ctx)`.
+a `customId`, and `run(ctx)`. It should also offer its form as a
+[template](GLOSSARY.md#components): a `ModalBuilder` from `@discordjs/builders`.
+The template is optional, but recommended, because `input` reads the form's
+text-input custom IDs and keeping both in one handler keeps them in agreement.
 
-Discovery validates builders locally through `toJSON()` before application-command
-deployment. Invalid exports, builders, guards, or duplicate IDs reject client
+Discovery validates templates locally through `toJSON()`, with the custom ID set,
+before application-command deployment. A template may omit its custom ID; if it
+sets one, it must equal `customId`. Invalid exports, templates, guards, or duplicate IDs reject client
 initialization with source-file context and the original cause. Reloads are
 atomic: a failure preserves the previously loaded registry. Modals have no REST
 registration and loading them does not log the bot in.
@@ -16,8 +20,8 @@ registration and loading them does not log the bot in.
 ## JSX authoring
 
 `@hyperion/jsx` can author the native builder with `Modal`, `Modal.Label`,
-`Modal.TextInput`, `Modal.TextDisplay`, and `renderModal()`. Alias core's handler
-class as `ModalHandler` when importing both APIs. See [JSX modals](jsx-modals.md)
+`Modal.TextInput`, `Modal.TextDisplay`, and `renderModal()`. Core's
+`ModalHandler` and JSX's `Modal` can be imported together. See [JSX modals](jsx-modals.md)
 for defaults, validation, and fresh per-user initial values. JSX does not change
 this guide's submission, guard, acknowledgment, or exact-ID routing contract.
 
@@ -29,14 +33,14 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { Modal, type ModalContext } from "@hyperion/core";
+import { ModalHandler, type ModalContext } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
-export default class SubmitFeedback extends Modal {
+export default class SubmitFeedback extends ModalHandler {
     constructor() {
         super({
+            customId: "feedback.submit",
             builder: new ModalBuilder()
-                .setCustomId("feedback.submit")
                 .setTitle("Feedback")
                 .addLabelComponents(
                     new LabelBuilder()
@@ -77,12 +81,13 @@ belong to the modal submission; they do not invoke `SelectMenu` handlers.
 Inside a command, button, or message select-menu handler:
 
 ```ts
-const modal = ctx.client.modals.get("feedback.submit");
-
-if (!modal) throw new Error("The feedback modal was not loaded.");
-
-await ctx.interaction.showModal(modal.builder);
+await ctx.interaction.showModal(ctx.client.modals.build("feedback.submit"));
 ```
+
+`build()` returns a fresh copy of the template with its custom ID set, so callers
+can adjust it (for example with initial values) without changing the shared
+template. It throws when no handler is loaded for the ID or the handler has no
+template.
 
 Opening a modal acknowledges the originating interaction. Do not reply or defer
 that interaction before calling `showModal()`. Submission is a separate

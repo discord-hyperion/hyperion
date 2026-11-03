@@ -1,12 +1,13 @@
 import { ChannelSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
-import { ChannelType, type ComponentType } from "discord.js";
+import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { ChannelType, ComponentType } from "discord.js";
 
-export default class ChooseChannel extends SelectMenu<ComponentType.ChannelSelect> {
+export default class ChooseChannel extends SelectMenuHandler<ComponentType.ChannelSelect> {
     constructor() {
         super({
+            customId: "channel.choose",
+            componentType: ComponentType.ChannelSelect,
             builder: new ChannelSelectMenuBuilder()
-                .setCustomId("channel.choose")
                 .setPlaceholder("Choose text or voice channels")
                 .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
                 .setMinValues(0)

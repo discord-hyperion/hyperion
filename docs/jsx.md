@@ -14,9 +14,9 @@ resolve JavaScript and declarations in `dist`.
   text inputs and informational text; see [JSX modals](jsx-modals.md). Other modal
   controls and standalone text rendering are outside the current API.
 - Message authoring uses `ActionRow`, `Button`, and `renderComponents()`.
-  `renderButton()` supplies interactive handler builders; see [JSX message components](jsx-message-components.md).
+  `renderButton()` supplies interactive handler templates; see [JSX message components](jsx-message-components.md).
 - Message string selects use `StringSelect.Option` children and `renderStringSelect()`
-  for handler builders; see [JSX select menus](jsx-select-menus.md).
+  for handler templates; see [JSX select menus](jsx-select-menus.md).
 
 - Export `renderEmbed()` from `@hyperion/jsx`; each call returns a fresh native
   `EmbedBuilder`, validated with `toJSON()` and available for customization.

@@ -47,7 +47,9 @@ test("development colour command and filesystem menu complete the selection flow
 
     const fixture = interaction();
     const { update } = fixture;
-    const template = client.selectMenus.get("colour.choose")?.builder.toJSON();
+    const template = client.selectMenus
+        .get("colour.choose")
+        ?.builder?.toJSON(false);
     await dispatcher.dispatch(fixture.interaction);
 
     assert.deepEqual(update.mock.calls[0]?.arguments[0], {
@@ -55,7 +57,7 @@ test("development colour command and filesystem menu complete the selection flow
         allowedMentions: { parse: [] },
     });
     assert.deepEqual(
-        client.selectMenus.get("colour.choose")?.builder.toJSON(),
+        client.selectMenus.get("colour.choose")?.builder?.toJSON(false),
         template,
     );
     assert.equal(fixture.reply.mock.callCount(), 0);

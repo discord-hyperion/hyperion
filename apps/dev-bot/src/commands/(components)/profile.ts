@@ -18,17 +18,12 @@ export default class ProfileCommand extends Command {
     }
 
     async run(ctx: CommandContext) {
-        const button = ctx.client.buttons.get("profile.refresh");
-
-        if (!button)
-            throw new Error("The refresh-profile button was not loaded.");
-
         await ctx.interaction.reply({
             content: "Press refresh to load your profile.",
             flags: MessageFlags.Ephemeral,
             components: [
                 new ActionRowBuilder().addComponents(
-                    button.builder,
+                    ctx.client.buttons.build("profile.refresh"),
                     new SecondaryButtonBuilder()
                         .setCustomId("profile.last-fetched")
                         .setLabel("Not fetched yet")

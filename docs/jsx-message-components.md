@@ -24,7 +24,7 @@ does not revive either feature or the deferred custom-ID data feature.
 - Initially support action rows, interactive buttons, and link buttons.
 - String selects are supported separately; defer entity selects, premium purchase
   buttons, and Components V2 layouts.
-- Produce native builders without changing handler builders, routing, guards,
+- Produce native builders without changing handler templates, routing, guards,
   acknowledgment, or native collectors. Do not add click callbacks or automatic
   registration.
 - Per-user disabled state is presentation. Application handlers remain
@@ -94,15 +94,16 @@ native APIs after rendering; that subsequent composition is caller-owned.
 
 ## Handler authoring example
 
-The single-button renderer supplies the builder required by core:
+The single-button renderer supplies a template for a core handler:
 
 ```tsx
-import { Button as ButtonHandler, type ButtonContext } from "@hyperion/core";
+import { ButtonHandler, type ButtonContext } from "@hyperion/core";
 import { Button, renderButton } from "@hyperion/jsx";
 
 export default class extends ButtonHandler {
     constructor() {
         super({
+            customId: "profile.refresh",
             builder: renderButton(
                 <Button customId="profile.refresh" style="primary">
                     Refresh profile
@@ -117,10 +118,9 @@ export default class extends ButtonHandler {
 }
 ```
 
-The JSX `Button` describes a visible control; core's `Button` describes its click
-handler. Alias the handler import when both are used. Discovery and guards stay
-unchanged. Do not store per-user values on the shared handler or mutate its
-registered builder for individual messages.
+The JSX `Button` describes a visible control; core's `ButtonHandler` processes its
+clicks. Discovery and guards stay unchanged. Do not store per-user values on the
+shared handler; use `client.buttons.build()` for a fresh copy of its template.
 
 ## Message authoring example
 

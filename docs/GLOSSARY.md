@@ -103,8 +103,14 @@ _Avoid_: Client event, component handler
 
 **Component handler**:
 A reusable definition of how a button click, select-menu selection, or modal
-submission is processed. It is separate from the visible control or form.
+submission is processed. It declares where submissions route, not how the
+control or form looks; it may carry a template for that.
 _Avoid_: Button, select menu, modal
+
+**Template**:
+An optional default control or form a component handler offers its callers. Each
+use gets a fresh copy with the custom ID set; the template itself never changes.
+_Avoid_: View, form factory
 
 **Button**:
 An interactive message control that a user clicks to trigger an action.

@@ -48,7 +48,9 @@ test("development user command and filesystem menu complete the selection flow",
     );
 
     const fixture = interaction();
-    const template = client.selectMenus.get("user.choose")?.builder.toJSON();
+    const template = client.selectMenus
+        .get("user.choose")
+        ?.builder?.toJSON(false);
     await dispatcher.dispatch(fixture.interaction);
 
     assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
@@ -57,7 +59,7 @@ test("development user command and filesystem menu complete the selection flow",
     });
     assert.equal(fixture.reply.mock.callCount(), 0);
     assert.deepEqual(
-        client.selectMenus.get("user.choose")?.builder.toJSON(),
+        client.selectMenus.get("user.choose")?.builder?.toJSON(false),
         template,
     );
 });

@@ -2,12 +2,12 @@ import { UserSelectMenuBuilder } from "@discordjs/builders";
 import { ComponentType, type UserSelectMenuInteraction } from "discord.js";
 import * as v from "valibot";
 import {
-    Button,
     type ButtonContext,
+    ButtonHandler,
     defineParams,
     ParamOwner,
-    SelectMenu,
     type SelectMenuContext,
+    SelectMenuHandler,
 } from "../src/index.ts";
 
 const assign = defineParams({
@@ -24,7 +24,7 @@ const counted = defineParams({
 
 type AssignContext = SelectMenuContext<ComponentType.UserSelect, typeof assign>;
 
-export class Assign extends SelectMenu<
+export class Assign extends SelectMenuHandler<
     ComponentType.UserSelect,
     typeof assign
 > {
@@ -53,10 +53,10 @@ export class Assign extends SelectMenu<
 export const selectContracts = (plain: SelectMenuContext) => {
     // @ts-expect-error Literal select contexts carry no params.
     plain.params;
-    // @ts-expect-error A params handler has no template builder.
+    // @ts-expect-error A template is optional, so it may be undefined.
     new Assign().builder.toJSON();
 
-    class Mismatched extends SelectMenu<
+    class Mismatched extends SelectMenuHandler<
         ComponentType.UserSelect,
         typeof assign
     > {
@@ -71,24 +71,42 @@ export const selectContracts = (plain: SelectMenuContext) => {
         async run() {}
     }
 
-    class Both extends SelectMenu<ComponentType.UserSelect, typeof assign> {
+    class Both extends SelectMenuHandler<
+        ComponentType.UserSelect,
+        typeof assign
+    > {
         constructor() {
             super({
                 componentType: ComponentType.UserSelect,
                 params: assign,
-                // @ts-expect-error Params handlers cannot supply a builder.
-                builder: new UserSelectMenuBuilder(),
+                // @ts-expect-error Params handlers cannot also declare a literal custom ID.
+                customId: "ticket.assign",
             });
         }
 
         async run() {}
     }
 
-    return [Mismatched, Both];
+    class WithTemplate extends SelectMenuHandler<
+        ComponentType.UserSelect,
+        typeof assign
+    > {
+        constructor() {
+            super({
+                componentType: ComponentType.UserSelect,
+                params: assign,
+                builder: new UserSelectMenuBuilder().setPlaceholder("Assign"),
+            });
+        }
+
+        async run() {}
+    }
+
+    return [Mismatched, Both, WithTemplate];
 };
 
 export const paramOwnerContracts = () => {
-    class Typo extends Button<typeof assign> {
+    class Typo extends ButtonHandler<typeof assign> {
         constructor() {
             // @ts-expect-error The key must exist in the params.
             super({ params: assign, guards: [new ParamOwner("ownr")] });
@@ -97,7 +115,7 @@ export const paramOwnerContracts = () => {
         async run(_ctx: ButtonContext<typeof assign>) {}
     }
 
-    class NotAString extends Button<typeof counted> {
+    class NotAString extends ButtonHandler<typeof counted> {
         constructor() {
             // @ts-expect-error The owner param must be a string.
             super({ params: counted, guards: [new ParamOwner("owner")] });

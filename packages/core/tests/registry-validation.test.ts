@@ -18,26 +18,28 @@ const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
 const discord = import.meta.resolve("discord.js");
 
-for (const { folder, Handler, Registry, builder } of [
+for (const { folder, Handler, Registry, builder, componentType = "" } of [
     {
         folder: "buttons",
-        Handler: "Button",
+        Handler: "ButtonHandler",
         Registry: ButtonRegistry,
-        builder: 'new PrimaryButtonBuilder().setCustomId("").setLabel("Test")',
+        // An 81-character label fails native validation.
+        builder: 'new PrimaryButtonBuilder().setLabel("x".repeat(81))',
     },
     {
         folder: "select-menus",
-        Handler: "SelectMenu",
+        Handler: "SelectMenuHandler",
+        componentType: "componentType: 3, ",
         Registry: SelectMenuRegistry,
         builder:
-            'new StringSelectMenuBuilder().setCustomId("").addOptions({ label: "Test", value: "test" })',
+            'new StringSelectMenuBuilder().setPlaceholder("x".repeat(151)).addOptions({ label: "Test", value: "test" })',
     },
     {
         folder: "modals",
-        Handler: "Modal",
+        Handler: "ModalHandler",
         Registry: ModalRegistry,
         builder:
-            'new ModalBuilder().setCustomId("").setTitle("Test").addLabelComponents(new LabelBuilder().setLabel("Input").setTextInputComponent(new TextInputBuilder().setCustomId("field").setStyle(TextInputStyle.Short)))',
+            'new ModalBuilder().setTitle("x".repeat(46)).addLabelComponents(new LabelBuilder().setLabel("Input").setTextInputComponent(new TextInputBuilder().setCustomId("field").setStyle(TextInputStyle.Short)))',
     },
 ]) {
     test(`${folder} use native validation and respect explicit global opt-out`, async t => {
@@ -51,7 +53,7 @@ import { ${Handler} } from ${JSON.stringify(library)};
 import { PrimaryButtonBuilder, StringSelectMenuBuilder, ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(builders)};
 import { TextInputStyle } from ${JSON.stringify(discord)};
 export default class extends ${Handler} {
-    constructor() { super({ builder: ${builder} }); }
+    constructor() { super({ customId: "handler", ${componentType}builder: ${builder} }); }
     async run() {}
 }`,
         );
@@ -71,7 +73,7 @@ export default class extends ${Handler} {
             disableValidators();
             await registry.load(root);
             assert.equal(registry.size, 1);
-            assert.ok(registry.has(""));
+            assert.ok(registry.has("handler"));
         } finally {
             if (enabled) enableValidators();
             else disableValidators();

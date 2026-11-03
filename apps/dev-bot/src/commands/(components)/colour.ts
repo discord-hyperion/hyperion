@@ -12,14 +12,14 @@ export default class ColourCommand extends Command {
     }
 
     async run(ctx: CommandContext) {
-        const menu = ctx.client.selectMenus.get("colour.choose");
-
-        if (!menu) throw new Error("The colour menu was not loaded.");
-
         await ctx.interaction.reply({
             content: "Choose your favourite colour.",
             flags: MessageFlags.Ephemeral,
-            components: [new ActionRowBuilder().addComponents(menu.builder)],
+            components: [
+                new ActionRowBuilder().addComponents(
+                    ctx.client.selectMenus.build("colour.choose"),
+                ),
+            ],
         });
     }
 }

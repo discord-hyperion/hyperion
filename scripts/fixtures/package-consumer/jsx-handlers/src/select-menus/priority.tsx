@@ -1,9 +1,12 @@
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
+import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
 import { renderStringSelect, StringSelect } from "@hyperion/jsx";
+import { ComponentType } from "discord.js";
 
-export default class extends SelectMenu {
+export default class extends SelectMenuHandler {
     constructor() {
         super({
+            customId: "consumer.priority",
+            componentType: ComponentType.StringSelect,
             builder: renderStringSelect(
                 <StringSelect customId="consumer.priority">
                     <StringSelect.Option label="Low" value="low" />

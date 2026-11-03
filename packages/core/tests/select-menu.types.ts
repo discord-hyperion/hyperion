@@ -5,14 +5,15 @@ import {
     StringSelectMenuBuilder,
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
-import type { ComponentType } from "discord.js";
+import { ComponentType } from "discord.js";
 import type {
     SelectMenuContext,
-    SelectMenuOptions,
+    SelectMenuHandlerOptions,
     SelectMenuType,
 } from "../src/components/index.ts";
 
-type Builder<Type extends SelectMenuType> = SelectMenuOptions<Type>["builder"];
+type Builder<Type extends SelectMenuType> =
+    SelectMenuHandlerOptions<Type>["builder"];
 type Expect<Condition extends true> = Condition;
 
 // Every select handler type rejects the builders of the other four select types.
@@ -66,8 +67,10 @@ export const selectMenuContracts = (
     // @ts-expect-error String selects do not expose resolved users.
     stringCtx.interaction.users;
 
-    const userOptions: SelectMenuOptions<ComponentType.UserSelect> = {
-        builder: new UserSelectMenuBuilder().setCustomId("user"),
+    const userOptions: SelectMenuHandlerOptions<ComponentType.UserSelect> = {
+        customId: "user",
+        componentType: ComponentType.UserSelect,
+        builder: new UserSelectMenuBuilder(),
         guards: [
             ctx => {
                 ctx.interaction.users.size satisfies number;
@@ -75,12 +78,16 @@ export const selectMenuContracts = (
             },
         ],
     };
-    const stringOptions: SelectMenuOptions = {
-        builder: new StringSelectMenuBuilder().setCustomId("string"),
+    const stringOptions: SelectMenuHandlerOptions = {
+        customId: "string",
+        componentType: ComponentType.StringSelect,
+        builder: new StringSelectMenuBuilder(),
     };
 
-    const roleOptions: SelectMenuOptions<ComponentType.RoleSelect> = {
-        builder: new RoleSelectMenuBuilder().setCustomId("role"),
+    const roleOptions: SelectMenuHandlerOptions<ComponentType.RoleSelect> = {
+        customId: "role",
+        componentType: ComponentType.RoleSelect,
+        builder: new RoleSelectMenuBuilder(),
         guards: [
             ctx => {
                 ctx.interaction.roles.size satisfies number;
@@ -89,11 +96,11 @@ export const selectMenuContracts = (
         ],
     };
 
-    const mentionableOptions: SelectMenuOptions<ComponentType.MentionableSelect> =
+    const mentionableOptions: SelectMenuHandlerOptions<ComponentType.MentionableSelect> =
         {
-            builder: new MentionableSelectMenuBuilder().setCustomId(
-                "mentionable",
-            ),
+            customId: "mentionable",
+            componentType: ComponentType.MentionableSelect,
+            builder: new MentionableSelectMenuBuilder(),
             guards: [
                 ctx => {
                     ctx.interaction.users.size satisfies number;
@@ -103,15 +110,26 @@ export const selectMenuContracts = (
             ],
         };
 
-    const channelOptions: SelectMenuOptions<ComponentType.ChannelSelect> = {
-        builder: new ChannelSelectMenuBuilder().setCustomId("channel"),
-        guards: [
-            ctx => {
-                ctx.interaction.channels.size satisfies number;
-                throw new Error("Type contract only");
-            },
-        ],
-    };
+    const mismatchedTemplate: SelectMenuHandlerOptions<ComponentType.UserSelect> =
+        {
+            customId: "user",
+            componentType: ComponentType.UserSelect,
+            // @ts-expect-error The template must match the declared select type.
+            builder: new RoleSelectMenuBuilder(),
+        };
+
+    const channelOptions: SelectMenuHandlerOptions<ComponentType.ChannelSelect> =
+        {
+            customId: "channel",
+            componentType: ComponentType.ChannelSelect,
+            builder: new ChannelSelectMenuBuilder(),
+            guards: [
+                ctx => {
+                    ctx.interaction.channels.size satisfies number;
+                    throw new Error("Type contract only");
+                },
+            ],
+        };
     // @ts-expect-error Channel selects do not expose resolved users.
     channelCtx.interaction.users;
     // @ts-expect-error Channel selects do not expose resolved roles.
@@ -119,6 +137,7 @@ export const selectMenuContracts = (
 
     return {
         channelOptions,
+        mismatchedTemplate,
         mentionableOptions,
         userOptions,
         stringOptions,

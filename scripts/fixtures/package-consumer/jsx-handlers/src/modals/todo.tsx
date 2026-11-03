@@ -1,8 +1,4 @@
-import {
-    defineInput,
-    type ModalContext,
-    Modal as ModalHandler,
-} from "@hyperion/core";
+import { defineInput, type ModalContext, ModalHandler } from "@hyperion/core";
 import { Modal, renderModal } from "@hyperion/jsx";
 import * as v from "valibot";
 
@@ -17,6 +13,7 @@ const input = defineInput({
 export default class extends ModalHandler<typeof input> {
     constructor() {
         super({
+            customId: "consumer.modal",
             builder: renderModal(
                 <Modal customId="consumer.modal" title="Consumer modal">
                     <Modal.Label text="Name">

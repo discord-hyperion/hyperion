@@ -5,10 +5,10 @@ resolution through the existing input pipeline.
 
 ## Handler and form ownership
 
-- Retain the native `builder` on each modal handler. It supplies the shared
-  default form and the custom ID used by the existing modal registry.
-- Commands and components open the registered builder or render a fresh form
-  with the same modal custom ID. Opening and submission are separate interactions.
+- Keep the form as the modal handler's `builder` template. It supplies the shared
+  default form; `customId` routes submissions to the handler.
+- Commands and components open a copy from `client.modals.build()` or render a
+  fresh form with the same modal custom ID. Opening and submission are separate interactions.
 - Keep form authoring separate from submission processing. Native builders and
   JSX remain alternative ways to author the form.
 
@@ -16,7 +16,7 @@ resolution through the existing input pipeline.
 
 Use the existing [typed command input](input-validation.md) contract for modal
 submissions with `defineInput({ schema, defer, resolve })`, a grouped `input`
-configuration, `Modal<typeof input>`, and `ModalContext<typeof input>`. Preserve
+configuration, `ModalHandler<typeof input>`, and `ModalContext<typeof input>`. Preserve
 the readonly `[issues, value]` handler contract and existing handlers without
 input configuration.
 
@@ -52,7 +52,7 @@ Reject duplicate submitted text-input custom IDs as input-processing errors for
 handlers with input validation configured. Do not silently accept the SDK's
 last-value overwrite behavior. Preserve schema-free handler behavior.
 
-Do not compare schema keys with the registered builder during discovery.
+Do not compare schema keys with the registered template during discovery.
 Validate builder/configuration structure without executing schemas or resolvers;
 actual submission values are validated at invocation time.
 
@@ -89,11 +89,7 @@ the schema to handle. Generated errors must not include submitted values.
 ## Complete handler example
 
 ```tsx
-import {
-    defineInput,
-    Modal as ModalHandler,
-    type ModalContext,
-} from "@hyperion/core";
+import { defineInput, ModalHandler, type ModalContext } from "@hyperion/core";
 import { renderModal } from "@hyperion/jsx";
 import * as v from "valibot";
 import { TodoForm } from "../views/todo-form.tsx";
@@ -108,7 +104,11 @@ const input = defineInput({
 
 export default class extends ModalHandler<typeof input> {
     constructor() {
-        super({ builder: renderModal(<TodoForm />), input });
+        super({
+            customId: "todo.create",
+            builder: renderModal(<TodoForm />),
+            input,
+        });
     }
 
     async run(ctx: ModalContext<typeof input>) {

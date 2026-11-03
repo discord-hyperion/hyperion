@@ -7,13 +7,20 @@ import {
 } from "@discordjs/builders";
 import { Collection, type ComponentType } from "discord.js";
 import type { Logger } from "pino";
-import { type AnySelectMenu, SelectMenu } from "../components/index.ts";
+import {
+    type AnySelectMenuHandler,
+    SelectMenuHandler,
+} from "../components/index.ts";
+import { buildTemplate } from "./build-template.ts";
 import { loadComponentHandlers } from "./load-modules.ts";
 import { resolveRoute } from "./resolve-route.ts";
 
-export class SelectMenuRegistry extends Collection<string, AnySelectMenu> {
+export class SelectMenuRegistry extends Collection<
+    string,
+    AnySelectMenuHandler
+> {
     /** Params handlers by route, shared by every select type. */
-    readonly routes = new Collection<string, AnySelectMenu>();
+    readonly routes = new Collection<string, AnySelectMenuHandler>();
 
     constructor(private readonly logger?: Logger) {
         super();
@@ -34,12 +41,17 @@ export class SelectMenuRegistry extends Collection<string, AnySelectMenu> {
         return match && { selectMenu: match.handler, raw: match.raw };
     }
 
+    /** A fresh copy of template with its custom ID set. */
+    build(customId: string) {
+        return buildTemplate("select menu", this, this.routes, customId);
+    }
+
     async load(root: string | URL = process.cwd()) {
-        await loadComponentHandlers<AnySelectMenu>(
+        await loadComponentHandlers<AnySelectMenuHandler>(
             this,
             root,
             "select-menus",
-            SelectMenu,
+            SelectMenuHandler,
             (selectMenu, data) => {
                 if (
                     ![
@@ -51,13 +63,13 @@ export class SelectMenuRegistry extends Collection<string, AnySelectMenu> {
                     ].some(builder => selectMenu.builder instanceof builder)
                 ) {
                     throw new TypeError(
-                        "SelectMenu requires a string, user, role, mentionable, or channel select builder.",
+                        "Select menu templates must be string, user, role, mentionable, or channel select builders.",
                     );
                 }
 
                 if (data.type !== selectMenu.componentType) {
                     throw new Error(
-                        "SelectMenu builder type must match its handler's component type.",
+                        "Select menu template type must match its handler's component type.",
                     );
                 }
             },

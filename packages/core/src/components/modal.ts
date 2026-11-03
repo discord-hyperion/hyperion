@@ -10,6 +10,7 @@ import type {
 import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
 import { validateInput } from "../util/validate-input.ts";
+import { handlerCustomId } from "./handler-options.ts";
 
 export type ModalInputDefinition = CommandInputDefinition<
     InteractionContext<ModalSubmitInteraction>
@@ -38,25 +39,30 @@ export type ModalContext<
         ? { readonly input: CommandInputResult<Input> }
         : unknown);
 
-export type ModalOptions<
+export type ModalHandlerOptions<
     Input extends ModalInputDefinition | undefined = undefined,
 > = {
-    builder: ModalBuilder;
+    customId: string;
+    /**
+     * Optional form template; callers get copies through `client.modals.build()`.
+     * Recommended, since `input` reads the form's text-input custom IDs.
+     */
+    builder?: ModalBuilder;
     guards?: readonly GuardProvider<ModalContext>[];
 } & (Input extends ModalInputDefinition ? { input: Input } : { input?: never });
 
-export abstract class Modal<
+export abstract class ModalHandler<
     Input extends ModalInputDefinition | undefined = undefined,
 > {
-    readonly builder: ModalBuilder;
+    readonly builder: ModalBuilder | undefined;
     readonly customId: string;
     readonly guards: readonly GuardProvider<ModalContext>[];
 
     readonly input: ModalInputDefinition | undefined;
 
-    protected constructor(options: ModalOptions<Input>) {
+    protected constructor(options: ModalHandlerOptions<Input>) {
+        this.customId = handlerCustomId("Modal", options.customId, undefined);
         this.builder = options.builder;
-        this.customId = this.builder.toJSON(false).custom_id;
         this.input = validateInput(options.input);
         this.guards = Object.freeze([...(options.guards ?? [])]);
 

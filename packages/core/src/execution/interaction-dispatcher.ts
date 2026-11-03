@@ -11,9 +11,9 @@ import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
 import { Command, type CommandType, Subcommand } from "../commands/index.ts";
 import {
-    Modal,
+    ModalHandler,
     type ParamsDefinition,
-    type SelectMenu,
+    type SelectMenuHandler,
     type SelectMenuType,
 } from "../components/index.ts";
 import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
@@ -74,7 +74,7 @@ export class InteractionDispatcher {
             });
 
             await this.execute(
-                selectMenu as SelectMenu<SelectMenuType>,
+                selectMenu as SelectMenuHandler<SelectMenuType>,
                 { client: this.client, interaction, logger },
                 "select-menu",
                 [],
@@ -385,7 +385,7 @@ export class InteractionDispatcher {
                 });
                 handlerContext = { ...ctx, input };
             } else if (
-                handler instanceof Modal &&
+                handler instanceof ModalHandler &&
                 interaction.isModalSubmit() &&
                 handler.input
             ) {
