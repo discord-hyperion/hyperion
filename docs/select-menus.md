@@ -15,6 +15,15 @@ String, user, role, mentionable, and channel message selects are supported.
 Selects embedded in modals are read by the [modal handler](modals.md) through
 the submission's components resolver, not dispatched to message select handlers.
 
+## Templates
+
+The select-menu registry stores handlers with their optional **templates** in
+`builder`. Each template defines a reusable menu of the declared `componentType`.
+`build("colour.choose")` copies it with a fixed custom ID;
+`build(definition, values)` copies it with an encoded params ID. Hyperion parses
+that ID when the selection arrives, separately from the user's selected values.
+Every build leaves the shared template unchanged.
+
 ## Define a string handler
 
 ```ts
@@ -132,8 +141,8 @@ export default class ChooseRole extends SelectMenuHandler<ComponentType.RoleSele
 
 Discord supplies the server's role options, so role builders do not use
 `addOptions()`. Selecting a role supplies data to your handler; it does not assign
-that role to anyone. The dev bot's `/role` command uses
-`setContexts(InteractionContextType.Guild)` to make the example server-only.
+that role to anyone. Use `setContexts(InteractionContextType.Guild)` on the
+command that sends the menu to restrict it to servers.
 
 ## Define a mentionable handler
 
@@ -177,8 +186,7 @@ export default class ChooseMentionable extends SelectMenuHandler<ComponentType.M
 Iterating `.values` preserves the selected order when users and roles are mixed.
 With `minValues` set to zero, clearing the selection produces an empty array; the
 example displays `None`. Discord supplies options, so do not call `addOptions()`.
-The server-only `/mentionable` dev command sends this menu. Selecting entries
-returns data without pinging users, assigning roles, or storing message state.
+Selecting entries returns data without pinging users, assigning roles, or storing message state.
 
 ## Define a channel handler
 
@@ -224,14 +232,16 @@ Discord supplies the channel options; do not call `addOptions()`. Use
 `setChannelTypes()` to restrict the offered channel types, or omit it to leave
 them unrestricted. With `minValues` set to zero, users can clear their selection.
 The example preserves selected order and falls back to IDs for missing names.
-The server-only `/channel` dev command sends this menu. Selection supplies data;
-it does not change channel permissions or persist application state.
+Selection supplies data; it does not change channel permissions or persist
+application state.
 
 ## Send a menu
 
 Inside a command, `build()` returns a fresh copy of the handler's template with
 its custom ID set. It throws when no handler is loaded for the ID, when the
-handler has no template, or when the ID is a params route.
+handler has no template, or when a params route is passed as a string.
+For params, use `build(definition, values)` so the generated ID includes the
+values needed for decoding.
 
 ```ts
 await ctx.interaction.reply({
@@ -271,6 +281,7 @@ export default class AssignTicket extends SelectMenuHandler<
         super({
             componentType: ComponentType.UserSelect,
             params: assignTicket,
+            builder: new UserSelectMenuBuilder().setPlaceholder("Assign to…"),
             guards: [paramOwner("owner")],
         });
     }
@@ -283,7 +294,7 @@ export default class AssignTicket extends SelectMenuHandler<
     }
 }
 
-// In a command: new UserSelectMenuBuilder().setCustomId(assignTicket({ ticketId, owner }))
+// In a command: ctx.client.selectMenus.build(assignTicket, { ticketId, owner })
 ```
 
 Params describe what the bot decided when it sent the menu; the selection is
@@ -316,11 +327,6 @@ not overwrite the original message.
 Use `ctx.logger` for correlated logs. Selected values are not logged by the
 framework. Handlers stay stateless: fetch async data and persist application
 state in application-owned storage rather than fields on a shared handler.
-
-The dev bot includes `/colour`, `/user`, `/role`, `/mentionable`, and `/channel`, with matching
-handlers in `src/select-menus/choose-colour.ts`, `choose-user.ts`, `choose-role.ts`,
-`choose-mentionable.ts`, and `choose-channel.ts`. `/ticket` sends a params user
-select handled by `src/select-menus/assign-ticket.ts`.
 
 ## JSX string-select authoring
 

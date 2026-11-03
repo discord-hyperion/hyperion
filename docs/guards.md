@@ -1,4 +1,4 @@
-# Command guards
+# Guards
 
 See the [execution glossary](GLOSSARY.md#execution) for guard and guard-provider
 terminology.
@@ -200,8 +200,7 @@ export const guildOnly = defineGuard<InteractionContext>({
 Hyperion awaits `onFail()` exactly once and adds no default response when it
 succeeds. The callback is responsible for acknowledging the interaction,
 including checking `replied` / `deferred` if earlier guards may already have
-acknowledged it. A passing guard never runs `onFail()`. The development bot's
-`/ticket` command uses this guard from `src/guards/guild-only.ts`.
+acknowledged it. A passing guard never runs `onFail()`.
 
 Hyperion does not automatically defer before guards. Async guards and factories
 must acknowledge within Discord's interaction deadline if they perform slow work.

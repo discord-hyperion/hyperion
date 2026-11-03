@@ -21,7 +21,7 @@ duplicate configuration.
 
 ```ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext, ownerOnly } from "discord-hyperion";
+import { Command, type CommandContext, ownerOnly } from "@hyperion/core";
 import { type ApplicationCommandType, MessageFlags } from "discord.js";
 
 export default class InspectUser extends Command<ApplicationCommandType.User> {
@@ -54,7 +54,7 @@ invoking `interaction.user`, not the selected `targetUser`.
 
 ```ts
 import { MessageContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "discord-hyperion";
+import { Command, type CommandContext } from "@hyperion/core";
 import { type ApplicationCommandType, MessageFlags } from "discord.js";
 
 export default class InspectMessage extends Command<ApplicationCommandType.Message> {
@@ -77,8 +77,6 @@ export default class InspectMessage extends Command<ApplicationCommandType.Messa
 ```
 
 The context exposes `MessageContextMenuCommandInteraction.targetMessage`.
-The dev bot includes both examples as `inspect-user.ts` and
-`inspect-message.ts`; they intentionally share the display name `Inspect`.
 
 The installed v15 builders are `UserContextCommandBuilder` and
 `MessageContextCommandBuilder`. `ContextMenuCommandBuilder` itself is abstract.

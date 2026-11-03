@@ -113,7 +113,6 @@ Subcommands are stored under `CommandRegistry.subcommandKey("ticket", "close")`.
 Use `client.commands.resolveSubcommand("ticket", "close")` for typed lookup.
 Use `client.commands.parents.get("ticket")` for the non-executable parent definition.
 Regular commands retain their existing keys and `resolve(name)` behavior.
-The development bot includes `/tools ping` and `/tools echo` examples.
 
 Duplicate sibling names, standalone chat-input commands sharing a parent's name,
 context-menu commands inside parents, and nested command options are rejected.

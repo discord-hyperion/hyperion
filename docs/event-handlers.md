@@ -197,7 +197,7 @@ SDK behavior. No tests require login, live tokens, deployment, or private files.
 - Prove event support through public root exports in source and packed consumers.
 
 The behavior/type coverage lives in `packages/core/tests/events.test.ts` and
-`events.types.ts`, with a ready-handler example test in `apps/dev-bot/tests`.
+`events.types.ts`.
 The source and packed-consumer checks also discover and execute ordered events.
 Run the repository's required type, test, and Biome checks and `pnpm verify:package`.
 

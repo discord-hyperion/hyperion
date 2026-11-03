@@ -175,7 +175,7 @@ dependency. Verify source/packed consumers, automatic runtime entry points,
 native builder identity, and reply/update type compatibility.
 
 Update the JSX guide's deferred scope, backlog, and standalone package examples.
-Add a JSX minor changeset and a dev-bot flow using existing exact-ID routing.
+Add a JSX minor changeset and an isolated example using existing exact-ID routing.
 Run required type/tests/Biome checks and package-consumer verification without
 startup, private credentials, login, deployment, or publishing.
 
@@ -214,11 +214,3 @@ The installed builders enforce labels of 1–80 characters, interactive custom I
 of 1–100 characters, and 1–5 buttons per row. JSX does not reproduce these schemas.
 Native disabled validation also rejects explicit null when enabled. Errors include
 structural paths; native validation causes may contain supplied values.
-
-## Development bot
-
-`/jsx-buttons` sends a two-row example containing an interactive button and a link.
-Its optional `disabled` boolean demonstrates fresh per-message presentation. The
-`jsx.refresh` handler is authored with `renderButton()` and updates the message
-through existing button dispatch. It stores no per-user state and introduces no
-collector or authorization shortcut.

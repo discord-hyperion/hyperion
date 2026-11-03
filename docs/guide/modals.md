@@ -1,0 +1,148 @@
+# Modals
+
+A modal is a pop-up form. You show it in response to a command or a click, the
+user fills it in, and the submission arrives later as a separate interaction.
+Hyperion routes that submission to a modal handler by its custom ID.
+
+## A modal handler
+
+Put handlers in `src/modals`. The registry keeps the handler’s `builder` as a reusable **template**, because
+it reads the form's fields when the submission comes back:
+
+```ts
+// src/modals/submit-feedback.ts
+import {
+    LabelBuilder,
+    ModalBuilder,
+    TextInputBuilder,
+} from "@discordjs/builders";
+import { type ModalContext, ModalHandler } from "@hyperion/core";
+import { MessageFlags, TextInputStyle } from "discord.js";
+
+export default class SubmitFeedback extends ModalHandler {
+    constructor() {
+        super({
+            customId: "feedback.submit",
+            builder: new ModalBuilder()
+                .setTitle("Feedback")
+                .addLabelComponents(
+                    new LabelBuilder()
+                        .setLabel("Your feedback")
+                        .setTextInputComponent(
+                            new TextInputBuilder()
+                                .setCustomId("feedback.message")
+                                .setStyle(TextInputStyle.Paragraph),
+                        ),
+                ),
+        });
+    }
+
+    async run(ctx: ModalContext) {
+        const message =
+            ctx.interaction.components.getTextInputValue("feedback.message");
+
+        await ctx.interaction.reply({
+            content: `Thanks! That's ${message.length} characters of feedback.`,
+            flags: MessageFlags.Ephemeral,
+        });
+    }
+}
+```
+
+In discord.js v15, text inputs sit inside labels, and you read values through
+`ctx.interaction.components` (not the older `.fields`).
+
+## Showing the modal
+
+From a command, button, or select-menu handler:
+
+```ts
+await ctx.interaction.showModal(ctx.client.modals.build("feedback.submit"));
+```
+
+`build()` gives you a fresh copy of the form, so you can pre-fill values for this
+user without touching anyone else's. Remember that showing a modal _is_ the
+response, so don't reply or defer first.
+
+## Validating the fields
+
+Rather than reading each field by hand, give the handler an input schema and get
+typed values in `ctx.input`:
+
+```ts
+const input = defineInput({
+    schema: v.object({ title: v.pipe(v.string(), v.trim(), v.minLength(1)) }),
+});
+
+export default class CreateTodo extends ModalHandler<typeof input> {
+    constructor() {
+        super({ customId: "todo.create", builder: todoForm, input });
+    }
+
+    async run(ctx: ModalContext<typeof input>) {
+        const [issues, value] = ctx.input;
+        if (issues) {
+            await ctx.interaction.reply({
+                content: issues[0].message,
+                flags: MessageFlags.Ephemeral,
+            });
+            return;
+        }
+
+        await ctx.interaction.reply(`Created "${value.title}".`);
+    }
+}
+```
+
+Field values are keyed by each text input's custom ID. Empty fields arrive as
+empty strings, so let the schema decide what's allowed. See
+[typed input](input.md) for resolvers and deferring.
+
+## Remembering what the form is about
+
+By the time the submission arrives, the code that showed the modal has finished.
+So how does a "Rename ticket" form know _which_ ticket? Put it in the modal's
+custom ID with params:
+
+```ts
+export const renameTicketForm = defineParams({
+    id: "ticket.rename-form",
+    keys: ["ticketId", "owner"],
+    schema: v.object({ ticketId: v.string(), owner: v.string() }),
+});
+
+export default class RenameTicket extends ModalHandler<
+    typeof input,
+    typeof renameTicketForm
+> {
+    constructor() {
+        super({
+            params: renameTicketForm,
+            builder: renameForm,
+            input,
+            guards: [paramOwner("owner")],
+        });
+    }
+
+    async run(ctx: ModalContext<typeof input, typeof renameTicketForm>) {
+        const [paramIssues, params] = ctx.params; // which ticket
+        const [inputIssues, value] = ctx.input; // what the user typed
+    }
+}
+
+// In the Rename button's handler:
+await ctx.interaction.showModal(
+    ctx.client.modals.build(renameTicketForm, params),
+);
+```
+
+The params are checked before your guards run, so `paramOwner("owner")` can make
+sure only the ticket's author submits it. See [data in custom IDs](custom-ids.md)
+for how params work.
+
+## Guards and responses
+
+Guards on the command or button that opened the form don't apply to the
+submission, so add them to the modal handler too. Responding works as usual,
+see [responding](responding.md). To change the message the form was opened
+from, check `ctx.interaction.isFromMessage()` and then call `update()`.

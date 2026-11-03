@@ -160,11 +160,6 @@ and submission remain separate interactions under the existing modal guide.
   verification. Include an appropriate JSX package changeset. Do not start the
   bot, read private credentials, log in, deploy commands, or publish.
 
-The dev bot demonstrates this flow in `src/views/todo-form.tsx`,
-`src/modals/create-todo.tsx`, and the `/jsx-modal` command. The optional command
-`name` value prefills a fresh form. The demo reports submitted character counts;
-it does not store a todo or submitted values.
-
 ## Verified native-builder facts
 
 Read-only investigation on 2026-10-31 checked the pinned

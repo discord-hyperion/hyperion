@@ -2,7 +2,7 @@
 
 Public packages use independent Changesets versions. The initial package is
 `@hyperion/core` at 0.1.0; `@hyperion/jsx` starts at 0.0.0 with a minor changeset
-proposing its first 0.1.0 release. The root and `@hyperion/dev-bot` are private. While core
+proposing its first 0.1.0 release. The workspace root is private. While core
 is 0.x, project policy uses minor bumps for breaking changes and patch bumps for
 compatible fixes; these are review decisions.
 

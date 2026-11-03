@@ -1,0 +1,100 @@
+# Writing style for the human guide
+
+Hyperion keeps two kinds of documentation:
+- **Reference docs** (`docs/*.md`): precise contracts for contributors and coding
+  agents. Dense is fine; completeness matters more than flow.
+- **The guide** (`docs/guide/`): written for people building bots. It should read
+  like a knowledgeable friend explaining things, not like a specification.
+
+This page covers the guide. When a feature changes, update the reference doc
+first, then the matching guide page. The guide may leave details out; it must
+never contradict the reference docs.
+
+The voice is modelled on the [discord.js guide](https://discordjs.guide/).
+
+## Voice
+
+- Talk to the reader as "you". Use "we" sparingly, for walking through something
+  together ("Let's add a guard").
+- Use contractions: "you'll", "don't", "it's".
+- A slight informal touch is welcome: a short aside in parentheses, a "that's
+  it", a "Sounds good? Great!". One per section at most; never jokes in warnings.
+- Prefer active voice. "Hyperion loads your buttons" beats "Buttons are loaded".
+- Say what things _do_, not what they _don't_. Lists of negatives ("does not
+  retain state, callbacks, sessions, or timers") become one positive sentence
+  ("Handlers don't remember anything between clicks").
+
+## Page shape
+
+1. **Open with motivation.** One or two sentences: what problem this solves, often
+   by comparison with something the reader already knows ("You've probably sent
+   buttons with discord.js before…").
+2. **Show code early.** A complete, copyable example comes before the details.
+3. **Explain after the code.** Short paragraphs that point at what the example did.
+4. **Caveats last**, as short bullets or a single "Watch out" sentence.
+
+Each section follows the same rhythm: a one-line definition, the API to use, an
+example, then notes.
+
+## Sentences and paragraphs
+
+- Two to four sentences per paragraph.
+- One idea per sentence. If a sentence has three commas and a semicolon, split it.
+- Explain jargon the first time, or avoid it. Prefer "checks run before your
+  handler" to "pre-handler execution checks".
+- Bullets are for parallel items (options, caveats). Don't turn reasoning into
+  bullet lists.
+
+## Headings
+
+- Noun phrases or short task phrases: "Buttons with data", "Sending a menu",
+  "Guards". Not questions, not full sentences.
+- Sentence case.
+
+## Words
+
+- "Discord" (capitalised) is the platform; "discord.js" (lowercase) is the library.
+- Plain verbs: send, reply, defer, show, click, pick, load.
+- Use the [glossary](GLOSSARY.md) terms (handler, guard, custom ID, params,
+  template), but explain them in passing instead of linking the glossary at the
+  top of every page.
+- Name the thing the reader types: `ButtonHandler`, `defineGuard()`, not "the
+  component-handler abstraction".
+
+## What to leave out
+
+These belong in reference docs, ADRs, or git history, not the guide:
+- Implementation details (staging, atomic replacement, declaration merging).
+- Verification criteria, test plans, "in this PR", "existing", "now", "remains
+  unchanged". The guide describes how things work, not how they changed.
+- Defensive disclaimers ("this is not a claim of…").
+- Exhaustive lists of log events or validation rules. Link the reference doc.
+
+## Examples
+
+- Import from `@hyperion/core` and `@hyperion/jsx`, never old package names.
+- Use self-contained examples that readers can adapt to their own bots.
+- Keep comments short and useful: `// Runs once per click`.
+
+## Avoid duplication
+
+Each topic has one home in the guide. Other pages link to it in one sentence:
+
+| Topic                                  | Home                                 |
+| -------------------------------------- | ------------------------------------ |
+| Replying, deferring, and error replies | [responding.md](guide/responding.md) |
+| Guards and their state                 | [guards.md](guide/guards.md)         |
+| Data in custom IDs                     | [custom-ids.md](guide/custom-ids.md) |
+| Typed input                            | [input.md](guide/input.md)           |
+| JSX authoring                          | [jsx.md](guide/jsx.md)               |
+| Logging                                | [logging.md](guide/logging.md)       |
+
+## Example rewrite
+
+> **Before:** Use a component handler to process button clicks. Hyperion stores
+> handler definitions for routing, but does not retain per-message state,
+> callbacks, sessions, timers, or update queues.
+>
+> **After:** A button handler runs when someone clicks a button your bot sent.
+> Handlers don't remember anything between clicks, so if a button needs data
+> (like which ticket it closes), put it in the custom ID or your own storage.

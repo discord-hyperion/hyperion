@@ -14,7 +14,7 @@ pnpm test
 pnpm check
 ```
 
-It does not start the development bot, load private environment files, log in to
+It does not start a bot, load private environment files, log in to
 Discord, or deploy commands. No application secrets are needed. Actions are pinned
 to commit SHAs with release comments; update both when upgrading an action.
 

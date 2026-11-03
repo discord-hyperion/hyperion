@@ -1,7 +1,6 @@
 # Custom-ID params
 
-Status: implemented for buttons, select menus, and modals. A JSX encoder helper
-is a follow-up (see [Scope](#scope)). This guide specifies typed
+Status: implemented for buttons, select menus, and modals. This guide specifies typed
 custom-ID data exposed through `ctx.params`. It implements the backlog entry in
 [features](features.md) and reuses the pipeline described in
 [input validation](input-validation.md).
@@ -58,6 +57,31 @@ stringified. Schema input is wire text, so it cannot type the encoder. The
 attached field names must not collide with function properties (`name`,
 `length`, `prototype`). Name exports for what they return (`todoDoneId`), not
 as if they ran the handler.
+
+## Templates and building controls
+
+Component registries keep shared handlers and their optional **templates** in
+`builder`. Use the template to create each button, select menu, or modal:
+
+```ts
+const button = ctx.client.buttons.build(todoDoneId, {
+    owner: user.id,
+    page: 2,
+    todoId: todo.id,
+});
+```
+
+`build(definition, values)` finds the handler by route, checks the ordered keys,
+encodes the supplied values using the definition, and sets the generated custom
+ID on a fresh template copy. The template and handler retain no per-use values.
+On interaction, Hyperion matches the route, decodes the ID, and validates the
+values against the handler's schema before guards run. The validated result or
+issues are available in `ctx.params`. Build-time encoding does not run that schema.
+
+The same overload exists on `client.selectMenus` and `client.modals`.
+`build("literal.id")` sets a fixed ID instead and carries no params. A handler
+without a template can still receive controls authored separately with the
+encoder, but cannot be used with `build()`.
 
 ## Wire format
 
@@ -202,7 +226,6 @@ or a control is stale.
 3. Select menus, all five types, and the `paramOwner()` guard.
 4. Modals, `build(definition, values)` on every registry, and the compile-time
    `keys` check.
-5. Follow-up: a JSX helper for the encoder.
 
 The codec, route lookup, and context typing are kind-agnostic, so each kind
 reuses them without redesign.

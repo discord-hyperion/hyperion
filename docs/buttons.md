@@ -4,8 +4,7 @@ Use a [component handler](GLOSSARY.md#components) to process button clicks.
 Hyperion stores handler definitions for routing, but does not retain per-message
 state, callbacks, sessions, timers, or update queues. Durable application state
 belongs in an application-owned storage layer.
-A future SQLite integration can provide persistence without tying it to the
-lifetime of a component handler. Database support is not implemented yet.
+Database integration is outside the framework’s current scope.
 
 ## Filesystem button handlers
 
@@ -21,7 +20,7 @@ handlers fail initialization with their source file. All command and button
 modules load before application commands are deployed.
 
 ```text
-apps/dev-bot/
+my-bot/
 ├── index.ts
 └── src/
     ├── commands/
@@ -30,6 +29,15 @@ apps/dev-bot/
     └── buttons/
         └── refresh-profile.ts
 ```
+
+## Templates
+
+The button registry stores handlers with their optional **templates** in
+`builder`. A template defines the reusable button appearance; `build()` creates
+an independent button from it and sets the custom ID. Use
+`build("profile.refresh")` for a fixed ID, or `build(definition, values)` to encode
+params into an ID that Hyperion can parse when the button is clicked.
+The shared template stays unchanged.
 
 ## Define a handler
 
@@ -75,8 +83,8 @@ both acknowledge the same ID.
 ## Carry data in the custom ID
 
 To give one handler many controls, each carrying its own values, declare typed
-params instead of `customId`. The command sets each button's custom ID with the
-encoder; see [custom-ID params](custom-id-params.md) for the wire
+params instead of `customId`. The registry builds each button from its template
+and encodes the supplied values into its custom ID; see [custom-ID params](custom-id-params.md) for the wire
 format, guard ordering, and stale-button rules.
 
 ```ts
@@ -88,7 +96,10 @@ export const todoDone = defineParams({
 
 export default class TodoDone extends ButtonHandler<typeof todoDone> {
     constructor() {
-        super({ params: todoDone });
+        super({
+            params: todoDone,
+            builder: new PrimaryButtonBuilder().setLabel("Done"),
+        });
     }
 
     async run(ctx: ButtonContext<typeof todoDone>) {
@@ -105,7 +116,7 @@ export default class TodoDone extends ButtonHandler<typeof todoDone> {
     }
 }
 
-// In a command: new PrimaryButtonBuilder().setCustomId(todoDone({ owner, todoId }))
+// In a command: ctx.client.buttons.build(todoDone, { owner, todoId })
 ```
 
 A params handler owns its whole `<id>:` namespace and is stored in
@@ -120,7 +131,9 @@ guards, so guards can read `ctx.params`; a schema failure reaches the handler as
 
 Inside a command's `run(ctx)`, `build()` returns a fresh copy of the handler's
 template with its custom ID set. It throws when no handler is loaded for the ID,
-when the handler has no template, or when the ID is a params route.
+when the handler has no template, or when a params route is passed as a string.
+For params, use `build(definition, values)` so the generated ID includes the
+values needed for decoding.
 
 ```ts
 import { ActionRowBuilder } from "@discordjs/builders";
@@ -139,11 +152,6 @@ await ctx.interaction.reply({
 
 Without a template, build the button yourself and set `customId` on it. The
 handler does not depend on how the button looks.
-
-The development bot includes this flow as `/profile` and
-`src/buttons/refresh-profile.ts`. Its button fetches fresh user data after
-acknowledging the click and updates the original message. Startup and live testing
-are performed by the developer; automated tests use mocked requests instead.
 
 ## Async data and state
 
@@ -206,6 +214,5 @@ register callbacks or change exact-ID routing, guards, or acknowledgment.
 
 See [JSX message components](jsx-message-components.md) for complete examples,
 plain-label rules, native validation, emoji data, and the distinction between
-shared templates and fresh per-message controls. `/jsx-buttons` demonstrates
-both renderers in the development bot. Native collectors continue to work with
-rendered message controls; avoid competing ownership of the same interactions.
+shared templates and fresh per-message controls. Native collectors continue to
+work with rendered message controls; avoid competing ownership of the same interactions.

@@ -189,7 +189,7 @@ existing button and modal rendering tests.
 
 Extend standalone source/packed fixtures, production/development runtime smoke
 tests, and core discovery/dispatch consumers. Keep JSX independent of core,
-React, and a discord.js runtime dependency. Add a dev-bot string-select flow,
+React, and a discord.js runtime dependency. Add a self-contained string-select example,
 JSX minor changeset, guide/README examples for both renderers, and current backlog
 updates. Document native validator gaps and unsupported scope explicitly.
 
@@ -218,11 +218,3 @@ Native setters can retain emoji objects. Rendering clones emoji data and creates
 new option builders, so later application mutations cannot change already
 rendered output. Shared JSX descriptions may still reference application objects;
 a later render reads their current values without freezing them.
-
-## Development bot
-
-`/jsx-select` demonstrates a JSX-authored menu routed to the existing
-`jsx.priority` handler. Optional `priority` (`low` or `high`) and `disabled`
-command options customize a fresh message. The view allows clearing selection
-with a zero minimum. The handler reports chosen strings (or `None`) without
-persisting them or modifying the registered template.

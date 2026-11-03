@@ -42,6 +42,14 @@ Read the relevant reference before implementation or review:
 - Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
   work: [Feature backlog](docs/features.md). Database support remains out of scope.
 
+## Documentation
+
+`docs/*.md` are reference docs for contributors and agents: precise and complete.
+`docs/guide/` is the human-facing guide. When behavior changes, update the
+reference doc, then the matching guide page following
+[the writing style](docs/writing-style.md). The guide may omit details but must
+never contradict the reference docs.
+
 ## Tooling and conventions
 
 - Use pnpm, preserve `pnpm-lock.yaml`, and keep the package-manager version pinned
