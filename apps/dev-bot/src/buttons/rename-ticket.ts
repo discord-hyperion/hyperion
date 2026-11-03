@@ -2,7 +2,7 @@ import {
     type ButtonContext,
     ButtonHandler,
     defineParams,
-    ParamOwner,
+    paramOwner,
 } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 import { renameTicketForm } from "../modals/rename-ticket.ts";
@@ -22,10 +22,7 @@ export default class RenameTicketButton extends ButtonHandler<
         super({
             params: renameTicket,
             guards: [
-                new ParamOwner(
-                    "owner",
-                    "Only the ticket's author can rename it.",
-                ),
+                paramOwner("owner", "Only the ticket's author can rename it."),
             ],
         });
     }

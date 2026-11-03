@@ -51,6 +51,8 @@ const openTicket = async (dispatcher: InteractionDispatcher) => {
     const { interaction, reply } = createChatInputInteraction({
         id: "open",
         commandName: "ticket",
+        guildId: "guild",
+        member: { id: "author" },
         user: { id: "author" },
         options: { getString: () => "Printer on fire" },
     });
@@ -240,4 +242,21 @@ test("development ticket Rename opens a modal that carries the ticket and checks
         content: `Ticket ${ticketId}: Printer fixed`,
         allowedMentions: { parse: [] },
     });
+});
+
+test("development ticket command rejects use outside a server with its own reply", async t => {
+    const { dispatcher } = await setup(t);
+    const { interaction, reply } = createChatInputInteraction({
+        id: "dm",
+        commandName: "ticket",
+        user: { id: "author" },
+        options: { getString: () => "Printer on fire" },
+    });
+    await dispatcher.dispatch(interaction);
+
+    assert.deepEqual(reply.mock.calls[0]?.arguments[0], {
+        content: "Tickets belong to a server. Run this there instead.",
+        flags: MessageFlags.Ephemeral,
+    });
+    assert.equal(reply.mock.callCount(), 1);
 });

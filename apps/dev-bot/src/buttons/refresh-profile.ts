@@ -3,14 +3,14 @@ import {
     PrimaryButtonBuilder,
     SecondaryButtonBuilder,
 } from "@discordjs/builders";
-import { type ButtonContext, ButtonHandler, OwnerOnly } from "@hyperion/core";
+import { type ButtonContext, ButtonHandler, ownerOnly } from "@hyperion/core";
 
 export default class RefreshProfileButton extends ButtonHandler {
     constructor() {
         super({
             customId: "profile.refresh",
             builder: new PrimaryButtonBuilder().setLabel("Refresh profile"),
-            guards: [new OwnerOnly()],
+            guards: [ownerOnly],
         });
     }
 

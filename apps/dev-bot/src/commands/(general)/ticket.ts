@@ -9,6 +9,7 @@ import {
 import { Command, type CommandContext } from "@hyperion/core";
 import { closeTicket } from "../../buttons/close-ticket.ts";
 import { renameTicket } from "../../buttons/rename-ticket.ts";
+import { guildOnly } from "../../guards/guild-only.ts";
 import { assignTicket } from "../../select-menus/assign-ticket.ts";
 
 export default class TicketCommand extends Command {
@@ -26,6 +27,7 @@ export default class TicketCommand extends Command {
                         .setRequired(true)
                         .setMaxLength(100),
                 ),
+            guards: [guildOnly],
         });
     }
 

@@ -8,7 +8,7 @@ import {
     defineParams,
     type ModalContext,
     ModalHandler,
-    ParamOwner,
+    paramOwner,
 } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 import * as v from "valibot";
@@ -60,10 +60,7 @@ export default class RenameTicketModal extends ModalHandler<
             input,
             // The submission is a separate interaction, so ownership is checked again.
             guards: [
-                new ParamOwner(
-                    "owner",
-                    "Only the ticket's author can rename it.",
-                ),
+                paramOwner("owner", "Only the ticket's author can rename it."),
             ],
         });
     }
