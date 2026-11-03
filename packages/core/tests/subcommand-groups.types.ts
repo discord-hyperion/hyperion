@@ -9,7 +9,7 @@ import {
     type CommandContext,
     type CommandRegistry,
     type GuardProvider,
-    OwnerOnly,
+    ownerOnly,
     type Subcommand,
     SubcommandGroup,
 } from "../src/index.ts";
@@ -49,7 +49,7 @@ export const subcommandGroupContracts = (
     // @ts-expect-error Group builders cannot be replaced.
     group.builder = new ChatInputCommandSubcommandGroupBuilder();
     // @ts-expect-error Group guards are readonly.
-    group.guards.push(new OwnerOnly());
+    group.guards.push(ownerOnly);
     // @ts-expect-error Group collections cannot be replaced.
     registry.groups = new Collection<string, SubcommandGroup>();
     // @ts-expect-error Context-menu commands cannot have grouped leaves.
@@ -70,7 +70,7 @@ export const subcommandGroupContracts = (
                             | null;
                         // @ts-expect-error Group guards receive command contexts, not autocomplete contexts.
                         ctx.interaction.respond([]);
-                        return new OwnerOnly();
+                        return ownerOnly;
                     },
                 ],
             });

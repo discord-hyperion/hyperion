@@ -5,10 +5,10 @@ import { Collection, Events, InteractionType, MessageFlags } from "discord.js";
 import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts";
 import { type ButtonContext, ButtonHandler } from "../src/components/index.ts";
 import {
-    Cooldown,
-    Guard,
+    cooldown,
+    defineGuard,
     type GuardProvider,
-    OwnerOnly,
+    ownerOnly,
 } from "../src/guards/index.ts";
 import {
     assertPrivateFailure,
@@ -116,12 +116,9 @@ test("unmatched IDs and unsupported components remain available to collectors", 
 
 test("button guards run in order and reject before later factories or handlers", async t => {
     const { client, dispatcher, records } = await setup(t);
-    const later = mock.fn(() => new OwnerOnly());
+    const later = mock.fn(() => ownerOnly);
     const execute = mock.fn(async (_ctx: ButtonContext) => {});
-    client.buttons.set(
-        "refresh",
-        new TestButton(execute, [new OwnerOnly(), later]),
-    );
+    client.buttons.set("refresh", new TestButton(execute, [ownerOnly, later]));
     const fixture = interaction("new", "other");
     await dispatcher.dispatch(fixture.interaction);
     assert.equal(later.mock.callCount(), 0);
@@ -135,21 +132,21 @@ test("button guards run in order and reject before later factories or handlers",
 
 test("custom button guard onFail receives the invocation context", async t => {
     const { client, dispatcher } = await setup(t);
-    class Deny extends Guard<ButtonContext> {
-        constructor() {
-            super({ description: "No access" });
-        }
-        run() {
-            return false;
-        }
-        async onFail(ctx: ButtonContext) {
-            await ctx.interaction.reply("Custom rejection");
-        }
-    }
+    const deny = () =>
+        defineGuard<ButtonContext>({
+            name: "Deny",
+            description: "No access",
+            run() {
+                return false;
+            },
+            async onFail(ctx: ButtonContext) {
+                await ctx.interaction.reply("Custom rejection");
+            },
+        });
     const execute = mock.fn(async (_ctx: ButtonContext) => {});
     client.buttons.set(
         "refresh",
-        new TestButton(execute, [async () => new Deny()]),
+        new TestButton(execute, [async () => deny()]),
     );
     const fixture = interaction();
     await dispatcher.dispatch(fixture.interaction);
@@ -164,13 +161,12 @@ test("Cooldown factories share state while selecting a separate key per user", a
     let now = 1_000;
     t.mock.method(Date, "now", () => now);
 
-    const factory = mock.fn(
-        (ctx: ButtonContext) =>
-            new Cooldown({
-                key: `refresh:${ctx.interaction.user.id}`,
-                durationMs: 5_000,
-                entries,
-            }),
+    const factory = mock.fn((ctx: ButtonContext) =>
+        cooldown({
+            key: `refresh:${ctx.interaction.user.id}`,
+            durationMs: 5_000,
+            entries,
+        }),
     );
 
     client.buttons.set("refresh", new TestButton(execute, [factory]));
@@ -208,7 +204,7 @@ test("Cooldown rejects invalid durations", () => {
     for (const durationMs of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
         assert.throws(
             () =>
-                new Cooldown({
+                cooldown({
                     key: "refresh",
                     durationMs,
                     entries: new Collection(),

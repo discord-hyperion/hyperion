@@ -15,7 +15,7 @@ import {
     Command,
     type CommandContext,
     CommandRegistry,
-    Guard,
+    defineGuard,
     HyperionClient,
     InteractionDispatcher,
     ParentCommand,
@@ -27,16 +27,13 @@ import { createTempRoot } from "./support/temp-root.ts";
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
 const credentials = { applicationId: "123", token: "fake-token" };
-const imports = `import { Command, ParentCommand, Subcommand, SubcommandGroup, Guard } from ${JSON.stringify(library)};
+const imports = `import { Command, ParentCommand, Subcommand, SubcommandGroup, defineGuard } from ${JSON.stringify(library)};
 import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder, ChatInputCommandSubcommandGroupBuilder } from ${JSON.stringify(builders)};
 export const calls = [];
 const guards = [ctx => {
     calls.push("factory");
     ctx.interaction.events.push("leaf factory");
-    return new class extends Guard {
-        constructor() { super({ description: "Allowed" }); }
-        run(ctx) { ctx.interaction.events.push("leaf guard"); return true; }
-    };
+    return defineGuard({ name: "test-guard", description: "Allowed", run(ctx) { ctx.interaction.events.push("leaf guard"); return true; } });
 }];`;
 const parentSource = `${imports}
 export default class extends ParentCommand {
@@ -221,15 +218,14 @@ test("replacement parent and group definitions are used by registration and disp
     const events: string[] = [];
     const factory = (name: string) => () => {
         events.push(`${name} factory`);
-        return new (class extends Guard {
-            constructor() {
-                super({ description: "Allowed" });
-            }
+        return defineGuard({
+            name: "test-guard",
+            description: "Allowed",
             run() {
                 events.push(`${name} guard`);
                 return true;
-            }
-        })();
+            },
+        });
     };
     class ReplacementParent extends ParentCommand {
         constructor() {

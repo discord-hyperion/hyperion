@@ -18,7 +18,7 @@ import {
 import {
     Command,
     type CommandContext,
-    Guard,
+    defineGuard,
     type GuardProvider,
     ParentCommand,
     Subcommand,
@@ -46,15 +46,14 @@ class Leaf extends Subcommand {
     async run(_ctx: CommandContext) {}
 }
 
-class Check extends Guard {
-    constructor() {
-        super({ description: "Denied" });
-    }
-
-    run(_ctx: CommandContext) {
-        return true;
-    }
-}
+const check = () =>
+    defineGuard({
+        name: "Check",
+        description: "Denied",
+        run(_ctx: CommandContext) {
+            return true;
+        },
+    });
 
 test("parent serialization respects SDK validation settings and explicit overrides", () => {
     const enabled = isValidationEnabled();
@@ -317,7 +316,7 @@ for (const [name, create] of [
     ["leaf", (guards: readonly GuardProvider[]) => new Leaf(undefined, guards)],
 ] as const) {
     test(`${name} validates and freezes copied guards without invoking factories`, () => {
-        const guard = new Check();
+        const guard = check();
         const factory = mock.fn(() => {
             throw new Error("Factory must remain lazy");
         });
@@ -331,10 +330,9 @@ for (const [name, create] of [
         assert.deepEqual(handler.guards, [guard, factory]);
         assert.equal(factory.mock.callCount(), 0);
 
-        for (const invalid of [null, {}, { run: () => true }, new Check()]) {
-            if (invalid instanceof Check) {
-                Object.defineProperty(invalid, "run", { value: undefined });
-            }
+        // A lookalike with every field still is not a guard from defineGuard().
+        const lookalike = { name: "x", description: "y", run: () => true };
+        for (const invalid of [null, {}, { run: () => true }, lookalike]) {
             assert.throws(() => create([invalid as unknown as GuardProvider]));
         }
     });

@@ -1,7 +1,8 @@
 import type { CustomIdButtonBuilder } from "@discordjs/builders";
 import type { ButtonInteraction } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
-import { Guard, type GuardProvider } from "../guards/index.ts";
+import { isGuard } from "../guards/guard.ts";
+import type { GuardProvider } from "../guards/index.ts";
 import {
     type ParamsDefinition,
     type ParamsResult,
@@ -47,12 +48,9 @@ export abstract class ButtonHandler<
 
         for (const provider of this.guards) {
             if (typeof provider === "function") continue;
-            if (
-                !(provider instanceof Guard) ||
-                typeof provider.run !== "function"
-            ) {
+            if (!isGuard(provider)) {
                 throw new TypeError(
-                    "Button guards must be Guard instances or guard factories.",
+                    "Button guards must be guards from defineGuard() or guard factories.",
                 );
             }
         }

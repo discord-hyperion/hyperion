@@ -23,7 +23,7 @@ import { createTempRoot } from "./support/temp-root.ts";
 const entryPoint = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
 const commandSource = (name: string, extra = "", methods = "", guards = "") => `
-    import { Command, Subcommand, Guard } from ${JSON.stringify(entryPoint)};
+    import { Command, Subcommand, defineGuard } from ${JSON.stringify(entryPoint)};
     import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder, UserContextCommandBuilder } from ${JSON.stringify(builders)};
     export default class extends Subcommand {
         constructor() { super({ builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Test subcommand")${extra}, ${guards} }); }
@@ -41,7 +41,7 @@ const standaloneSource = (name: string) =>
         );
 
 const parentSource = (extra = "", guards = "") => `
-    import { ParentCommand, Guard } from ${JSON.stringify(entryPoint)};
+    import { ParentCommand, defineGuard } from ${JSON.stringify(entryPoint)};
     import { ChatInputCommandBuilder } from ${JSON.stringify(builders)};
     export default class extends ParentCommand {
         constructor() { super({ builder: new ChatInputCommandBuilder().setDescription("Manage test commands.")${extra}, ${guards} }); }
@@ -264,7 +264,7 @@ test("dispatch selects only the requested leaf and runs its guards", async t => 
             "ping",
             "",
             "",
-            `guards: [ctx => new class extends Guard { constructor() { super({ description: "Not allowed" }); } run() { return ctx.interaction.user.id === "allowed"; } }],`,
+            `guards: [ctx => defineGuard({ name: "test-guard", description: "Not allowed", run() { return ctx.interaction.user.id === "allowed"; } })],`,
         ),
     );
     await add("[tools]/other.mjs", commandSource("other"));

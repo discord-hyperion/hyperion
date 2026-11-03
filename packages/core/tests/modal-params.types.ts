@@ -6,7 +6,7 @@ import {
     defineParams,
     type ModalContext,
     ModalHandler,
-    ParamOwner,
+    paramOwner,
 } from "../src/index.ts";
 import type { ModalRegistry } from "../src/registries/index.ts";
 
@@ -33,12 +33,12 @@ export class RenameTicket extends ModalHandler<typeof input, typeof rename> {
             builder: new ModalBuilder().setTitle("Rename"),
             input,
             guards: [
-                new ParamOwner("owner"),
+                paramOwner("owner"),
                 ctx => {
                     ctx.params satisfies RenameContext["params"];
                     // @ts-expect-error Guards run before input processing.
                     ctx.input;
-                    return new ParamOwner("owner");
+                    return paramOwner("owner");
                 },
             ],
         });
@@ -91,7 +91,7 @@ export const modalParamsContracts = (registry: ModalRegistry) => {
     class Typo extends ModalHandler<undefined, typeof rename> {
         constructor() {
             // @ts-expect-error The key must exist in the params.
-            super({ params: rename, guards: [new ParamOwner("ownr")] });
+            super({ params: rename, guards: [paramOwner("ownr")] });
         }
 
         async run() {}

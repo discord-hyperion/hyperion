@@ -32,7 +32,7 @@ import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
-const imports = `import { Command, ParentCommand, Subcommand, SubcommandGroup, Guard } from ${JSON.stringify(library)};
+const imports = `import { Command, ParentCommand, Subcommand, SubcommandGroup, defineGuard } from ${JSON.stringify(library)};
 import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder, ChatInputCommandSubcommandGroupBuilder, UserContextCommandBuilder } from ${JSON.stringify(builders)};`;
 const parentSource = (guards = "") => `${imports}
 export default class extends ParentCommand {
@@ -568,10 +568,7 @@ test("indexed deployment errors preserve the cause and parent, group, and leaf s
 const guards = (scope: string) => `guards: [1, 2].map(index => ctx => {
     const name = "${scope}" + index;
     ctx.interaction.events.push(name + " factory");
-    return new class extends Guard {
-        constructor() { super({ description: "Denied" }); }
-        run(ctx) { ctx.interaction.events.push(name + " guard"); if (ctx.interaction.failure === name + " error") throw new Error("Guard failed"); return ctx.interaction.failure !== name; }
-    };
+    return defineGuard({ name: "test-guard", description: "Denied", run(ctx) { ctx.interaction.events.push(name + " guard"); if (ctx.interaction.failure === name + " error") throw new Error("Guard failed"); return ctx.interaction.failure !== name; } });
 }),`;
 
 for (const failure of [

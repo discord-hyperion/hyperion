@@ -12,7 +12,8 @@ import {
     type UserContextMenuCommandInteraction,
 } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
-import { Guard, type GuardProvider } from "../guards/index.ts";
+import { isGuard } from "../guards/guard.ts";
+import type { GuardProvider } from "../guards/index.ts";
 import type {
     CommandInputDefinition,
     CommandInputResult,
@@ -119,12 +120,9 @@ export abstract class Command<
 
         for (const provider of this.guards) {
             if (typeof provider === "function") continue;
-            if (
-                !(provider instanceof Guard) ||
-                typeof provider.run !== "function"
-            ) {
+            if (!isGuard(provider)) {
                 throw new TypeError(
-                    "Command guards must be Guard instances or guard factories.",
+                    "Command guards must be guards from defineGuard() or guard factories.",
                 );
             }
         }

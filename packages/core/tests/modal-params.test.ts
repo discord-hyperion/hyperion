@@ -27,7 +27,7 @@ import {
     ModalHandler,
     SelectMenuHandler,
 } from "../src/components/index.ts";
-import { Guard, ParamOwner } from "../src/guards/index.ts";
+import { defineGuard, type Guard, paramOwner } from "../src/guards/index.ts";
 import { defineInput } from "../src/index.ts";
 import {
     ButtonRegistry,
@@ -113,18 +113,17 @@ describe("modal params dispatch", () => {
     test("guards see params, then input runs and the handler sees both", async t => {
         const { client, dispatcher, records } = await createTestClient(t);
         const order: string[] = [];
-        class SeesParams extends Guard<ModalContext<undefined, typeof rename>> {
-            constructor() {
-                super({ description: "Denied" });
-            }
-
-            run(ctx: ModalContext<undefined, typeof rename>) {
-                order.push("guard");
-                assert.deepEqual(ctx.params, [null, ticket]);
-                assert.equal("input" in ctx, false);
-                return true;
-            }
-        }
+        const seesParams = () =>
+            defineGuard<ModalContext<undefined, typeof rename>>({
+                name: "SeesParams",
+                description: "Denied",
+                run(ctx: ModalContext<undefined, typeof rename>) {
+                    order.push("guard");
+                    assert.deepEqual(ctx.params, [null, ticket]);
+                    assert.equal("input" in ctx, false);
+                    return true;
+                },
+            });
         const execute = mock.fn<Run>(async ctx => {
             order.push("handler");
             assert.deepEqual(ctx.params, [null, ticket]);
@@ -132,7 +131,7 @@ describe("modal params dispatch", () => {
         });
         client.modals.routes.set(
             rename.id,
-            createRenameModal(execute, [new SeesParams()]),
+            createRenameModal(execute, [seesParams()]),
         );
         const fixture = submission(rename(ticket));
         await dispatcher.dispatch(fixture.interaction);
@@ -180,13 +179,13 @@ describe("modal params dispatch", () => {
         assert.equal(execute.mock.callCount(), 1);
     });
 
-    test("ParamOwner rejects another user before input runs", async t => {
+    test("paramOwner rejects another user before input runs", async t => {
         const { client, dispatcher } = await createTestClient(t);
         const execute = mock.fn<Run>(async () => {});
         client.modals.routes.set(
             rename.id,
             createRenameModal(execute, [
-                new ParamOwner("owner", "Only the author can rename it."),
+                paramOwner("owner", "Only the author can rename it."),
             ]),
         );
         const fixture = submission(rename(ticket), "Hijack", "intruder");

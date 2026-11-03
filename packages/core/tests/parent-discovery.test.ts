@@ -16,7 +16,7 @@ import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
-const imports = `import { Command, ParentCommand, Subcommand, Guard } from ${JSON.stringify(library)};
+const imports = `import { Command, ParentCommand, Subcommand, defineGuard } from ${JSON.stringify(library)};
 import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder } from ${JSON.stringify(builders)};`;
 
 const parentSource = (extra = "", guards = "", tail = "") => `${imports}
@@ -151,10 +151,7 @@ for (const scenario of [
 
 const guard = (scope: string) => `guards: [ctx => {
     ctx.interaction.events.push("${scope} factory");
-    return new class extends Guard {
-        constructor() { super({ description: "${scope} rejected" }); }
-        run(ctx) { ctx.interaction.events.push("${scope} guard"); if (ctx.interaction.failure === "${scope} error") throw new Error("Guard failed"); return ctx.interaction.failure !== "${scope}"; }
-    };
+    return defineGuard({ name: "test-guard", description: "${scope} rejected", run(ctx) { ctx.interaction.events.push("${scope} guard"); if (ctx.interaction.failure === "${scope} error") throw new Error("Guard failed"); return ctx.interaction.failure !== "${scope}"; } });
 }],`;
 
 for (const failure of [

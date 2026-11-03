@@ -11,7 +11,7 @@ import {
     ButtonHandler,
     defineParams,
 } from "../src/components/index.ts";
-import { Guard } from "../src/guards/index.ts";
+import { defineGuard } from "../src/guards/index.ts";
 import { ButtonRegistry } from "../src/registries/index.ts";
 import { buttonKind } from "./support/component-kinds.ts";
 import { createHandlerRoot } from "./support/temp-root.ts";
@@ -236,16 +236,15 @@ describe("button params loading", () => {
 describe("button params dispatch", () => {
     test("guards and the handler receive validated, typed params", async t => {
         const { client, dispatcher, records } = await createTestClient(t);
-        class SeesParams extends Guard<TodoContext> {
-            constructor() {
-                super({ description: "Denied" });
-            }
-
-            run(ctx: TodoContext) {
-                seen.push(ctx.params);
-                return ctx.params[1]?.owner === ctx.interaction.user.id;
-            }
-        }
+        const seesParams = () =>
+            defineGuard<TodoContext>({
+                name: "SeesParams",
+                description: "Denied",
+                run(ctx: TodoContext) {
+                    seen.push(ctx.params);
+                    return ctx.params[1]?.owner === ctx.interaction.user.id;
+                },
+            });
         const seen: TodoContext["params"][] = [];
         const execute = mock.fn(async (ctx: TodoContext) => {
             const [issues, value] = ctx.params;
@@ -255,7 +254,7 @@ describe("button params dispatch", () => {
         });
         client.buttons.routes.set(
             todoDone.id,
-            new TodoButton(execute, [new SeesParams()]) as never,
+            new TodoButton(execute, [seesParams()]) as never,
         );
         const id = todoDone({ owner: "owner", page: 2, todoId: "a:b" });
 
@@ -287,22 +286,20 @@ describe("button params dispatch", () => {
             await ctx.interaction.reply("out of date");
         });
         const guard = mock.fn((ctx: TodoContext) => ctx.params[0] === null);
-        class IssueGuard extends Guard<TodoContext> {
-            constructor() {
-                super({ description: "Invalid params" });
-            }
-
-            run(ctx: TodoContext) {
-                return guard(ctx);
-            }
-
-            async onFail(ctx: TodoContext) {
-                await ctx.interaction.reply("rejected");
-            }
-        }
+        const issueGuard = () =>
+            defineGuard<TodoContext>({
+                name: "IssueGuard",
+                description: "Invalid params",
+                run(ctx: TodoContext) {
+                    return guard(ctx);
+                },
+                async onFail(ctx: TodoContext) {
+                    await ctx.interaction.reply("rejected");
+                },
+            });
         client.buttons.routes.set(
             todoDone.id,
-            new TodoButton(execute, [new IssueGuard()]) as never,
+            new TodoButton(execute, [issueGuard()]) as never,
         );
 
         const bad = click("todo.done:owner:not-a-number:abc");
