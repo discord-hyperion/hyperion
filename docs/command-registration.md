@@ -1,10 +1,5 @@
 # Filesystem command registration
 
-The same registry also supports user and message [context-menu commands](context-menu-commands.md).
-Use `Command<ApplicationCommandType.User>` or `Command<ApplicationCommandType.Message>`
-with the matching v15 builder; its payload determines the runtime type. Plain `Command`
-continues to define a chat-input command.
-
 Place commands in `<bot root>/src/commands` and pass registration credentials to
 `HyperionClient.create()`. Individual handler paths are fixed by convention.
 
@@ -16,7 +11,7 @@ const applicationId = process.env.DISCORD_APPLICATION_ID;
 const guildId = process.env.DISCORD_DEV_GUILD_ID;
 
 if (!token || !applicationId || !guildId) {
-    throw new Error("Missing development bot configuration.");
+    throw new Error("Missing bot configuration.");
 }
 
 const client = await HyperionClient.create({
@@ -35,13 +30,13 @@ const client = await HyperionClient.create({
 await client.login(token);
 ```
 
-This example belongs in `apps/dev-bot/index.ts`. Supply environment variables through
+Put this example in your bot’s `index.ts`. Supply environment variables through
 your startup environment. Hyperion does not read environment files itself.
 
 The bot layout is:
 
 ```text
-apps/dev-bot/
+my-bot/
 ├── index.ts
 └── src/
     └── commands/
@@ -62,7 +57,7 @@ are registered together and dispatched to their leaf modules. `{group}` folders
 add another level through explicit [group definitions](subcommand-groups.md).
 
 `root` defaults to `process.cwd()` and can be a filesystem path or file URL.
-For a dev bot in the framework repository, set it relative to the bot entry point
+Set it relative to your bot entry point
 as shown above. Hyperion scans only `<root>/src/commands`, including its nested
 folders. A missing command folder (or missing `src`) is skipped, with no deployment
 request. An existing empty folder also results in no deployment. Other filesystem
@@ -101,6 +96,11 @@ export default class PingCommand extends Command {
     }
 }
 ```
+
+The same registry also supports user and message [context-menu commands](context-menu-commands.md).
+Use `Command<ApplicationCommandType.User>` or `Command<ApplicationCommandType.Message>`
+with the matching v15 builder; its payload determines the runtime type. Plain `Command`
+continues to define a chat-input command.
 
 The registry checks the exported class, executable handler, named builder, and
 duplicate names. It uses unvalidated serialization only to obtain the lookup name
@@ -143,7 +143,7 @@ unsupported interaction types are left alone.
 
 Optional command `guards` run in order before the handler. They accept shared
 instances or lazy per-invocation factories. The first rejection or error stops
-execution; see [Command guards](./guards.md) for configuration and custom responses.
+execution; see [Guards](./guards.md) for configuration and custom responses.
 
 Handlers control acknowledgment by default. Reply, defer, or open a modal as
 appropriate. Commands with an [input schema](input-validation.md) can set
@@ -174,35 +174,10 @@ Commands also receive `ctx.logger`, a Pino child logger carrying invocation
 metadata. See [Logging and startup progress](./logging.md) for levels, coloured
 output, startup indicators, and configuration.
 
-
 ## Autocomplete
 
 Commands can also implement an optional `autocomplete(ctx)` hook. Enable it with
 `.setAutocomplete(true)` on supported options; discovery and registration do not
 execute hooks. See [autocomplete](autocomplete.md) for the typed API, response
-lifecycle, and authorization requirements. The dev bot's `/topic` command
-demonstrates autocomplete and validates submitted values in its normal handler.
-
-## Development bot
-
-The root startup scripts delegate to the bot package and target `apps/dev-bot/index.ts`:
-
-```sh
-pnpm dev          # Restart on source changes
-pnpm start        # Run once
-pnpm start:debug  # Run with the Node inspector
-```
-
-Configure `DISCORD_TOKEN`, `DISCORD_APPLICATION_ID`, and `DISCORD_DEV_GUILD_ID`
-yourself in the startup environment or your private `apps/dev-bot/.env` file. All three
-are required by the development bot. Startup deploys commands to that development
-guild before logging in; it does not perform global registration. Invite the
-application to your test guild, start the bot, wait for the ready message, and
-invoke `/ping` to receive `Pong!`.
-
-These scripts load private environment files and must only be run by the user,
-not by coding agents. Live Discord execution is separate from automated tests.
-
-Run the registration and dispatch tests with `pnpm test`. The tests mock REST
-requests and interactions and do not log in, contact Discord, or load environment
-files.
+lifecycle, and authorization requirements. Validate submitted values again in
+the normal command handler.

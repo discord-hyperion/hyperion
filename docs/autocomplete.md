@@ -16,7 +16,7 @@ import {
     type AutocompleteContext,
     Command,
     type CommandContext,
-} from "discord-hyperion";
+} from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
 const topics = ["commands", "buttons", "select-menus", "modals"];
@@ -79,9 +79,6 @@ when responding for integer or number options. Selecting a suggestion fills the
 option; submitting the command later invokes `run()` as a separate interaction.
 Suggestions are not validation: users can submit other values, so `run()` must
 validate the selected value and authorize execution again.
-
-The dev bot includes a `/topic` command that filters public topic names
-case-insensitively and validates the submitted identifier in its normal handler.
 
 ## Response lifecycle
 

@@ -8,3 +8,6 @@ packages/*/dist/
 
 # Local Turbo cache and task logs
 .turbo/
+
+# Temporary working notes and prototypes
+/.scratch/

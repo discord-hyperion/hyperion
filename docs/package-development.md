@@ -1,7 +1,7 @@
 # Package development and publication artifacts
 
-The workspace resolves `@hyperion/core` to `packages/core/src/index.ts`. The dev
-bot uses this public export through its workspace dependency. `@hyperion/jsx`
+The workspace resolves `@hyperion/core` to `packages/core/src/index.ts`. Workspace
+consumers use this public export through a workspace dependency. `@hyperion/jsx`
 resolves to `packages/jsx/lib/index.ts` and has production/development automatic
 runtime subpaths; it has no dependency on core. Run source checks
 and tests without compiling first:

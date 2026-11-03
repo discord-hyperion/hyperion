@@ -74,7 +74,15 @@ This uses the installed discord.js v15 APIs: labels wrap text inputs, and
 not the older `.fields` API. Other builder-supported modal components are passed
 through unchanged. For example, read embedded string selects with
 `ctx.interaction.components.getStringSelectValues(customId)`. Embedded selects
-belong to the modal submission; they do not invoke `SelectMenu` handlers.
+belong to the modal submission; they do not invoke `SelectMenuHandler` handlers.
+
+## Templates
+
+The modal registry retains the handler's reusable form **template** in `builder`.
+`build("feedback.submit")` creates a fresh form with a fixed ID.
+`build(definition, values)` creates a fresh form with an encoded custom ID that
+Hyperion can parse on submission. Params identify the form's application data;
+text-input IDs identify fields within it. Neither build changes the template.
 
 ## Open a modal
 
@@ -92,8 +100,6 @@ template.
 Opening a modal acknowledges the originating interaction. Do not reply or defer
 that interaction before calling `showModal()`. Submission is a separate
 interaction routed to `ModalHandler.run()`. Modal submissions cannot open another modal.
-The development bot's `/feedback` command demonstrates opening and submitting
-the filesystem modal in `apps/dev-bot/src/modals/submit-feedback.ts`.
 
 Unmatched modal IDs remain untouched for application-owned collectors and
 listeners. Avoid acknowledging the same submission in both a filesystem handler
@@ -149,8 +155,7 @@ Params are decoded and validated before guards, so guards (such as
 when params have issues, so the handler receives both tuples and chooses the
 response. A params handler is stored in `client.modals.routes`.
 `build(definition, values)` returns a fresh copy of the form with the encoded
-custom ID. The development bot's `/ticket` **Rename** button opens
-`src/modals/rename-ticket.ts` this way.
+custom ID, which Hyperion decodes and validates when the form is submitted.
 
 ## Guards and acknowledgment
 
@@ -159,7 +164,7 @@ factories. Shared interaction guards such as `ownerOnly` and `cooldown()` work t
 Factories do not run during discovery. A rejection or exception stops later
 guards and the handler. A custom `onFail(ctx)` owns the rejection response.
 Guards on the originating command or component do not automatically apply to
-the modal submission; declare submission guards on the `Modal` itself.
+the modal submission; declare submission guards on the `ModalHandler` itself.
 
 Without `input.defer: true`, Hyperion does not automatically acknowledge submissions. Use `reply()` or
 `deferReply()` followed by `editReply()` for a separate response. For a modal
@@ -177,8 +182,10 @@ logged and contained.
 
 Modal handlers can optionally configure `input` with a Standard Schema-compatible
 schema, private deferral, and whole-input resolution. Use `defineInput`,
-`Modal<typeof input>`, and `ModalContext<typeof input>` to infer handler values.
-The builder remains required and supplies the routing ID and shared default form.
+`ModalHandler<typeof input>`, and `ModalContext<typeof input>` to infer handler
+values. The optional `builder` supplies the shared form template; `customId` or
+`params` defines routing. Keep a template to use `client.modals.build()`, or author
+the form separately with a matching custom ID and text-input IDs.
 
 Processing runs after guards. Expected validation issues reach the handler through
 `ctx.input`; schema/resolver exceptions and extraction failures use the existing

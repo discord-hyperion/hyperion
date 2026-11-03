@@ -29,8 +29,6 @@ export default class Settings extends SubcommandGroup {
 The folder supplies the default group name. Group metadata is explicit rather
 than generated from folder names. Top-level permissions, contexts, and
 installation settings remain on the parent command.
-The development bot demonstrates `/tools diagnostics uptime` alongside the
-direct `/tools ping` and `/tools echo` subcommands.
 
 Grouped leaves reuse the existing `Subcommand` class, native leaf builder,
 `run()`, and optional `autocomplete()` hook. Their filesystem ancestry determines

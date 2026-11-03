@@ -11,7 +11,7 @@
 
 ## Planned
 
-- [ ] Typed custom-ID data exposed through interaction handlers. Buttons, select menus, modals, and the `paramOwner()` guard are implemented; a JSX encoder helper remains. See [custom-ID params](custom-id-params.md).
+- [x] Typed custom-ID data exposed through interaction handlers. Buttons, select menus, modals, and the `paramOwner()` guard are implemented. JSX controls take encoded IDs directly (`customId={closeTicket(ticket)}`), so no separate JSX encoder helper is planned. See [custom-ID params](custom-id-params.md).
   - Separate handler definitions from visible button builders; handlers must not require a template button.
   - Let commands or shared views create multiple controls, with each custom ID carrying its own data.
   - Declare parameter contracts through handlers and expose validated invocation-local values through `ctx.params`.
@@ -27,9 +27,7 @@
   - Support application-defined resolvers, including asynchronous validation.
   - Keep expected validation failures separate from unexpected errors across input sources.
 - [x] Guard definitions through `defineGuard()`. Guards are execution checks defined as frozen definitions rather than classes; the built-ins are `ownerOnly`, `cooldown()`, and `paramOwner()`. See [guards](guards.md) and [ADR 0003](adr/0003-guards-are-definitions-not-classes.md).
-- [ ] Intuitive, declarative embed creation API.
-  - Describe embed content, fields, and styling with a typed API that reduces builder boilerplate.
-  - Support reusable defaults and templates while retaining access to native Discord builders.
+- [x] Intuitive, declarative embed creation API. Superseded by `@hyperion/jsx`: `renderEmbed()` and reusable JSX components cover typed, declarative embeds with native builder output. Further message layout work, including Components V2, continues under JSX authoring.
 - [ ] Further JSX authoring through `@hyperion/jsx`.
   - Native embeds, modal labels/text inputs/informational text, escaped text composition, reusable components, and TSX/JSX handlers are implemented; see the [JSX guide](jsx.md) and [JSX modals](jsx-modals.md).
   - Action rows, interactive buttons, link buttons, and message string selects are implemented; see

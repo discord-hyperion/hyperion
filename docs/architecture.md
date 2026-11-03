@@ -8,14 +8,13 @@ indicate that a feature is implemented.
 ## Package boundaries
 
 The pnpm workspace contains `@hyperion/core` in `packages/core`, the independent
-`@hyperion/jsx` authoring package in `packages/jsx`, and the private
-`@hyperion/dev-bot` in `apps/dev-bot`. Shared tooling, documentation, and interaction
-mocks stay at the root. Add future utility or plugin packages when they have a
+`@hyperion/jsx` authoring package in `packages/jsx`. Shared tooling, documentation,
+and interaction mocks stay at the root. Add future utility or plugin packages when they have a
 concrete responsibility.
 
 JSX implementation lives in `packages/jsx/lib`, with its own public root and
 compiler runtime exports. It depends on native builders rather than core; see
-[JSX authoring](jsx.md). The dev bot consumes both packages.
+[JSX authoring](jsx.md). Applications can consume both packages.
 
 Framework responsibilities remain split across `client`, `commands`, `components`,
 `contexts`, `guards`, `events`, `registries`, `execution`, `logging`, and `util`.
@@ -25,8 +24,8 @@ through a workspace dependency. Local exports resolve source directly, so tsx
 development requires no compilation. Internal imports use relative `.ts` paths;
 repository-only TypeScript path aliases are unnecessary.
 
-Framework tests live in `packages/core/tests`; real development-bot flows live in
-`apps/dev-bot/tests`. Shared interaction mocks live in `tests/fixtures`. Root
+Framework tests live in `packages/core/tests` and `packages/jsx/tests`.
+Shared interaction mocks live in `tests/fixtures`. Root
 TypeScript settings are inherited by package configs. Run `pnpm typecheck`,
 `pnpm test`, and `pnpm check` from the root. See [package development](package-development.md)
 for release builds, publication exports, and isolated consumer verification.
@@ -86,6 +85,21 @@ or override that setting. Partial discovery metadata reads use `toJSON(false)`.
 Builder-family suitability, routing-metadata consistency, explicit filesystem
 definitions, duplicate routes, and empty-deployment protection remain framework
 checks. Native payload errors retain their source context and original cause.
+
+## Component templates
+
+Component registries store shared handler definitions, including their optional
+**templates** in `builder`. A template is the reusable native builder for a button,
+select menu, or modal. The registry keeps this template alongside the routing
+and execution definition; each control returned by `build()` is a fresh copy.
+
+`registry.build("literal.id")` copies the template and sets its fixed custom ID.
+`registry.build(definition, values)` uses the params definition to encode the
+values into a custom ID, then sets it on a fresh template copy. When Discord
+returns that ID, the registry matches the route and decodes the values; the
+execution pipeline validates them before guards and exposes them in `ctx.params`.
+Building does not validate params against their schema or store invocation data.
+See [custom-ID params](custom-id-params.md) for encoding and parsing rules.
 
 ## Invocation boundaries
 
