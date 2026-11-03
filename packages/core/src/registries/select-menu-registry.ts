@@ -5,14 +5,33 @@ import {
     StringSelectMenuBuilder,
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
-import { Collection } from "discord.js";
+import { Collection, type ComponentType } from "discord.js";
 import type { Logger } from "pino";
 import { type AnySelectMenu, SelectMenu } from "../components/index.ts";
 import { loadComponentHandlers } from "./load-modules.ts";
+import { resolveRoute } from "./resolve-route.ts";
 
 export class SelectMenuRegistry extends Collection<string, AnySelectMenu> {
+    /** Params handlers by route, shared by every select type. */
+    readonly routes = new Collection<string, AnySelectMenu>();
+
     constructor(private readonly logger?: Logger) {
         super();
+    }
+
+    /**
+     * Exact custom ID first, then a params route. A handler of another select
+     * type is unmatched, and is rejected before its params are decoded.
+     */
+    resolve(customId: string, componentType: ComponentType) {
+        const match = resolveRoute(
+            this,
+            this.routes,
+            customId,
+            selectMenu => selectMenu.componentType === componentType,
+        );
+
+        return match && { selectMenu: match.handler, raw: match.raw };
     }
 
     async load(root: string | URL = process.cwd()) {
@@ -43,6 +62,7 @@ export class SelectMenuRegistry extends Collection<string, AnySelectMenu> {
                 }
             },
             this.logger,
+            this.routes,
         );
     }
 }

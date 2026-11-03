@@ -11,8 +11,8 @@ import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
 import { Command, type CommandType, Subcommand } from "../commands/index.ts";
 import {
-    Button,
     Modal,
+    type ParamsDefinition,
     type SelectMenu,
     type SelectMenuType,
 } from "../components/index.ts";
@@ -60,16 +60,14 @@ export class InteractionDispatcher {
                 raw,
             );
         } else if (interaction.isSelectMenu()) {
-            const selectMenu = this.client.selectMenus.get(
+            const match = this.client.selectMenus.resolve(
                 interaction.customId,
+                interaction.componentType,
             );
+            // Unknown IDs and other select types stay unmatched.
+            if (!match) return;
 
-            if (
-                !selectMenu ||
-                selectMenu.componentType !== interaction.componentType
-            ) {
-                return;
-            }
+            const { selectMenu, raw } = match;
 
             const logger = this.createLogger(interaction, {
                 selectMenu: selectMenu.customId,
@@ -79,6 +77,8 @@ export class InteractionDispatcher {
                 selectMenu as SelectMenu<SelectMenuType>,
                 { client: this.client, interaction, logger },
                 "select-menu",
+                [],
+                raw,
             );
         } else if (interaction.isModalSubmit()) {
             const modal = this.client.modals.get(interaction.customId);
@@ -317,6 +317,7 @@ export class InteractionDispatcher {
     private async execute<Context extends InteractionContext>(
         handler: {
             readonly guards: readonly GuardProvider<Context>[];
+            readonly params?: ParamsDefinition | undefined;
             run: (ctx: Context) => Promise<void>;
         },
         ctx: Context,
@@ -335,15 +336,13 @@ export class InteractionDispatcher {
             // Params are decoded and schema-validated before guards so guards
             // can read them; no application code runs at this stage.
             let current = ctx;
-            if (rawParams !== undefined && handler instanceof Button) {
-                if (handler.params) {
-                    stage = "params";
-                    current = {
-                        ...ctx,
-                        params: await resolveParams(handler.params, rawParams),
-                    };
-                    stage = "guards";
-                }
+            if (rawParams !== undefined && handler.params) {
+                stage = "params";
+                current = {
+                    ...ctx,
+                    params: await resolveParams(handler.params, rawParams),
+                };
+                stage = "guards";
             }
 
             const result = await this.guards.run(
