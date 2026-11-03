@@ -153,6 +153,48 @@ for (const phase of ["new", "deferred", "replied"] as const) {
     });
 }
 
+test("falls back to a private follow-up when a deferred reply cannot take content", async t => {
+    const client = await HyperionClient.create({
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
+        name: "Test",
+        logging: false as const,
+        discord: { intents: [] },
+    });
+    t.after(() => client.destroy());
+    t.mock.method(client.logger, "child", () => client.logger);
+    const errors = t.mock.method(client.logger, "error", () => undefined);
+    const debug = t.mock.method(client.logger, "debug", () => undefined);
+    client.commands.set(
+        "ping",
+        new TestCommand(async () => {
+            throw new Error("Failed after editing into a layout message");
+        }),
+    );
+    const fixture = createInteraction({ deferred: true });
+    // Discord rejects content on a reply already edited into a layout message.
+    fixture.editReply.mock.mockImplementation(async () => {
+        throw new Error("Cannot send content with IS_COMPONENTS_V2");
+    });
+
+    await new InteractionDispatcher(client).dispatch(fixture.interaction);
+
+    const content = "Something went wrong while running this command.";
+    assert.equal(fixture.editReply.mock.callCount(), 1);
+    assert.deepEqual(fixture.followUp.mock.calls[0]?.arguments[0], {
+        content,
+        flags: MessageFlags.Ephemeral,
+    });
+    assert.ok(
+        debug.mock.calls.some(
+            call =>
+                (call.arguments[0] as { event?: string }).event ===
+                "command.error-response.fallback",
+        ),
+    );
+    // Only the handler failure is an error; the fallback succeeded.
+    assert.equal(errors.mock.callCount(), 1);
+});
+
 test("contains synchronous throws and failed error responses in the event listener", async t => {
     const client = await HyperionClient.create({
         root: new URL("./fixtures/empty-bot/", import.meta.url),

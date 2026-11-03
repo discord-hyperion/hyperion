@@ -452,7 +452,20 @@ export class InteractionDispatcher {
                     flags: MessageFlags.Ephemeral,
                 });
             } else if (interaction.deferred) {
-                await interaction.editReply({ content });
+                try {
+                    await interaction.editReply({ content });
+                } catch (err) {
+                    // A deferred reply already edited into a layout message
+                    // cannot take content, so fall back to a private follow-up.
+                    logger.debug(
+                        { event: `${kind}.error-response.fallback`, err },
+                        `Editing the ${kind} reply failed; sending a follow-up`,
+                    );
+                    await interaction.followUp({
+                        content,
+                        flags: MessageFlags.Ephemeral,
+                    });
+                }
             } else {
                 await interaction.reply({
                     content,
