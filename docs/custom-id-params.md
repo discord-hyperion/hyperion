@@ -77,7 +77,7 @@ as if they ran the handler.
 ## Handler
 
 ```ts
-export default class TodoDone extends Button<typeof todoDoneId> {
+export default class TodoDone extends ButtonHandler<typeof todoDoneId> {
     constructor() {
         super({ params: todoDoneId });
     }
@@ -105,9 +105,9 @@ export default class TodoDone extends Button<typeof todoDoneId> {
   from its custom ID and `input` from its fields.
 - Handlers without `params` keep literal custom-ID routing and expose no
   `ctx.params`.
-- A handler supplies either `builder` (literal custom ID) or `params`, never
-  both. A params handler has no template component, so commands build the
-  component with the encoder.
+- A handler declares either `customId` (literal) or `params`, never both. Either
+  kind may carry a template; commands set a params control's custom ID with the
+  encoder.
 
 ## Pipeline
 
@@ -146,8 +146,8 @@ issues.
 - Registries gain a route index for `id` alongside the exact-ID `Collection`,
   exposed as `registry.resolve(customId)`.
 - Load-time checks reject: duplicate routes, a route that equals a literal
-  custom ID, a route containing `:`, duplicate keys, and a handler that supplies
-  both `builder` and `params`.
+  custom ID, a route containing `:`, duplicate keys, and a handler that declares
+  both `customId` and `params`.
 - There is no runtime check that the schema agrees with `keys`. Typing both
   through `typeof todoDoneId` ties the encoder and `ctx.params` together, and a
   mismatch shows up as a validation failure.
@@ -200,13 +200,12 @@ Select menus reuse the codec, route lookup, pipeline, and `ctx.params` tuple.
 - Params are decided when the bot sends the menu; the selection is decided at
   click time. They stay separate: `ctx.params` carries the former and
   `ctx.interaction.values` (or the resolved collections) carries the latter.
-- A params handler has no template builder, so it declares its select type
-  explicitly (`super({ componentType: ComponentType.UserSelect, params })`).
+- Every select handler declares its select type
+  (`super({ componentType: ComponentType.UserSelect, params })`).
   A click whose `componentType` differs is unmatched, and the type is checked
   before decoding, so the schema never runs for the wrong kind.
-- Typing gains a second generic: `SelectMenu<Type, Params>` and
-  `SelectMenuContext<Type, Params>`. `Params` defaults to none, so existing
-  `SelectMenu<Type>` code is unchanged.
+- Typing gains a second generic: `SelectMenuHandler<Type, Params>` and
+  `SelectMenuContext<Type, Params>`. `Params` defaults to none.
 - Routes are unique per registry, as literal custom IDs are today. All five
   select types share `client.selectMenus`, so routes are unique across them and
   across literal select IDs. A button and a select menu may share a route.

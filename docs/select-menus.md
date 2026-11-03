@@ -2,10 +2,12 @@
 
 For control and handler terminology, see the [component glossary](GLOSSARY.md#components).
 
-Hyperion loads default-exported `SelectMenu` subclasses from
+Hyperion loads default-exported `SelectMenuHandler` subclasses from
 `<root>/src/select-menus`, recursively. Missing directories are optional. Each
-handler needs a zero-argument constructor, a supported builder with a unique
-custom ID, and `run(ctx)`. Invalid builders and duplicate IDs fail startup
+handler needs a zero-argument constructor, a unique `customId` (or params), its
+`componentType`, and `run(ctx)`. It may also offer an optional
+[template](GLOSSARY.md#components) builder of the same select type. Invalid
+templates and duplicate IDs fail startup
 before command deployment. Loading is atomic: a failed reload preserves the
 previous registry.
 
@@ -17,13 +19,15 @@ the submission's components resolver, not dispatched to message select handlers.
 
 ```ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
+import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 
-export default class ChooseColour extends SelectMenu {
+export default class ChooseColour extends SelectMenuHandler {
     constructor() {
         super({
+            customId: "colour.choose",
+            componentType: ComponentType.StringSelect,
             builder: new StringSelectMenuBuilder()
-                .setCustomId("colour.choose")
                 .setPlaceholder("Choose a colour")
                 .addOptions(
                     { label: "Blue", value: "blue" },
@@ -42,28 +46,30 @@ export default class ChooseColour extends SelectMenu {
 ```
 
 `ctx.interaction` is a Discord.js `StringSelectMenuInteraction`, so `values` and
-message-update methods are available directly. Multi-select builders return all
-selected values in that array. Builder definitions are shared templates: avoid
-mutating them during invocations.
+message-update methods are available directly. Multi-select menus return all
+selected values in that array. `componentType` is always declared, and a template
+must match it. Templates are shared: callers get copies through `build()`, so
+never mutate the template itself.
 
 ## Define a user handler
 
-Set the generic component type on the handler and its context. This pairs a
-`UserSelectMenuBuilder` with a Discord.js `UserSelectMenuInteraction`, including
+Set the generic component type on the handler and its context, and pass the
+same `componentType`. This pairs a `UserSelectMenuBuilder` template with a Discord.js `UserSelectMenuInteraction`, including
 resolved `.users` and `.members` collections alongside the selected IDs in
 `.values`. Member data depends on guild context; do not assume every selected
 user has a cached guild member.
 
 ```ts
 import { UserSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
+import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseUser extends SelectMenu<ComponentType.UserSelect> {
+export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSelect> {
     constructor() {
         super({
+            customId: "user.choose",
+            componentType: ComponentType.UserSelect,
             builder: new UserSelectMenuBuilder()
-                .setCustomId("user.choose")
                 .setPlaceholder("Choose a user")
                 .setMinValues(1)
                 .setMaxValues(1),
@@ -82,10 +88,10 @@ export default class ChooseUser extends SelectMenu<ComponentType.UserSelect> {
 ```
 
 Discord supplies the user options; do not call `addOptions()` on a user builder.
-String selects retain the default generic, so existing handlers need no changes.
+String selects use the default generic.
 All supported types share `client.selectMenus` and must have unique IDs within it. The
 registry returns a union of typed handlers; narrow `menu.componentType` before
-accessing type-specific builder methods. Dispatch checks the ID and component
+accessing type-specific template methods. Dispatch checks the ID and component
 type together before running guards or a handler.
 
 ## Define a role handler
@@ -98,14 +104,15 @@ depending on guild cache state; `.name` is available on either. Narrow with
 
 ```ts
 import { RoleSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
-import type { ComponentType } from "discord.js";
+import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 
-export default class ChooseRole extends SelectMenu<ComponentType.RoleSelect> {
+export default class ChooseRole extends SelectMenuHandler<ComponentType.RoleSelect> {
     constructor() {
         super({
+            customId: "role.choose",
+            componentType: ComponentType.RoleSelect,
             builder: new RoleSelectMenuBuilder()
-                .setCustomId("role.choose")
                 .setPlaceholder("Choose a role")
                 .setMinValues(1)
                 .setMaxValues(1),
@@ -138,14 +145,15 @@ the selection and guild data; a role selection does not have a user entry.
 
 ```ts
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
-import type { ComponentType } from "discord.js";
+import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 
-export default class ChooseMentionable extends SelectMenu<ComponentType.MentionableSelect> {
+export default class ChooseMentionable extends SelectMenuHandler<ComponentType.MentionableSelect> {
     constructor() {
         super({
+            customId: "mentionable.choose",
+            componentType: ComponentType.MentionableSelect,
             builder: new MentionableSelectMenuBuilder()
-                .setCustomId("mentionable.choose")
                 .setPlaceholder("Choose users or roles")
                 .setMinValues(0)
                 .setMaxValues(5),
@@ -182,14 +190,15 @@ channel type before using cache-specific methods.
 
 ```ts
 import { ChannelSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
-import { ChannelType, type ComponentType } from "discord.js";
+import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { ChannelType, ComponentType } from "discord.js";
 
-export default class ChooseChannel extends SelectMenu<ComponentType.ChannelSelect> {
+export default class ChooseChannel extends SelectMenuHandler<ComponentType.ChannelSelect> {
     constructor() {
         super({
+            customId: "channel.choose",
+            componentType: ComponentType.ChannelSelect,
             builder: new ChannelSelectMenuBuilder()
-                .setCustomId("channel.choose")
                 .setPlaceholder("Choose text or voice channels")
                 .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
                 .setMinValues(0)
@@ -220,19 +229,22 @@ it does not change channel permissions or persist application state.
 
 ## Send a menu
 
-Inside a command, retrieve the registered definition and place its builder in an
-action row:
+Inside a command, `build()` returns a fresh copy of the handler's template with
+its custom ID set. It throws when no handler is loaded for the ID, when the
+handler has no template, or when the ID is a params route.
 
 ```ts
-const menu = ctx.client.selectMenus.get("colour.choose");
-
-if (!menu) throw new Error("Colour menu was not loaded.");
-
 await ctx.interaction.reply({
     content: "Choose a colour.",
-    components: [new ActionRowBuilder().addComponents(menu.builder)],
+    components: [
+        new ActionRowBuilder().addComponents(
+            ctx.client.selectMenus.build("colour.choose"),
+        ),
+    ],
 });
 ```
+
+Without a template, build the menu yourself and set `customId` on it.
 
 Import `ActionRowBuilder` from `@discordjs/builders`. Select menus are sent as
 message components and do not require application-command registration. Routing
@@ -242,8 +254,7 @@ collectors and listeners; avoid acknowledging the same interaction twice.
 ## Carry data in the custom ID
 
 A select menu can declare typed [custom-ID params](custom-id-params.md) instead
-of a template builder. It names its select type, and the command builds the menu
-with the encoder:
+of `customId`. The command sets each menu's custom ID with the encoder:
 
 ```ts
 export const assignTicket = defineParams({
@@ -252,7 +263,7 @@ export const assignTicket = defineParams({
     schema: v.object({ ticketId: v.string(), owner: v.string() }),
 });
 
-export default class AssignTicket extends SelectMenu<
+export default class AssignTicket extends SelectMenuHandler<
     ComponentType.UserSelect,
     typeof assignTicket
 > {
@@ -277,7 +288,7 @@ export default class AssignTicket extends SelectMenu<
 
 Params describe what the bot decided when it sent the menu; the selection is
 what the user chose. A params handler is stored in `client.selectMenus.routes`
-and never has a `builder`. Routes are unique across every select type. A click
+and may also carry a template. Routes are unique across every select type. A click
 of another select type is unmatched before its params are decoded.
 
 ## Guards, async work, and errors
@@ -311,7 +322,7 @@ select handled by `src/select-menus/assign-ticket.ts`.
 
 ## JSX string-select authoring
 
-`@hyperion/jsx` can author a native string-select handler builder with
+`@hyperion/jsx` can author a native string-select template with
 `renderStringSelect()` and `StringSelect.Option` children. Use the same view inside
 an `ActionRow` with `renderComponents()` for a fresh message instance. Existing
 exact-ID/type routing, guards, selected string values, acknowledgment, and native

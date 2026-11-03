@@ -12,11 +12,11 @@ lifetime of a component handler. Database support is not implemented yet.
 Put button handlers in `<bot root>/src/buttons`. Hyperion loads them recursively
 during `HyperionClient.create()`, even when application-command registration is
 not configured. A missing folder is skipped. Buttons do not require deployment
-to Discord: send their builders as components of a message.
+to Discord: send them as components of a message.
 
-Each module default-exports a `Button` subclass with a public, zero-argument
+Each module default-exports a `ButtonHandler` subclass with a public, zero-argument
 constructor. As with commands, barrels, declarations, test files, hidden entries,
-and `node_modules` are skipped. Duplicate custom IDs, invalid builders, and invalid
+and `node_modules` are skipped. Duplicate custom IDs, invalid templates, and invalid
 handlers fail initialization with their source file. All command and button
 modules load before application commands are deployed.
 
@@ -33,21 +33,22 @@ apps/dev-bot/
 
 ## Define a handler
 
-Use an interactive builder from the installed discord.js v15 builder package:
-`PrimaryButtonBuilder`, `SecondaryButtonBuilder`, `SuccessButtonBuilder`, or
-`DangerButtonBuilder`. Link and premium buttons do not dispatch custom-ID
-interactions and cannot be Hyperion handlers.
+A handler declares where clicks route with `customId`. It may also offer an
+optional [template](GLOSSARY.md#components): an interactive builder from the
+installed discord.js v15 builder package (`PrimaryButtonBuilder`,
+`SecondaryButtonBuilder`, `SuccessButtonBuilder`, or `DangerButtonBuilder`).
+Link and premium buttons do not dispatch custom-ID interactions and cannot be
+templates.
 
 ```ts
 import { PrimaryButtonBuilder } from "@discordjs/builders";
-import { Button, type ButtonContext } from "@hyperion/core";
+import { ButtonHandler, type ButtonContext } from "@hyperion/core";
 
-export default class RefreshButton extends Button {
+export default class RefreshButton extends ButtonHandler {
     constructor() {
         super({
-            builder: new PrimaryButtonBuilder()
-                .setCustomId("profile.refresh")
-                .setLabel("Refresh profile"),
+            customId: "profile.refresh",
+            builder: new PrimaryButtonBuilder().setLabel("Refresh profile"),
         });
     }
 
@@ -66,16 +67,16 @@ export default class RefreshButton extends Button {
 
 Handlers are stored in `client.buttons`, a Discord `Collection` keyed by exact
 custom ID. `profile.refresh` matches only that ID; suffixes, wildcards, and regex
-routing are not interpreted. Keep IDs stable after construction, including when
-cloning builders. Unmatched buttons are ignored so application-owned collectors
+routing are not interpreted. Keep IDs stable after construction. The template may
+omit its custom ID; if it sets one, it must equal `customId`. Unmatched buttons are ignored so application-owned collectors
 and listeners can handle them. Avoid having a collector and a Hyperion handler
 both acknowledge the same ID.
 
 ## Carry data in the custom ID
 
 To give one handler many controls, each carrying its own values, declare typed
-params instead of a template builder. The command builds the visible button
-with the encoder; see [custom-ID params](custom-id-params.md) for the wire
+params instead of `customId`. The command sets each button's custom ID with the
+encoder; see [custom-ID params](custom-id-params.md) for the wire
 format, guard ordering, and stale-button rules.
 
 ```ts
@@ -85,7 +86,7 @@ export const todoDone = defineParams({
     schema: v.object({ owner: v.string(), todoId: v.string() }),
 });
 
-export default class TodoDone extends Button<typeof todoDone> {
+export default class TodoDone extends ButtonHandler<typeof todoDone> {
     constructor() {
         super({ params: todoDone });
     }
@@ -107,29 +108,35 @@ export default class TodoDone extends Button<typeof todoDone> {
 // In a command: new PrimaryButtonBuilder().setCustomId(todoDone({ owner, todoId }))
 ```
 
-A params handler owns its whole `<id>:` namespace, is stored in
-`client.buttons.routes`, and never has a `builder`. Exact-match routing for
+A params handler owns its whole `<id>:` namespace and is stored in
+`client.buttons.routes`. It may also carry a template. Exact-match routing for
 literal handlers is unchanged. Params are decoded and schema-validated before
 guards, so guards can read `ctx.params`; a schema failure reaches the handler as
 `issues` rather than as an automatic reply.
 
 ## Send the button
 
-Inside a command's `run(ctx)`:
+Inside a command's `run(ctx)`, `build()` returns a fresh copy of the handler's
+template with its custom ID set. It throws when no handler is loaded for the ID,
+when the handler has no template, or when the ID is a params route.
 
 ```ts
 import { ActionRowBuilder } from "@discordjs/builders";
 import { MessageFlags } from "discord.js";
 
-const button = ctx.client.buttons.get("profile.refresh");
-if (!button) throw new Error("Refresh button is not loaded.");
-
 await ctx.interaction.reply({
     content: "Press refresh to load your profile.",
     flags: MessageFlags.Ephemeral,
-    components: [new ActionRowBuilder().addComponents(button.builder)],
+    components: [
+        new ActionRowBuilder().addComponents(
+            ctx.client.buttons.build("profile.refresh"),
+        ),
+    ],
 });
 ```
+
+Without a template, build the button yourself and set `customId` on it. The
+handler does not depend on how the button looks.
 
 The development bot includes this flow as `/profile` and
 `src/buttons/refresh-profile.ts`. Its button fetches fresh user data after
@@ -143,13 +150,12 @@ scoped `logger`. Fetch async data there using the clicking user or source messag
 ID as a lookup key. Each click can retrieve current status instead of retaining a
 snapshot from when the button was sent.
 
-Handler instances and their builder templates are shared. Keep invocation data in
-local variables; clone builders before changing labels, styles, or disabled state:
+Handler instances and their templates are shared. Keep invocation data in
+local variables, and change labels, styles, or disabled state on a copy from
+`build()`, which never alters the template:
 
 ```ts
-const builder = new PrimaryButtonBuilder(this.builder.toJSON()).setLabel(
-    "Updated",
-);
+const builder = ctx.client.buttons.build(this.customId).setLabel("Updated");
 ```
 
 Handlers do not receive command-local closure state. Store persistent
@@ -191,13 +197,13 @@ application data are not logged automatically.
 ## JSX authoring
 
 `@hyperion/jsx` provides `Button` and `renderButton()` for native interactive
-handler builders, and `ActionRow` with `renderComponents()` for message controls.
-Alias core's class as `ButtonHandler` when both APIs are imported. Link buttons
-belong in message rows and cannot define core handlers. Rendering does not
+templates, and `ActionRow` with `renderComponents()` for message controls.
+Core's `ButtonHandler` and JSX's `Button` can be imported together. Link buttons
+belong in message rows and cannot be templates. Rendering does not
 register callbacks or change exact-ID routing, guards, or acknowledgment.
 
 See [JSX message components](jsx-message-components.md) for complete examples,
 plain-label rules, native validation, emoji data, and the distinction between
-shared handler builders and fresh per-message controls. `/jsx-buttons` demonstrates
+shared templates and fresh per-message controls. `/jsx-buttons` demonstrates
 both renderers in the development bot. Native collectors continue to work with
 rendered message controls; avoid competing ownership of the same interactions.

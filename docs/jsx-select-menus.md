@@ -92,12 +92,15 @@ Do not log automatically or truncate invalid content.
 ## Handler example
 
 ```tsx
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
+import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
 import { StringSelect, renderStringSelect } from "@hyperion/jsx";
+import { ComponentType } from "discord.js";
 
-export default class extends SelectMenu {
+export default class extends SelectMenuHandler {
     constructor() {
         super({
+            customId: "todo.priority",
+            componentType: ComponentType.StringSelect,
             builder: renderStringSelect(
                 <StringSelect
                     customId="todo.priority"
@@ -222,4 +225,4 @@ a later render reads their current values without freezing them.
 `jsx.priority` handler. Optional `priority` (`low` or `high`) and `disabled`
 command options customize a fresh message. The view allows clearing selection
 with a zero minimum. The handler reports chosen strings (or `None`) without
-persisting them or modifying the registered builder.
+persisting them or modifying the registered template.
