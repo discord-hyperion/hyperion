@@ -46,7 +46,7 @@ leaves across multiple folders. Put this in `(support)/[ticket]/index.ts`:
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { ParentCommand, OwnerOnly } from "@hyperion/core";
+import { ParentCommand, ownerOnly } from "@hyperion/core";
 import { InteractionContextType } from "discord.js";
 
 export default class Ticket extends ParentCommand {
@@ -55,7 +55,7 @@ export default class Ticket extends ParentCommand {
             builder: new ChatInputCommandBuilder()
                 .setDescription("Manage support tickets.")
                 .setContexts(InteractionContextType.Guild),
-            guards: [new OwnerOnly()],
+            guards: [ownerOnly],
         });
     }
 }

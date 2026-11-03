@@ -271,7 +271,7 @@ export default class AssignTicket extends SelectMenuHandler<
         super({
             componentType: ComponentType.UserSelect,
             params: assignTicket,
-            guards: [new ParamOwner("owner")],
+            guards: [paramOwner("owner")],
         });
     }
 
@@ -301,7 +301,7 @@ The optional `guards` array accepts instances or lazy async factories for
 `Guard<SelectMenuContext<ComponentType.RoleSelect>>` (role selects), or
 `Guard<SelectMenuContext<ComponentType.MentionableSelect>>` (mentionable selects), or
 `Guard<SelectMenuContext<ComponentType.ChannelSelect>>` (channel selects).
-Shared guards such as `OwnerOnly` also work. Every component
+Shared guards such as `ownerOnly` also work. Every component
 must declare its own guards; a command's guards do not apply to its menus.
 
 Handlers control acknowledgment. Use `update()` for immediate message changes,

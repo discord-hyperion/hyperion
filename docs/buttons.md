@@ -170,9 +170,9 @@ the service that owns them.
 
 ## Guards, acknowledgment, and errors
 
-Button options accept `guards`, including shared instances and lazy async
-factories. `OwnerOnly` works on both commands and buttons. Custom button guards
-extend `Guard<ButtonContext>`; a guard reusable across both can accept the broader
+Button options accept `guards`, including shared guards and lazy async
+factories. `ownerOnly` works on both commands and buttons. Custom button guards
+are `defineGuard<ButtonContext>({ … })` definitions; a guard reusable across both can accept the broader
 `InteractionContext`. Guards on the command that sends a button do not
 automatically protect later clicks; attach the required guards to the button.
 Rejection stops later guards and the handler. `onFail(ctx)` controls custom

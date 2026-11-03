@@ -118,7 +118,7 @@ match → decode → schema validate → guards → handler
 This intentionally differs from command and modal input
 (`guards → extract → validate → resolve → handler`):
 - Guards can read `ctx.params`, so one reusable ownership guard (for example
-  `ParamOwner("owner")`) can compare the clicker with a forged-able ID value.
+  `paramOwner("owner")`) can compare the clicker with a forged-able ID value.
 - Validation is pure and cheap. Because `resolve` is excluded, no application
   lookup runs before authorization.
 - Guard contexts for params handlers carry `params`. Guards for other handlers
@@ -176,7 +176,7 @@ issues.
 - A schema failure does not stop guards. A guard that reads `ctx.params` must
   handle the issues case itself and reject; the framework does not reject on its
   behalf, so handlers keep control of the response.
-- The built-in `ParamOwner` guard rejects whenever `ctx.params` carries issues.
+- The built-in `paramOwner()` guard rejects whenever `ctx.params` carries issues.
 
 ## Stale controls
 
@@ -199,7 +199,7 @@ or a control is stale.
 
 1. Shared codec (`defineParams`, encode, decode) and the route index.
 2. Buttons.
-3. Select menus, all five types, and the `ParamOwner` guard.
+3. Select menus, all five types, and the `paramOwner()` guard.
 4. Modals, `build(definition, values)` on every registry, and the compile-time
    `keys` check.
 5. Follow-up: a JSX helper for the encoder.
@@ -235,7 +235,7 @@ match → decode → params validate → guards → input (defer, extract, valid
 
 - Typing gains a second generic: `ModalHandler<Input, Params>` and
   `ModalContext<Input, Params>`. `Params` defaults to none.
-- Guards see `ctx.params` but never `ctx.input`, so `ParamOwner` works unchanged
+- Guards see `ctx.params` but never `ctx.input`, so `paramOwner()` works unchanged
   and rejects before any input processing.
 - Input runs even when params have issues, so the handler receives both tuples.
   An input resolver receives the params-bearing context. A resolver that reads
@@ -256,13 +256,13 @@ Guards that read `ctx.params` are typed through the same definition, for example
 `Guard<ButtonContext<typeof todoDoneId>>`, so a guard written for one params
 handler cannot be attached to a handler with different params.
 
-## ParamOwner
+## paramOwner()
 
-`ParamOwner` is an opt-in built-in guard, not part of execution: it runs only
+`paramOwner()` is an opt-in built-in guard, not part of execution: it runs only
 when a handler lists it.
 
 ```ts
-guards: [new ParamOwner("owner", "Only the ticket's author can close it.")];
+guards: [paramOwner("owner", "Only the ticket's author can close it.")];
 ```
 
 - It passes when `ctx.params` has no issues and `params[key]` equals the user's

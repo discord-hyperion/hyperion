@@ -128,7 +128,7 @@ export default class RenameTicket extends ModalHandler<
                 "Rename ticket",
             ) /* … "title" text input */,
             input,
-            guards: [new ParamOwner("owner")],
+            guards: [paramOwner("owner")],
         });
     }
 
@@ -145,7 +145,7 @@ await ctx.interaction.showModal(
 ```
 
 Params are decoded and validated before guards, so guards (such as
-`ParamOwner`) can read `ctx.params` but never `ctx.input`. Input then runs, even
+`paramOwner()`) can read `ctx.params` but never `ctx.input`. Input then runs, even
 when params have issues, so the handler receives both tuples and chooses the
 response. A params handler is stored in `client.modals.routes`.
 `build(definition, values)` returns a fresh copy of the form with the encoded
@@ -155,7 +155,7 @@ custom ID. The development bot's `/ticket` **Rename** button opens
 ## Guards and acknowledgment
 
 `guards` accepts ordered `Guard<ModalContext>` instances or lazy per-invocation
-factories. Shared interaction guards such as `OwnerOnly` and `Cooldown` work too.
+factories. Shared interaction guards such as `ownerOnly` and `cooldown()` work too.
 Factories do not run during discovery. A rejection or exception stops later
 guards and the handler. A custom `onFail(ctx)` owns the rejection response.
 Guards on the originating command or component do not automatically apply to

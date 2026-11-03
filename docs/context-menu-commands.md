@@ -21,14 +21,14 @@ duplicate configuration.
 
 ```ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext, OwnerOnly } from "discord-hyperion";
+import { Command, type CommandContext, ownerOnly } from "discord-hyperion";
 import { type ApplicationCommandType, MessageFlags } from "discord.js";
 
 export default class InspectUser extends Command<ApplicationCommandType.User> {
     constructor() {
         super({
             builder: new UserContextCommandBuilder().setName("Inspect"),
-            guards: [new OwnerOnly()],
+            guards: [ownerOnly],
         });
     }
 
@@ -136,7 +136,7 @@ errors retain source-file context, including when names are shared across types.
 
 Use `Guard<CommandContext<ApplicationCommandType.User>>` or the corresponding
 message context for target-specific checks. Shared `InteractionContext` guards
-such as `OwnerOnly` and `Cooldown` also work. Factories are lazy and receive the
+such as `ownerOnly` and `cooldown()` also work. Factories are lazy and receive the
 resolved target only during invocation, never during discovery or deployment.
 
 Handlers own acknowledgment: reply immediately, defer and later edit the reply,
