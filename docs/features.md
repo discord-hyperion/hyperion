@@ -26,6 +26,12 @@
   - Extend validation to additional modal control types and custom-ID parameters.
   - Support application-defined resolvers, including asynchronous validation.
   - Keep expected validation failures separate from unexpected errors across input sources.
+- [ ] Guard definitions through `defineGuard()` (under consideration).
+  - Match the `defineInput()` and `defineParams()` style: a helper that returns a frozen definition, generic over the context type (`defineGuard<ButtonContext>({ ... })`), defaulting to the command context like `Guard`. A standalone guard has nothing to infer its context from, so inference only helps when the definition names its source (for example `defineGuard({ params: closeTicket, run(ctx) { ... } })`); otherwise supply the context type explicitly.
+  - Keep `name`, `description`, `run()`, and optional `onFail()`; allow a parameterized form such as `defineGuard((guildId: string) => ({ ... }))` in place of a class with constructor arguments. A function form needs an explicit `name`, since class guards default it to the class name for logs.
+  - Return a `Guard` instance internally. The six `instanceof Guard` checks (command, command-guard freezing, button, select menu, modal, and the guard pipeline) then stay unchanged, instances stay distinguishable from guard factories, and only the authoring surface differs.
+  - Guards are constructed in handlers and are not expected to move to filesystem discovery, so they need not follow the handlers' class-only convention. Class-based `Guard` subclasses remain supported for guards with real state, such as `Cooldown`.
+  - Convert built-in guards (`OwnerOnly`, `Cooldown`) only if both forms stay supported, and keep guard providers (instances and factories) working for every handler type.
 - [ ] Intuitive, declarative embed creation API.
   - Describe embed content, fields, and styling with a typed API that reduces builder boilerplate.
   - Support reusable defaults and templates while retaining access to native Discord builders.
