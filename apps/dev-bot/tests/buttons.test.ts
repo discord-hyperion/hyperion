@@ -76,7 +76,7 @@ test("development profile command and button complete the async refresh flow", a
     );
 
     const button = client.buttons.get("profile.refresh");
-    const template = button?.builder.toJSON();
+    const template = button?.builder?.toJSON(false);
     const fixture = interaction();
     Object.assign(fixture.interaction, { customId: "profile.refresh" });
     await dispatcher.dispatch(fixture.interaction);
@@ -91,5 +91,5 @@ test("development profile command and button complete the async refresh flow", a
     assert.equal(edited.content, "Profile refreshed: Refreshed user");
     assert.equal(fixture.reply.mock.callCount(), 0);
     assert.equal(fixture.followUp.mock.callCount(), 0);
-    assert.deepEqual(button?.builder.toJSON(), template);
+    assert.deepEqual(button?.builder?.toJSON(false), template);
 });

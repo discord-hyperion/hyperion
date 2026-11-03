@@ -13,14 +13,14 @@ export default class ChannelCommand extends Command {
     }
 
     async run(ctx: CommandContext) {
-        const menu = ctx.client.selectMenus.get("channel.choose");
-
-        if (!menu) throw new Error("The channel menu was not loaded.");
-
         await ctx.interaction.reply({
             content: "Choose channels.",
             flags: MessageFlags.Ephemeral,
-            components: [new ActionRowBuilder().addComponents(menu.builder)],
+            components: [
+                new ActionRowBuilder().addComponents(
+                    ctx.client.selectMenus.build("channel.choose"),
+                ),
+            ],
         });
     }
 }

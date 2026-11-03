@@ -13,6 +13,7 @@ import {
     type ParamsResult,
     validateParams,
 } from "./custom-id-params.ts";
+import { handlerCustomId } from "./handler-options.ts";
 
 export type SelectMenuType =
     | ComponentType.StringSelect
@@ -45,63 +46,44 @@ export type SelectMenuContext<
         ? { readonly params: ParamsResult<Params> }
         : unknown);
 
-export type SelectMenuOptions<
+export type SelectMenuHandlerOptions<
     Type extends SelectMenuType = ComponentType.StringSelect,
     Params extends ParamsDefinition | undefined = undefined,
 > = {
+    componentType: Type;
+    /** Optional template; callers get copies through `client.selectMenus.build()`. */
+    builder?: SelectMenuBuilders[Type];
     guards?: readonly GuardProvider<SelectMenuContext<Type, Params>>[];
 } & (Params extends ParamsDefinition
-    ? { componentType: Type; params: Params; builder?: never }
-    : {
-          builder: SelectMenuBuilders[Type];
-          componentType?: never;
-          params?: never;
-      });
+    ? { params: Params; customId?: never }
+    : { customId: string; params?: never });
 
-export abstract class SelectMenu<
+export abstract class SelectMenuHandler<
     Type extends SelectMenuType = ComponentType.StringSelect,
     Params extends ParamsDefinition | undefined = undefined,
 > {
-    /** Literal handlers only; params handlers build their controls per call. */
-    readonly builder: Params extends ParamsDefinition
-        ? undefined
-        : SelectMenuBuilders[Type];
+    readonly builder: SelectMenuBuilders[Type] | undefined;
     readonly componentType: Type;
     readonly params: ParamsDefinition | undefined;
     /** The exact custom ID, or the route for a params handler. */
     readonly customId: string;
     readonly guards: readonly GuardProvider<SelectMenuContext<Type, Params>>[];
 
-    protected constructor(options: SelectMenuOptions<Type, Params>) {
-        if (options.builder !== undefined && options.params !== undefined) {
+    protected constructor(options: SelectMenuHandlerOptions<Type, Params>) {
+        if (!selectMenuTypes.includes(options.componentType)) {
             throw new TypeError(
-                "Select menu handlers accept either a builder or params, not both.",
+                "Select menu handlers require a select componentType.",
             );
         }
 
-        this.builder = options.builder as this["builder"];
         this.params = validateParams(options.params);
-
-        if (this.params) {
-            if (!selectMenuTypes.includes(options.componentType)) {
-                throw new TypeError(
-                    "Select menu params handlers require a select componentType.",
-                );
-            }
-
-            this.customId = this.params.id;
-            this.componentType = options.componentType as Type;
-        } else if (options.builder) {
-            const data = options.builder.toJSON(false);
-
-            this.customId = data.custom_id;
-            // The builder map pairs each generic type with its matching builder.
-            this.componentType = data.type as Type;
-        } else {
-            throw new TypeError(
-                "Select menu handlers require a builder or params.",
-            );
-        }
+        this.customId = handlerCustomId(
+            "Select menu",
+            options.customId,
+            this.params,
+        );
+        this.componentType = options.componentType;
+        this.builder = options.builder;
 
         this.guards = Object.freeze([...(options.guards ?? [])]);
 
@@ -121,9 +103,9 @@ export abstract class SelectMenu<
     abstract run(ctx: SelectMenuContext<Type, Params>): Promise<void>;
 }
 
-export type AnySelectMenu =
-    | SelectMenu<ComponentType.StringSelect>
-    | SelectMenu<ComponentType.UserSelect>
-    | SelectMenu<ComponentType.RoleSelect>
-    | SelectMenu<ComponentType.MentionableSelect>
-    | SelectMenu<ComponentType.ChannelSelect>;
+export type AnySelectMenuHandler =
+    | SelectMenuHandler<ComponentType.StringSelect>
+    | SelectMenuHandler<ComponentType.UserSelect>
+    | SelectMenuHandler<ComponentType.RoleSelect>
+    | SelectMenuHandler<ComponentType.MentionableSelect>
+    | SelectMenuHandler<ComponentType.ChannelSelect>;

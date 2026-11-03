@@ -43,7 +43,7 @@ test("JSX buttons preserve builder identity, personalized disabled state, and ex
     const dispatcher = new InteractionDispatcher(client);
     const handler = client.buttons.get("jsx.refresh");
     assert.ok(handler?.builder instanceof CustomIdButtonBuilder);
-    const template = handler.builder.toJSON();
+    const template = handler.builder?.toJSON(false);
 
     for (const disabled of [false, true]) {
         const fixture = createChatInputInteraction({
@@ -65,7 +65,7 @@ test("JSX buttons preserve builder identity, personalized disabled state, and ex
         assert.equal(button.toJSON().disabled, disabled);
         assert.notEqual(button, handler.builder);
     }
-    assert.deepEqual(handler.builder.toJSON(), template);
+    assert.deepEqual(handler.builder?.toJSON(false), template);
     const click = createButtonInteraction({ customId: "jsx.refresh" });
     await dispatcher.dispatch(click.interaction);
     assert.deepEqual(click.update.mock.calls[0]?.arguments[0], {

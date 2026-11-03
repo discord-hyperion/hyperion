@@ -6,25 +6,31 @@ import {
     StringSelectMenuBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { Events, MessageFlags, TextInputStyle } from "discord.js";
+import {
+    ComponentType,
+    Events,
+    MessageFlags,
+    TextInputStyle,
+} from "discord.js";
 import { createModalInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
     Guard,
     type GuardProvider,
-    Modal,
     type ModalContext,
+    ModalHandler,
     OwnerOnly,
-    SelectMenu,
+    SelectMenuHandler,
 } from "../src/index.ts";
 import { assertPrivateFailure, phases } from "./support/acknowledgment.ts";
 import { createTestClient } from "./support/test-client.ts";
 
-class TestModal extends Modal {
+class TestModal extends ModalHandler {
     constructor(
         private readonly execute: (ctx: ModalContext) => Promise<void>,
         guards: readonly GuardProvider<ModalContext>[] = [],
     ) {
         super({
+            customId: "feedback.submit",
             builder: new ModalBuilder()
                 .setCustomId("feedback.submit")
                 .setTitle("Feedback")
@@ -123,17 +129,22 @@ test("embedded selects are resolved by the modal without invoking message select
         .setCustomId("colour.choose")
         .addOptions({ label: "Blue", value: "blue" });
     const execute = mock.fn(async () => {});
-    class MessageMenu extends SelectMenu {
+    class MessageMenu extends SelectMenuHandler {
         constructor() {
-            super({ builder });
+            super({
+                customId: "colour.choose",
+                componentType: ComponentType.StringSelect,
+                builder,
+            });
         }
         run() {
             return execute();
         }
     }
-    class EmbeddedModal extends Modal {
+    class EmbeddedModal extends ModalHandler {
         constructor() {
             super({
+                customId: "feedback.submit",
                 builder: new ModalBuilder()
                     .setCustomId("feedback.submit")
                     .setTitle("Choose a colour")
@@ -154,7 +165,7 @@ test("embedded selects are resolved by the modal without invoking message select
     }
     client.selectMenus.set("colour.choose", new MessageMenu());
     const modal = new EmbeddedModal();
-    assert.match(JSON.stringify(modal.builder.toJSON()), /colour.choose/);
+    assert.match(JSON.stringify(modal.builder?.toJSON()), /colour.choose/);
     client.modals.set(modal.customId, modal);
     const fixture = interaction();
     const getStringSelectValues = mock.fn((_customId: string) => ["blue"]);

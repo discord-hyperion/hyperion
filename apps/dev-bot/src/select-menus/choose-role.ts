@@ -1,12 +1,13 @@
 import { RoleSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
-import type { ComponentType } from "discord.js";
+import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 
-export default class ChooseRole extends SelectMenu<ComponentType.RoleSelect> {
+export default class ChooseRole extends SelectMenuHandler<ComponentType.RoleSelect> {
     constructor() {
         super({
+            customId: "role.choose",
+            componentType: ComponentType.RoleSelect,
             builder: new RoleSelectMenuBuilder()
-                .setCustomId("role.choose")
                 .setPlaceholder("Choose a role")
                 .setMinValues(1)
                 .setMaxValues(1),

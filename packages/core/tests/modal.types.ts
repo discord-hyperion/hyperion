@@ -3,7 +3,7 @@ import type { ModalSubmitInteraction } from "discord.js";
 import {
     type AnyInteraction,
     type ModalContext,
-    type ModalOptions,
+    type ModalHandlerOptions,
     OwnerOnly,
 } from "../src/index.ts";
 
@@ -18,7 +18,8 @@ export const modalContracts = (ctx: ModalContext) => {
         ctx.interaction.message.id satisfies string;
     }
 
-    const options: ModalOptions = {
+    const options: ModalHandlerOptions = {
+        customId: "feedback.submit",
         builder: new ModalBuilder().setCustomId("feedback.submit"),
         guards: [
             ctx => {
@@ -29,8 +30,9 @@ export const modalContracts = (ctx: ModalContext) => {
             },
         ],
     };
-    const wrongBuilder: ModalOptions = {
-        // @ts-expect-error Modal handlers require a ModalBuilder.
+    const wrongBuilder: ModalHandlerOptions = {
+        customId: "feedback.submit",
+        // @ts-expect-error Modal templates must be ModalBuilder instances.
         builder: new TextInputBuilder(),
     };
     // @ts-expect-error Modal submissions use the v15 components resolver, not fields.

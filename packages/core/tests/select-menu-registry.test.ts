@@ -17,7 +17,11 @@ const fixture = (t: TestContext) =>
 const userSource = (id: string) =>
     source(id)
         .replaceAll("StringSelectMenuBuilder", "UserSelectMenuBuilder")
-        .replace('.addOptions({ label: "Blue", value: "blue" })', "");
+        .replace('.addOptions({ label: "Blue", value: "blue" })', "")
+        .replace(
+            "componentType: 3",
+            `componentType: ${ComponentType.UserSelect}`,
+        );
 
 test("loads all supported selects together without REST registration", async t => {
     const { root, directory } = await fixture(t);
@@ -64,7 +68,7 @@ test("loads all supported selects together without REST registration", async t =
         ComponentType.RoleSelect,
     );
     assert.equal(
-        client.selectMenus.get("user.choose")?.builder.toJSON().type,
+        client.selectMenus.get("user.choose")?.builder?.toJSON().type,
         ComponentType.UserSelect,
     );
     assert.equal(put.mock.callCount(), 0);
@@ -109,13 +113,20 @@ test("invalid user select limits retain source context and previous handlers", a
 });
 
 const roleSource = (id: string) =>
-    userSource(id).replaceAll("UserSelectMenuBuilder", "RoleSelectMenuBuilder");
+    userSource(id)
+        .replaceAll("UserSelectMenuBuilder", "RoleSelectMenuBuilder")
+        .replace(
+            `componentType: ${ComponentType.UserSelect}`,
+            `componentType: ${ComponentType.RoleSelect}`,
+        );
 
 const channelSource = (id: string) =>
-    userSource(id).replaceAll(
-        "UserSelectMenuBuilder",
-        "ChannelSelectMenuBuilder",
-    );
+    userSource(id)
+        .replaceAll("UserSelectMenuBuilder", "ChannelSelectMenuBuilder")
+        .replace(
+            `componentType: ${ComponentType.UserSelect}`,
+            `componentType: ${ComponentType.ChannelSelect}`,
+        );
 
 test("duplicate channel IDs preserve previously loaded handlers", async t => {
     const { root, directory } = await fixture(t);
@@ -205,10 +216,12 @@ test("invalid role limits retain source context and previous handlers", async t 
 });
 
 const mentionableSource = (id: string) =>
-    userSource(id).replaceAll(
-        "UserSelectMenuBuilder",
-        "MentionableSelectMenuBuilder",
-    );
+    userSource(id)
+        .replaceAll("UserSelectMenuBuilder", "MentionableSelectMenuBuilder")
+        .replace(
+            `componentType: ${ComponentType.UserSelect}`,
+            `componentType: ${ComponentType.MentionableSelect}`,
+        );
 
 test("duplicate mentionable IDs preserve previously loaded handlers", async t => {
     const { root, directory } = await fixture(t);

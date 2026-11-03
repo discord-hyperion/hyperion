@@ -61,7 +61,7 @@ for (const [label, ids, expected] of [
         const menu = client.selectMenus.get("channel.choose");
         assert.ok(menu);
         assert.equal(menu.componentType, ComponentType.ChannelSelect);
-        assert.deepEqual(menu.builder.toJSON().channel_types, [
+        assert.deepEqual(menu.builder?.toJSON(false).channel_types, [
             ChannelType.GuildText,
             ChannelType.GuildVoice,
         ]);
@@ -76,7 +76,7 @@ for (const [label, ids, expected] of [
         }
         const template = client.selectMenus
             .get("channel.choose")
-            ?.builder.toJSON();
+            ?.builder?.toJSON(false);
         await dispatcher.dispatch(fixture.interaction);
 
         assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
@@ -85,7 +85,7 @@ for (const [label, ids, expected] of [
         });
         assert.equal(fixture.reply.mock.callCount(), 0);
         assert.deepEqual(
-            client.selectMenus.get("channel.choose")?.builder.toJSON(),
+            client.selectMenus.get("channel.choose")?.builder?.toJSON(false),
             template,
         );
     });

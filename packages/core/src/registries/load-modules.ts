@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection } from "discord.js";
 import type { Logger } from "pino";
+import { copyTemplate, type Template } from "../components/handler-options.ts";
 import {
     assertRegistryClass,
     type RegistryBaseClass,
@@ -58,10 +59,10 @@ export const loadHandler = async <Instance>(
     return new HandlerClass();
 };
 
-type ComponentData = { custom_id?: string; type?: number };
+type ComponentData = ReturnType<Template["toJSON"]>;
 type ComponentHandler = {
     readonly customId: string;
-    readonly builder?: { toJSON: () => ComponentData } | undefined;
+    readonly builder?: Template | undefined;
     readonly params?: { readonly id: string } | undefined;
     run: unknown;
 };
@@ -91,29 +92,29 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
 
             if (typeof handler.run !== "function") {
                 throw new TypeError(
-                    `${baseClass.name} handlers must provide a run() method.`,
+                    `${title} handlers must provide a run() method.`,
                 );
             }
+            if (handler.params !== undefined && !routes) {
+                throw new TypeError(`${title} handlers do not support params.`);
+            }
 
-            if (handler.params === undefined) {
-                const data = handler.builder?.toJSON();
-                if (!data) {
-                    throw new TypeError(
-                        `${baseClass.name} handlers require a builder.`,
-                    );
-                }
+            if (handler.builder !== undefined) {
+                const data = handler.builder.toJSON(false);
 
                 validate(handler, data);
 
-                if (data.custom_id !== handler.customId) {
+                if (
+                    data.custom_id !== undefined &&
+                    data.custom_id !== handler.customId
+                ) {
                     throw new Error(
-                        `${baseClass.name} builder custom ID must match its handler's custom ID.`,
+                        `${title} template custom ID must match its handler's ${handler.params ? "route" : "custom ID"}.`,
                     );
                 }
-            } else if (!routes) {
-                throw new TypeError(
-                    `${baseClass.name} handlers do not support params.`,
-                );
+
+                // Validate the copy callers will receive, with its custom ID set.
+                copyTemplate(handler.builder, handler.customId).toJSON();
             }
         } catch (cause) {
             throw new Error(`Failed to load ${name} from "${file}".`, {

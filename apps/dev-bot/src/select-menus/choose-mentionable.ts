@@ -1,12 +1,13 @@
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
-import type { ComponentType } from "discord.js";
+import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { ComponentType } from "discord.js";
 
-export default class ChooseMentionable extends SelectMenu<ComponentType.MentionableSelect> {
+export default class ChooseMentionable extends SelectMenuHandler<ComponentType.MentionableSelect> {
     constructor() {
         super({
+            customId: "mentionable.choose",
+            componentType: ComponentType.MentionableSelect,
             builder: new MentionableSelectMenuBuilder()
-                .setCustomId("mentionable.choose")
                 .setPlaceholder("Choose users or roles")
                 .setMinValues(0)
                 .setMaxValues(5),

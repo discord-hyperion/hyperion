@@ -85,10 +85,13 @@ try {
     assert.equal(client.commands.parents.size, 1);
     const modal = client.modals.get("consumer.modal");
     assert.ok(modal);
-    assert.equal(modal.builder.toJSON().custom_id, modal.customId);
+    assert.equal(
+        client.modals.build(modal.customId).toJSON().custom_id,
+        modal.customId,
+    );
     const buttonHandler = client.buttons.get("consumer.refresh");
     assert.ok(buttonHandler);
-    assert.equal(buttonHandler.builder.toJSON().custom_id, "consumer.refresh");
+    assert.equal(buttonHandler.builder?.toJSON().custom_id, "consumer.refresh");
     const updates: unknown[] = [];
     const click = {
         type: InteractionType.MessageComponent,

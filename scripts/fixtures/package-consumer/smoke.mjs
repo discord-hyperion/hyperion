@@ -5,28 +5,28 @@ import {
     PrimaryButtonBuilder,
 } from "@discordjs/builders";
 import {
-    Button,
+    ButtonHandler,
     Command,
     CommandRegistry,
     HyperionClient,
-    Modal,
+    ModalHandler,
 } from "@hyperion/core";
 import { Client, Events } from "discord.js";
 
-class ExampleButton extends Button {
+class ExampleButton extends ButtonHandler {
     constructor() {
         super({
-            builder: new PrimaryButtonBuilder()
-                .setCustomId("button")
-                .setLabel("Button"),
+            customId: "button",
+            builder: new PrimaryButtonBuilder().setLabel("Button"),
         });
     }
     async run() {}
 }
-class ExampleModal extends Modal {
+class ExampleModal extends ModalHandler {
     constructor() {
         super({
-            builder: new ModalBuilder().setCustomId("modal").setTitle("Modal"),
+            customId: "modal",
+            builder: new ModalBuilder().setTitle("Modal"),
         });
     }
     async run() {}

@@ -43,7 +43,7 @@ test("JSX string selects preserve builder identity, personalized defaults, and e
     await client.commands.load(root);
     const handler = client.selectMenus.get("jsx.priority");
     assert.ok(handler?.builder instanceof StringSelectMenuBuilder);
-    const template = handler.builder.toJSON();
+    const template = handler.builder?.toJSON(false);
     const dispatcher = new InteractionDispatcher(client);
 
     for (const priority of ["low", "high"]) {
@@ -73,7 +73,7 @@ test("JSX string selects preserve builder identity, personalized defaults, and e
             [priority],
         );
     }
-    assert.deepEqual(handler.builder.toJSON(), template);
+    assert.deepEqual(handler.builder?.toJSON(false), template);
 
     for (const values of [["high"], []]) {
         const fixture = createSelectInteraction(ComponentType.StringSelect, {
@@ -99,5 +99,5 @@ test("JSX string selects preserve builder identity, personalized defaults, and e
     assert.equal(unmatched.update.mock.callCount(), 0);
     assert.equal(unmatched.reply.mock.callCount(), 0);
     assert.equal(wrongType.update.mock.callCount(), 0);
-    assert.deepEqual(handler.builder.toJSON(), template);
+    assert.deepEqual(handler.builder?.toJSON(false), template);
 });

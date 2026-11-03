@@ -1,3 +1,4 @@
+import { ComponentType } from "discord.js";
 import type { HyperionClient } from "../../src/client/index.ts";
 import {
     ButtonRegistry,
@@ -31,11 +32,11 @@ export const buttonKind: ComponentKind = {
     property: "buttons",
     Registry: ButtonRegistry,
     source: (id, extra = "") => `
-    import { Button } from ${JSON.stringify(componentModule("button"))};
+    import { ButtonHandler } from ${JSON.stringify(componentModule("button"))};
     import { PrimaryButtonBuilder } from ${JSON.stringify(buildersModule)};
-    export default class extends Button {
+    export default class extends ButtonHandler {
         constructor() {
-            super({ builder: new PrimaryButtonBuilder()
+            super({ customId: ${JSON.stringify(id)}, builder: new PrimaryButtonBuilder()
                 .setCustomId(${JSON.stringify(id)}).setLabel("Click"), ${extra} });
         }
         async run() {}
@@ -60,11 +61,11 @@ export const modalKind: ComponentKind = {
     property: "modals",
     Registry: ModalRegistry,
     source: (id, extra = "") => `
-    import { Modal } from ${JSON.stringify(componentModule("modal"))};
+    import { ModalHandler } from ${JSON.stringify(componentModule("modal"))};
     import { ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(buildersModule)};
-    export default class extends Modal {
+    export default class extends ModalHandler {
         constructor() {
-            super({ builder: new ModalBuilder()
+            super({ customId: ${JSON.stringify(id)}, builder: new ModalBuilder()
                 .setCustomId(${JSON.stringify(id)})${textModalBody}, ${extra} });
         }
         async run() {}
@@ -92,11 +93,11 @@ export const selectMenuKind: ComponentKind = {
     property: "selectMenus",
     Registry: SelectMenuRegistry,
     source: (id, extra = "") => `
-    import { SelectMenu } from ${JSON.stringify(componentModule("select-menu"))};
+    import { SelectMenuHandler } from ${JSON.stringify(componentModule("select-menu"))};
     import { StringSelectMenuBuilder } from ${JSON.stringify(buildersModule)};
-    export default class extends SelectMenu {
+    export default class extends SelectMenuHandler {
         constructor() {
-            super({ builder: new StringSelectMenuBuilder()
+            super({ customId: ${JSON.stringify(id)}, componentType: ${ComponentType.StringSelect}, builder: new StringSelectMenuBuilder()
                 .setCustomId(${JSON.stringify(id)}).addOptions({ label: "Blue", value: "blue" }), ${extra} });
         }
         async run() {}

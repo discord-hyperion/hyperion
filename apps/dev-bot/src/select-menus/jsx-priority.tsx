@@ -1,10 +1,15 @@
-import { SelectMenu, type SelectMenuContext } from "@hyperion/core";
+import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
 import { renderStringSelect } from "@hyperion/jsx";
+import { ComponentType } from "discord.js";
 import { JsxPriority } from "../views/jsx-priority.tsx";
 
-export default class extends SelectMenu {
+export default class extends SelectMenuHandler {
     constructor() {
-        super({ builder: renderStringSelect(<JsxPriority />) });
+        super({
+            customId: "jsx.priority",
+            componentType: ComponentType.StringSelect,
+            builder: renderStringSelect(<JsxPriority />),
+        });
     }
 
     async run(ctx: SelectMenuContext) {

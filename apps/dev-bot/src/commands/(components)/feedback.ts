@@ -11,10 +11,8 @@ export default class FeedbackCommand extends Command {
     }
 
     async run(ctx: CommandContext) {
-        const modal = ctx.client.modals.get("feedback.submit");
-
-        if (!modal) throw new Error("The feedback modal was not loaded.");
-
-        await ctx.interaction.showModal(modal.builder);
+        await ctx.interaction.showModal(
+            ctx.client.modals.build("feedback.submit"),
+        );
     }
 }

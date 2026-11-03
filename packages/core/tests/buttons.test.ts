@@ -3,7 +3,7 @@ import { mock, type TestContext, test } from "node:test";
 import { PrimaryButtonBuilder } from "@discordjs/builders";
 import { Collection, Events, InteractionType, MessageFlags } from "discord.js";
 import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts";
-import { Button, type ButtonContext } from "../src/components/index.ts";
+import { type ButtonContext, ButtonHandler } from "../src/components/index.ts";
 import {
     Cooldown,
     Guard,
@@ -32,12 +32,13 @@ const interaction = (phase: Phase = "new", userId = "owner") =>
         ephemeral: phase === "defer-reply" ? true : null,
     });
 
-class TestButton extends Button {
+class TestButton extends ButtonHandler {
     constructor(
         private readonly execute: (ctx: ButtonContext) => Promise<void>,
         guards: readonly GuardProvider<ButtonContext>[] = [],
     ) {
         super({
+            customId: "refresh",
             builder: new PrimaryButtonBuilder()
                 .setCustomId("refresh")
                 .setLabel("Refresh"),

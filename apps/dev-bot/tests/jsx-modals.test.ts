@@ -26,7 +26,7 @@ test("JSX modal discovery, fresh opening and exact-ID submission preserve the sh
     const handler = client.modals.get("todo.create");
     const dispatcher = new InteractionDispatcher(client);
     assert.ok(handler);
-    const template = handler.builder.toJSON();
+    const template = handler.builder?.toJSON(false);
     const opened: ModalBuilder[] = [];
 
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -47,7 +47,7 @@ test("JSX modal discovery, fresh opening and exact-ID submission preserve the sh
     }
 
     assert.notEqual(opened[0], opened[1]);
-    assert.deepEqual(handler.builder.toJSON(), template);
+    assert.deepEqual(handler.builder?.toJSON(false), template);
 
     const submitted = createModalInteraction({
         customId: "todo.create",
@@ -86,7 +86,7 @@ test("JSX modal discovery, fresh opening and exact-ID submission preserve the sh
             "Received a todo name of 22 characters and description of 19 characters. This demo does not store submissions.",
         allowedMentions: { parse: [] },
     });
-    assert.deepEqual(handler.builder.toJSON(), template);
+    assert.deepEqual(handler.builder?.toJSON(false), template);
     assert.ok(
         records.every(
             line =>

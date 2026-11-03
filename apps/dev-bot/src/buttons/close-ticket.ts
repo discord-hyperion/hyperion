@@ -1,6 +1,6 @@
 import {
-    Button,
     type ButtonContext,
+    ButtonHandler,
     defineParams,
     ParamOwner,
 } from "@hyperion/core";
@@ -22,7 +22,9 @@ export const closeTicket = defineParams({
 
 export type CloseTicketContext = ButtonContext<typeof closeTicket>;
 
-export default class CloseTicketButton extends Button<typeof closeTicket> {
+export default class CloseTicketButton extends ButtonHandler<
+    typeof closeTicket
+> {
     constructor() {
         super({
             params: closeTicket,

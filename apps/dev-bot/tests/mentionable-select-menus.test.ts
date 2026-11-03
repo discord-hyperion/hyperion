@@ -63,7 +63,7 @@ for (const [name, values, expected] of [
         const fixture = interaction("new", [...values]);
         const template = client.selectMenus
             .get("mentionable.choose")
-            ?.builder.toJSON();
+            ?.builder?.toJSON(false);
         await dispatcher.dispatch(fixture.interaction);
 
         assert.deepEqual(fixture.update.mock.calls[0]?.arguments[0], {
@@ -72,7 +72,9 @@ for (const [name, values, expected] of [
         });
         assert.equal(fixture.reply.mock.callCount(), 0);
         assert.deepEqual(
-            client.selectMenus.get("mentionable.choose")?.builder.toJSON(),
+            client.selectMenus
+                .get("mentionable.choose")
+                ?.builder?.toJSON(false),
             template,
         );
     });

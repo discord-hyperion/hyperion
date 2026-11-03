@@ -3,14 +3,14 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { Modal, type ModalContext } from "@hyperion/core";
+import { type ModalContext, ModalHandler } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
-export default class SubmitFeedback extends Modal {
+export default class SubmitFeedback extends ModalHandler {
     constructor() {
         super({
+            customId: "feedback.submit",
             builder: new ModalBuilder()
-                .setCustomId("feedback.submit")
                 .setTitle("Feedback")
                 .addLabelComponents(
                     new LabelBuilder()

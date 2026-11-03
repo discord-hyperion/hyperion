@@ -1,5 +1,5 @@
 import { ComponentType } from "discord.js";
-import type { Modal, ModalContext } from "../components/modal.ts";
+import type { ModalContext, ModalHandler } from "../components/modal.ts";
 import { resolveInput } from "./resolve-input.ts";
 
 /** Read structured data before SDK hoisting can hide duplicate custom IDs. */
@@ -36,7 +36,10 @@ const extractModalInput = (ctx: ModalContext) => {
     return Object.fromEntries(entries);
 };
 
-export const resolveModalInput = async (modal: Modal, ctx: ModalContext) => {
+export const resolveModalInput = async (
+    modal: ModalHandler,
+    ctx: ModalContext,
+) => {
     if (!modal.input) return undefined;
 
     return resolveInput(modal.input, ctx, () => extractModalInput(ctx));

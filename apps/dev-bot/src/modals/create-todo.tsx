@@ -1,8 +1,4 @@
-import {
-    defineInput,
-    type ModalContext,
-    Modal as ModalHandler,
-} from "@hyperion/core";
+import { defineInput, type ModalContext, ModalHandler } from "@hyperion/core";
 import { renderModal } from "@hyperion/jsx";
 import * as v from "valibot";
 import { TodoForm } from "../views/todo-form.tsx";
@@ -22,6 +18,7 @@ const input = defineInput({
 export default class extends ModalHandler<typeof input> {
     constructor() {
         super({
+            customId: "todo.create",
             builder: renderModal(<TodoForm />),
             input,
         });
