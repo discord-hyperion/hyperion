@@ -31,8 +31,9 @@
 - [ ] Further JSX authoring through `@hyperion/jsx`.
   - Native embeds, modal labels/text inputs/informational text, escaped text composition, reusable components, and TSX/JSX handlers are implemented; see the [JSX guide](jsx.md) and [JSX modals](jsx-modals.md).
   - Action rows, interactive buttons, link buttons, and message string selects are implemented; see
-    [JSX message components](jsx-message-components.md) and [JSX select menus](jsx-select-menus.md). Entity selects, premium
-    buttons, Components V2 layouts, and additional modal controls remain deferred.
+    [JSX message components](jsx-message-components.md) and [JSX select menus](jsx-select-menus.md).
+  - Layout messages (Components V2) with containers, sections, text displays, thumbnails, media galleries, separators, headings, and subtext are implemented; see [JSX layout messages](jsx-layout.md). The `File` component remains deferred until attachment handling is designed.
+  - Entity selects, premium buttons, and additional modal controls remain deferred.
     Standalone text formatting was dropped.
 - [ ] Managed interactive collectors.
   - Provide a simple abstraction for creating, tracking, stopping, and cleaning up collectors.

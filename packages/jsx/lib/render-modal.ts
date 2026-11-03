@@ -90,6 +90,7 @@ export const renderModal = (view: Child): ModalBuilder => {
                         section.props.children,
                         `${path}.TextDisplay`,
                         section.depth,
+                        { blocks: true },
                     ),
                 ),
             );

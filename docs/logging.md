@@ -98,6 +98,11 @@ also available for application-level messages.
 
 ## Error and data handling
 
+When the generic error response cannot edit a deferred reply (for example, one
+already edited into a layout message), Hyperion sends an ephemeral follow-up
+instead and logs `<kind>.error-response.fallback` at debug level. A failed
+follow-up is logged as `<kind>.error-response.failed`.
+
 Activity and error levels are independent: setting the level to `error` hides
 normal activity while retaining failures. Disabling logging entirely does not
 disable user-facing error responses. Error records preserve type, message,

@@ -178,3 +178,39 @@ handlers still receive string values and must check current authorization.
 See the [complete JSX select guide](https://github.com/favylicious/discord-hyperion/blob/main/docs/jsx-select-menus.md)
 for native limits, handler/message examples, and the `/jsx-select` demo. Entity
 selects and modal select authoring remain deferred.
+
+## Layout messages
+
+`renderMessage()` builds layout messages (Discord's Components V2) from
+`Container`, `Section`, `TextDisplay`, `Thumbnail`, `MediaGallery`, `Separator`,
+and the existing message controls. It returns `{ components, flags }` with the
+V2 flag set; pass `{ ephemeral: true }` for a private reply.
+
+```tsx
+import {
+    Container,
+    H2,
+    renderMessage,
+    Section,
+    TextDisplay,
+    Thumbnail,
+} from "@hyperion/jsx";
+
+await interaction.reply(
+    renderMessage(
+        <Container accent={0x5865f2}>
+            <Section accessory={<Thumbnail url={avatarUrl} />}>
+                <TextDisplay>
+                    <H2>Profile</H2>
+                    {username}
+                </TextDisplay>
+            </Section>
+        </Container>,
+    ),
+);
+```
+
+Placement rules (thumbnails only as section accessories, one to three text
+displays per section, at most 40 components) are checked at render time.
+`H1`–`H3` and `Subtext` also work in embed descriptions and field values. See
+the [layout message reference](https://github.com/favylicious/discord-hyperion/blob/main/docs/jsx-layout.md).

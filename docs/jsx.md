@@ -89,8 +89,9 @@ resolve JavaScript and declarations in `dist`.
 - Validate structural nesting at runtime and use native builder `toJSON()`
   validation while respecting the SDK validator setting. Report invalid output.
 - Preserve shared modal definitions and existing handler routing. Inserting
-  prebuilt builders, React lifecycle behavior, automatic rerendering, complete
-  Components V2 layouts, and entity select-menu authoring remain deferred.
+  prebuilt builders, React lifecycle behavior, automatic rerendering, and entity
+  select-menu authoring remain deferred. Layout messages (Components V2) are
+  rendered by `renderMessage()`; see [JSX layout messages](jsx-layout.md).
 - Verify automatic-runtime source and published consumption, opt-in TSX handlers,
   and performance before making compatibility or speed claims.
 

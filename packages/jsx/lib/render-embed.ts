@@ -81,17 +81,16 @@ export const renderEmbed = (view: Child): EmbedBuilder => {
             switch (section.name) {
                 case "Embed.Title":
                     builder.setTitle(
-                        renderTextContent(
-                            props.children,
-                            path,
-                            section.depth,
-                            true,
-                        ),
+                        renderTextContent(props.children, path, section.depth, {
+                            plain: true,
+                        }),
                     );
                     break;
                 case "Embed.Description":
                     builder.setDescription(
-                        renderTextContent(props.children, path, section.depth),
+                        renderTextContent(props.children, path, section.depth, {
+                            blocks: true,
+                        }),
                     );
                     break;
                 case "Embed.Field": {
@@ -112,6 +111,7 @@ export const renderEmbed = (view: Child): EmbedBuilder => {
                             props.children,
                             `${path}.value`,
                             section.depth,
+                            { blocks: true },
                         ),
                         ...(props.inline === undefined
                             ? {}

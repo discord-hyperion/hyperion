@@ -60,7 +60,7 @@ const interactive = (node: Node) => {
     return builder.setCustomId(customId);
 };
 
-const buildButton = (node: Node) => {
+export const buildButton = (node: Node) => {
     const link = node.props.url !== undefined;
 
     if (link && ("customId" in node.props || "style" in node.props)) {
@@ -84,7 +84,7 @@ const buildButton = (node: Node) => {
             node.props.children,
             `${node.path}.label`,
             node.depth,
-            true,
+            { plain: true },
         );
         if (label.length) builder.setLabel(label);
 
@@ -136,11 +136,62 @@ export const renderButton = (view: Child): CustomIdButtonBuilder => {
     return builder;
 };
 
+export type DeclaredIds = { id: string; path: string }[];
+
+/** Reject a custom ID already declared in the same render. */
+export const declareId = (ids: DeclaredIds, id: string, path: string) => {
+    const duplicate = ids.find(entry => entry.id === id);
+    if (duplicate) {
+        throw new JSXRenderError(
+            path,
+            `Duplicate component custom ID; first declared at ${duplicate.path}.`,
+        );
+    }
+
+    ids.push({ id, path });
+};
+
+/** Build one explicit action row; IDs must stay unique across the whole render. */
+export const buildRow = (root: Node, path: string, ids: DeclaredIds) => {
+    const row = new ActionRowBuilder();
+    const children = expand(root.props.children, path, root.depth);
+
+    for (const [childIndex, child] of children.entries()) {
+        const childPath = `${path}.children[${childIndex}]`;
+        if (
+            typeof child !== "object" ||
+            (child.name !== "Button" && child.name !== "StringSelect")
+        ) {
+            throw new JSXRenderError(
+                childPath,
+                "Expected a Button or StringSelect.",
+            );
+        }
+
+        const location = `${childPath}.${child.name}`;
+        const node = { ...child, path: location };
+        const control =
+            node.name === "StringSelect"
+                ? buildStringSelect(node)
+                : buildButton(node);
+        if (
+            control instanceof CustomIdButtonBuilder ||
+            control instanceof StringSelectMenuBuilder
+        ) {
+            declareId(ids, node.props.customId as string, location);
+        }
+
+        row.addComponents(control);
+    }
+
+    return row;
+};
+
 /** Render explicit action rows; complete-message constraints remain caller-owned. */
 export const renderComponents = (view: Child): ActionRowBuilder[] => {
     const roots = expand(view, "root");
     const rows: ActionRowBuilder[] = [];
-    const ids: { id: string; path: string }[] = [];
+    const ids: DeclaredIds = [];
 
     for (const [index, root] of roots.entries()) {
         const path = `components[${index}]`;
@@ -148,45 +199,7 @@ export const renderComponents = (view: Child): ActionRowBuilder[] => {
             throw new JSXRenderError(path, "Expected an explicit ActionRow.");
         }
 
-        const row = new ActionRowBuilder();
-        const children = expand(root.props.children, path, root.depth);
-
-        for (const [childIndex, child] of children.entries()) {
-            const childPath = `${path}.children[${childIndex}]`;
-            if (
-                typeof child !== "object" ||
-                (child.name !== "Button" && child.name !== "StringSelect")
-            ) {
-                throw new JSXRenderError(
-                    childPath,
-                    "Expected a Button or StringSelect.",
-                );
-            }
-
-            const location = `${childPath}.${child.name}`;
-            const node = { ...child, path: location };
-            const control =
-                node.name === "StringSelect"
-                    ? buildStringSelect(node)
-                    : buildButton(node);
-            if (
-                control instanceof CustomIdButtonBuilder ||
-                control instanceof StringSelectMenuBuilder
-            ) {
-                const id = node.props.customId as string;
-                const duplicate = ids.find(entry => entry.id === id);
-                if (duplicate) {
-                    throw new JSXRenderError(
-                        location,
-                        `Duplicate component custom ID; first declared at ${duplicate.path}.`,
-                    );
-                }
-
-                ids.push({ id, path: location });
-            }
-
-            row.addComponents(control);
-        }
+        const row = buildRow(root, path, ids);
 
         validateComponent(row, path);
         rows.push(row);
