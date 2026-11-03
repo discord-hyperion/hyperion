@@ -1,9 +1,9 @@
 import { CustomIdButtonBuilder } from "@discordjs/builders";
 import { Collection } from "discord.js";
 import type { Logger } from "pino";
-import { decodeParams } from "../components/custom-id-params.ts";
 import { Button } from "../components/index.ts";
 import { loadComponentHandlers } from "./load-modules.ts";
+import { resolveRoute } from "./resolve-route.ts";
 
 export class ButtonRegistry extends Collection<string, Button> {
     /** Params handlers by route; literal handlers stay keyed by exact custom ID. */
@@ -15,15 +15,9 @@ export class ButtonRegistry extends Collection<string, Button> {
 
     /** Exact custom ID first, then a params route; undefined when unmatched. */
     resolve(customId: string) {
-        const exact = this.get(customId);
-        if (exact) return { button: exact, raw: undefined };
+        const match = resolveRoute(this, this.routes, customId);
 
-        const button = this.routes.get(customId.split(":")[0] ?? "");
-        if (!button?.params) return undefined;
-
-        const raw = decodeParams(button.params, customId);
-
-        return raw ? { button, raw } : undefined;
+        return match && { button: match.handler, raw: match.raw };
     }
 
     async load(root: string | URL = process.cwd()) {
