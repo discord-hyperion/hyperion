@@ -27,7 +27,8 @@ import {
     type UserContextMenuCommandInteraction,
 } from "discord.js";
 
-type UserData = Pick<User, "id"> & Partial<Pick<User, "username">>;
+type UserData = Pick<User, "id"> &
+    Partial<Pick<User, "username" | "displayAvatarURL">>;
 type MemberData = Partial<Pick<GuildMember, "id" | "nickname">> & {
     user?: UserData;
 };
