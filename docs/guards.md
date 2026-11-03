@@ -3,7 +3,7 @@
 See the [execution glossary](GLOSSARY.md#execution) for guard and guard-provider
 terminology.
 
-`OwnerOnly` and `Cooldown` are built-in guards supplied by Hyperion, located in
+`OwnerOnly`, `Cooldown`, and `ParamOwner` are built-in guards supplied by Hyperion, located in
 `src/guards/builtins` and exported from the public library entry point. Use them
 directly; custom guard subclasses are only needed for application-specific checks.
 
@@ -106,6 +106,21 @@ than fields: multiple invocations can execute concurrently. Factories create
 isolated instances but do not make shared dependencies concurrency-safe. Keep
 cross-invocation state, such as cooldowns, in a deliberately shared service rather
 than recreating it inside each factory.
+
+## Ownership from custom-ID params
+
+`ParamOwner` checks a handler's [custom-ID params](custom-id-params.md): it passes
+only when the params are valid and `params[key]` equals the user's ID. Custom IDs
+are client-controlled, so this is a real authorization check. It is opt-in and
+works on any handler kind that declares params:
+
+```ts
+guards: [new ParamOwner("owner", "Only the ticket's author can close it.")];
+```
+
+The key must exist in the handler's params as a string, or the guard does not
+compile. The description defaults to "Only the person this was sent for can use
+it." Params are validated before guards, so the guard sees `ctx.params`.
 
 ## Rejection responses
 

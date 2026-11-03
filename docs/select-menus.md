@@ -239,6 +239,47 @@ message components and do not require application-command registration. Routing
 matches the exact custom ID. Unknown IDs are ignored for application-owned
 collectors and listeners; avoid acknowledging the same interaction twice.
 
+## Carry data in the custom ID
+
+A select menu can declare typed [custom-ID params](custom-id-params.md) instead
+of a template builder. It names its select type, and the command builds the menu
+with the encoder:
+
+```ts
+export const assignTicket = defineParams({
+    id: "ticket.assign",
+    keys: ["ticketId", "owner"],
+    schema: v.object({ ticketId: v.string(), owner: v.string() }),
+});
+
+export default class AssignTicket extends SelectMenu<
+    ComponentType.UserSelect,
+    typeof assignTicket
+> {
+    constructor() {
+        super({
+            componentType: ComponentType.UserSelect,
+            params: assignTicket,
+            guards: [new ParamOwner("owner")],
+        });
+    }
+
+    async run(
+        ctx: SelectMenuContext<ComponentType.UserSelect, typeof assignTicket>,
+    ) {
+        const [issues, params] = ctx.params; // From the custom ID.
+        const assignee = ctx.interaction.users.first(); // From the click.
+    }
+}
+
+// In a command: new UserSelectMenuBuilder().setCustomId(assignTicket({ ticketId, owner }))
+```
+
+Params describe what the bot decided when it sent the menu; the selection is
+what the user chose. A params handler is stored in `client.selectMenus.routes`
+and never has a `builder`. Routes are unique across every select type. A click
+of another select type is unmatched before its params are decoded.
+
 ## Guards, async work, and errors
 
 The optional `guards` array accepts instances or lazy async factories for
@@ -265,7 +306,8 @@ state in application-owned storage rather than fields on a shared handler.
 
 The dev bot includes `/colour`, `/user`, `/role`, `/mentionable`, and `/channel`, with matching
 handlers in `src/select-menus/choose-colour.ts`, `choose-user.ts`, `choose-role.ts`,
-`choose-mentionable.ts`, and `choose-channel.ts`.
+`choose-mentionable.ts`, and `choose-channel.ts`. `/ticket` sends a params user
+select handled by `src/select-menus/assign-ticket.ts`.
 
 ## JSX string-select authoring
 

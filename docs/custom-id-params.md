@@ -188,25 +188,28 @@ Never log params, decoded values, issues, or the full custom ID. Log the route
 
 1. Shared codec (`defineParams`, encode, decode) and the route index.
 2. Buttons.
-3. Follow-ups: select menus and modals, then a JSX helper for the encoder.
+3. Select menus, all five types, and the `ParamOwner` guard.
+4. Follow-ups: modals, then a JSX helper for the encoder.
 
-The first PR covers the codec, the route index, and buttons only. The codec and
-context typing are kind-agnostic so the follow-ups need no redesign.
+The codec, route lookup, and context typing are kind-agnostic, so each kind
+reuses them without redesign.
 
-## Select menus (follow-up)
+## Select menus
 
 Select menus reuse the codec, route lookup, pipeline, and `ctx.params` tuple.
 - Params are decided when the bot sends the menu; the selection is decided at
   click time. They stay separate: `ctx.params` carries the former and
   `ctx.interaction.values` (or the resolved collections) carries the latter.
 - A params handler has no template builder, so it declares its select type
-  explicitly (`super({ type: ComponentType.UserSelect, params })`). The
-  dispatcher keeps rejecting a click whose `componentType` differs.
+  explicitly (`super({ componentType: ComponentType.UserSelect, params })`).
+  A click whose `componentType` differs is unmatched, and the type is checked
+  before decoding, so the schema never runs for the wrong kind.
 - Typing gains a second generic: `SelectMenu<Type, Params>` and
   `SelectMenuContext<Type, Params>`. `Params` defaults to none, so existing
   `SelectMenu<Type>` code is unchanged.
-- Routes are unique per registry, as literal custom IDs are today. A button and a
-  select menu may share a route.
+- Routes are unique per registry, as literal custom IDs are today. All five
+  select types share `client.selectMenus`, so routes are unique across them and
+  across literal select IDs. A button and a select menu may share a route.
 
 Modals follow separately, since they carry both `ctx.params` and `ctx.input`.
 
@@ -216,7 +219,18 @@ Guards that read `ctx.params` are typed through the same definition, for example
 `Guard<ButtonContext<typeof todoDoneId>>`, so a guard written for one params
 handler cannot be attached to a handler with different params.
 
-## Open items
+## ParamOwner
 
-- A reusable `ParamOwner` guard, generic over its key name, deferred until the
-  base feature lands.
+`ParamOwner` is an opt-in built-in guard, not part of execution: it runs only
+when a handler lists it.
+
+```ts
+guards: [new ParamOwner("owner", "Only the ticket's author can close it.")];
+```
+
+- It passes when `ctx.params` has no issues and `params[key]` equals the user's
+  ID. Params that fail validation are always rejected.
+- The key must exist in the handler's params with a string value; otherwise the
+  guard does not compile. It works for any handler kind that carries params.
+- Its log name is `param-owner`. The optional description, which is the default
+  rejection reply, defaults to "Only the person this was sent for can use it."
