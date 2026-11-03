@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { mock, test } from "node:test";
 import { Events, MessageFlags } from "discord.js";
-import { Guard } from "../src/guards/index.ts";
+import { defineGuard } from "../src/guards/index.ts";
 import {
     type AnySelectContext,
     createMenu,
@@ -40,24 +40,23 @@ test("mentionable listener exposes users and roles without logging either", asyn
 
 test("mentionable guard factories receive mixed resolved data and can reject a selection", async t => {
     const { client, dispatcher } = await createTestClient(t);
-    class DenyRoles extends Guard<AnySelectContext> {
-        constructor() {
-            super({ description: "Choose users only." });
-        }
-
-        run(ctx: AnySelectContext) {
-            return (
-                ctx.interaction.isMentionableSelectMenu() &&
-                ctx.interaction.roles.size === 0
-            );
-        }
-    }
+    const denyRoles = () =>
+        defineGuard<AnySelectContext>({
+            name: "DenyRoles",
+            description: "Choose users only.",
+            run(ctx: AnySelectContext) {
+                return (
+                    ctx.interaction.isMentionableSelectMenu() &&
+                    ctx.interaction.roles.size === 0
+                );
+            },
+        });
     const execute = mock.fn(async () => {});
     const factory = mock.fn(async (ctx: AnySelectContext) => {
         assert.ok(ctx.interaction.isMentionableSelectMenu());
         assert.equal(ctx.interaction.users.first()?.id, "person");
 
-        return new DenyRoles();
+        return denyRoles();
     });
     client.selectMenus.set(
         mentionable.customId,

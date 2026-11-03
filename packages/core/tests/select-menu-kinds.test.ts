@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, mock, test } from "node:test";
 import { ComponentType, Events, MessageFlags } from "discord.js";
-import { Guard } from "../src/guards/index.ts";
+import { defineGuard } from "../src/guards/index.ts";
 import { assertPrivateFailure, phases } from "./support/acknowledgment.ts";
 import {
     type AnySelectContext,
@@ -11,15 +11,14 @@ import {
 } from "./support/select-kinds.ts";
 import { createTestClient } from "./support/test-client.ts";
 
-class Deny extends Guard<AnySelectContext> {
-    constructor(description = "Denied") {
-        super({ description });
-    }
-
-    run() {
-        return false;
-    }
-}
+const deny = (description = "Denied") =>
+    defineGuard<AnySelectContext>({
+        name: "Deny",
+        description,
+        run() {
+            return false;
+        },
+    });
 
 for (const kind of selectKinds) {
     describe(`${kind.name} select menus`, () => {
@@ -92,19 +91,17 @@ for (const kind of selectKinds) {
 
         test("guard factories resolve lazily with resolved data and can reject with a custom reply", async t => {
             const { client, dispatcher } = await createTestClient(t);
-            class DenyEmpty extends Guard<AnySelectContext> {
-                constructor() {
-                    super({ description: "Denied" });
-                }
-
-                run(ctx: AnySelectContext) {
-                    return resolvedEntries(ctx.interaction).length === 0;
-                }
-
-                async onFail(ctx: AnySelectContext) {
-                    await ctx.interaction.reply("Choose again.");
-                }
-            }
+            const denyEmpty = () =>
+                defineGuard<AnySelectContext>({
+                    name: "DenyEmpty",
+                    description: "Denied",
+                    run(ctx: AnySelectContext) {
+                        return resolvedEntries(ctx.interaction).length === 0;
+                    },
+                    async onFail(ctx: AnySelectContext) {
+                        await ctx.interaction.reply("Choose again.");
+                    },
+                });
             const execute = mock.fn(async () => {});
             const factory = mock.fn(async (ctx: AnySelectContext) => {
                 assert.equal(
@@ -112,7 +109,7 @@ for (const kind of selectKinds) {
                     "selected",
                 );
 
-                return new DenyEmpty();
+                return denyEmpty();
             });
             client.selectMenus.set(
                 kind.customId,
@@ -133,11 +130,11 @@ for (const kind of selectKinds) {
 
         test("guard rejection stops later factories and handlers", async t => {
             const { client, dispatcher } = await createTestClient(t);
-            const later = mock.fn(() => new Deny());
+            const later = mock.fn(() => deny());
             const execute = mock.fn(async () => {});
             client.selectMenus.set(
                 kind.customId,
-                createMenu(kind, execute, [async () => new Deny(), later]),
+                createMenu(kind, execute, [async () => deny(), later]),
             );
             const fixture = kind.interaction();
             await dispatcher.dispatch(fixture.interaction);
@@ -153,7 +150,7 @@ for (const kind of selectKinds) {
         test("guard rejections and exceptions share the private response pipeline", async t => {
             const { client, dispatcher } = await createTestClient(t);
             const execute = mock.fn(async () => {});
-            const later = mock.fn(() => new Deny());
+            const later = mock.fn(() => deny());
 
             for (const fails of [false, true]) {
                 client.selectMenus.set(
@@ -162,7 +159,7 @@ for (const kind of selectKinds) {
                         () => {
                             if (fails) throw new Error("Private guard failure");
 
-                            return new Deny("Choose again.");
+                            return deny("Choose again.");
                         },
                         later,
                     ]),

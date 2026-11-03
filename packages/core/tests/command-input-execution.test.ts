@@ -22,26 +22,23 @@ import {
     type CommandInputOptions,
     type CommandInputResult,
     type CommandInputSchema,
+    defineGuard,
     defineInput,
-    Guard,
     type GuardProvider,
 } from "../src/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
 import { createTestClient } from "./support/test-client.ts";
 
-class Check extends Guard {
-    constructor(
-        private readonly check: (
-            ctx: CommandContext,
-        ) => boolean | Promise<boolean>,
-    ) {
-        super({ description: "Denied" });
-    }
-
-    run(ctx: CommandContext) {
-        return this.check(ctx);
-    }
-}
+const check = (
+    predicate: (ctx: CommandContext) => boolean | Promise<boolean>,
+) =>
+    defineGuard({
+        name: "Check",
+        description: "Denied",
+        run(ctx: CommandContext) {
+            return predicate(ctx);
+        },
+    });
 
 class InputCommand extends Command<CommandInputOptions> {
     constructor(
@@ -153,7 +150,7 @@ test("guards precede private deferral, async schema, whole-input resolution, and
         },
         builder,
         [
-            new Check(ctx => {
+            check(ctx => {
                 assert.equal("input" in ctx, false);
                 order.push("guard");
                 return true;
@@ -224,7 +221,7 @@ test("a guard rejection skips deferral, resolvers, schema, and handler", async t
             },
             async () => never(),
             undefined,
-            [new Check(() => false)],
+            [check(() => false)],
         ),
     );
     const fixture = interaction([todoOption("a")]);
@@ -299,7 +296,7 @@ for (const phase of ["deferred", "replied"] as const) {
                 run,
                 undefined,
                 [
-                    new Check(async ctx => {
+                    check(async ctx => {
                         if (phase === "deferred")
                             await ctx.interaction.deferReply();
                         else await ctx.interaction.reply("Acknowledged");
@@ -458,21 +455,21 @@ test("grouped subcommands run inherited guards before their own input pipeline",
         new URL("../src/index.ts", import.meta.url).href,
     );
     const builders = JSON.stringify(import.meta.resolve("@discordjs/builders"));
-    const shared = `import { Guard } from ${entry}; export const order = []; export class Check extends Guard { constructor(name) { super({description:name}); } run(ctx) { if ('input' in ctx) throw Error('Early input'); order.push(this.description); return true; } }`;
+    const shared = `import { defineGuard } from ${entry}; export const order = []; export const check = (name) => defineGuard({ name: "Check", description:name, run(ctx) { if ('input' in ctx) throw Error('Early input'); order.push(this.description); return true; } });`;
     await writeFile(path.join(root, "shared.mjs"), shared);
     const sharedUrl = pathToFileURL(path.join(root, "shared.mjs")).href;
-    const common = `import { Check, order } from ${JSON.stringify(sharedUrl)};`;
+    const common = `import { check, order } from ${JSON.stringify(sharedUrl)};`;
     await writeFile(
         path.join(directory, "../index.mjs"),
-        `${common} import {ParentCommand} from ${entry}; import {ChatInputCommandBuilder} from ${builders}; export default class extends ParentCommand { constructor() { super({builder:new ChatInputCommandBuilder().setDescription('Tools'), guards:[new Check('parent')]}); } }`,
+        `${common} import {ParentCommand} from ${entry}; import {ChatInputCommandBuilder} from ${builders}; export default class extends ParentCommand { constructor() { super({builder:new ChatInputCommandBuilder().setDescription('Tools'), guards:[check('parent')]}); } }`,
     );
     await writeFile(
         path.join(directory, "index.mjs"),
-        `${common} import {SubcommandGroup} from ${entry}; import {ChatInputCommandSubcommandGroupBuilder} from ${builders}; export default class extends SubcommandGroup { constructor() { super({builder:new ChatInputCommandSubcommandGroupBuilder().setDescription('Items'), guards:[new Check('group')]}); } }`,
+        `${common} import {SubcommandGroup} from ${entry}; import {ChatInputCommandSubcommandGroupBuilder} from ${builders}; export default class extends SubcommandGroup { constructor() { super({builder:new ChatInputCommandSubcommandGroupBuilder().setDescription('Items'), guards:[check('group')]}); } }`,
     );
     await writeFile(
         path.join(directory, "todo.mjs"),
-        `${common} import {Subcommand} from ${entry}; import {ChatInputCommandSubcommandBuilder} from ${builders}; export default class extends Subcommand { constructor() { super({builder:new ChatInputCommandSubcommandBuilder().setName('todo').setDescription('Todo').addStringOptions(o=>o.setName('todo').setDescription('ID')), guards:[new Check('leaf')], input:{resolve:value=>{order.push('resolver');return {todo:{id:value.todo}};}, schema:{'~standard':{version:1,vendor:'test',validate:value=>{order.push('schema');return {value};}}}}}); } async run(ctx) { order.push('handler'); await ctx.interaction.reply(JSON.stringify(ctx.input)); } }`,
+        `${common} import {Subcommand} from ${entry}; import {ChatInputCommandSubcommandBuilder} from ${builders}; export default class extends Subcommand { constructor() { super({builder:new ChatInputCommandSubcommandBuilder().setName('todo').setDescription('Todo').addStringOptions(o=>o.setName('todo').setDescription('ID')), guards:[check('leaf')], input:{resolve:value=>{order.push('resolver');return {todo:{id:value.todo}};}, schema:{'~standard':{version:1,vendor:'test',validate:value=>{order.push('schema');return {value};}}}}}); } async run(ctx) { order.push('handler'); await ctx.interaction.reply(JSON.stringify(ctx.input)); } }`,
     );
     await client.commands.load(root);
     const fixture = createChatInputInteraction({
@@ -509,7 +506,7 @@ test("schema-free commands keep the original context and do not extract options"
                     .setName("test")
                     .setDescription("Plain"),
                 guards: [
-                    new Check(ctx => {
+                    check(ctx => {
                         guarded = ctx;
                         return true;
                     }),

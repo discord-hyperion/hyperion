@@ -3,7 +3,7 @@ import { type TestContext, test } from "node:test";
 import { Client, ClientApplication, Events, Routes } from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 import { HyperionClient } from "../src/client/index.ts";
-import { OwnerOnly } from "../src/guards/index.ts";
+import { ownerOnly } from "../src/guards/index.ts";
 
 const applicationId = "100000000000000001";
 const personalOwnerId = "200000000000000001";
@@ -60,19 +60,19 @@ test("creating a client does not fetch ownership and pre-login lookup fails clos
     );
 
     await assert.rejects(
-        new OwnerOnly().run(context(client, personalOwnerId)),
+        async () => ownerOnly.run(context(client, personalOwnerId)),
         /before the bot has logged in/,
     );
     assert.equal(get.mock.callCount(), 0);
 });
 
-test("OwnerOnly fetches the personal owner through Discord and caches the result", async t => {
+test("ownerOnly fetches the personal owner through Discord and caches the result", async t => {
     const client = await setup(t);
     const get = t.mock.method(client.rest, "get", async (route: string) => {
         assert.equal(route, Routes.currentApplication());
         return personalApplication();
     });
-    const guard = new OwnerOnly();
+    const guard = ownerOnly;
 
     assert.equal(await guard.run(context(client, personalOwnerId)), true);
     assert.equal(await guard.run(context(client, "another-user")), false);
@@ -92,7 +92,7 @@ test("team-owned applications authorize only the team's owner", async t => {
             members: [],
         },
     }));
-    const guard = new OwnerOnly();
+    const guard = ownerOnly;
 
     assert.equal(await client.getOwnerId(), teamOwnerId);
     assert.equal(await guard.run(context(client, teamOwnerId)), true);
@@ -112,7 +112,7 @@ test("concurrent owner checks share one API request", async t => {
     });
 
     const first = client.getOwnerId();
-    const second = new OwnerOnly().run(context(client, personalOwnerId));
+    const second = ownerOnly.run(context(client, personalOwnerId));
     assert.equal(get.mock.callCount(), 1);
 
     release();
@@ -132,10 +132,7 @@ test("readiness prefetches the owner for later guard checks", async t => {
     client.emit(Events.ClientReady, { user: { id: "bot" } } as Client<true>);
     await client.waitForAllListenersToComplete();
     assert.equal(get.mock.callCount(), 1);
-    assert.equal(
-        await new OwnerOnly().run(context(client, personalOwnerId)),
-        true,
-    );
+    assert.equal(await ownerOnly.run(context(client, personalOwnerId)), true);
     assert.equal(get.mock.callCount(), 1);
 });
 
@@ -147,10 +144,10 @@ test("API failures are not authorized or permanently cached", async t => {
         if (++attempts === 1) throw failure;
         return personalApplication();
     });
-    const guard = new OwnerOnly();
+    const guard = ownerOnly;
 
     await assert.rejects(
-        guard.run(context(client, personalOwnerId)),
+        async () => guard.run(context(client, personalOwnerId)),
         error => error === failure,
     );
     assert.equal(await guard.run(context(client, personalOwnerId)), true);
@@ -170,7 +167,7 @@ test("missing ownership fails closed and readiness errors are logged and contain
     assert.equal(error.mock.callCount(), 1);
 
     await assert.rejects(
-        new OwnerOnly().run(context(client, personalOwnerId)),
+        async () => ownerOnly.run(context(client, personalOwnerId)),
         /did not return an application owner/,
     );
     assert.equal(get.mock.callCount(), 2);

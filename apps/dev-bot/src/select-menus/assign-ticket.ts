@@ -1,6 +1,6 @@
 import {
     defineParams,
-    ParamOwner,
+    paramOwner,
     type SelectMenuContext,
     SelectMenuHandler,
 } from "@hyperion/core";
@@ -28,10 +28,7 @@ export default class AssignTicketMenu extends SelectMenuHandler<
             componentType: ComponentType.UserSelect,
             params: assignTicket,
             guards: [
-                new ParamOwner(
-                    "owner",
-                    "Only the ticket's author can assign it.",
-                ),
+                paramOwner("owner", "Only the ticket's author can assign it."),
             ],
         });
     }

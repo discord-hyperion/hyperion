@@ -14,9 +14,9 @@ import {
     Command,
     type CommandContext,
     CommandRegistry,
-    Guard,
+    defineGuard,
     type GuardProvider,
-    OwnerOnly,
+    ownerOnly,
 } from "../src/index.ts";
 import { createTestClient } from "./support/test-client.ts";
 
@@ -133,22 +133,22 @@ for (const type of [
 
     test(`context command type ${type} supports ordered target-aware guard factories and custom rejection`, async t => {
         const { client, dispatcher } = await createTestClient(t);
-        class Deny extends Guard<MenuContext> {
-            constructor() {
-                super({ description: "Denied" });
-            }
-            run() {
-                return false;
-            }
-            async onFail(ctx: MenuContext) {
-                await ctx.interaction.reply("Custom rejection");
-            }
-        }
+        const deny = () =>
+            defineGuard<MenuContext>({
+                name: "Deny",
+                description: "Denied",
+                run() {
+                    return false;
+                },
+                async onFail(ctx: MenuContext) {
+                    await ctx.interaction.reply("Custom rejection");
+                },
+            });
         const execute = mock.fn(async (_ctx: MenuContext) => {});
-        const later = mock.fn(() => new Deny());
+        const later = mock.fn(() => deny());
         const factory = mock.fn(async (ctx: MenuContext) => {
             assert.equal(ctx.interaction.commandType, type);
-            return new Deny();
+            return deny();
         });
         const command =
             type === ApplicationCommandType.User
@@ -168,15 +168,15 @@ for (const type of [
         );
     });
 
-    test(`OwnerOnly authorizes the context-menu caller rather than the selected user for type ${type}`, async t => {
+    test(`ownerOnly authorizes the context-menu caller rather than the selected user for type ${type}`, async t => {
         const { client, dispatcher } = await createTestClient(t);
         t.mock.method(client, "getOwnerId", async () => "owner");
         const execute = mock.fn(async (_ctx: MenuContext) => {});
         client.commands.set(
             CommandRegistry.key("Inspect", type),
             type === ApplicationCommandType.User
-                ? new UserCommand(execute, [new OwnerOnly()])
-                : new MessageCommand(execute, [new OwnerOnly()]),
+                ? new UserCommand(execute, [ownerOnly])
+                : new MessageCommand(execute, [ownerOnly]),
         );
         const denied = interaction(type);
         await dispatcher.dispatch(denied.interaction);

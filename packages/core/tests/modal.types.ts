@@ -4,7 +4,7 @@ import {
     type AnyInteraction,
     type ModalContext,
     type ModalHandlerOptions,
-    OwnerOnly,
+    ownerOnly,
 } from "../src/index.ts";
 
 export const modalContracts = (ctx: ModalContext) => {
@@ -26,7 +26,7 @@ export const modalContracts = (ctx: ModalContext) => {
                 ctx.interaction.components.getTextInputValue(
                     "message",
                 ) satisfies string;
-                return new OwnerOnly();
+                return ownerOnly;
             },
         ],
     };

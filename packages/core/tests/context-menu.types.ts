@@ -10,7 +10,7 @@ import {
     type CommandContext,
     type CommandOptions,
     type CommandRegistry,
-    OwnerOnly,
+    ownerOnly,
     type Subcommand,
 } from "../src/index.ts";
 
@@ -62,7 +62,7 @@ export const contextMenuContracts = (
         guards: [
             ctx => {
                 ctx.interaction.targetUser.id satisfies string;
-                return new OwnerOnly();
+                return ownerOnly;
             },
         ],
     };
@@ -71,7 +71,7 @@ export const contextMenuContracts = (
         guards: [
             ctx => {
                 ctx.interaction.targetMessage.id satisfies string;
-                return new OwnerOnly();
+                return ownerOnly;
             },
         ],
     };

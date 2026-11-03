@@ -1,12 +1,12 @@
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext, OwnerOnly } from "@hyperion/core";
+import { Command, type CommandContext, ownerOnly } from "@hyperion/core";
 import { type ApplicationCommandType, MessageFlags } from "discord.js";
 
 export default class InspectUser extends Command<ApplicationCommandType.User> {
     constructor() {
         super({
             builder: new UserContextCommandBuilder().setName("Inspect"),
-            guards: [new OwnerOnly()],
+            guards: [ownerOnly],
         });
     }
 

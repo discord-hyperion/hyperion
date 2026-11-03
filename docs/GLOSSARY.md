@@ -197,7 +197,7 @@ An execution check that permits or rejects an invocation before its handler runs
 _Avoid_: Precondition, autocomplete filter
 
 **Guard provider**:
-A guard instance or a factory that supplies a guard for a particular invocation.
+A guard, or a factory that supplies a guard for a particular invocation.
 _Avoid_: Handler
 
 **Autocomplete**:

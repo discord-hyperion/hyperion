@@ -1,6 +1,7 @@
 import type { Logger } from "pino";
 import type { CommandContext } from "../commands/index.ts";
-import { Guard, type GuardProvider } from "../guards/index.ts";
+import { isGuard } from "../guards/guard.ts";
+import type { Guard, GuardProvider } from "../guards/index.ts";
 import { resolve } from "../util/index.ts";
 
 export type GuardResult<Context = CommandContext> =
@@ -15,9 +16,9 @@ export class GuardPipeline {
         for (const provider of providers) {
             const guard = await resolve(provider, ctx);
 
-            if (!(guard instanceof Guard) || typeof guard.run !== "function") {
+            if (!isGuard(guard)) {
                 throw new TypeError(
-                    "A guard provider must resolve to a Guard with a run() method.",
+                    "A guard provider must resolve to a guard from defineGuard().",
                 );
             }
 

@@ -69,8 +69,10 @@ Read the relevant reference before implementation or review:
   locals when they improve clarity, avoid repeated work, or provide type safety.
 - Group related statements, separating validation, mutations, logging, and later
   operations with blank lines. Follow the registry loaders' spacing.
-- Keep the class-based structure; prefer shared implementations or generic types over empty
-  `Base<X>` subclasses. Use Discord's `Collection` for keyed stores, including
+- Keep the class-based structure for handlers; prefer shared implementations or generic
+  types over empty `Base<X>` subclasses. Guards are execution checks, not handlers:
+  define them with `defineGuard()` and closures, not classes (see
+  [ADR 0003](docs/adr/0003-guards-are-definitions-not-classes.md)). Use Discord's `Collection` for keyed stores, including
   tests and examples; arrays, sets, and weak maps suit their respective purposes.
 
 ## Verification

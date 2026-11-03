@@ -13,7 +13,7 @@ import {
     type SelectMenuContext,
     SelectMenuHandler,
 } from "../src/components/index.ts";
-import { type GuardProvider, ParamOwner } from "../src/guards/index.ts";
+import { type GuardProvider, paramOwner } from "../src/guards/index.ts";
 import { SelectMenuRegistry } from "../src/registries/index.ts";
 import { selectMenuKind } from "./support/component-kinds.ts";
 import { type SelectKind, selectKinds } from "./support/select-kinds.ts";
@@ -68,7 +68,7 @@ for (const kind of selectKinds) {
             });
             client.selectMenus.routes.set(
                 pick.id,
-                createParamsMenu(kind, execute, [new ParamOwner("owner")]),
+                createParamsMenu(kind, execute, [paramOwner("owner")]),
             );
             const fixture = kind.interaction({
                 customId: pick({ owner: "caller" }),
@@ -109,13 +109,13 @@ for (const kind of selectKinds) {
             assert.equal(execute.mock.callCount(), 0);
         });
 
-        test("ParamOwner rejects other users and invalid params with its description", async t => {
+        test("paramOwner rejects other users and invalid params with its description", async t => {
             const { client, dispatcher } = await createTestClient(t);
             const execute = mock.fn<Run>(async () => {});
             client.selectMenus.routes.set(
                 pick.id,
                 createParamsMenu(kind, execute, [
-                    new ParamOwner("owner", "Not yours."),
+                    paramOwner("owner", "Not yours."),
                 ]),
             );
 
@@ -219,14 +219,14 @@ describe("select menu params definitions", () => {
     });
 });
 
-test("ParamOwner works on button params with the default description", async t => {
+test("paramOwner works on button params with the default description", async t => {
     const { client, dispatcher } = await createTestClient(t);
     const execute = mock.fn(async () => {});
     client.buttons.routes.set(
         pick.id,
         new (class extends ButtonHandler<typeof pick> {
             constructor() {
-                super({ params: pick, guards: [new ParamOwner("owner")] });
+                super({ params: pick, guards: [paramOwner("owner")] });
             }
 
             run(_ctx: ButtonContext<typeof pick>) {

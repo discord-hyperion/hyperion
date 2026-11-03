@@ -14,11 +14,11 @@ import {
 } from "discord.js";
 import { createModalInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
-    Guard,
+    defineGuard,
     type GuardProvider,
     type ModalContext,
     ModalHandler,
-    OwnerOnly,
+    ownerOnly,
     SelectMenuHandler,
 } from "../src/index.ts";
 import { assertPrivateFailure, phases } from "./support/acknowledgment.ts";
@@ -180,7 +180,7 @@ test("embedded selects are resolved by the modal without invoking message select
     assert.equal(fixture.reply.mock.calls[0]?.arguments[0], "blue");
 });
 
-test("modal guards run lazily in order and shared OwnerOnly guards work", async t => {
+test("modal guards run lazily in order and shared ownerOnly guards work", async t => {
     const { client, dispatcher } = await createTestClient(t);
     t.mock.method(client, "getOwnerId", async () => "owner");
     const execute = mock.fn(async (_ctx: ModalContext) => {});
@@ -189,9 +189,9 @@ test("modal guards run lazily in order and shared OwnerOnly guards work", async 
             ctx.interaction.components.getTextInputValue("feedback.message"),
             "Private submitted text",
         );
-        return new OwnerOnly();
+        return ownerOnly;
     });
-    const later = mock.fn(() => new OwnerOnly());
+    const later = mock.fn(() => ownerOnly);
     client.modals.set(
         "feedback.submit",
         new TestModal(execute, [factory, later]),
@@ -223,19 +223,19 @@ test("modal guards run lazily in order and shared OwnerOnly guards work", async 
 
 test("modal custom rejection owns the response and guards are snapshotted", async t => {
     const { client, dispatcher } = await createTestClient(t);
-    class Deny extends Guard<ModalContext> {
-        constructor() {
-            super({ description: "Denied" });
-        }
-        run() {
-            return false;
-        }
-        async onFail(ctx: ModalContext) {
-            await ctx.interaction.reply("Custom rejection");
-        }
-    }
+    const deny = () =>
+        defineGuard<ModalContext>({
+            name: "Deny",
+            description: "Denied",
+            run() {
+                return false;
+            },
+            async onFail(ctx: ModalContext) {
+                await ctx.interaction.reply("Custom rejection");
+            },
+        });
     const execute = mock.fn(async (_ctx: ModalContext) => {});
-    const guards: GuardProvider<ModalContext>[] = [new Deny()];
+    const guards: GuardProvider<ModalContext>[] = [deny()];
     const modal = new TestModal(execute, guards);
     guards.length = 0;
     assert.ok(Object.isFrozen(modal.guards));

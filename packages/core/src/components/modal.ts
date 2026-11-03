@@ -8,7 +8,8 @@ import type {
     CommandInputSchema,
 } from "../commands/command-input.ts";
 import type { InteractionContext } from "../contexts/index.ts";
-import { Guard, type GuardProvider } from "../guards/index.ts";
+import { isGuard } from "../guards/guard.ts";
+import type { GuardProvider } from "../guards/index.ts";
 import { validateInput } from "../util/validate-input.ts";
 import {
     type ParamsDefinition,
@@ -94,12 +95,9 @@ export abstract class ModalHandler<
 
         for (const provider of this.guards) {
             if (typeof provider === "function") continue;
-            if (
-                !(provider instanceof Guard) ||
-                typeof provider.run !== "function"
-            ) {
+            if (!isGuard(provider)) {
                 throw new TypeError(
-                    "Modal guards must be Guard instances or guard factories.",
+                    "Modal guards must be guards from defineGuard() or guard factories.",
                 );
             }
         }

@@ -17,8 +17,8 @@ import {
 import * as v from "valibot";
 import { createModalInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
+    defineGuard,
     defineInput,
-    Guard,
     type GuardProvider,
     type ModalContext,
     ModalHandler,
@@ -69,19 +69,14 @@ class InputModal extends ModalHandler<ModalInputOptions> {
         return this.execute(ctx);
     }
 }
-class Check extends Guard<ModalContext> {
-    constructor(
-        private readonly check: (
-            ctx: ModalContext,
-        ) => boolean | Promise<boolean>,
-    ) {
-        super({ description: "Denied" });
-    }
-
-    run(ctx: ModalContext) {
-        return this.check(ctx);
-    }
-}
+const check = (predicate: (ctx: ModalContext) => boolean | Promise<boolean>) =>
+    defineGuard<ModalContext>({
+        name: "Check",
+        description: "Denied",
+        run(ctx: ModalContext) {
+            return predicate(ctx);
+        },
+    });
 const submission = (
     data: readonly Submitted[] = [text("name", "Private text")],
 ) => createModalInteraction({ customId: "todo.create", components: { data } });
@@ -124,7 +119,7 @@ test("modal guards precede private deferral, async schema, resolver, and handler
                 await ctx.interaction.editReply("Created");
             },
             [
-                new Check(ctx => {
+                check(ctx => {
                     order.push("guard");
                     assert.equal(ctx.interaction.deferred, false);
                     assert.equal("input" in ctx, false);
@@ -362,7 +357,7 @@ test("guard rejection skips extraction, deferral, schemas, and resolvers", async
         new InputModal(
             { defer: true, schema: schema(validate), resolve },
             run,
-            [new Check(() => false)],
+            [check(() => false)],
         ),
     );
     const fixture = submission([text("same"), text("same")]);
@@ -386,7 +381,7 @@ for (const acknowledgment of ["reply", "deferReply", "deferUpdate"] as const) {
                     throw new Error("Failure");
                 }),
             }, async () => {}, [
-                new Check(async ctx => {
+                check(async ctx => {
                     if (acknowledgment === "reply")
                         await ctx.interaction.reply("Acknowledged");
                     else if (acknowledgment === "deferReply")

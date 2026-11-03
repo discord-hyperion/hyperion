@@ -10,7 +10,7 @@ import {
     type CommandContext,
     type CommandRegistry,
     type GuardProvider,
-    OwnerOnly,
+    ownerOnly,
     ParentCommand,
     Subcommand,
 } from "../src/index.ts";
@@ -46,9 +46,9 @@ export const subcommandContracts = (
     // @ts-expect-error Leaf builders are readonly.
     leaf.builder = new ChatInputCommandSubcommandBuilder();
     // @ts-expect-error Parent guard lists cannot be mutated.
-    parent.guards.push(new OwnerOnly());
+    parent.guards.push(ownerOnly);
     // @ts-expect-error Leaf guard lists cannot be mutated.
-    leaf.guards.push(new OwnerOnly());
+    leaf.guards.push(ownerOnly);
     // @ts-expect-error The parent collection property cannot be replaced.
     registry.parents = new Collection<string, ParentCommand>();
     // @ts-expect-error Run requires a command context rather than autocomplete.
@@ -68,7 +68,7 @@ export const subcommandContracts = (
                             | null;
                         // @ts-expect-error Parent guards do not receive a context-menu target.
                         ctx.interaction.targetUser;
-                        return new OwnerOnly();
+                        return ownerOnly;
                     },
                 ],
             });
@@ -89,7 +89,7 @@ export const subcommandContracts = (
                             | null;
                         // @ts-expect-error Leaf guards do not receive autocomplete contexts.
                         ctx.interaction.respond([]);
-                        return new OwnerOnly();
+                        return ownerOnly;
                     },
                 ],
             });

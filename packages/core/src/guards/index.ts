@@ -1,7 +1,8 @@
 export * from "./builtins/index.ts";
 export {
-    Guard,
+    defineGuard,
+    type Guard,
+    type GuardDefinition,
     type GuardFactory,
-    type GuardOptions,
     type GuardProvider,
 } from "./guard.ts";

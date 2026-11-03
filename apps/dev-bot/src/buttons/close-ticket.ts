@@ -2,7 +2,7 @@ import {
     type ButtonContext,
     ButtonHandler,
     defineParams,
-    ParamOwner,
+    paramOwner,
 } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 import * as v from "valibot";
@@ -30,10 +30,7 @@ export default class CloseTicketButton extends ButtonHandler<
             params: closeTicket,
             // The custom ID is client-controlled, so ownership is checked on every click.
             guards: [
-                new ParamOwner(
-                    "owner",
-                    "Only the ticket's author can close it.",
-                ),
+                paramOwner("owner", "Only the ticket's author can close it."),
             ],
         });
     }

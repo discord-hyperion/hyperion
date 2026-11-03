@@ -5,7 +5,7 @@ import {
     type ButtonContext,
     ButtonHandler,
     defineParams,
-    ParamOwner,
+    paramOwner,
     type SelectMenuContext,
     SelectMenuHandler,
 } from "../src/index.ts";
@@ -32,7 +32,7 @@ export class Assign extends SelectMenuHandler<
         super({
             componentType: ComponentType.UserSelect,
             params: assign,
-            guards: [new ParamOwner("owner")],
+            guards: [paramOwner("owner")],
         });
     }
 
@@ -109,7 +109,7 @@ export const paramOwnerContracts = () => {
     class Typo extends ButtonHandler<typeof assign> {
         constructor() {
             // @ts-expect-error The key must exist in the params.
-            super({ params: assign, guards: [new ParamOwner("ownr")] });
+            super({ params: assign, guards: [paramOwner("ownr")] });
         }
 
         async run(_ctx: ButtonContext<typeof assign>) {}
@@ -118,7 +118,7 @@ export const paramOwnerContracts = () => {
     class NotAString extends ButtonHandler<typeof counted> {
         constructor() {
             // @ts-expect-error The owner param must be a string.
-            super({ params: counted, guards: [new ParamOwner("owner")] });
+            super({ params: counted, guards: [paramOwner("owner")] });
         }
 
         async run(_ctx: ButtonContext<typeof counted>) {}

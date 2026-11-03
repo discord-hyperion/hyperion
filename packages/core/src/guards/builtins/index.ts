@@ -1,3 +1,3 @@
-export { Cooldown, type CooldownOptions } from "./cooldown.ts";
-export { OwnerOnly } from "./owner-only.ts";
-export { ParamOwner, type ParamOwnerContext } from "./param-owner.ts";
+export { type CooldownOptions, cooldown } from "./cooldown.ts";
+export { ownerOnly } from "./owner-only.ts";
+export { type ParamOwnerContext, paramOwner } from "./param-owner.ts";

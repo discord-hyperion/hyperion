@@ -1,4 +1,5 @@
-import { Guard, type GuardProvider } from "../guards/index.ts";
+import { isGuard } from "../guards/guard.ts";
+import type { GuardProvider } from "../guards/index.ts";
 import type { CommandContext } from "./command.ts";
 
 export const freezeCommandGuards = (
@@ -8,12 +9,9 @@ export const freezeCommandGuards = (
 
     for (const provider of guards) {
         if (typeof provider === "function") continue;
-        if (
-            !(provider instanceof Guard) ||
-            typeof provider.run !== "function"
-        ) {
+        if (!isGuard(provider)) {
             throw new TypeError(
-                "Command guards must be Guard instances or guard factories.",
+                "Command guards must be guards from defineGuard() or guard factories.",
             );
         }
     }
