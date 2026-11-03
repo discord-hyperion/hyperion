@@ -1,7 +1,8 @@
-# Custom-ID params (proposal)
+# Custom-ID params
 
-Status: proposal, not implemented. This guide specifies typed custom-ID data
-exposed through `ctx.params`. It implements the deferred backlog entry in
+Status: implemented for buttons and select menus. Modals and a JSX encoder
+helper are follow-ups (see [Scope](#scope)). This guide specifies typed
+custom-ID data exposed through `ctx.params`. It implements the backlog entry in
 [features](features.md) and reuses the pipeline described in
 [input validation](input-validation.md).
 
@@ -160,8 +161,7 @@ issues.
 - A handler that declares `params` owns its whole `<route>:` namespace. The route
   lookup applies only to these handlers and only after exact match fails.
 - Loading fails when a literal custom ID equals a params route, so a bare
-  `todo.done` can never be ambiguous. Update the routing paragraph in
-  [buttons](buttons.md) when this ships.
+  `todo.done` can never be ambiguous.
 
 ## Guards and invalid params
 
@@ -170,7 +170,7 @@ issues.
 - A schema failure does not stop guards. A guard that reads `ctx.params` must
   handle the issues case itself and reject; the framework does not reject on its
   behalf, so handlers keep control of the response.
-- The built-in `ParamOwner` guard will reject whenever `ctx.params` carries issues.
+- The built-in `ParamOwner` guard rejects whenever `ctx.params` carries issues.
 
 ## Stale controls
 
