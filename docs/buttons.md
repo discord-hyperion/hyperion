@@ -109,7 +109,9 @@ export default class TodoDone extends ButtonHandler<typeof todoDone> {
 ```
 
 A params handler owns its whole `<id>:` namespace and is stored in
-`client.buttons.routes`. It may also carry a template. Exact-match routing for
+`client.buttons.routes`. It may also carry a template, which
+`client.buttons.build(todoDone, { owner, todoId })` copies with the encoded
+custom ID. Exact-match routing for
 literal handlers is unchanged. Params are decoded and schema-validated before
 guards, so guards can read `ctx.params`; a schema failure reaches the handler as
 `issues` rather than as an automatic reply.

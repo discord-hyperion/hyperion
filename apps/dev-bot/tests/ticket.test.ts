@@ -3,11 +3,13 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
+import type { ModalBuilder } from "@discordjs/builders";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
 import { Collection, ComponentType, MessageFlags } from "discord.js";
 import {
     createButtonInteraction,
     createChatInputInteraction,
+    createModalInteraction,
     createSelectInteraction,
 } from "../../../tests/fixtures/interactions.ts";
 
@@ -17,13 +19,15 @@ const setup = async (t: TestContext) => {
     for (const [folder, modulePath] of [
         ["commands", "commands/(general)/ticket"],
         ["buttons", "buttons/close-ticket"],
+        ["buttons", "buttons/rename-ticket"],
         ["select-menus", "select-menus/assign-ticket"],
+        ["modals", "modals/rename-ticket"],
     ] as const) {
         const directory = path.join(root, "src", folder);
         await mkdir(directory, { recursive: true });
         const url = new URL(`../src/${modulePath}.ts`, import.meta.url);
         await writeFile(
-            path.join(directory, "handler.mjs"),
+            path.join(directory, `${path.basename(modulePath)}.mjs`),
             `export { default } from ${JSON.stringify(url.href)};`,
         );
     }
@@ -38,6 +42,7 @@ const setup = async (t: TestContext) => {
     await client.commands.load(root);
     await client.buttons.load(root);
     await client.selectMenus.load(root);
+    await client.modals.load(root);
 
     return { client, dispatcher: new InteractionDispatcher(client) };
 };
@@ -62,6 +67,7 @@ const openTicket = async (dispatcher: InteractionDispatcher) => {
         content: payload.content,
         assignId: assignRow?.toJSON().components[0]?.custom_id,
         customId: closeRow?.toJSON().components[0]?.custom_id,
+        renameId: closeRow?.toJSON().components[1]?.custom_id,
     };
 };
 
@@ -159,4 +165,79 @@ test("development ticket command sends an Assign menu that carries the ticket se
 
     assert.equal(crossed.reply.mock.callCount(), 0);
     assert.equal(crossed.update.mock.callCount(), 0);
+});
+
+const submitRename = (customId: string, userId: string, title: string) =>
+    createModalInteraction({
+        id: `rename-${userId}`,
+        customId,
+        user: { id: userId },
+        message: { id: "ticket-message" },
+        components: {
+            data: [
+                {
+                    id: 1,
+                    type: ComponentType.Label,
+                    component: {
+                        id: 2,
+                        type: ComponentType.TextInput,
+                        customId: "title",
+                        value: title,
+                    },
+                },
+            ],
+        },
+    });
+
+test("development ticket Rename opens a modal that carries the ticket and checks ownership again", async t => {
+    const { dispatcher } = await setup(t);
+    const { content, renameId } = await openTicket(dispatcher);
+    const ticketId = /^Ticket ([0-9a-f]{8}):/.exec(content)?.[1];
+
+    assert.ok(ticketId && renameId);
+    assert.equal(renameId, `ticket.rename:${ticketId}:author`);
+
+    const intruderClick = click(renameId, "intruder");
+    await dispatcher.dispatch(intruderClick.interaction);
+
+    assert.equal(intruderClick.showModal.mock.callCount(), 0);
+
+    const authorClick = click(renameId, "author");
+    await dispatcher.dispatch(authorClick.interaction);
+
+    const form = authorClick.showModal.mock.calls[0]?.arguments[0] as
+        | ModalBuilder
+        | undefined;
+    const formId = form?.toJSON().custom_id;
+
+    assert.equal(formId, `ticket.rename-form:${ticketId}:author`);
+    assert.ok(formId);
+
+    // A forged submission reaches the modal handler, whose guard rejects it.
+    const intruderSubmit = submitRename(formId, "intruder", "Hijacked");
+    await dispatcher.dispatch(intruderSubmit.interaction);
+
+    assert.equal(intruderSubmit.update.mock.callCount(), 0);
+    assert.deepEqual(intruderSubmit.reply.mock.calls[0]?.arguments[0], {
+        content: "Only the ticket's author can rename it.",
+        flags: MessageFlags.Ephemeral,
+    });
+
+    const blank = submitRename(formId, "author", "   ");
+    await dispatcher.dispatch(blank.interaction);
+
+    assert.equal(blank.update.mock.callCount(), 0);
+    assert.deepEqual(blank.reply.mock.calls[0]?.arguments[0], {
+        content: "The title must not be blank.",
+        flags: MessageFlags.Ephemeral,
+        allowedMentions: { parse: [] },
+    });
+
+    const renamed = submitRename(formId, "author", "  Printer fixed  ");
+    await dispatcher.dispatch(renamed.interaction);
+
+    assert.deepEqual(renamed.update.mock.calls[0]?.arguments[0], {
+        content: `Ticket ${ticketId}: Printer fixed`,
+        allowedMentions: { parse: [] },
+    });
 });

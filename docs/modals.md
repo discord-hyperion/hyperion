@@ -91,7 +91,7 @@ template.
 
 Opening a modal acknowledges the originating interaction. Do not reply or defer
 that interaction before calling `showModal()`. Submission is a separate
-interaction routed to `Modal.run()`. Modal submissions cannot open another modal.
+interaction routed to `ModalHandler.run()`. Modal submissions cannot open another modal.
 The development bot's `/feedback` command demonstrates opening and submitting
 the filesystem modal in `apps/dev-bot/src/modals/submit-feedback.ts`.
 
@@ -99,6 +99,58 @@ Unmatched modal IDs remain untouched for application-owned collectors and
 listeners. Avoid acknowledging the same submission in both a filesystem handler
 and a collector. Modal IDs are unique within `client.modals`; they do not share a
 namespace with buttons or message selects.
+
+## Carry data in the custom ID
+
+A submission is a separate interaction, so the code that showed the modal has
+already returned. To tell the modal handler which record the form is about,
+declare typed [custom-ID params](custom-id-params.md) instead of `customId`:
+
+```ts
+export const renameTicketForm = defineParams({
+    id: "ticket.rename-form",
+    keys: ["ticketId", "owner"],
+    schema: v.object({ ticketId: v.string(), owner: v.string() }),
+});
+
+const input = defineInput({
+    schema: v.object({ title: v.pipe(v.string(), v.trim(), v.minLength(1)) }),
+});
+
+export default class RenameTicket extends ModalHandler<
+    typeof input,
+    typeof renameTicketForm
+> {
+    constructor() {
+        super({
+            params: renameTicketForm,
+            builder: new ModalBuilder().setTitle(
+                "Rename ticket",
+            ) /* … "title" text input */,
+            input,
+            guards: [new ParamOwner("owner")],
+        });
+    }
+
+    async run(ctx: ModalContext<typeof input, typeof renameTicketForm>) {
+        const [paramIssues, params] = ctx.params; // Which ticket, from the custom ID.
+        const [inputIssues, value] = ctx.input; // The new title, from the form.
+    }
+}
+
+// In a button handler:
+await ctx.interaction.showModal(
+    ctx.client.modals.build(renameTicketForm, { ticketId, owner }),
+);
+```
+
+Params are decoded and validated before guards, so guards (such as
+`ParamOwner`) can read `ctx.params` but never `ctx.input`. Input then runs, even
+when params have issues, so the handler receives both tuples and chooses the
+response. A params handler is stored in `client.modals.routes`.
+`build(definition, values)` returns a fresh copy of the form with the encoded
+custom ID. The development bot's `/ticket` **Rename** button opens
+`src/modals/rename-ticket.ts` this way.
 
 ## Guards and acknowledgment
 

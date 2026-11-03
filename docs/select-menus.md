@@ -288,7 +288,9 @@ export default class AssignTicket extends SelectMenuHandler<
 
 Params describe what the bot decided when it sent the menu; the selection is
 what the user chose. A params handler is stored in `client.selectMenus.routes`
-and may also carry a template. Routes are unique across every select type. A click
+and may also carry a template, which
+`client.selectMenus.build(assignTicket, { ticketId, owner })` copies with the
+encoded custom ID. Routes are unique across every select type. A click
 of another select type is unmatched before its params are decoded.
 
 ## Guards, async work, and errors

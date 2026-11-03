@@ -10,11 +10,24 @@ import type {
 import type { InteractionContext } from "../contexts/index.ts";
 import { Guard, type GuardProvider } from "../guards/index.ts";
 import { validateInput } from "../util/validate-input.ts";
+import {
+    type ParamsDefinition,
+    type ParamsResult,
+    validateParams,
+} from "./custom-id-params.ts";
 import { handlerCustomId } from "./handler-options.ts";
 
-export type ModalInputDefinition = CommandInputDefinition<
-    InteractionContext<ModalSubmitInteraction>
->;
+/** The submission context guards and input resolvers see: params, never input. */
+type ModalParamsContext<
+    Params extends ParamsDefinition | undefined = undefined,
+> = InteractionContext<ModalSubmitInteraction> &
+    (Params extends ParamsDefinition
+        ? { readonly params: ParamsResult<Params> }
+        : unknown);
+
+export type ModalInputDefinition<
+    Params extends ParamsDefinition | undefined = undefined,
+> = CommandInputDefinition<ModalParamsContext<Params>>;
 export type ModalInputOptions<
     Schema extends CommandInputSchema = CommandInputSchema,
     Result = unknown,
@@ -33,37 +46,50 @@ export type ModalInputResolver<
 >;
 
 export type ModalContext<
-    Input extends ModalInputDefinition | undefined = undefined,
-> = InteractionContext<ModalSubmitInteraction> &
-    (Input extends ModalInputDefinition
+    Input extends ModalInputDefinition<Params> | undefined = undefined,
+    Params extends ParamsDefinition | undefined = undefined,
+> = ModalParamsContext<Params> &
+    (Input extends ModalInputDefinition<Params>
         ? { readonly input: CommandInputResult<Input> }
         : unknown);
 
 export type ModalHandlerOptions<
-    Input extends ModalInputDefinition | undefined = undefined,
+    Input extends ModalInputDefinition<Params> | undefined = undefined,
+    Params extends ParamsDefinition | undefined = undefined,
 > = {
-    customId: string;
     /**
      * Optional form template; callers get copies through `client.modals.build()`.
      * Recommended, since `input` reads the form's text-input custom IDs.
      */
     builder?: ModalBuilder;
-    guards?: readonly GuardProvider<ModalContext>[];
-} & (Input extends ModalInputDefinition ? { input: Input } : { input?: never });
+    /** Guards run before input, so they see params but never `ctx.input`. */
+    guards?: readonly GuardProvider<ModalContext<undefined, Params>>[];
+} & (Input extends ModalInputDefinition<Params>
+    ? { input: Input }
+    : { input?: never }) &
+    (Params extends ParamsDefinition
+        ? { params: Params; customId?: never }
+        : { customId: string; params?: never });
 
 export abstract class ModalHandler<
-    Input extends ModalInputDefinition | undefined = undefined,
+    Input extends ModalInputDefinition<Params> | undefined = undefined,
+    Params extends ParamsDefinition | undefined = undefined,
 > {
     readonly builder: ModalBuilder | undefined;
+    readonly params: ParamsDefinition | undefined;
+    /** The exact custom ID, or the route for a params handler. */
     readonly customId: string;
-    readonly guards: readonly GuardProvider<ModalContext>[];
+    readonly guards: readonly GuardProvider<ModalContext<undefined, Params>>[];
 
     readonly input: ModalInputDefinition | undefined;
 
-    protected constructor(options: ModalHandlerOptions<Input>) {
-        this.customId = handlerCustomId("Modal", options.customId, undefined);
+    protected constructor(options: ModalHandlerOptions<Input, Params>) {
+        this.params = validateParams(options.params);
+        this.customId = handlerCustomId("Modal", options.customId, this.params);
         this.builder = options.builder;
-        this.input = validateInput(options.input);
+        this.input = validateInput(
+            options.input as ModalInputDefinition | undefined,
+        );
         this.guards = Object.freeze([...(options.guards ?? [])]);
 
         for (const provider of this.guards) {
@@ -79,5 +105,5 @@ export abstract class ModalHandler<
         }
     }
 
-    abstract run(ctx: ModalContext<Input>): Promise<void>;
+    abstract run(ctx: ModalContext<Input, Params>): Promise<void>;
 }

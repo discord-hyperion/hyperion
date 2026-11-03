@@ -81,9 +81,11 @@ export class InteractionDispatcher {
                 raw,
             );
         } else if (interaction.isModalSubmit()) {
-            const modal = this.client.modals.get(interaction.customId);
+            const match = this.client.modals.resolve(interaction.customId);
+            // Unmatched IDs may belong to application-owned collectors/listeners.
+            if (!match) return;
 
-            if (!modal) return;
+            const { modal, raw } = match;
 
             const logger = this.createLogger(interaction, {
                 modal: modal.customId,
@@ -93,6 +95,8 @@ export class InteractionDispatcher {
                 modal,
                 { client: this.client, interaction, logger },
                 "modal",
+                [],
+                raw,
             );
         } else if (interaction.isAutocomplete()) {
             await this.dispatchAutocomplete(interaction);
@@ -380,10 +384,10 @@ export class InteractionDispatcher {
             ) {
                 stage = "input";
                 const input = await resolveCommandInput(handler, {
-                    ...ctx,
+                    ...current,
                     interaction,
                 });
-                handlerContext = { ...ctx, input };
+                handlerContext = { ...current, input };
             } else if (
                 handler instanceof ModalHandler &&
                 interaction.isModalSubmit() &&
@@ -391,11 +395,12 @@ export class InteractionDispatcher {
             ) {
                 stage = "input";
 
+                // Input resolvers see params; guards never see input.
                 const input = await resolveModalInput(handler, {
-                    ...ctx,
+                    ...current,
                     interaction,
                 });
-                handlerContext = { ...ctx, input };
+                handlerContext = { ...current, input };
             }
 
             stage = "handler";

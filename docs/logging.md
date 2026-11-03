@@ -48,6 +48,10 @@ No global console interception or background formatting worker is installed.
   `interactionId`, `guildId`, and `userId`, without logging selected values.
 - Modals: `modals.load` startup steps and discovery counts; `modal.started`,
   `modal.completed`, `modal.rejected`, and `modal.failed` execution events.
+- Custom-ID params: `button.params.undecodable`, `select-menu.params.undecodable`,
+  and `modal.params.undecodable` at debug level when a custom ID matches a route
+  but cannot be decoded. They carry the route and segment counts only, never
+  values or the full custom ID.
   Invocation logs include `modal`, `interactionId`, `guildId`, and `userId`,
   without logging submitted values. Failed responses emit
   `modal.error-response.failed`; unmatched custom IDs are ignored.

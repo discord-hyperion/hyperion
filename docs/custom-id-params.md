@@ -1,7 +1,7 @@
 # Custom-ID params
 
-Status: implemented for buttons and select menus. Modals and a JSX encoder
-helper are follow-ups (see [Scope](#scope)). This guide specifies typed
+Status: implemented for buttons, select menus, and modals. A JSX encoder helper
+is a follow-up (see [Scope](#scope)). This guide specifies typed
 custom-ID data exposed through `ctx.params`. It implements the backlog entry in
 [features](features.md) and reuses the pipeline described in
 [input validation](input-validation.md).
@@ -148,9 +148,15 @@ issues.
 - Load-time checks reject: duplicate routes, a route that equals a literal
   custom ID, a route containing `:`, duplicate keys, and a handler that declares
   both `customId` and `params`.
-- There is no runtime check that the schema agrees with `keys`. Typing both
-  through `typeof todoDoneId` ties the encoder and `ctx.params` together, and a
-  mismatch shows up as a validation failure.
+- `defineParams` checks at compile time that `keys` names exactly the schema's
+  input keys, in any order. A missing or unknown key fails to compile with a
+  readable message. The check is skipped when the schema's keys cannot be
+  known, such as a record or an untyped schema. Order stays yours, because it
+  is the wire format. There is no runtime check.
+- `registry.build(definition, values)` returns a fresh copy of a params
+  handler's template with the encoded custom ID. It throws when no params
+  handler is loaded for the route, when the handler declares different `keys`,
+  or when it has no template.
 - Replacement stays atomic with the rest of the registry.
 
 ## Routing rules
@@ -184,14 +190,19 @@ version segment.
 Never log params, decoded values, issues, or the full custom ID. Log the route
 `id` and counts only, following [logging](logging.md).
 
+A custom ID that matches a route but fails to decode stays unmatched and logs
+`<kind>.params.undecodable` at debug level with the route, the segment count,
+and the expected count. This usually means a template was sent without values,
+or a control is stale.
+
 ## Scope
 
 1. Shared codec (`defineParams`, encode, decode) and the route index.
 2. Buttons.
 3. Select menus, all five types, and the `ParamOwner` guard.
-4. Follow-ups: modals, then a JSX helper for the encoder. Modal params also add
-   a compile-time check that `keys` names exactly the schema's input keys, in any
-   order, skipped when the schema's keys cannot be known.
+4. Modals, `build(definition, values)` on every registry, and the compile-time
+   `keys` check.
+5. Follow-up: a JSX helper for the encoder.
 
 The codec, route lookup, and context typing are kind-agnostic, so each kind
 reuses them without redesign.
@@ -212,7 +223,32 @@ Select menus reuse the codec, route lookup, pipeline, and `ctx.params` tuple.
   select types share `client.selectMenus`, so routes are unique across them and
   across literal select IDs. A button and a select menu may share a route.
 
-Modals follow separately, since they carry both `ctx.params` and `ctx.input`.
+## Modals
+
+A modal carries two sets of values: `ctx.params` from its custom ID, decided
+when the bot showed it, and `ctx.input` from its text inputs, decided by the
+user.
+
+```
+match → decode → params validate → guards → input (defer, extract, validate, resolve) → handler
+```
+
+- Typing gains a second generic: `ModalHandler<Input, Params>` and
+  `ModalContext<Input, Params>`. `Params` defaults to none.
+- Guards see `ctx.params` but never `ctx.input`, so `ParamOwner` works unchanged
+  and rejects before any input processing.
+- Input runs even when params have issues, so the handler receives both tuples.
+  An input resolver receives the params-bearing context. A resolver that reads
+  `ctx.params` must handle issues itself, and annotating it as
+  `ctx: ModalContext<undefined, typeof params>` only compiles on a handler with
+  those params.
+- Exceptions report `stage: "params"` or `stage: "input"`.
+- The form stays on the handler as its template, because `input` reads the
+  form's text-input custom IDs. Open it with
+  `ctx.client.modals.build(definition, values)`.
+- Routes are unique within `client.modals` and must not equal a literal modal
+  custom ID. A modal may share a route with a button or select menu.
+- A params modal without `input` is allowed.
 
 ## Guard typing
 

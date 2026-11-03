@@ -77,6 +77,30 @@ export const validateParams = (params: ParamsDefinition | undefined) => {
     });
 };
 
+type SchemaKeys<Schema extends StandardSchemaV1> = Extract<
+    keyof StandardSchemaV1.InferInput<Schema>,
+    string
+>;
+
+/**
+ * `Keys` when it names exactly the schema's input keys, in any order; otherwise
+ * a readable error. Skipped when the schema's keys cannot be known, such as an
+ * untyped schema or a record.
+ */
+type CheckedKeys<
+    Keys extends readonly string[],
+    Schema extends StandardSchemaV1,
+> =
+    unknown extends StandardSchemaV1.InferInput<Schema>
+        ? Keys
+        : string extends SchemaKeys<Schema>
+          ? Keys
+          : [Exclude<Keys[number], SchemaKeys<Schema>>] extends [never]
+            ? [Exclude<SchemaKeys<Schema>, Keys[number]>] extends [never]
+                ? Keys
+                : `Missing from keys: ${Exclude<SchemaKeys<Schema>, Keys[number]>}`
+            : `Not in the schema: ${Exclude<Keys[number], SchemaKeys<Schema>>}`;
+
 /**
  * Define the values a handler reads from its custom ID. Calling the result
  * builds a custom ID; passing it to a handler declares how to read one.
@@ -86,7 +110,8 @@ export const defineParams = <
     Schema extends StandardSchemaV1,
 >(definition: {
     readonly id: string;
-    readonly keys: Keys;
+    /** Wire order. Must name exactly the schema's input keys; order is yours. */
+    readonly keys: Keys & CheckedKeys<Keys, Schema>;
     readonly schema: Schema;
 }): CustomIdParams<Keys, Schema> => {
     const snapshot = validateParams(definition);

@@ -9,8 +9,13 @@ import { Collection, type ComponentType } from "discord.js";
 import type { Logger } from "pino";
 import {
     type AnySelectMenuHandler,
+    type CustomIdParams,
+    type ParamValues,
     SelectMenuHandler,
 } from "../components/index.ts";
+
+type SelectTemplate = NonNullable<AnySelectMenuHandler["builder"]>;
+
 import { buildTemplate } from "./build-template.ts";
 import { loadComponentHandlers } from "./load-modules.ts";
 import { resolveRoute } from "./resolve-route.ts";
@@ -31,19 +36,26 @@ export class SelectMenuRegistry extends Collection<
      * type is unmatched, and is rejected before its params are decoded.
      */
     resolve(customId: string, componentType: ComponentType) {
-        const match = resolveRoute(
-            this,
-            this.routes,
-            customId,
-            selectMenu => selectMenu.componentType === componentType,
-        );
+        const match = resolveRoute(this, this.routes, customId, {
+            accepts: selectMenu => selectMenu.componentType === componentType,
+            logger: this.logger,
+            kind: "select-menu",
+        });
 
         return match && { selectMenu: match.handler, raw: match.raw };
     }
 
-    /** A fresh copy of template with its custom ID set. */
-    build(customId: string) {
-        return buildTemplate("select menu", this, this.routes, customId);
+    /** A fresh copy of a handler's template with its custom ID set. */
+    build(customId: string): SelectTemplate;
+    build<Keys extends readonly string[]>(
+        definition: CustomIdParams<Keys>,
+        values: ParamValues<Keys>,
+    ): SelectTemplate;
+    build(
+        target: string | CustomIdParams,
+        values?: ParamValues<readonly string[]>,
+    ) {
+        return buildTemplate("select menu", this, this.routes, target, values);
     }
 
     async load(root: string | URL = process.cwd()) {
