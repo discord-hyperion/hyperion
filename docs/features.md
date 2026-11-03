@@ -11,7 +11,7 @@
 
 ## Planned
 
-- [ ] Typed custom-ID data exposed through interaction handlers. Buttons, select menus, and the `ParamOwner` guard are implemented; modals and a JSX encoder helper remain. See [custom-ID params](custom-id-params.md).
+- [ ] Typed custom-ID data exposed through interaction handlers. Buttons, select menus, modals, and the `ParamOwner` guard are implemented; a JSX encoder helper remains. See [custom-ID params](custom-id-params.md).
   - Separate handler definitions from visible button builders; handlers must not require a template button.
   - Let commands or shared views create multiple controls, with each custom ID carrying its own data.
   - Declare parameter contracts through handlers and expose validated invocation-local values through `ctx.params`.
@@ -23,7 +23,7 @@
   - Chat-input commands and subcommands now support optional Standard Schema-compatible schemas, whole-input resolution after validation, inferred handler input through `defineInput`, and handler-owned validation responses. See [typed command input](input-validation.md).
   - Modal handlers now support text-input schemas, optional whole-input resolution,
     and inferred submission results; see [modal input validation](modal-input-validation.md).
-  - Extend validation to additional modal control types and custom-ID parameters.
+  - Extend validation to additional modal control types.
   - Support application-defined resolvers, including asynchronous validation.
   - Keep expected validation failures separate from unexpected errors across input sources.
 - [ ] Guard definitions through `defineGuard()` (under consideration).
