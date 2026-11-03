@@ -2,39 +2,38 @@ import {
     Button,
     type ButtonContext,
     defineParams,
-    Guard,
+    ParamOwner,
 } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 import * as v from "valibot";
+
+/** The values every ticket control carries in its custom ID. */
+export const ticketSchema = v.object({
+    ticketId: v.pipe(v.string(), v.regex(/^[a-z0-9]{8}$/)),
+    owner: v.string(),
+});
 
 /** Builds the Close button's custom ID and declares how to read it back. */
 export const closeTicket = defineParams({
     id: "ticket.close",
     keys: ["ticketId", "owner"],
-    schema: v.object({
-        ticketId: v.pipe(v.string(), v.regex(/^[a-z0-9]{8}$/)),
-        owner: v.string(),
-    }),
+    schema: ticketSchema,
 });
 
 export type CloseTicketContext = ButtonContext<typeof closeTicket>;
 
-/** The custom ID is client-controlled, so ownership is checked on every click. */
-class TicketOwner extends Guard<CloseTicketContext> {
-    constructor() {
-        super({ description: "Only the ticket's author can close it." });
-    }
-
-    run(ctx: CloseTicketContext) {
-        const [issues, params] = ctx.params;
-
-        return !issues && params.owner === ctx.interaction.user.id;
-    }
-}
-
 export default class CloseTicketButton extends Button<typeof closeTicket> {
     constructor() {
-        super({ params: closeTicket, guards: [new TicketOwner()] });
+        super({
+            params: closeTicket,
+            // The custom ID is client-controlled, so ownership is checked on every click.
+            guards: [
+                new ParamOwner(
+                    "owner",
+                    "Only the ticket's author can close it.",
+                ),
+            ],
+        });
     }
 
     async run(ctx: CloseTicketContext) {

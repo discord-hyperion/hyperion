@@ -4,10 +4,11 @@ import os from "node:os";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
-import { MessageFlags } from "discord.js";
+import { Collection, ComponentType, MessageFlags } from "discord.js";
 import {
     createButtonInteraction,
     createChatInputInteraction,
+    createSelectInteraction,
 } from "../../../tests/fixtures/interactions.ts";
 
 const setup = async (t: TestContext) => {
@@ -16,6 +17,7 @@ const setup = async (t: TestContext) => {
     for (const [folder, modulePath] of [
         ["commands", "commands/(general)/ticket"],
         ["buttons", "buttons/close-ticket"],
+        ["select-menus", "select-menus/assign-ticket"],
     ] as const) {
         const directory = path.join(root, "src", folder);
         await mkdir(directory, { recursive: true });
@@ -35,6 +37,7 @@ const setup = async (t: TestContext) => {
     t.after(() => client.destroy());
     await client.commands.load(root);
     await client.buttons.load(root);
+    await client.selectMenus.load(root);
 
     return { client, dispatcher: new InteractionDispatcher(client) };
 };
@@ -53,11 +56,26 @@ const openTicket = async (dispatcher: InteractionDispatcher) => {
         components: { toJSON(): { components: { custom_id: string }[] } }[];
     };
 
+    const [assignRow, closeRow] = payload.components;
+
     return {
         content: payload.content,
-        customId: payload.components[0]?.toJSON().components[0]?.custom_id,
+        assignId: assignRow?.toJSON().components[0]?.custom_id,
+        customId: closeRow?.toJSON().components[0]?.custom_id,
     };
 };
+
+const assign = (customId: string, userId: string) =>
+    createSelectInteraction(ComponentType.UserSelect, {
+        id: `assign-${userId}`,
+        customId,
+        values: ["helper"],
+        users: new Collection([
+            ["helper", { id: "helper", username: "Helper" }],
+        ]),
+        members: new Collection(),
+        user: { id: userId },
+    });
 
 const click = (customId: string, userId: string) =>
     createButtonInteraction({
@@ -108,4 +126,37 @@ test("development ticket button rejects forged IDs and ignores malformed ones", 
 
     assert.equal(malformed.reply.mock.callCount(), 0);
     assert.equal(malformed.update.mock.callCount(), 0);
+});
+
+test("development ticket command sends an Assign menu that carries the ticket separately from the selection", async t => {
+    const { dispatcher } = await setup(t);
+    const { content, assignId } = await openTicket(dispatcher);
+    const ticketId = /^Ticket ([0-9a-f]{8}):/.exec(content)?.[1];
+
+    assert.ok(ticketId && assignId);
+    assert.equal(assignId, `ticket.assign:${ticketId}:author`);
+
+    const intruder = assign(assignId, "intruder");
+    await dispatcher.dispatch(intruder.interaction);
+
+    assert.equal(intruder.update.mock.callCount(), 0);
+    assert.deepEqual(intruder.reply.mock.calls[0]?.arguments[0], {
+        content: "Only the ticket's author can assign it.",
+        flags: MessageFlags.Ephemeral,
+    });
+
+    const author = assign(assignId, "author");
+    await dispatcher.dispatch(author.interaction);
+
+    assert.deepEqual(author.update.mock.calls[0]?.arguments[0], {
+        content: `Ticket ${ticketId} assigned to Helper.`,
+        allowedMentions: { parse: [] },
+    });
+
+    // The same custom ID on a button is a different registry: unmatched.
+    const crossed = click(assignId, "author");
+    await dispatcher.dispatch(crossed.interaction);
+
+    assert.equal(crossed.reply.mock.callCount(), 0);
+    assert.equal(crossed.update.mock.callCount(), 0);
 });
