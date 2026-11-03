@@ -58,3 +58,8 @@ export const Embed = Object.assign(
         Thumbnail: primitive<{ url: string }>("Embed.Thumbnail", ["url"]),
     },
 );
+
+export const H1 = primitive<Children>("H1", ["children"]);
+export const H2 = primitive<Children>("H2", ["children"]);
+export const H3 = primitive<Children>("H3", ["children"]);
+export const Subtext = primitive<Children>("Subtext", ["children"]);

@@ -154,8 +154,20 @@ The visible name and optional explanatory text associated with a form control.
 _Avoid_: Custom ID, placeholder
 
 **Text display**:
-Informational formatted text presented alongside interactive controls.
-_Avoid_: Text input, submitted value
+A block of formatted text in a modal or a layout message.
+_Avoid_: Text input, submitted value, message content
+
+**Layout component**:
+A component that arranges content within a message, such as a container,
+section, text display, thumbnail, media gallery, or separator, as opposed to an
+interactive control.
+_Avoid_: Display component, Components V2 component
+
+**Layout message**:
+A message whose visible content is built entirely from layout components and
+interactive controls, without plain message content or embeds. Once sent, it
+stays a layout message.
+_Avoid_: Components V2 message, embed
 
 **Custom ID**:
 An application-defined identifier attached to an interactive control or form to

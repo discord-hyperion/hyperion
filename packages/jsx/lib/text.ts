@@ -2,12 +2,14 @@ import {
     bold,
     channelMention,
     codeBlock,
+    heading,
     hyperlink,
     inlineCode,
     italic,
     roleMention,
     spoiler,
     strikethrough,
+    subtext,
     underline,
     userMention,
 } from "@discordjs/formatters";
@@ -25,6 +27,12 @@ const inlineFormatters: Readonly<Record<string, (text: string) => string>> = {
     Underline: underline,
     Strikethrough: strikethrough,
     Spoiler: spoiler,
+};
+const blockFormatters: Readonly<Record<string, (text: string) => string>> = {
+    H1: text => heading(text, 1),
+    H2: text => heading(text, 2),
+    H3: text => heading(text, 3),
+    Subtext: subtext,
 };
 const mentionFormatters: Readonly<Record<string, (id: string) => string>> = {
     UserMention: userMention,
@@ -71,17 +79,56 @@ const destination = (value: unknown, path: string) => {
     );
 };
 
+export type TextOptions = {
+    /** Plain metadata: no escaping and no formatting components. */
+    plain?: boolean;
+    /** Headings and subtext are allowed (text displays, descriptions, field values). */
+    blocks?: boolean;
+    insideLink?: boolean;
+    /** Inside inline formatting, where line-level blocks cannot render. */
+    nested?: boolean;
+};
+
+type Part = { text: string; block: boolean };
+
+/** Join parts so each heading or subtext occupies its own line. */
+const joinParts = (parts: readonly Part[]) => {
+    let output = "";
+    let afterBlock = false;
+
+    for (const { text, block } of parts) {
+        if ((block || afterBlock) && output !== "" && !output.endsWith("\n")) {
+            output += "\n";
+        }
+
+        output += text;
+        afterBlock = block;
+    }
+
+    return output;
+};
+
 export const renderTextContent = (
     content: unknown,
     path: string,
     depth = 0,
-    plain = false,
-    insideLink = false,
-): string =>
-    expand(content, path, depth)
-        .map(value => {
+    options: TextOptions = {},
+): string => {
+    const {
+        plain = false,
+        blocks = false,
+        insideLink = false,
+        nested = false,
+    } = options;
+    const inner = { blocks, insideLink, nested: true };
+
+    return joinParts(
+        expand(content, path, depth).map((value): Part => {
             if (typeof value === "string" || typeof value === "number") {
-                return plain ? String(value) : escapeLiteral(String(value));
+                return {
+                    text: plain ? String(value) : escapeLiteral(String(value)),
+                    block: false,
+                };
             }
 
             const current = { ...value, path: `${path}.${value.name}` };
@@ -93,93 +140,124 @@ export const renderTextContent = (
                 );
             }
 
-            const formatInline = inlineFormatters[current.name];
+            const formatBlock = blockFormatters[current.name];
 
-            if (formatInline) {
-                return formatInline(
-                    renderTextContent(
-                        current.props.children,
-                        current.path,
-                        current.depth,
-                        false,
-                        insideLink,
-                    ),
-                );
-            }
-            if (current.name === "Br") return "\n";
-            if (current.name === "Raw") return literal(current);
-            if (current.name === "Code") {
-                const text = literal(current);
-
-                if (/[`\r\n]/.test(text)) {
+            if (formatBlock) {
+                if (!blocks || nested) {
                     throw new JSXRenderError(
                         current.path,
-                        "Code cannot contain backticks or line breaks.",
+                        `${current.name} must start its own line in a text display, embed description, or field value.`,
                     );
                 }
 
-                return inlineCode(text);
-            }
-            if (current.name === "CodeBlock") {
-                const text = literal(current);
-                const language = current.props.language ?? "";
-
-                if (text.includes("```")) {
-                    throw new JSXRenderError(
-                        current.path,
-                        "CodeBlock cannot contain triple backticks.",
-                    );
-                }
-                if (
-                    typeof language !== "string" ||
-                    !/^[\w+-]*$/.test(language)
-                ) {
-                    throw new JSXRenderError(
-                        current.path,
-                        "CodeBlock language must be a single language identifier.",
-                    );
-                }
-
-                return codeBlock(language, text);
-            }
-            if (current.name === "Link") {
-                if (insideLink) {
-                    throw new JSXRenderError(
-                        current.path,
-                        "Links cannot contain other links.",
-                    );
-                }
-
-                const href = destination(current.props.href, current.path);
-                const label = renderTextContent(
+                const text = renderTextContent(
                     current.props.children,
                     current.path,
                     current.depth,
-                    false,
-                    true,
+                    inner,
                 );
 
-                return hyperlink(label, href);
-            }
-            const formatMention = mentionFormatters[current.name];
-
-            if (formatMention) {
-                if (
-                    typeof current.props.id !== "string" ||
-                    !/^\d+$/.test(current.props.id)
-                ) {
+                if (text.includes("\n")) {
                     throw new JSXRenderError(
                         current.path,
-                        "Mention id must be a nonempty string of digits.",
+                        `${current.name} must fit on one line.`,
                     );
                 }
 
-                return formatMention(current.props.id);
+                return { text: formatBlock(text), block: true };
             }
 
+            return { text: renderInline(current, inner), block: false };
+        }),
+    );
+};
+
+const renderInline = (
+    current: Node,
+    inner: Required<Omit<TextOptions, "plain">>,
+): string => {
+    const { insideLink } = inner;
+    const formatInline = inlineFormatters[current.name];
+
+    if (formatInline) {
+        return formatInline(
+            renderTextContent(
+                current.props.children,
+                current.path,
+                current.depth,
+                inner,
+            ),
+        );
+    }
+    if (current.name === "Br") return "\n";
+    if (current.name === "Raw") return literal(current);
+    if (current.name === "Code") {
+        const text = literal(current);
+
+        if (/[`\r\n]/.test(text)) {
             throw new JSXRenderError(
                 current.path,
-                "Expected text content, not an embed section.",
+                "Code cannot contain backticks or line breaks.",
             );
-        })
-        .join("");
+        }
+
+        return inlineCode(text);
+    }
+    if (current.name === "CodeBlock") {
+        const text = literal(current);
+        const language = current.props.language ?? "";
+
+        if (text.includes("```")) {
+            throw new JSXRenderError(
+                current.path,
+                "CodeBlock cannot contain triple backticks.",
+            );
+        }
+        if (typeof language !== "string" || !/^[\w+-]*$/.test(language)) {
+            throw new JSXRenderError(
+                current.path,
+                "CodeBlock language must be a single language identifier.",
+            );
+        }
+
+        return codeBlock(language, text);
+    }
+    if (current.name === "Link") {
+        if (insideLink) {
+            throw new JSXRenderError(
+                current.path,
+                "Links cannot contain other links.",
+            );
+        }
+
+        const href = destination(current.props.href, current.path);
+        const label = renderTextContent(
+            current.props.children,
+            current.path,
+            current.depth,
+            { ...inner, insideLink: true },
+        );
+
+        return hyperlink(label, href);
+    }
+    const formatMention = mentionFormatters[current.name];
+
+    if (formatMention) {
+        if (
+            typeof current.props.id !== "string" ||
+            !/^\d+$/.test(current.props.id)
+        ) {
+            throw new JSXRenderError(
+                current.path,
+                "Mention id must be a nonempty string of digits.",
+            );
+        }
+
+        return formatMention(current.props.id);
+    }
+
+    throw new JSXRenderError(
+        current.path,
+        "Expected text content, not an embed section.",
+    );
+};
