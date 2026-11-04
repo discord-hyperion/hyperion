@@ -1,0 +1,15 @@
+import { loader } from "fumadocs-core/source";
+import { metaSchema, pageSchema } from "fumadocs-core/source/schema";
+import { defineDocs } from "fumadocs-mdx/macro";
+
+const docs = defineDocs({
+    dir: "content/docs",
+    docs: { schema: pageSchema },
+    meta: { schema: metaSchema },
+});
+
+// The guide is the whole site, so it is served from the root.
+export const source = loader({
+    baseUrl: "/",
+    source: docs.toFumadocsSource(),
+});
