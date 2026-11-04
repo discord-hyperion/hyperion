@@ -50,6 +50,11 @@ reference doc, then the matching guide page following
 [the writing style](docs/writing-style.md). The guide may omit details but must
 never contradict the reference docs.
 
+A change that ships or drops backlog work updates
+[the feature list](docs/features.md) in the same pull request: delete the done
+bullets, and move a finished item to Implemented as one line linking its reference
+doc. The list holds only open work.
+
 ## Tooling and conventions
 
 - Use pnpm, preserve `pnpm-lock.yaml`, and keep the package-manager version pinned
