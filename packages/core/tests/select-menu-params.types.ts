@@ -39,8 +39,10 @@ export class Assign extends SelectMenuHandler<
     async run(ctx: AssignContext) {
         ctx.interaction satisfies UserSelectMenuInteraction;
         const [issues, params] = ctx.params;
+
         if (issues) {
             params satisfies undefined;
+
             return;
         }
 

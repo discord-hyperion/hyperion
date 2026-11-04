@@ -47,6 +47,7 @@ export const inferredInputContracts = (
             const todo: Todo | null = values.id
                 ? { id: values.id, name: values.description }
                 : null;
+
             return {
                 todo,
                 message: values.description,
@@ -78,17 +79,24 @@ export const inferredInputContracts = (
 
         async run(ctx: CommandContext<typeof input>) {
             const [issues, value] = ctx.input;
+
             if (issues) {
                 value satisfies undefined;
                 issues satisfies readonly StandardSchemaV1.Issue[];
+
                 return;
             }
+
             value.todo satisfies Todo | null;
             value.message satisfies string;
             value.overdue satisfies boolean;
             // @ts-expect-error Nullable todo results must be checked.
             value.todo.name;
-            if (value.todo) value.todo.name satisfies string;
+
+            if (value.todo) {
+                value.todo.name satisfies string;
+            }
+
             // @ts-expect-error Resolver output replaces raw schema fields.
             value.deadline;
             // @ts-expect-error Input results are readonly.
@@ -161,23 +169,28 @@ export const inputOutputContracts = (
     promisedSchema: StandardSchemaV1<unknown, Promise<Todo>>,
 ) => {
     const [issues, value] = resolved;
+
     if (!issues) {
         value satisfies CommandInputOutput<Definitions["input"]>;
         value.todo satisfies Todo | null;
         value.message satisfies string;
     }
+
     const [schemaIssues, schemaValue] = plain.input;
+
     if (!schemaIssues) {
         schemaValue.id satisfies string;
         schemaValue.deadline satisfies Date;
         schemaValue.description satisfies string;
     }
+
     const promisedInput = defineInput({ schema: promisedSchema });
     const promisedOutput = (
         value: CommandInputOutput<typeof promisedInput>,
     ) => {
         value satisfies Promise<Todo>;
     };
+
     return promisedOutput;
 };
 

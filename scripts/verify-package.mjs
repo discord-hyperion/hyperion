@@ -29,6 +29,7 @@ const workspace = JSON.parse(
 const temporary = await realpath(
     await mkdtemp(path.join(os.tmpdir(), "hyperion-package-")),
 );
+
 const packages = await Promise.all(
     ["jsx", "core"].map(async name => ({
         name,
@@ -41,6 +42,7 @@ const packages = await Promise.all(
         ),
     })),
 );
+
 const sources = [];
 const run = (command, args, cwd) =>
     execFileSync(command, args, { cwd, stdio: "inherit", timeout: 120_000 });
@@ -54,6 +56,7 @@ const configure = async (directory, name) => {
         directory,
         { recursive: true },
     );
+
     await writeFile(
         path.join(directory, "tsconfig.json"),
         JSON.stringify({
@@ -203,6 +206,7 @@ try {
                 [pkg.manifest.name]: `file:${pkg.archive}`,
             })),
         );
+
         await writeFile(
             path.join(consumer, "package.json"),
             JSON.stringify({
@@ -224,6 +228,7 @@ try {
                 },
             }),
         );
+
         const pnpm = args =>
             execFileSync("pnpm", args, {
                 cwd: consumer,
@@ -236,19 +241,24 @@ try {
             });
         // Seed this independent project's metadata/lockfile, then prove offline reconstruction.
         pnpm(["install", "--ignore-scripts"]);
+
         await rm(path.join(consumer, "node_modules"), {
             recursive: true,
             force: true,
         });
+
         pnpm(["install", "--offline", "--frozen-lockfile", "--ignore-scripts"]);
         run(process.execPath, [path.join(consumer, "smoke.mjs")], consumer);
         types(consumer);
         tsx(consumer, item.name === "jsx" ? "consumer.tsx" : "consumer.ts");
+
         if (item.name === "core") {
             tsx(consumer, "jsx-integration.tsx");
         }
+
         if (destination) {
             await mkdir(destination, { recursive: true });
+
             await cp(
                 item.archive,
                 path.join(destination, path.basename(item.archive)),

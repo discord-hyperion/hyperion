@@ -63,10 +63,12 @@ test("shared guards and lazy async factories run in order with the handler's con
     let checked: CommandContext | undefined;
     const factory = mock.fn(async (ctx: CommandContext) => {
         order.push("factory");
+
         return check(next => {
             assert.equal(next, ctx);
             checked = next;
             order.push("second");
+
             return true;
         });
     });
@@ -76,6 +78,7 @@ test("shared guards and lazy async factories run in order with the handler's con
             [
                 check(() => {
                     order.push("first");
+
                     return true;
                 }),
                 factory,
@@ -179,17 +182,21 @@ test("factories create independent instances for concurrent invocations", async 
                     await Promise.resolve();
                     assert.equal(next.interaction.user.id, expected);
                     users.push(expected);
+
                     return true;
                 });
                 instances.push(guard);
+
                 return guard;
             },
         ]),
     );
+
     await Promise.all([
         dispatcher.dispatch(interaction("new", "first").interaction),
         dispatcher.dispatch(interaction("new", "second").interaction),
     ]);
+
     assert.deepEqual(users.sort(), ["first", "second"]);
     assert.equal(instances.length, 2);
     assert.notEqual(instances[0], instances[1]);
@@ -325,6 +332,7 @@ test("closure guards keep state across invocations", async t => {
             run: (ctx: CommandContext) => {
                 const used = counts.get(ctx.interaction.user.id) ?? 0;
                 counts.set(ctx.interaction.user.id, used + 1);
+
                 return used < max;
             },
         });

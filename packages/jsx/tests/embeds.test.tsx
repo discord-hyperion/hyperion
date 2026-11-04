@@ -415,8 +415,11 @@ test("respects the SDK validator setting but retains structural checks", () => {
             JSXRenderError,
         );
     } finally {
-        if (enabled) enableValidators();
-        else disableValidators();
+        if (enabled) {
+            enableValidators();
+        } else {
+            disableValidators();
+        }
     }
 });
 
@@ -494,8 +497,11 @@ test("plain metadata and fragment prop checks survive disabled native validation
             /Footer text must be plain text/,
         );
     } finally {
-        if (enabled) enableValidators();
-        else disableValidators();
+        if (enabled) {
+            enableValidators();
+        } else {
+            disableValidators();
+        }
     }
 });
 

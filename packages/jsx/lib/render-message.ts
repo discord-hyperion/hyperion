@@ -103,9 +103,14 @@ const media = <Builder extends ThumbnailBuilder | MediaGalleryItemBuilder>(
     }
 
     builder.setURL(url);
-    if (description !== undefined)
+
+    if (description !== undefined) {
         builder.setDescription(description as string);
-    if (spoiler !== undefined) builder.setSpoiler(spoiler as boolean);
+    }
+
+    if (spoiler !== undefined) {
+        builder.setSpoiler(spoiler as boolean);
+    }
 
     return builder;
 };
@@ -121,16 +126,17 @@ const textDisplay = (node: Node, state: State) => {
 };
 
 const accessoryButton = (section: SectionBuilder, button: unknown) => {
-    if (button instanceof PrimaryButtonBuilder)
+    if (button instanceof PrimaryButtonBuilder) {
         section.setPrimaryButtonAccessory(button);
-    else if (button instanceof SecondaryButtonBuilder)
+    } else if (button instanceof SecondaryButtonBuilder) {
         section.setSecondaryButtonAccessory(button);
-    else if (button instanceof SuccessButtonBuilder)
+    } else if (button instanceof SuccessButtonBuilder) {
         section.setSuccessButtonAccessory(button);
-    else if (button instanceof DangerButtonBuilder)
+    } else if (button instanceof DangerButtonBuilder) {
         section.setDangerButtonAccessory(button);
-    else if (button instanceof LinkButtonBuilder)
+    } else if (button instanceof LinkButtonBuilder) {
         section.setLinkButtonAccessory(button);
+    }
 };
 
 const section = (node: Node, state: State) => {
@@ -148,6 +154,7 @@ const section = (node: Node, state: State) => {
 
     for (const [index, value] of texts.entries()) {
         const child = element(value, `${node.path}.children[${index}]`);
+
         if (child.name !== "TextDisplay") {
             throw new JSXRenderError(
                 child.path,
@@ -164,6 +171,7 @@ const section = (node: Node, state: State) => {
         node.depth,
     );
     const [value] = accessories;
+
     if (accessories.length !== 1 || value === undefined) {
         throw new JSXRenderError(
             `${node.path}.accessory`,
@@ -178,6 +186,7 @@ const section = (node: Node, state: State) => {
         builder.setThumbnailAccessory(media(accessory, new ThumbnailBuilder()));
     } else if (accessory.name === "Button") {
         const button = buildButton(accessory);
+
         if (button instanceof CustomIdButtonBuilder) {
             declareId(
                 state.ids,
@@ -212,6 +221,7 @@ const gallery = (node: Node, state: State) => {
 
     for (const [index, value] of items.entries()) {
         const item = element(value, `${node.path}.children[${index}]`);
+
         if (item.name !== "MediaGallery.Item") {
             throw new JSXRenderError(
                 item.path,
@@ -231,7 +241,10 @@ const separator = (node: Node, state: State) => {
     const builder = new SeparatorBuilder();
     const { divider, spacing } = node.props;
 
-    if (divider !== undefined) builder.setDivider(divider as boolean);
+    if (divider !== undefined) {
+        builder.setDivider(divider as boolean);
+    }
+
     if (spacing !== undefined) {
         if (spacing !== "small" && spacing !== "large") {
             throw new JSXRenderError(
@@ -259,7 +272,9 @@ const native = <Result>(node: Node, build: () => Result) => {
     try {
         return build();
     } catch (cause) {
-        if (cause instanceof JSXRenderError) throw cause;
+        if (cause instanceof JSXRenderError) {
+            throw cause;
+        }
 
         throw new JSXRenderError(
             node.path,
@@ -293,8 +308,13 @@ const container = (node: Node, state: State) => {
     const builder = new ContainerBuilder();
     const { accent, spoiler } = node.props;
 
-    if (accent !== undefined) builder.setAccentColor(accent as number);
-    if (spoiler !== undefined) builder.setSpoiler(spoiler as boolean);
+    if (accent !== undefined) {
+        builder.setAccentColor(accent as number);
+    }
+
+    if (spoiler !== undefined) {
+        builder.setSpoiler(spoiler as boolean);
+    }
 
     for (const [index, value] of expand(
         node.props.children,
@@ -314,15 +334,17 @@ const container = (node: Node, state: State) => {
             );
         }
 
-        if (built instanceof TextDisplayBuilder)
+        if (built instanceof TextDisplayBuilder) {
             builder.addTextDisplayComponents(built);
-        else if (built instanceof SectionBuilder)
+        } else if (built instanceof SectionBuilder) {
             builder.addSectionComponents(built);
-        else if (built instanceof MediaGalleryBuilder)
+        } else if (built instanceof MediaGalleryBuilder) {
             builder.addMediaGalleryComponents(built);
-        else if (built instanceof SeparatorBuilder)
+        } else if (built instanceof SeparatorBuilder) {
             builder.addSeparatorComponents(built);
-        else builder.addActionRowComponents(built);
+        } else {
+            builder.addActionRowComponents(built);
+        }
     }
 
     return builder;

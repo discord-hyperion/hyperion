@@ -74,14 +74,17 @@ export default class RenameTicketModal extends ModalHandler<
                 content: "This ticket form is out of date.",
                 flags: MessageFlags.Ephemeral,
             });
+
             return;
         }
+
         if (inputIssues) {
             await ctx.interaction.reply({
                 content: inputIssues.map(issue => issue.message).join("\n"),
                 flags: MessageFlags.Ephemeral,
                 allowedMentions: { parse: [] },
             });
+
             return;
         }
 

@@ -27,6 +27,7 @@ for (const extension of ["tsx", "jsx"]) {
         }
 
         await mkdir(path.join(root, "nested"));
+
         await writeFile(
             path.join(root, "nested", `leaf.${extension}`),
             "export {};",

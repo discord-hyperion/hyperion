@@ -203,24 +203,30 @@ test("response effects transition only after default or customized successful co
             for (const custom of [false, true]) {
                 const fixture = create();
                 const sentinel = { custom };
-                if (custom)
+
+                if (custom) {
                     fixture[method].mock.mockImplementation(
                         async () => sentinel,
                     );
+                }
+
                 const argument =
                     method === "respond"
                         ? []
                         : { flags: MessageFlags.Ephemeral };
+
                 const result = await Reflect.get(
                     fixture.interaction,
                     method,
                 )(argument);
+
                 assert.equal(result, custom ? sentinel : undefined);
                 assert.equal(fixture[method].mock.callCount(), 1);
                 assert.equal(
                     fixture[method].mock.calls[0]?.arguments[0],
                     argument,
                 );
+
                 if (fixture.interaction.isAutocomplete()) {
                     assert.equal(fixture.interaction.responded, true);
                 } else {
@@ -269,10 +275,12 @@ test("rejected and in-flight custom effects preserve acknowledgment state", asyn
             fixture[method].mock.mockImplementation(async () => {
                 throw failure;
             });
+
             await assert.rejects(
                 Reflect.get(fixture.interaction, method)([]),
                 error => error === failure,
             );
+
             assert.deepEqual(fixture.interaction, acknowledged);
 
             for (const reject of [
@@ -286,10 +294,12 @@ test("rejected and in-flight custom effects preserve acknowledgment state", asyn
                 const fresh = create();
                 const initial = { ...fresh.interaction };
                 fresh[method].mock.mockImplementation(reject);
+
                 await assert.rejects(
                     Reflect.get(fresh.interaction, method)([]),
                     error => error === failure,
                 );
+
                 assert.deepEqual(fresh.interaction, initial);
             }
         }

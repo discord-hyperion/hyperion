@@ -41,9 +41,11 @@ export const renderEmbed = (view: Child): EmbedBuilder => {
             builder.setColor(root.props.color as number),
         );
     }
+
     if (root.props.url !== undefined) {
         native("Embed.url", () => builder.setURL(root.props.url as string));
     }
+
     if (root.props.timestamp !== undefined) {
         native("Embed.timestamp", () =>
             builder.setTimestamp(
@@ -69,6 +71,7 @@ export const renderEmbed = (view: Child): EmbedBuilder => {
         if (!section.name.startsWith("Embed.") || section.name === "Embed") {
             throw new JSXRenderError(path, "Expected an embed section.");
         }
+
         if (section.name !== "Embed.Field") {
             if (seen.has(section.name)) {
                 throw new JSXRenderError(path, "Duplicate singleton section.");

@@ -21,9 +21,11 @@ export const handlerCustomId = (
     }
 
     const id = params?.id ?? customId;
+
     if (typeof id !== "string" || id === "") {
         throw new TypeError(`${kind} handlers require a customId or params.`);
     }
+
     if (id.length > maxCustomIdLength) {
         throw new RangeError(
             `${kind} custom IDs must not exceed ${maxCustomIdLength} characters.`,

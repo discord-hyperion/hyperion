@@ -18,6 +18,7 @@ const interaction = (type: ContextType, phase = "new", caller = "caller") => {
         replied: phase === "replied",
         ephemeral: phase === "deferred" ? false : null,
     };
+
     return type === ApplicationCommandType.User
         ? createUserContextInteraction({
               ...data,
@@ -39,6 +40,7 @@ const interaction = (type: ContextType, phase = "new", caller = "caller") => {
 
 const setup = async (t: TestContext) => {
     const records: Record<string, unknown>[] = [];
+
     const client = await HyperionClient.create({
         name: "Test",
         discord: { intents: [] },
@@ -49,7 +51,9 @@ const setup = async (t: TestContext) => {
             destination: { write: line => records.push(JSON.parse(line)) },
         },
     });
+
     t.after(() => client.destroy());
+
     return { client, records, dispatcher: new InteractionDispatcher(client) };
 };
 

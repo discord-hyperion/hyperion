@@ -61,13 +61,17 @@ const commandEntries = (state: CommandState, loading = false) => {
         state.metadata.get(command)?.source;
     const parentEntry = (name: string, definition: CommandDefinition) => {
         const command = state.parents.get(name);
-        if (!command)
+
+        if (!command) {
             throw new Error(
                 loading
                     ? `Missing parent definition for "${name}" (referenced by "${source(definition)}").`
                     : `Subcommand in "${source(definition)}" has no parent definition.`,
             );
+        }
+
         let entry = parents.get(name);
+
         if (!entry) {
             entry = {
                 kind: "parent",
@@ -79,6 +83,7 @@ const commandEntries = (state: CommandState, loading = false) => {
             parents.set(name, entry);
             entries.push(entry);
         }
+
         return entry;
     };
     const groupEntry = (
@@ -87,41 +92,55 @@ const commandEntries = (state: CommandState, loading = false) => {
         definition: CommandDefinition,
     ) => {
         let group = entry.groups.get(name);
+
         if (!group) {
             const command = state.groups.get(
                 CommandRegistry.groupKey(entry.name, name),
             );
-            if (!command)
+
+            if (!command) {
                 throw new Error(
                     loading
                         ? `Missing group definition for "${entry.name} ${name}" (referenced by "${source(definition)}").`
                         : `Subcommand in "${source(definition)}" has no group definition.`,
                 );
+            }
+
             group = { name, command, subcommands: [] };
             entry.groups.set(name, group);
         }
+
         return group;
     };
 
     if (loading) {
         for (const [name, parent] of state.parents) {
-            if (state.commands.get(name) instanceof Command)
+            if (state.commands.get(name) instanceof Command) {
                 throw new Error(
                     `Command "${name}" cannot be both a standalone command and a subcommand parent (${source(parent)}).`,
                 );
+            }
+
             parentEntry(name, parent);
         }
+
         for (const [key, group] of state.groups) {
             const route = state.metadata.get(group);
-            if (!route?.parent || !route.group)
+
+            if (!route?.parent || !route.group) {
                 throw new Error(
                     `Missing group ancestry in "${source(group)}".`,
                 );
+            }
+
             const conflicting = state.commands.get(key);
-            if (conflicting)
+
+            if (conflicting) {
                 throw new Error(
                     `Group "${key}" conflicts with a direct subcommand (${source(group)}, ${source(conflicting)}).`,
                 );
+            }
+
             groupEntry(parentEntry(route.parent, group), route.group, group);
         }
     }
@@ -131,15 +150,24 @@ const commandEntries = (state: CommandState, loading = false) => {
             entries.push({ kind: "command", command });
             continue;
         }
+
         const route = state.metadata.get(command);
-        if (!route?.parent)
+
+        if (!route?.parent) {
             throw new Error(
                 `Subcommand in "${source(command)}" has no parent definition.`,
             );
+        }
+
         const entry = parentEntry(route.parent, command);
-        if (route.group === undefined) entry.subcommands.push(command);
-        else groupEntry(entry, route.group, command).subcommands.push(command);
+
+        if (route.group === undefined) {
+            entry.subcommands.push(command);
+        } else {
+            groupEntry(entry, route.group, command).subcommands.push(command);
+        }
     }
+
     return entries;
 };
 
@@ -171,6 +199,7 @@ const serializeEntry = (
                           group.command.compose(group.name, group.subcommands),
                       ),
                   );
+
         return { body, definitions };
     } catch (cause) {
         const sources = definitions
@@ -248,6 +277,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         }
 
         const command = this.get(CommandRegistry.key(name, type));
+
         return command instanceof Command && command.commandType === type
             ? command
             : undefined;
@@ -268,6 +298,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         const command = this.get(
             CommandRegistry.subcommandKey(parent, name, group),
         );
+
         return command instanceof Subcommand &&
             this.parents.has(parent) &&
             this.metadata.get(command)?.parent === parent &&
@@ -285,6 +316,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
             this.logger,
             true,
         );
+
         const state: CommandState = {
             commands: new Collection(),
             parents: new Collection(),
@@ -300,6 +332,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                 );
                 if (!classification) continue;
                 const { kind, path: parsed } = classification;
+
                 const command = await loadHandler<CommandDefinition>(
                     file,
                     definitionClasses[kind],
@@ -312,10 +345,12 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                 });
 
                 if (command instanceof ParentCommand && parsed.parent) {
-                    if (parents.has(parsed.parent))
+                    if (parents.has(parsed.parent)) {
                         throw new Error(
                             `Duplicate parent definition "${parsed.parent}".`,
                         );
+                    }
+
                     parents.set(parsed.parent, command);
                     this.logger?.debug(
                         {
@@ -327,6 +362,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                     );
                     continue;
                 }
+
                 if (
                     command instanceof SubcommandGroup &&
                     parsed.parent &&
@@ -336,20 +372,26 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                         parsed.parent,
                         parsed.group,
                     );
-                    if (groups.has(key))
+
+                    if (groups.has(key)) {
                         throw new Error(`Duplicate group definition "${key}".`);
+                    }
+
                     groups.set(key, command);
                     continue;
                 }
+
                 if (
                     !(
                         command instanceof Command ||
                         command instanceof Subcommand
                     )
-                )
+                ) {
                     throw new TypeError("Expected an executable command.");
+                }
 
                 const data = command.builder.toJSON(false);
+
                 if (
                     typeof data.name !== "string" ||
                     typeof command.run !== "function"
@@ -358,6 +400,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                         "Commands must provide a named builder and a run() method.",
                     );
                 }
+
                 if (
                     command.autocomplete !== undefined &&
                     (typeof command.autocomplete !== "function" ||
@@ -369,6 +412,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                         "Commands may configure autocomplete() only as a function on chat-input commands.",
                     );
                 }
+
                 if (
                     command instanceof Command &&
                     (data.type ?? ApplicationCommandType.ChatInput) !==
@@ -391,10 +435,13 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                               ? command.commandType
                               : ApplicationCommandType.ChatInput,
                       );
-                if (commands.has(key))
+
+                if (commands.has(key)) {
                     throw new Error(
                         `Duplicate command name "${parsed.parent ? key : data.name}" in "${file}".`,
                     );
+                }
+
                 commands.set(key, command);
                 this.logger?.debug(
                     {
@@ -419,7 +466,9 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         }
 
         for (const entry of commandEntries(state, true)) {
-            if (entry.kind === "parent") serializeEntry(entry, metadata, false);
+            if (entry.kind === "parent") {
+                serializeEntry(entry, metadata, false);
+            }
         }
 
         this.clear();
@@ -427,9 +476,17 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         this.groups.clear();
         this.metadata = metadata;
 
-        for (const [key, command] of commands) this.set(key, command);
-        for (const [key, parent] of parents) this.parents.set(key, parent);
-        for (const [key, group] of groups) this.groups.set(key, group);
+        for (const [key, command] of commands) {
+            this.set(key, command);
+        }
+
+        for (const [key, parent] of parents) {
+            this.parents.set(key, parent);
+        }
+
+        for (const [key, group] of groups) {
+            this.groups.set(key, group);
+        }
 
         this.logger?.info(
             { event: "commands.loaded", count: this.size },
@@ -439,20 +496,27 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
 
     /** Replaces all application commands in each selected scope. */
     async register(options: CommandRegistrationOptions) {
-        if (!options.applicationId.trim() || !options.token.trim())
+        if (!options.applicationId.trim() || !options.token.trim()) {
             throw new Error(
                 "Command registration requires an application ID and bot token.",
             );
-        if (options.guildIds?.length === 0)
+        }
+
+        if (options.guildIds?.length === 0) {
             throw new Error(
                 "Provide at least one guild ID, or omit guildIds for global registration.",
             );
-        if (options.guildIds?.some(id => !id.trim()))
+        }
+
+        if (options.guildIds?.some(id => !id.trim())) {
             throw new Error("Guild IDs must not be empty.");
-        if (this.size === 0)
+        }
+
+        if (this.size === 0) {
             throw new Error(
                 "No commands were found; refusing to overwrite commands with an empty list.",
             );
+        }
 
         const registrations = commandEntries({
             commands: this,

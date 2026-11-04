@@ -11,6 +11,7 @@ import {
 test("JSX modal discovery, fresh opening and exact-ID submission preserve the shared definition", async t => {
     const root = new URL("../", import.meta.url);
     const records: string[] = [];
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
@@ -20,6 +21,7 @@ test("JSX modal discovery, fresh opening and exact-ID submission preserve the sh
             destination: { write: line => records.push(line) },
         },
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
 

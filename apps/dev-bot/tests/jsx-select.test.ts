@@ -18,6 +18,7 @@ test("JSX string selects preserve builder identity, personalized defaults, and e
             ".consumer-select-",
         ),
     );
+
     t.after(() => rm(root, { recursive: true, force: true }));
     for (const [folder, file, relative] of [
         ["commands", "show.tsx", "../src/commands/(components)/jsx-select.tsx"],
@@ -28,17 +29,20 @@ test("JSX string selects preserve builder identity, personalized defaults, and e
         ],
     ] as const) {
         await mkdir(path.join(root, "src", folder), { recursive: true });
+
         await writeFile(
             path.join(root, "src", folder, file),
             `export { default } from ${JSON.stringify(new URL(relative, import.meta.url).href)};`,
         );
     }
+
     const client = await HyperionClient.create({
         root,
         name: "Test",
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const handler = client.selectMenus.get("jsx.priority");

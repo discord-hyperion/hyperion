@@ -145,6 +145,7 @@ export class InteractionDispatcher {
 
             if (!command || !parent) {
                 await this.unavailableCommand(interaction, logger);
+
                 return;
             }
 
@@ -162,6 +163,7 @@ export class InteractionDispatcher {
                         : []),
                 ],
             );
+
             return;
         }
 
@@ -172,6 +174,7 @@ export class InteractionDispatcher {
 
         if (!command) {
             await this.unavailableCommand(interaction, logger);
+
             return;
         }
 
@@ -193,6 +196,7 @@ export class InteractionDispatcher {
             { event: "command.unavailable" },
             "No handler found for command",
         );
+
         await this.respondWithError(
             interaction,
             "This command is no longer available. Please try again later.",
@@ -247,6 +251,7 @@ export class InteractionDispatcher {
             );
 
             await this.respondWithEmptyAutocomplete(interaction, logger);
+
             return;
         }
 
@@ -340,6 +345,7 @@ export class InteractionDispatcher {
             // Params are decoded and schema-validated before guards so guards
             // can read them; no application code runs at this stage.
             let current = ctx;
+
             if (rawParams !== undefined && handler.params) {
                 stage = "params";
                 current = {
@@ -363,6 +369,7 @@ export class InteractionDispatcher {
                     },
                     `${kind} rejected by guard`,
                 );
+
                 if (result.guard.onFail) {
                     await result.guard.onFail(current);
                 } else {
@@ -373,20 +380,24 @@ export class InteractionDispatcher {
                         kind,
                     );
                 }
+
                 return;
             }
 
             let handlerContext = current;
+
             if (
                 (handler instanceof Command || handler instanceof Subcommand) &&
                 interaction.isChatInputCommand() &&
                 handler.input
             ) {
                 stage = "input";
+
                 const input = await resolveCommandInput(handler, {
                     ...current,
                     interaction,
                 });
+
                 handlerContext = { ...current, input };
             } else if (
                 handler instanceof ModalHandler &&
@@ -400,6 +411,7 @@ export class InteractionDispatcher {
                     ...current,
                     interaction,
                 });
+
                 handlerContext = { ...current, input };
             }
 
@@ -446,6 +458,7 @@ export class InteractionDispatcher {
                 kind !== "command" &&
                 interaction.deferred &&
                 interaction.ephemeral === null;
+
             if (interaction.replied || deferredUpdate) {
                 await interaction.followUp({
                     content,
@@ -461,6 +474,7 @@ export class InteractionDispatcher {
                         { event: `${kind}.error-response.fallback`, err },
                         `Editing the ${kind} reply failed; sending a follow-up`,
                     );
+
                     await interaction.followUp({
                         content,
                         flags: MessageFlags.Ephemeral,

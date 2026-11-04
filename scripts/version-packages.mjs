@@ -16,7 +16,9 @@ for (const parent of ["packages", "apps"]) {
                 await access(filename);
                 files.push(filename);
             } catch (error) {
-                if (error.code !== "ENOENT") throw error;
+                if (error.code !== "ENOENT") {
+                    throw error;
+                }
             }
         }
     }

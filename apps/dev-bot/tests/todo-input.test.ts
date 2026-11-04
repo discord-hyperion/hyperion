@@ -12,18 +12,21 @@ for (const Handler of [CreateTodo, GetTodo]) {
             discord: { intents: [] },
             logging: { level: "silent", progress: false },
         });
+
         t.after(() => client.destroy());
         const fixture = createChatInputInteraction({ deferred: true });
         const issues = [
             { message: "Name is required", path: ["name"] },
             { message: "Deadline must be a timestamp", path: ["deadline"] },
         ];
+
         await new Handler().run({
             client,
             logger: client.logger,
             interaction: fixture.interaction,
             input: [issues, undefined],
         });
+
         assert.equal(fixture.editReply.mock.callCount(), 1);
         assert.deepEqual(fixture.editReply.mock.calls[0]?.arguments[0], {
             content: "Name is required\nDeadline must be a timestamp",

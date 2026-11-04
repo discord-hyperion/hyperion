@@ -26,6 +26,7 @@ const setup = async (t: TestContext) => {
         const directory = path.join(root, "src", folder);
         await mkdir(directory, { recursive: true });
         const url = new URL(`../src/${modulePath}.ts`, import.meta.url);
+
         await writeFile(
             path.join(directory, `${path.basename(modulePath)}.mjs`),
             `export { default } from ${JSON.stringify(url.href)};`,
@@ -38,6 +39,7 @@ const setup = async (t: TestContext) => {
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     await client.buttons.load(root);

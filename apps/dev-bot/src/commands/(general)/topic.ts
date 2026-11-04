@@ -62,6 +62,7 @@ export default class TopicCommand extends Command {
 
         if (focused.name !== "query") {
             await ctx.interaction.respond([]);
+
             return;
         }
 

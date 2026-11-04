@@ -74,17 +74,22 @@ export const expand = (child: unknown, path: string, depth = 0): Value[] => {
             "Nesting limit exceeded; check for recursive components or children.",
         );
     }
+
     if (child === null || child === undefined || typeof child === "boolean")
         return [];
     if (typeof child === "string" || typeof child === "number") return [child];
+
     if (Array.isArray(child)) {
         return child.flatMap((value, index) =>
             expand(value, `${path}[${index}]`, depth + 1),
         );
     }
+
     if (typeof child !== "object" || !(element in child)) {
         // Observe rejected async components without permitting asynchronous rendering.
-        if (child instanceof Promise) void child.catch(() => {});
+        if (child instanceof Promise) {
+            void child.catch(() => {});
+        }
 
         throw new JSXRenderError(
             path,
@@ -104,6 +109,7 @@ export const expand = (child: unknown, path: string, depth = 0): Value[] => {
 
         return expand(node.props.children, path, depth + 1);
     }
+
     if (typeof node.type !== "function") {
         throw new JSXRenderError(
             path,

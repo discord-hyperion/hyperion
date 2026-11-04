@@ -49,6 +49,7 @@ const client = await HyperionClient.create({
     discord: { intents: [] },
     logging: false,
 });
+
 try {
     const calls = [];
     client.on("consumer:event", (label, count) => calls.push([label, count]));

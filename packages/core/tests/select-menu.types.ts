@@ -43,6 +43,7 @@ export const selectMenuContracts = (
     channelCtx.interaction.channels.first()?.type satisfies number | undefined;
 
     const channel = channelCtx.interaction.channels.first();
+
     if (channel && "name" in channel) {
         channel.name satisfies string | null | undefined;
     }

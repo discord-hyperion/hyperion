@@ -43,6 +43,7 @@ export default class CloseTicketButton extends ButtonHandler<
                 content: "This ticket button is out of date.",
                 flags: MessageFlags.Ephemeral,
             });
+
             return;
         }
 

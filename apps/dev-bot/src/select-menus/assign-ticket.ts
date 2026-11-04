@@ -43,6 +43,7 @@ export default class AssignTicketMenu extends SelectMenuHandler<
                 content: "This ticket menu is out of date.",
                 flags: MessageFlags.Ephemeral,
             });
+
             return;
         }
 

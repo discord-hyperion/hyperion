@@ -38,8 +38,10 @@ for (const failure of [
             assert.ok(error instanceof Error);
             assert.match(error.message, /Failed to load modal.*broken.mjs/);
             assert.ok(error.cause instanceof Error);
+
             return true;
         });
+
         assert.equal(registry.get("valid"), original);
         assert.equal(registry.size, 1);
     });

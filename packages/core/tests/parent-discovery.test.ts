@@ -36,10 +36,12 @@ const fixture = async (t: TestContext) => {
         const filename = path.join(root, "src", "commands", file);
         await mkdir(path.dirname(filename), { recursive: true });
         await writeFile(filename, source);
+
         return filename;
     };
     await add("(public)/[ticket]/index.mjs", parentSource());
     await add("(public)/[ticket]/close.mjs", leafSource());
+
     return { root, add };
 };
 
@@ -47,14 +49,17 @@ test("one explicit parent is shared across categories and ordinary barrels stay 
     const { root, add } = await fixture(t);
     await add("(staff)/[ticket]/open.mjs", leafSource("open"));
     await add("index.mjs", 'throw new Error("Root barrel must not run");');
+
     await add(
         "(staff)/index.mjs",
         'throw new Error("Category barrel must not run");',
     );
+
     await add(
         "(staff)/[ticket]/(helpers)/index.mjs",
         'throw new Error("Nested barrel must not run");',
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
 
@@ -102,6 +107,7 @@ for (const scenario of [
                     "[other]/index.mjs",
                     parentSource('.setName("wrong")'),
                 );
+
                 await add("[other]/view.mjs", leafSource("view"));
                 break;
             case "manual":
@@ -111,6 +117,7 @@ for (const scenario of [
                         '.addSubcommands(sub => sub.setName("manual").setDescription("Manual"))',
                     ),
                 );
+
                 break;
             case "after-super":
                 await add(
@@ -121,12 +128,14 @@ for (const scenario of [
                         'this.builder.addStringOptions(option => option.setName("manual").setDescription("Manual"));',
                     ),
                 );
+
                 break;
             case "legacy-leaf":
                 await add(
                     "[ticket]/legacy.mjs",
                     `${imports} export default class extends Command { constructor() { super({ builder: new ChatInputCommandBuilder().setName("legacy").setDescription("Legacy") }); } async run() {} }`,
                 );
+
                 break;
             case "standalone-leaf":
                 await add("view.mjs", leafSource("view"));
@@ -139,8 +148,10 @@ for (const scenario of [
         await assert.rejects(registry.load(root), error => {
             assert.ok(error instanceof Error);
             assert.ok(error.message.includes(".mjs"));
+
             return true;
         });
+
         assert.equal(registry.parents, parentCollection);
         assert.equal(registry.parents.get("ticket"), parent);
         assert.equal(registry.resolveSubcommand("ticket", "close"), leaf);
@@ -166,12 +177,14 @@ for (const failure of [
         // A second logical parent avoids rewriting an already imported fixture module.
         await add("[tools]/index.mjs", parentSource("", guard("parent")));
         await add("[tools]/run.mjs", leafSource("run", guard("leaf")));
+
         const client = await HyperionClient.create({
             name: "Test",
             root,
             discord: { intents: [] },
             logging: false,
         });
+
         t.after(() => client.destroy());
         await client.commands.load(root);
         const events: string[] = [];
@@ -189,13 +202,21 @@ for (const failure of [
         await new InteractionDispatcher(client).dispatch(request.interaction);
 
         const expected = ["parent factory", "parent guard"];
-        if (!failure?.startsWith("parent"))
+
+        if (!failure?.startsWith("parent")) {
             expected.push("leaf factory", "leaf guard");
-        if (!failure) expected.push("handler");
+        }
+
+        if (!failure) {
+            expected.push("handler");
+        }
+
         assert.deepEqual(events, expected);
         assert.equal(reply.mock.callCount(), 1);
-        if (!failure) assert.equal(reply.mock.calls[0]?.arguments[0], "done");
-        else
+
+        if (!failure) {
+            assert.equal(reply.mock.calls[0]?.arguments[0], "done");
+        } else {
             assert.equal(
                 (
                     reply.mock.calls[0]?.arguments[0] as
@@ -204,6 +225,7 @@ for (const failure of [
                 )?.flags,
                 MessageFlags.Ephemeral,
             );
+        }
     });
 }
 
@@ -212,6 +234,7 @@ test("autocomplete and deployment do not invoke inherited guard factories", asyn
     const forbiddenGuard =
         'guards: [() => { throw new Error("Must not invoke guard factories"); }],';
     await add("[tools]/index.mjs", parentSource("", forbiddenGuard));
+
     await add(
         "[tools]/search.mjs",
         leafSource(
@@ -220,19 +243,23 @@ test("autocomplete and deployment do not invoke inherited guard factories", asyn
             'async autocomplete(ctx) { await ctx.interaction.respond([{ name: "Found", value: "found" }]); }',
         ),
     );
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     await client.commands.register({
         applicationId: "123",
         token: "fake-token",
     });
+
     const request = createAutocompleteInteraction({
         id: "complete",
         commandName: "tools",
@@ -244,7 +271,9 @@ test("autocomplete and deployment do not invoke inherited guard factories", asyn
     });
     const { respond } = request;
     respond.mock.mockImplementation(async () => {
-        if (respond.mock.callCount() > 0) throw new Error("Double response");
+        if (respond.mock.callCount() > 0) {
+            throw new Error("Double response");
+        }
     });
     await new InteractionDispatcher(client).dispatch(request.interaction);
 
@@ -256,11 +285,12 @@ test("autocomplete and deployment do not invoke inherited guard factories", asyn
 
 test("the SDK rejects an oversized composed parent before any REST call", async t => {
     const { root, add } = await fixture(t);
-    for (let index = 0; index < 25; index++)
+    for (let index = 0; index < 25; index++) {
         await add(
             `(staff)/[ticket]/child-${index}.mjs`,
             leafSource(`child-${index}`),
         );
+    }
     const registry = new CommandRegistry();
     await registry.load(root);
     const put = t.mock.method(REST.prototype, "put", async () => []);
@@ -271,9 +301,11 @@ test("the SDK rejects an oversized composed parent before any REST call", async 
             assert.ok(error instanceof Error);
             assert.ok(error.cause instanceof Error);
             assert.match(error.message, /index.mjs/);
+
             return true;
         },
     );
+
     assert.equal(put.mock.callCount(), 0);
     assert.equal(registry.parents.get("ticket")?.builder.options.length, 0);
 });

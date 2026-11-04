@@ -268,7 +268,9 @@ export class EventRegistry {
                 }),
             ]);
         } finally {
-            if (timeout) clearTimeout(timeout);
+            if (timeout) {
+                clearTimeout(timeout);
+            }
 
             let waiting = 0;
             let active = 0;
@@ -276,7 +278,9 @@ export class EventRegistry {
             for (const queue of queues) {
                 queue.abandoned = true;
 
-                if (queue.running) active++;
+                if (queue.running) {
+                    active++;
+                }
 
                 for (const occurrence of queue.waiting.splice(0)) {
                     waiting++;

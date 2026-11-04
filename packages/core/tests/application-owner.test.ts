@@ -29,6 +29,7 @@ const setup = async (t: TestContext) => {
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
 
     // Construct the same SDK application object populated by the gateway, without logging in.
@@ -54,6 +55,7 @@ test("creating a client does not fetch ownership and pre-login lookup fails clos
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     const get = t.mock.method(client.rest, "get", async () =>
         personalApplication(),
@@ -63,6 +65,7 @@ test("creating a client does not fetch ownership and pre-login lookup fails clos
         async () => ownerOnly.run(context(client, personalOwnerId)),
         /before the bot has logged in/,
     );
+
     assert.equal(get.mock.callCount(), 0);
 });
 
@@ -70,6 +73,7 @@ test("ownerOnly fetches the personal owner through Discord and caches the result
     const client = await setup(t);
     const get = t.mock.method(client.rest, "get", async (route: string) => {
         assert.equal(route, Routes.currentApplication());
+
         return personalApplication();
     });
     const guard = ownerOnly;
@@ -108,6 +112,7 @@ test("concurrent owner checks share one API request", async t => {
     });
     const get = t.mock.method(client.rest, "get", async () => {
         await wait;
+
         return personalApplication();
     });
 
@@ -141,7 +146,10 @@ test("API failures are not authorized or permanently cached", async t => {
     const failure = new Error("Discord unavailable");
     let attempts = 0;
     const get = t.mock.method(client.rest, "get", async () => {
-        if (++attempts === 1) throw failure;
+        if (++attempts === 1) {
+            throw failure;
+        }
+
         return personalApplication();
     });
     const guard = ownerOnly;
@@ -150,6 +158,7 @@ test("API failures are not authorized or permanently cached", async t => {
         async () => guard.run(context(client, personalOwnerId)),
         error => error === failure,
     );
+
     assert.equal(await guard.run(context(client, personalOwnerId)), true);
     assert.equal(get.mock.callCount(), 2);
 });
@@ -170,6 +179,7 @@ test("missing ownership fails closed and readiness errors are logged and contain
         async () => ownerOnly.run(context(client, personalOwnerId)),
         /did not return an application owner/,
     );
+
     assert.equal(get.mock.callCount(), 2);
 });
 

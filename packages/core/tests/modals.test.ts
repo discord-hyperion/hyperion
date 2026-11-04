@@ -54,6 +54,7 @@ class TestModal extends ModalHandler {
 
 const interaction = (phase = "new", message = "Private submitted text") => {
     const getTextInputValue = mock.fn((_customId: string) => message);
+
     return {
         ...createModalInteraction({
             id: "modal-submission",
@@ -189,6 +190,7 @@ test("modal guards run lazily in order and shared ownerOnly guards work", async 
             ctx.interaction.components.getTextInputValue("feedback.message"),
             "Private submitted text",
         );
+
         return ownerOnly;
     });
     const later = mock.fn(() => ownerOnly);
@@ -303,16 +305,19 @@ test("concurrent modal submissions receive independent contexts without automati
         "feedback.submit",
         new TestModal(async ctx => {
             contexts.push(ctx);
+
             const message = await Promise.resolve(
                 ctx.interaction.components.getTextInputValue(
                     "feedback.message",
                 ),
             );
+
             await ctx.interaction.reply(message);
         }),
     );
     const first = interaction("new", "first");
     const second = interaction("new", "second");
+
     await Promise.all([
         dispatcher.dispatch(first.interaction),
         dispatcher.dispatch(second.interaction),

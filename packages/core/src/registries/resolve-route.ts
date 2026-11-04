@@ -28,6 +28,7 @@ export const resolveRoute = <Handler extends RoutedHandler>(
     },
 ) => {
     const exact = literal.get(customId);
+
     if (exact) {
         return accepts(exact) ? { handler: exact, raw: undefined } : undefined;
     }
@@ -38,6 +39,7 @@ export const resolveRoute = <Handler extends RoutedHandler>(
     if (!handler?.params || !accepts(handler)) return undefined;
 
     const raw = decodeParams(handler.params, customId);
+
     if (!raw) {
         // A matched route that fails to decode is usually a template sent
         // without values or a stale control. Log the route and counts only.
@@ -50,6 +52,7 @@ export const resolveRoute = <Handler extends RoutedHandler>(
             },
             "Custom ID matched a params route but could not be decoded",
         );
+
         return undefined;
     }
 

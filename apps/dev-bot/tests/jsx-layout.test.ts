@@ -14,18 +14,22 @@ test("JSX layout command replies with a private layout message", async t => {
             ".consumer-layout-",
         ),
     );
+
     t.after(() => rm(root, { recursive: true, force: true }));
     await mkdir(path.join(root, "src", "commands"), { recursive: true });
+
     await writeFile(
         path.join(root, "src", "commands", "layout.tsx"),
         `export { default } from ${JSON.stringify(new URL("../src/commands/(components)/jsx-layout.tsx", import.meta.url).href)};`,
     );
+
     const client = await HyperionClient.create({
         root,
         name: "Test",
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
 

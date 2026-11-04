@@ -72,8 +72,11 @@ test("parent serialization respects SDK validation settings and explicit overrid
         assert.throws(() => parent.serialize("tools", [leaf], true));
         assert.equal(parent.builder.options.length, 0);
     } finally {
-        if (enabled) enableValidators();
-        else disableValidators();
+        if (enabled) {
+            enableValidators();
+        } else {
+            disableValidators();
+        }
     }
 });
 
@@ -299,6 +302,7 @@ test("parent forwards the validation flag and cleans up when native serializatio
         () => parent.serialize("tools", [leaf], false),
         error => {
             assert.equal(error, failure);
+
             return true;
         },
     );

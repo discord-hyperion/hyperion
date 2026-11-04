@@ -77,16 +77,22 @@ export const classifyCommandPath = (relativePath: string) => {
         if (match?.[1]) {
             categories.push(name);
         } else if (match?.[2]) {
-            if (parent)
+            if (parent) {
                 throw new TypeError("Command parents cannot be nested.");
+            }
+
             parent = name;
         } else {
-            if (!parent)
+            if (!parent) {
                 throw new TypeError(
                     "Subcommand groups require a [parent] folder.",
                 );
-            if (group)
+            }
+
+            if (group) {
                 throw new TypeError("Subcommand groups cannot be nested.");
+            }
+
             group = name;
         }
     }
@@ -115,7 +121,10 @@ export const classifyCommandPath = (relativePath: string) => {
 /** Parses a module path relative to src/commands; rejects ignored barrels. */
 export const parseCommandPath = (relativePath: string): CommandPath => {
     const classification = classifyCommandPath(relativePath);
-    if (!classification)
+
+    if (!classification) {
         throw new TypeError("Expected a command module filename.");
+    }
+
     return classification.path;
 };

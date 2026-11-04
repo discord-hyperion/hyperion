@@ -57,9 +57,11 @@ export const modalInputContracts = (
 
         async run(ctx: ModalContext<typeof input>) {
             const [issues, value] = ctx.input;
+
             if (issues) {
                 value satisfies undefined;
                 issues satisfies readonly StandardSchemaV1.Issue[];
+
                 return;
             }
 
@@ -141,5 +143,6 @@ export const contextFreeModalResolver = (
             value.todo.name satisfies string;
         }
     }
+
     return ContextFree;
 };

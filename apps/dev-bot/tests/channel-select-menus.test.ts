@@ -41,6 +41,7 @@ for (const [label, ids, expected] of [
             discord: { intents: [] },
             logging: false,
         });
+
         t.after(() => client.destroy());
         await client.commands.load(new URL("../", import.meta.url));
         const dispatcher = new InteractionDispatcher(client);
@@ -67,6 +68,7 @@ for (const [label, ids, expected] of [
         ]);
 
         const fixture = interaction("new", [...ids]);
+
         if (label === "unnamed") {
             Object.assign(fixture.interaction.channels.get("unnamed") ?? {}, {
                 name: null,
@@ -74,6 +76,7 @@ for (const [label, ids, expected] of [
         } else if (label === "missing") {
             fixture.interaction.channels.clear();
         }
+
         const template = client.selectMenus
             .get("channel.choose")
             ?.builder?.toJSON(false);

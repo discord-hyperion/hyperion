@@ -21,8 +21,10 @@ const View: Component<{ name: string }> = ({ name }) => (
     </Embed>
 );
 const embed: EmbedBuilder = renderEmbed(<View name="Standalone TSX" />);
-if (embed.toJSON().title !== "Standalone TSX")
+
+if (embed.toJSON().title !== "Standalone TSX") {
     throw new Error("Unexpected JSX output.");
+}
 
 const modal: ModalBuilder = renderModal(
     <Modal customId="standalone.modal" title="Standalone modal">
@@ -34,6 +36,7 @@ const modal: ModalBuilder = renderModal(
         </Modal.Label>
     </Modal>,
 );
+
 if (modal.toJSON().custom_id !== "standalone.modal") {
     throw new Error("Unexpected modal output.");
 }
@@ -70,12 +73,14 @@ const rows: import("@discordjs/builders").ActionRowBuilder[] = renderComponents(
         <Button url="https://example.com">Open</Button>
     </ActionRow>,
 );
+
 if (
     interactiveButton.toJSON().custom_id !== "standalone.refresh" ||
     rows.length !== 1
 ) {
     throw new Error("Unexpected button output.");
 }
+
 const invalidButtonTypes = () => {
     // @ts-expect-error Interactive styles are required in published types.
     const missingStyle = <Button customId="missing">Missing</Button>;
@@ -115,9 +120,11 @@ const selectRows: import("@discordjs/builders").ActionRowBuilder[] =
             </StringSelect>
         </ActionRow>,
     );
+
 if (select.toJSON().options.length !== 2 || selectRows.length !== 1) {
     throw new Error("Unexpected string select output.");
 }
+
 const invalidSelectTypes = () => {
     const missingId = { children: [] };
     // @ts-expect-error Select IDs remain required in published declarations.

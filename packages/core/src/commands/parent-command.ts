@@ -22,6 +22,7 @@ export abstract class ParentCommand {
                 "Parent commands require a ChatInputCommandBuilder.",
             );
         }
+
         if (options.builder.options.length > 0) {
             throw new TypeError(
                 "Parent commands cannot define options or subcommands directly. Define subcommands in files under the parent folder.",
@@ -51,6 +52,7 @@ export abstract class ParentCommand {
                 `Parent builder name "${configuredName}" must match folder name "${name}".`,
             );
         }
+
         if (subcommands.length === 0 && groups.length === 0) {
             throw new TypeError(
                 `Parent command "${name}" must contain at least one subcommand.`,
@@ -64,6 +66,7 @@ export abstract class ParentCommand {
                 ...subcommands.map(subcommand => subcommand.builder),
             );
             this.builder.addSubcommandGroups(...groups);
+
             return this.builder.toJSON(validate);
         } finally {
             this.builder.spliceOptions(0, this.builder.options.length);

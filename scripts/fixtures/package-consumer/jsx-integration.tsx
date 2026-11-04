@@ -66,6 +66,7 @@ const selectComponents = renderComponents(
 void modalResponse;
 void response;
 const failures: unknown[] = [];
+
 const client = await HyperionClient.create({
     name: "JSX consumer",
     root: new URL("./jsx-handlers/", import.meta.url),
@@ -75,11 +76,15 @@ const client = await HyperionClient.create({
         destination: {
             write: line => {
                 const record = JSON.parse(line);
-                if (record.event === "event.failed") failures.push(record.err);
+
+                if (record.event === "event.failed") {
+                    failures.push(record.err);
+                }
             },
         },
     },
 });
+
 try {
     await client.commands.load(new URL("./jsx-handlers/", import.meta.url));
     assert.equal(client.commands.parents.size, 1);

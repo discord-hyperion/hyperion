@@ -22,6 +22,7 @@ export abstract class SubcommandGroup {
                 "Subcommand groups require a ChatInputCommandSubcommandGroupBuilder.",
             );
         }
+
         if (options.builder.options.length > 0) {
             throw new TypeError(
                 "Subcommand groups cannot define children directly. Define subcommands in files under the group folder.",
@@ -46,6 +47,7 @@ export abstract class SubcommandGroup {
                 `Group builder name "${data.name}" must match folder name "${name}".`,
             );
         }
+
         if (subcommands.length === 0) {
             throw new TypeError(
                 `Subcommand group "${name}" must contain at least one subcommand.`,
@@ -64,6 +66,7 @@ export abstract class SubcommandGroup {
                 data.name_localizations as Partial<Record<Locale, string>>,
             );
         }
+
         if (data.description_localizations) {
             builder.setDescriptionLocalizations(
                 data.description_localizations as Partial<

@@ -26,6 +26,7 @@ export const guardContracts = (entries: Map<string, number>) => {
         description: "x",
         run: ctx => {
             ctx satisfies CommandContext;
+
             return true;
         },
     });

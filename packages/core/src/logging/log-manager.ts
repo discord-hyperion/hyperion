@@ -61,11 +61,16 @@ export class LogManager {
             {
                 write: message => {
                     const spinning = this.spinner?.isSpinning;
-                    if (spinning) this.spinner?.clear();
+
+                    if (spinning) {
+                        this.spinner?.clear();
+                    }
 
                     destination.write(format ? format(message) : message);
 
-                    if (spinning) this.spinner?.render();
+                    if (spinning) {
+                        this.spinner?.render();
+                    }
                 },
             },
         );
@@ -97,6 +102,7 @@ export class LogManager {
                 },
                 `${label}: completed`,
             );
+
             return result;
         } catch (err) {
             spinner?.stop();

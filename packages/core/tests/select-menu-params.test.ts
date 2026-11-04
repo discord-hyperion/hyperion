@@ -175,6 +175,7 @@ describe("select menu params definitions", () => {
             "hyperion-select-params-",
             "select-menus",
         );
+
         const source = (route: string, componentType: ComponentType) => `
             import { SelectMenuHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
             const params = defineParams({ id: ${JSON.stringify(route)}, keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: value => ({ value }) } } });
@@ -184,10 +185,12 @@ describe("select menu params definitions", () => {
             }
         `;
         const registry = new SelectMenuRegistry();
+
         await writeFile(
             path.join(directory, "user.mjs"),
             source("a.route", ComponentType.UserSelect),
         );
+
         await registry.load(root);
         const original = registry.routes.get("a.route");
 

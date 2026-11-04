@@ -28,6 +28,7 @@ export const validateRelease = ({
     );
     const number = "(?:0|[1-9][0-9]*)";
     const base = `${number}\\.${number}\\.${number}`;
+
     if (channel === "latest") {
         assert.equal(
             ref,
@@ -95,7 +96,9 @@ if (
     try {
         pre = JSON.parse(await readFile(".changeset/pre.json", "utf8"));
     } catch (error) {
-        if (error.code !== "ENOENT") throw error;
+        if (error.code !== "ENOENT") {
+            throw error;
+        }
     }
     validateRelease({
         version: manifest.version,

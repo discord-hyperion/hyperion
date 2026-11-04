@@ -26,6 +26,7 @@ const interaction = (
         type,
         focused: true as const,
     }));
+
     return {
         ...createAutocompleteInteraction({
             id: "autocomplete-request",
@@ -40,6 +41,7 @@ const interaction = (
 
 const setup = async (t: TestContext, level: "debug" | "info" = "debug") => {
     const records: Record<string, unknown>[] = [];
+
     const client = await HyperionClient.create({
         name: "Test",
         discord: { intents: [] },
@@ -50,6 +52,7 @@ const setup = async (t: TestContext, level: "debug" | "info" = "debug") => {
             destination: { write: line => records.push(JSON.parse(line)) },
         },
     });
+
     t.after(() => client.destroy());
 
     return { client, records, dispatcher: new InteractionDispatcher(client) };
@@ -63,6 +66,7 @@ test("discovery and mocked registration preserve autocomplete flags without exec
     await mkdir(path.join(root, "src", "commands"), { recursive: true });
     const commandModule = import.meta.resolve("@hyperion/core");
     const buildersModule = import.meta.resolve("@discordjs/builders");
+
     await writeFile(
         path.join(root, "src", "commands", "search.mjs"),
         `
@@ -81,11 +85,13 @@ test("discovery and mocked registration preserve autocomplete flags without exec
         }
     `,
     );
+
     const put = t.mock.method(
         REST.prototype,
         "put",
         async (_route: unknown, _options: unknown) => [],
     );
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
@@ -93,6 +99,7 @@ test("discovery and mocked registration preserve autocomplete flags without exec
         logging: false,
         commands: { applicationId: "123", token: "test-token" },
     });
+
     t.after(() => client.destroy());
     assert.equal(put.mock.callCount(), 1);
     const payload = put.mock.calls[0]?.arguments[1] as {

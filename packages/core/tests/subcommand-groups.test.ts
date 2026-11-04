@@ -58,17 +58,21 @@ const fixture = async (t: TestContext) => {
         const filename = path.join(root, "src", "commands", file);
         await mkdir(path.dirname(filename), { recursive: true });
         await writeFile(filename, source);
+
         return filename;
     };
     const parentFile = await add("(public)/[ticket]/index.mjs", parentSource());
+
     const groupFile = await add(
         "(public)/[ticket]/{settings}/index.mjs",
         groupSource(),
     );
+
     const leafFile = await add(
         "(public)/[ticket]/{settings}/view.mjs",
         leafSource(),
     );
+
     return { root, add, parentFile, groupFile, leafFile };
 };
 
@@ -172,10 +176,12 @@ for (const setter of ["setNameLocalizations", "setDescriptionLocalizations"]) {
     ]) {
         test(`native validation rejects malformed ${setter}: ${JSON.stringify(localizations)}`, async t => {
             const { root, add } = await fixture(t);
+
             const source = await add(
                 "[ticket]/{invalid}/index.mjs",
                 groupSource(`.${setter}(${JSON.stringify(localizations)})`),
             );
+
             await add("[ticket]/{invalid}/view.mjs", leafSource());
             const registry = new CommandRegistry();
             await registry.load(root);
@@ -185,8 +191,10 @@ for (const setter of ["setNameLocalizations", "setDescriptionLocalizations"]) {
                 assert.ok(error instanceof Error);
                 assert.ok(error.cause instanceof Error);
                 assert.ok(error.message.includes(source));
+
                 return true;
             });
+
             assert.equal(put.mock.callCount(), 0);
         });
     }
@@ -217,10 +225,12 @@ test("categories merge logical groups while direct and grouped leaves retain sep
     await add("[other]/index.mjs", parentSource());
     await add("[other]/{settings}/index.mjs", groupSource());
     await add("[other]/{settings}/view.mjs", leafSource());
+
     await add(
         "[ticket]/{settings}/(helpers)/index.mjs",
         'throw new Error("Ignored barrel");',
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
 
@@ -307,12 +317,14 @@ for (const scenario of [
                     "(staff)/[ticket]/{settings}/index.mjs",
                     groupSource(),
                 );
+
                 break;
             case "name":
                 await add(
                     "[ticket]/{wrong}/index.mjs",
                     groupSource('.setName("different")'),
                 );
+
                 await add("[ticket]/{wrong}/view.mjs", leafSource());
                 break;
             case "manual":
@@ -320,12 +332,14 @@ for (const scenario of [
                     "[ticket]/{manual}/index.mjs",
                     groupSource(manualChild),
                 );
+
                 break;
             case "after-super":
                 await add(
                     "[ticket]/{manual}/index.mjs",
                     groupSource("", "", `this.builder${manualChild};`),
                 );
+
                 await add("[ticket]/{manual}/view.mjs", leafSource());
                 break;
             case "duplicate-leaf":
@@ -333,6 +347,7 @@ for (const scenario of [
                     "(staff)/[ticket]/{settings}/duplicate.mjs",
                     leafSource(),
                 );
+
                 break;
             case "collision":
                 await add("[ticket]/settings.mjs", leafSource("settings"));
@@ -342,12 +357,14 @@ for (const scenario of [
                     "[ticket]/{settings}/{nested}/view.mjs",
                     leafSource(),
                 );
+
                 break;
             case "context-menu":
                 await add(
                     "[ticket]/{settings}/inspect.mjs",
                     `${imports} export default class extends Command { constructor() { super({ builder: new UserContextCommandBuilder().setName("Inspect") }); } async run() {} }`,
                 );
+
                 break;
             case "misplaced-definition":
                 await add("[ticket]/{settings}/group.mjs", groupSource());
@@ -357,11 +374,14 @@ for (const scenario of [
                 await add("[orphan]/{settings}/view.mjs", leafSource());
                 break;
         }
+
         await assert.rejects(registry.load(root), error => {
             assert.ok(error instanceof Error);
             assert.match(error.message, /\.mjs/);
+
             return true;
         });
+
         assert.equal(registry.parents, parents);
         assert.equal(registry.groups, groups);
         assert.equal(registry.parents.get("ticket"), parent);
@@ -403,12 +423,14 @@ test("successful reload replaces parents, groups, and leaves together", async t 
 test("registration composes fresh native groups with metadata and never accumulates children", async t => {
     const { root, add } = await fixture(t);
     await add("[ticket]/close.mjs", leafSource("close"));
+
     await add(
         "[ticket]/{localized}/index.mjs",
         groupSource(
             '.setNameLocalizations({ "en-US": "localized" }).setDescriptionLocalizations({ "en-US": "Settings" })',
         ),
     );
+
     await add(
         "[ticket]/{localized}/search.mjs",
         leafSource("search").replace(
@@ -416,6 +438,7 @@ test("registration composes fresh native groups with metadata and never accumula
             '.setDescription("Action").addStringOptions(option => option.setName("query").setDescription("Query").setAutocomplete(true))',
         ),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
     const group = registry.resolveGroup("ticket", "localized");
@@ -427,6 +450,7 @@ test("registration composes fresh native groups with metadata and never accumula
         "put",
         async (_route: unknown, options: { body: unknown }) => {
             bodies.push(options.body);
+
             return [];
         },
     );
@@ -463,8 +487,9 @@ test("registration composes fresh native groups with metadata and never accumula
         true,
     );
     assert.equal(attach.mock.callCount(), 0);
-    for (const definition of registry.groups.values())
+    for (const definition of registry.groups.values()) {
         assert.equal(definition.builder.options.length, 0);
+    }
     assert.equal(registry.parents.get("ticket")?.builder.options.length, 0);
 });
 
@@ -477,29 +502,43 @@ for (const scenario of [
 ] as const) {
     test(`complete native validation blocks REST for ${scenario} and retains source diagnostics`, async t => {
         const { root, add, parentFile, groupFile, leafFile } = await fixture(t);
+
         if (scenario === "oversized") {
-            for (let index = 0; index < 25; index++)
+            for (let index = 0; index < 25; index++) {
                 await add(
                     `[ticket]/{settings}/child-${index}.mjs`,
                     leafSource(`child-${index}`),
                 );
+            }
         }
+
         const registry = new CommandRegistry();
         await registry.load(root);
         const group = registry.resolveGroup("ticket", "settings");
         const parent = registry.parents.get("ticket");
         const leaf = registry.resolveSubcommand("ticket", "view", "settings");
         assert.ok(group && parent && leaf);
-        if (scenario === "invalid-group") group.builder.setDescription("");
-        if (scenario === "invalid-leaf") leaf.builder.setDescription("");
-        if (scenario === "mutated-group")
+
+        if (scenario === "invalid-group") {
+            group.builder.setDescription("");
+        }
+
+        if (scenario === "invalid-leaf") {
+            leaf.builder.setDescription("");
+        }
+
+        if (scenario === "mutated-group") {
             group.builder.addSubcommands(child =>
                 child.setName("manual").setDescription("Manual"),
             );
-        if (scenario === "mutated-parent")
+        }
+
+        if (scenario === "mutated-parent") {
             parent.builder.addSubcommands(child =>
                 child.setName("manual").setDescription("Manual"),
             );
+        }
+
         const put = t.mock.method(REST.prototype, "put", async () => []);
         for (let attempt = 0; attempt < 2; attempt++) {
             await assert.rejects(registry.register(credentials), error => {
@@ -508,6 +547,7 @@ for (const scenario of [
                 assert.ok(error.message.includes(parentFile));
                 assert.ok(error.message.includes(groupFile));
                 assert.ok(error.message.includes(leafFile));
+
                 return true;
             });
         }
@@ -520,6 +560,7 @@ for (const scenario of [
             parent.builder.options.length,
             scenario === "mutated-parent" ? 1 : 0,
         );
+
         if (scenario === "invalid-group" || scenario === "invalid-leaf") {
             group.builder.setDescription("Settings");
             leaf.builder.setDescription("Action");
@@ -556,11 +597,14 @@ test("indexed deployment errors preserve the cause and parent, group, and leaf s
     t.mock.method(REST.prototype, "put", async () => {
         throw failure;
     });
+
     await assert.rejects(registry.register(credentials), error => {
         assert.ok(error instanceof Error);
         assert.equal(error.cause, failure);
-        for (const source of [parentFile, groupFile, leafFile])
+        for (const source of [parentFile, groupFile, leafFile]) {
             assert.ok(error.message.includes(source));
+        }
+
         return true;
     });
 });
@@ -583,20 +627,24 @@ for (const failure of [
     test(`grouped guards are lazy, ordered, and stop on ${failure ?? "success"}`, async t => {
         const { root, add } = await fixture(t);
         await add("[tools]/index.mjs", parentSource(guards("parent")));
+
         await add(
             "[tools]/{settings}/index.mjs",
             groupSource("", guards("group")),
         );
+
         await add(
             "[tools]/{settings}/view.mjs",
             leafSource("view", guards("leaf")),
         );
+
         const client = await HyperionClient.create({
             name: "Test",
             root,
             discord: { intents: [] },
             logging: false,
         });
+
         t.after(() => client.destroy());
         await client.commands.load(root);
         const put = t.mock.method(REST.prototype, "put", async () => []);
@@ -629,12 +677,17 @@ for (const failure of [
                 expected.push(`${name} factory`, `${name} guard`);
                 if (failure?.startsWith(name)) break;
             }
-            if (!failure) expected.push("handler");
+
+            if (!failure) {
+                expected.push("handler");
+            }
+
             assert.deepEqual(events, expected);
             assert.equal(reply.mock.callCount(), 1);
-            if (!failure)
+
+            if (!failure) {
                 assert.equal(reply.mock.calls[0]?.arguments[0], "done");
-            else
+            } else {
                 assert.equal(
                     (
                         reply.mock.calls[0]?.arguments[0] as
@@ -643,6 +696,7 @@ for (const failure of [
                     )?.flags,
                     MessageFlags.Ephemeral,
                 );
+            }
         }
     });
 }
@@ -652,6 +706,7 @@ test("autocomplete selects the group, skips all guard levels, and never falls ba
     const forbidden =
         'guards: [() => { throw new Error("Guard factory must not run"); }],';
     await add("[tools]/index.mjs", parentSource(forbidden));
+
     await add(
         "[tools]/view.mjs",
         leafSource(
@@ -660,8 +715,10 @@ test("autocomplete selects the group, skips all guard levels, and never falls ba
             'async autocomplete(ctx) { await ctx.interaction.respond([{ name: "direct", value: "direct" }]); }',
         ),
     );
+
     for (const group of ["settings", "archive", "no-hook"]) {
         await add(`[tools]/{${group}}/index.mjs`, groupSource("", forbidden));
+
         await add(
             `[tools]/{${group}}/view.mjs`,
             leafSource(
@@ -673,12 +730,14 @@ test("autocomplete selects the group, skips all guard levels, and never falls ba
             ),
         );
     }
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const dispatcher = new InteractionDispatcher(client);

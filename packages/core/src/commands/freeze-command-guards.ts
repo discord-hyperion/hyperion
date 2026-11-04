@@ -9,6 +9,7 @@ export const freezeCommandGuards = (
 
     for (const provider of guards) {
         if (typeof provider === "function") continue;
+
         if (!isGuard(provider)) {
             throw new TypeError(
                 "Command guards must be guards from defineGuard() or guard factories.",

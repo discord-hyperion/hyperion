@@ -70,6 +70,7 @@ export const subcommandGroupContracts = (
                             | null;
                         // @ts-expect-error Group guards receive command contexts, not autocomplete contexts.
                         ctx.interaction.respond([]);
+
                         return ownerOnly;
                     },
                 ],
@@ -100,5 +101,6 @@ export const subcommandGroupContracts = (
             });
         }
     }
+
     return { Settings, WrongTopLevel, WrongLeaf, WrongContextMenu };
 };

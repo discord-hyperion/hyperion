@@ -168,11 +168,14 @@ describe("button params loading", () => {
             "hyperion-params-",
             "buttons",
         );
+
         await writeFile(path.join(directory, "a.mjs"), paramsSource("a.route"));
+
         await writeFile(
             path.join(directory, "b.mjs"),
             buttonKind.source("b.literal"),
         );
+
         const registry = new ButtonRegistry();
         await registry.load(root);
 
@@ -190,6 +193,7 @@ describe("button params loading", () => {
             "hyperion-params-",
             "buttons",
         );
+
         const registry = new ButtonRegistry();
         await writeFile(path.join(directory, "a.mjs"), paramsSource("a.route"));
         await registry.load(root);
@@ -242,6 +246,7 @@ describe("button params dispatch", () => {
                 description: "Denied",
                 run(ctx: TodoContext) {
                     seen.push(ctx.params);
+
                     return ctx.params[1]?.owner === ctx.interaction.user.id;
                 },
             });

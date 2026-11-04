@@ -13,6 +13,7 @@ export const resolveInput = async <Context extends InteractionContext>(
     extract: () => Record<string, unknown>,
 ): Promise<CommandInputResult<CommandInputDefinition<Context>>> => {
     const { interaction } = ctx;
+
     if (definition.defer && !interaction.deferred && !interaction.replied) {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     }

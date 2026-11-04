@@ -22,6 +22,7 @@ const interaction = (
             getSubcommandGroup: () => group,
         },
     };
+
     return autocomplete
         ? createAutocompleteInteraction(data)
         : createChatInputInteraction(data);
@@ -29,6 +30,7 @@ const interaction = (
 
 test("development subcommands load and execute through the client listener", async t => {
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     const client = await HyperionClient.create({
         name: "Test",
         root: new URL("../", import.meta.url),
@@ -40,6 +42,7 @@ test("development subcommands load and execute through the client listener", asy
             guildIds: ["456"],
         },
     });
+
     t.after(() => client.destroy());
     const ping = interaction("ping");
 

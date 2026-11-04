@@ -95,6 +95,7 @@ export abstract class ModalHandler<
 
         for (const provider of this.guards) {
             if (typeof provider === "function") continue;
+
             if (!isGuard(provider)) {
                 throw new TypeError(
                     "Modal guards must be guards from defineGuard() or guard factories.",

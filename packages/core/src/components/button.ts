@@ -48,6 +48,7 @@ export abstract class ButtonHandler<
 
         for (const provider of this.guards) {
             if (typeof provider === "function") continue;
+
             if (!isGuard(provider)) {
                 throw new TypeError(
                     "Button guards must be guards from defineGuard() or guard factories.",

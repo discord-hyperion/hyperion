@@ -24,10 +24,12 @@ for (const kind of componentKinds) {
                 "hyperion-templates-",
                 kind.folder,
             );
+
             await writeFile(
                 path.join(directory, "handler.mjs"),
                 withoutTemplateId(kind.source("templated"), "templated"),
             );
+
             const registry = new kind.Registry();
             await registry.load(root);
 
@@ -49,10 +51,12 @@ for (const kind of componentKinds) {
                 "hyperion-templates-",
                 kind.folder,
             );
+
             await writeFile(
                 path.join(directory, "handler.mjs"),
                 withoutTemplate(kind.source("bare")),
             );
+
             const registry = new kind.Registry();
             await registry.load(root);
 
@@ -70,6 +74,7 @@ for (const kind of componentKinds) {
                 "hyperion-templates-",
                 kind.folder,
             );
+
             await writeFile(
                 path.join(directory, "handler.mjs"),
                 kind
@@ -86,6 +91,7 @@ for (const kind of componentKinds) {
                     String(error.cause),
                     /template custom ID must match its handler's custom ID/,
                 );
+
                 return true;
             });
         });
@@ -98,6 +104,7 @@ test("a select template must match the declared componentType", async t => {
         "hyperion-templates-",
         "select-menus",
     );
+
     await writeFile(
         path.join(directory, "handler.mjs"),
         selectMenuKind
@@ -111,6 +118,7 @@ test("a select template must match the declared componentType", async t => {
     await assert.rejects(new selectMenuKind.Registry().load(root), error => {
         assert.ok(error instanceof Error);
         assert.match(String(error.cause), /template type must match/);
+
         return true;
     });
 });
@@ -122,6 +130,7 @@ test("literal custom IDs must be non-empty and at most 100 characters", async t 
             "hyperion-templates-",
             "buttons",
         );
+
         await writeFile(
             path.join(directory, "handler.mjs"),
             withoutTemplate(buttonKind.source(id)),

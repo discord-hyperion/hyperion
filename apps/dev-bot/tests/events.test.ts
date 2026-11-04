@@ -5,6 +5,7 @@ import { ClientUser, Events } from "discord.js";
 
 test("filesystem ready handlers execute in order once, alongside internal readiness", async t => {
     const records: { msg: string; source?: string }[] = [];
+
     const client = await HyperionClient.create({
         name: "Test",
         root: new URL("../", import.meta.url),
@@ -14,6 +15,7 @@ test("filesystem ready handlers execute in order once, alongside internal readin
             destination: { write: line => records.push(JSON.parse(line)) },
         },
     });
+
     t.after(() => client.destroy());
     client.user = Reflect.construct(ClientUser, [
         client,

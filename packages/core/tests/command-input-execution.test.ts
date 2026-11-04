@@ -70,6 +70,7 @@ const schema = (
 
 const interaction = (values: CommandInteractionOption[] = []) => {
     const options = new Collection(values.map(value => [value.name, value]));
+
     return createChatInputInteraction({
         commandName: "test",
         options: { get: name => options.get(name) ?? null },
@@ -119,6 +120,7 @@ test("guards precede private deferral, async schema, whole-input resolution, and
                     omitted: undefined,
                 });
                 await Promise.resolve();
+
                 return {
                     value: {
                         title: "Default",
@@ -137,6 +139,7 @@ test("guards precede private deferral, async schema, whole-input resolution, and
                 });
                 order.push("resolve");
                 await Promise.resolve();
+
                 return { title: "Default", todo: { id: "a" } };
             },
         },
@@ -153,6 +156,7 @@ test("guards precede private deferral, async schema, whole-input resolution, and
             check(ctx => {
                 assert.equal("input" in ctx, false);
                 order.push("guard");
+
                 return true;
             }),
         ],
@@ -235,7 +239,10 @@ for (const phase of ["new", "deferred", "replied"] as const) {
         test(`${failing} exception stops execution and uses the ${phase} error response`, async t => {
             const { client, dispatcher, records } = await createTestClient(t);
             const validate = mock.fn(() => {
-                if (failing === "schema") throw new Error("Lookup failed");
+                if (failing === "schema") {
+                    throw new Error("Lookup failed");
+                }
+
                 return { value: null };
             });
             const run = mock.fn(async () => {});
@@ -245,8 +252,10 @@ for (const phase of ["new", "deferred", "replied"] as const) {
                     {
                         schema: schema(validate),
                         resolve: () => {
-                            if (failing === "resolver")
+                            if (failing === "resolver") {
                                 throw new Error("Lookup failed");
+                            }
+
                             return null;
                         },
                     },
@@ -297,9 +306,12 @@ for (const phase of ["deferred", "replied"] as const) {
                 undefined,
                 [
                     check(async ctx => {
-                        if (phase === "deferred")
+                        if (phase === "deferred") {
                             await ctx.interaction.deferReply();
-                        else await ctx.interaction.reply("Acknowledged");
+                        } else {
+                            await ctx.interaction.reply("Acknowledged");
+                        }
+
                         return true;
                     }),
                 ],
@@ -373,6 +385,7 @@ test("option extraction preserves falsy values, entity IDs, and resolved attachm
     const options = builder.toJSON(false).options?.map((option, index) => {
         const value = values[index];
         assert.ok(value !== undefined);
+
         return { name: option.name, type: option.type, value };
     });
     assert.ok(options);
@@ -396,6 +409,7 @@ test("option extraction preserves falsy values, entity IDs, and resolved attachm
                         mentionable: "44",
                         attachment,
                     });
+
                     return { value: input };
                 }),
             },
@@ -425,7 +439,11 @@ test("concurrent invocations keep resolved values and handler contexts separate"
                     assert.ok(
                         value && typeof value === "object" && "todo" in value,
                     );
-                    if (value.todo === "first") await gate;
+
+                    if (value.todo === "first") {
+                        await gate;
+                    }
+
                     return { todo: value.todo };
                 },
             },
@@ -459,18 +477,22 @@ test("grouped subcommands run inherited guards before their own input pipeline",
     await writeFile(path.join(root, "shared.mjs"), shared);
     const sharedUrl = pathToFileURL(path.join(root, "shared.mjs")).href;
     const common = `import { check, order } from ${JSON.stringify(sharedUrl)};`;
+
     await writeFile(
         path.join(directory, "../index.mjs"),
         `${common} import {ParentCommand} from ${entry}; import {ChatInputCommandBuilder} from ${builders}; export default class extends ParentCommand { constructor() { super({builder:new ChatInputCommandBuilder().setDescription('Tools'), guards:[check('parent')]}); } }`,
     );
+
     await writeFile(
         path.join(directory, "index.mjs"),
         `${common} import {SubcommandGroup} from ${entry}; import {ChatInputCommandSubcommandGroupBuilder} from ${builders}; export default class extends SubcommandGroup { constructor() { super({builder:new ChatInputCommandSubcommandGroupBuilder().setDescription('Items'), guards:[check('group')]}); } }`,
     );
+
     await writeFile(
         path.join(directory, "todo.mjs"),
         `${common} import {Subcommand} from ${entry}; import {ChatInputCommandSubcommandBuilder} from ${builders}; export default class extends Subcommand { constructor() { super({builder:new ChatInputCommandSubcommandBuilder().setName('todo').setDescription('Todo').addStringOptions(o=>o.setName('todo').setDescription('ID')), guards:[check('leaf')], input:{resolve:value=>{order.push('resolver');return {todo:{id:value.todo}};}, schema:{'~standard':{version:1,vendor:'test',validate:value=>{order.push('schema');return {value};}}}}}); } async run(ctx) { order.push('handler'); await ctx.interaction.reply(JSON.stringify(ctx.input)); } }`,
     );
+
     await client.commands.load(root);
     const fixture = createChatInputInteraction({
         commandName: "tools",
@@ -508,6 +530,7 @@ test("schema-free commands keep the original context and do not extract options"
                 guards: [
                     check(ctx => {
                         guarded = ctx;
+
                         return true;
                     }),
                 ],
@@ -679,6 +702,7 @@ for (const resolved of [
         }));
         const resolve = mock.fn(async (value: unknown) => {
             assert.deepEqual(value, { id: "missing", name: "Default name" });
+
             return resolved;
         });
         const run = mock.fn(
@@ -706,6 +730,7 @@ test("defineInput infers a concrete handler's output without running callbacks d
         assert.ok(value && typeof value === "object" && "todo" in value);
         assert.equal(typeof value.todo, "string");
         assert.ok(typeof value.todo === "string");
+
         return { value: { id: value.todo.trim() } };
     });
     const typedSchema: StandardSchemaV1<unknown, { id: string }> = {

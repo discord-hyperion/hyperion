@@ -95,6 +95,7 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
                     `${title} handlers must provide a run() method.`,
                 );
             }
+
             if (handler.params !== undefined && !routes) {
                 throw new TypeError(`${title} handlers do not support params.`);
             }

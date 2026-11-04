@@ -14,6 +14,7 @@ export const modalContracts = (ctx: ModalContext) => {
     ctx.interaction.components.getStringSelectValues(
         "colour",
     ) satisfies readonly string[];
+
     if (ctx.interaction.isFromMessage()) {
         ctx.interaction.message.id satisfies string;
     }
@@ -26,6 +27,7 @@ export const modalContracts = (ctx: ModalContext) => {
                 ctx.interaction.components.getTextInputValue(
                     "message",
                 ) satisfies string;
+
                 return ownerOnly;
             },
         ],

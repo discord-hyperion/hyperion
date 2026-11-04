@@ -18,6 +18,7 @@ export default class ChooseChannel extends SelectMenuHandler<ComponentType.Chann
     async run(ctx: SelectMenuContext<ComponentType.ChannelSelect>) {
         const names = ctx.interaction.values.map(id => {
             const channel = ctx.interaction.channels.get(id);
+
             return channel && "name" in channel ? (channel.name ?? id) : id;
         });
 

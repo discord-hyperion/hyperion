@@ -47,6 +47,7 @@ export const buildTemplate = <Handler extends TemplatedHandler>(
                 `No ${name} params handler is loaded for route "${target.id}".`,
             );
         }
+
         if (!sameKeys(handler.params.keys, target.keys)) {
             throw new Error(
                 `The ${name} params handler for "${target.id}" declares different keys than this definition.`,

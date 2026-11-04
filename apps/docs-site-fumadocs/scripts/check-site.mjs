@@ -111,11 +111,13 @@ for (const page of pages) {
                 .replace(/^(blob|edit)\/main\//, "")
                 .split("#")[0];
 
-            if (file && !existsSync(path.join(repoRoot, file)))
+            if (file && !existsSync(path.join(repoRoot, file))) {
                 problems.push(`${where}: GitHub link to missing file ${file}`);
+            }
 
             continue;
         }
+
         if (
             /^[a-z][a-z+.-]*:/i.test(href) ||
             href === "" ||
@@ -124,11 +126,13 @@ for (const page of pages) {
             continue;
 
         if (href.startsWith("#")) {
-            if (!idsOf(page).has(href.slice(1)))
+            if (!idsOf(page).has(href.slice(1))) {
                 problems.push(`${where}: missing anchor ${href}`);
+            }
 
             continue;
         }
+
         if (base && !href.startsWith(`${base}/`) && href !== base) {
             problems.push(`${where}: link outside base ${base}: ${href}`);
 
@@ -202,8 +206,9 @@ for (const file of walk(guide, ".md")) {
 
         fences++;
 
-        if (!rendered.has(normalize(lines)))
+        if (!rendered.has(normalize(lines))) {
             lost.push(`${path.relative(guide, file)}: ${lines[0]}`);
+        }
     }
 }
 
@@ -255,6 +260,7 @@ const server = await serve(0);
 
 try {
     const origin = `http://127.0.0.1:${server.address().port}`;
+
     const { staticClient } = await import(
         fileURLToPath(
             new URL(
@@ -263,6 +269,7 @@ try {
             ),
         )
     );
+
     const client = staticClient({ from: `${origin}${base}/api/search` });
 
     for (const [term, page] of [

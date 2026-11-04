@@ -31,7 +31,11 @@ const menu = (children: Child = option(), customId = "priority") => (
 const fails = (run: () => unknown, native = false) =>
     assert.throws(run, error => {
         assert.ok(error instanceof JSXRenderError);
-        if (native) assert.ok(error.cause instanceof Error);
+
+        if (native) {
+            assert.ok(error.cause instanceof Error);
+        }
+
         return true;
     });
 
@@ -127,6 +131,7 @@ test("components/options evaluate once per render and retain mapped option order
     let calls = 0;
     const Options = () => {
         calls++;
+
         return (
             <>
                 {["high", "low"].map(value => (
@@ -191,6 +196,7 @@ test("duplicate option values show both paths without echoing supplied data", ()
             assert.match(error.message, /options\[0\]/);
             assert.match(error.message, /options\[1\]/);
             assert.ok(!error.message.includes("private-value"));
+
             return true;
         },
     );
@@ -227,6 +233,7 @@ for (const order of ["button-first", "select-first"] as const) {
                 assert.match(error.message, /components\[0\]/);
                 assert.match(error.message, /components\[1\]/);
                 assert.ok(!error.message.includes("private-id"));
+
                 return true;
             },
         );
@@ -285,6 +292,7 @@ for (const [name, view] of [
             error => {
                 assert.ok(error instanceof JSXRenderError);
                 assert.ok(!error.message.includes("private text"));
+
                 return true;
             },
         );
@@ -506,6 +514,8 @@ test("global validation settings retain structural and uniqueness checks", () =>
             ),
         );
     } finally {
-        if (enabled) enableValidators();
+        if (enabled) {
+            enableValidators();
+        }
     }
 });

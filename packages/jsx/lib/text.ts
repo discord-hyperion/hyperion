@@ -66,6 +66,7 @@ const destination = (value: unknown, path: string) => {
     } catch (cause) {
         throw new JSXRenderError(path, "Invalid link destination.", { cause });
     }
+
     if (url.protocol !== "http:" && url.protocol !== "https:") {
         throw new JSXRenderError(
             path,
@@ -189,8 +190,10 @@ const renderInline = (
             ),
         );
     }
+
     if (current.name === "Br") return "\n";
     if (current.name === "Raw") return literal(current);
+
     if (current.name === "Code") {
         const text = literal(current);
 
@@ -203,6 +206,7 @@ const renderInline = (
 
         return inlineCode(text);
     }
+
     if (current.name === "CodeBlock") {
         const text = literal(current);
         const language = current.props.language ?? "";
@@ -213,6 +217,7 @@ const renderInline = (
                 "CodeBlock cannot contain triple backticks.",
             );
         }
+
         if (typeof language !== "string" || !/^[\w+-]*$/.test(language)) {
             throw new JSXRenderError(
                 current.path,
@@ -222,6 +227,7 @@ const renderInline = (
 
         return codeBlock(language, text);
     }
+
     if (current.name === "Link") {
         if (insideLink) {
             throw new JSXRenderError(
@@ -240,6 +246,7 @@ const renderInline = (
 
         return hyperlink(label, href);
     }
+
     const formatMention = mentionFormatters[current.name];
 
     if (formatMention) {

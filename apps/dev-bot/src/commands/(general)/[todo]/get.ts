@@ -28,6 +28,7 @@ export default class extends Subcommand<typeof input> {
             await ctx.interaction.editReply({
                 content: issues.map(issue => issue.message).join("\n"),
             });
+
             return;
         }
 

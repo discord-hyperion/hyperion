@@ -42,6 +42,7 @@ const unescapeValue = (value: string) =>
 /** Validate and snapshot a definition without evaluating application code. */
 export const validateParams = (params: ParamsDefinition | undefined) => {
     if (params === undefined) return undefined;
+
     if (
         !params ||
         (typeof params !== "object" && typeof params !== "function")
@@ -52,11 +53,13 @@ export const validateParams = (params: ParamsDefinition | undefined) => {
     if (typeof params.id !== "string" || params.id === "") {
         throw new TypeError("Params id must be a non-empty string.");
     }
+
     if (params.id.includes(separator) || params.id.includes("%")) {
         throw new TypeError(
             `Params id must not contain "${separator}" or "%".`,
         );
     }
+
     if (
         !Array.isArray(params.keys) ||
         params.keys.some(key => typeof key !== "string" || key === "") ||
@@ -66,6 +69,7 @@ export const validateParams = (params: ParamsDefinition | undefined) => {
     }
 
     const standard = params.schema?.["~standard"];
+
     if (standard?.version !== 1 || typeof standard.validate !== "function") {
         throw new TypeError("Params schema must implement Standard Schema v1.");
     }
@@ -115,7 +119,10 @@ export const defineParams = <
     readonly schema: Schema;
 }): CustomIdParams<Keys, Schema> => {
     const snapshot = validateParams(definition);
-    if (!snapshot) throw new TypeError("defineParams requires a definition.");
+
+    if (!snapshot) {
+        throw new TypeError("defineParams requires a definition.");
+    }
 
     const encode = (values: ParamValues<Keys>) => {
         const segments = [snapshot.id];
@@ -137,6 +144,7 @@ export const defineParams = <
         }
 
         const customId = segments.join(separator);
+
         if (customId.length > maxCustomIdLength) {
             throw new RangeError(
                 `Custom ID for "${snapshot.id}" exceeds ${maxCustomIdLength} characters.`,
@@ -158,6 +166,7 @@ export const defineParams = <
 /** Split a custom ID into raw values, or undefined when it is not this route. */
 export const decodeParams = (params: ParamsDefinition, customId: string) => {
     const segments = customId.split(separator);
+
     if (
         segments[0] !== params.id ||
         segments.length !== params.keys.length + 1

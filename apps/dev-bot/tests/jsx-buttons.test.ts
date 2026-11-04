@@ -17,6 +17,7 @@ test("JSX buttons preserve builder identity, personalized disabled state, and ex
             ".consumer-buttons-",
         ),
     );
+
     t.after(() => rm(root, { recursive: true, force: true }));
     for (const [folder, file, relative] of [
         [
@@ -27,17 +28,20 @@ test("JSX buttons preserve builder identity, personalized disabled state, and ex
         ["buttons", "refresh.tsx", "../src/buttons/jsx-refresh.tsx"],
     ] as const) {
         await mkdir(path.join(root, "src", folder), { recursive: true });
+
         await writeFile(
             path.join(root, "src", folder, file),
             `export { default } from ${JSON.stringify(new URL(relative, import.meta.url).href)};`,
         );
     }
+
     const client = await HyperionClient.create({
         root,
         name: "Test",
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const dispatcher = new InteractionDispatcher(client);

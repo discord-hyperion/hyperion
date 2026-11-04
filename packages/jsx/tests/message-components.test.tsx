@@ -85,6 +85,7 @@ test("reusable components, fragments, arrays, labels and keys evaluate once per 
     let evaluations = 0;
     const Label = () => {
         evaluations++;
+
         return (
             <>
                 Todo {0}
@@ -187,6 +188,7 @@ test("duplicate IDs identify both paths without echoing the ID, and separate ren
             assert.match(error.message, /components\[0\].children\[0\]/);
             assert.match(error.message, /components\[1\].children\[0\]/);
             assert.ok(!error.message.includes("private-route"));
+
             return true;
         },
     );
@@ -234,6 +236,7 @@ for (const [name, view] of [
             error => {
                 assert.ok(error instanceof JSXRenderError);
                 assert.ok(!error.message.includes("private text"));
+
                 return true;
             },
         );
@@ -288,6 +291,7 @@ test("native constraints retain causes and structural paths", () => {
                 assert.ok(error instanceof JSXRenderError);
                 assert.ok(error.cause instanceof Error);
                 assert.match(error.path, /components\[0\]/);
+
                 return true;
             },
         );
@@ -339,7 +343,9 @@ test("native validators can be disabled while JSX structure and duplicate rules 
             JSXRenderError,
         );
     } finally {
-        if (enabled) enableValidators();
+        if (enabled) {
+            enableValidators();
+        }
     }
 });
 
