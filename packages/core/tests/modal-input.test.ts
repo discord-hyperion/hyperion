@@ -146,7 +146,7 @@ test("modal guards precede private deferral, async schema, resolver, and handler
     assert.ok(!JSON.stringify(records).includes("Private text"));
 });
 
-test("extracts submitted labels/legacy rows, preserves literal keys and empties, and ignores other controls", async t => {
+test("extracts submitted labels/legacy rows, preserves literal keys and empties, and ignores text displays", async t => {
     const { client, dispatcher } = await createTestClient(t);
     const data: Submitted[] = [
         text("todo.name", ""),
@@ -195,6 +195,8 @@ test("extracts submitted labels/legacy rows, preserves literal keys and empties,
                 ["__proto__", "safe"],
                 ["constructor", "ordinary"],
                 ["extra", "personalized"],
+                ["choice", ["a"]],
+                ["file", []],
             ]),
         );
         assert.equal(Object.getPrototypeOf(values), Object.prototype);
@@ -213,6 +215,160 @@ test("extracts submitted labels/legacy rows, preserves literal keys and empties,
     assert.equal(validate.mock.callCount(), 1);
     assert.equal(run.mock.callCount(), 1);
 });
+
+const control = (component: Record<string, unknown>, id = 20): Submitted =>
+    ({
+        id,
+        type: ComponentType.Label,
+        component: { id: id + 1, ...component },
+    }) as unknown as Submitted;
+const attachment = (id: string) => ({ id, name: `${id}.png`, size: 10 });
+
+test("extracts every modal control with its value shape", async t => {
+    const { client, dispatcher } = await createTestClient(t);
+    const files = [attachment("f2"), attachment("f1")];
+    const data: Submitted[] = [
+        text("name", "Todo"),
+        control({
+            type: ComponentType.StringSelect,
+            customId: "priority",
+            values: ["high"],
+        }),
+        control({
+            type: ComponentType.UserSelect,
+            customId: "assignee",
+            values: ["100"],
+            users: new Collection(),
+        }),
+        control({
+            type: ComponentType.RoleSelect,
+            customId: "roles",
+            values: [],
+        }),
+        control({
+            type: ComponentType.MentionableSelect,
+            customId: "notify",
+            values: ["200", "300"],
+        }),
+        control({
+            type: ComponentType.ChannelSelect,
+            customId: "channel",
+            values: ["400"],
+        }),
+        control({
+            type: ComponentType.FileUpload,
+            customId: "files",
+            // Order follows `values`, not the collection.
+            values: ["f1", "f2"],
+            attachments: new Collection(files.map(file => [file.id, file])),
+        }),
+        control({
+            type: ComponentType.RadioGroup,
+            customId: "size",
+            value: null,
+        }),
+        control({
+            type: ComponentType.CheckboxGroup,
+            customId: "tags",
+            values: ["bug"],
+        }),
+        control({
+            type: ComponentType.Checkbox,
+            customId: "urgent",
+            value: false,
+        }),
+    ];
+    const validate = mock.fn(values => {
+        assert.deepEqual(values, {
+            name: "Todo",
+            priority: ["high"],
+            assignee: ["100"],
+            roles: [],
+            notify: ["200", "300"],
+            channel: ["400"],
+            files: [files[1], files[0]],
+            size: null,
+            tags: ["bug"],
+            urgent: false,
+        });
+
+        return { value: values };
+    });
+    const run = mock.fn(async () => {});
+    client.modals.set(
+        "todo.create",
+        new InputModal({ schema: schema(validate) }, run),
+    );
+
+    await dispatcher.dispatch(submission(data).interaction);
+
+    assert.equal(validate.mock.callCount(), 1);
+    assert.equal(run.mock.callCount(), 1);
+});
+
+for (const [name, component] of [
+    [
+        "select without a string array",
+        { type: ComponentType.UserSelect, values: "Private value" },
+    ],
+    [
+        "checkbox group with a non-string value",
+        { type: ComponentType.CheckboxGroup, values: [42] },
+    ],
+    [
+        "file upload missing an attachment",
+        {
+            type: ComponentType.FileUpload,
+            values: ["Private value"],
+            attachments: new Collection(),
+        },
+    ],
+    [
+        "file upload without an ID array",
+        {
+            type: ComponentType.FileUpload,
+            values: "Private value",
+            attachments: new Collection(),
+        },
+    ],
+    [
+        "radio group with a non-string value",
+        { type: ComponentType.RadioGroup, value: 42 },
+    ],
+    [
+        "checkbox with a non-boolean value",
+        { type: ComponentType.Checkbox, value: "Private value" },
+    ],
+    [
+        "duplicate custom ID across control types",
+        { type: ComponentType.Checkbox, value: true, customId: "Private ID" },
+    ],
+] as const) {
+    test(`rejects a ${name} before validation without logging values`, async t => {
+        const { client, dispatcher, records } = await createTestClient(t);
+        const validate = mock.fn(values => ({ value: values }));
+        const run = mock.fn(async () => {});
+        client.modals.set(
+            "todo.create",
+            new InputModal({ schema: schema(validate) }, run),
+        );
+        const fixture = submission([
+            text("Private ID", "ok"),
+            control({ customId: "other", ...component }),
+        ]);
+
+        await dispatcher.dispatch(fixture.interaction);
+
+        assert.equal(validate.mock.callCount(), 0);
+        assert.equal(run.mock.callCount(), 0);
+        assert.equal(
+            records.find(record => record.event === "modal.failed")?.stage,
+            "input",
+        );
+        assert.ok(!JSON.stringify(records).includes("Private value"));
+        assert.ok(!JSON.stringify(records).includes("Private ID"));
+    });
+}
 
 test("schemas own missing-field defaults, trimming, and successful output without a resolver", async t => {
     const { client, dispatcher } = await createTestClient(t);

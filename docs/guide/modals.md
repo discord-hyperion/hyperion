@@ -94,8 +94,18 @@ export default class CreateTodo extends ModalHandler<typeof input> {
 }
 ```
 
-Field values are keyed by each text input's custom ID. Empty fields arrive as
-empty strings, so let the schema decide what's allowed. See
+Each control in the form shows up under its custom ID. Text inputs give you a
+string, and empty ones arrive as `""`, so let the schema decide what's allowed.
+Other controls work the same way:
+- Select menus and checkbox groups give an array of the picked values. For user,
+  role, and channel selects, that's their IDs.
+- File uploads give an array of discord.js `Attachment`s, so your schema can check
+  size and type.
+- A radio group gives the picked value, or `null`. A checkbox gives `true` or
+  `false`.
+
+Need the picked users or roles themselves? Read them in a resolver with
+`ctx.interaction.components.getSelectedUsers()` and friends. See
 [typed input](input.md) for resolvers and deferring.
 
 ## Remembering what the form is about

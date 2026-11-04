@@ -20,14 +20,32 @@ configuration, `ModalHandler<typeof input>`, and `ModalContext<typeof input>`. P
 the readonly `[issues, value]` handler contract and existing handlers without
 input configuration.
 
-Extract text-input values only. Other modal controls remain available
-through native interaction getters; this feature does not add JSX controls.
+Extract every [modal control](GLOSSARY.md) in the submission. Each control's
+value has one shape:
+
+| Control                                            | Schema input                               |
+| -------------------------------------------------- | ------------------------------------------ |
+| Text input                                         | `string`                                   |
+| String, user, role, mentionable, or channel select | `string[]` (option values or entity IDs)   |
+| File upload                                        | `Attachment[]`, in submitted order         |
+| Radio group                                        | `string`, or `null` when nothing is picked |
+| Checkbox group                                     | `string[]`                                 |
+| Checkbox                                           | `boolean`                                  |
+
+Entity selects pass IDs, not users, roles, or channels: IDs are what the person
+picked and are easy to validate and test. Resolvers that need the objects read
+them from `ctx.interaction.components` (`getSelectedUsers()`, `getSelectedRoles()`,
+and the other native getters), which Discord has already resolved. File uploads
+pass attachments instead, because an upload's ID says nothing a schema can check;
+size, content type, and name live on the attachment.
 
 Schemas remain explicit and independent of native builders or JSX forms. Form
 constraints describe visible controls; schemas validate application input. Do
 not generate schemas or inspect validator-specific internals.
 
-Preserve empty strings without trimming or converting them to `undefined`.
+Preserve empty values without trimming or converting them to `undefined`: an
+empty text input stays `""`, and an optional select, upload, or checkbox group left
+empty stays `[]`.
 Schemas own normalization, defaults, and application constraints.
 
 Use guards → optional private deferral → extraction → schema validation → optional
@@ -42,14 +60,14 @@ there is no resolver and the complete resolver result otherwise. Schema/resolver
 exceptions skip the handler and use the existing `input` error stage. Validation
 responses remain handler-owned.
 
-Extract text inputs from the actual submission, keyed by their exact custom IDs.
+Extract modal controls from the actual submission, keyed by their exact custom IDs.
 The registered default builder is not a field whitelist: personalized forms may
-submit a different field structure. Missing controls produce absent keys; empty
-submitted strings remain empty strings. Dotted IDs are literal keys rather than
-nested object paths. The schema determines which fields are accepted or required.
+submit a different control structure. Missing controls produce absent keys; empty
+submitted values remain empty. Dotted IDs are literal keys rather than
+nested object paths. The schema determines which controls are accepted or required.
 
-Reject duplicate submitted text-input custom IDs as input-processing errors for
-handlers with input validation configured. Do not silently accept the SDK's
+Reject duplicate submitted custom IDs, across all modal control types, as
+input-processing errors for handlers with input validation configured. Do not silently accept the SDK's
 last-value overwrite behavior. Preserve schema-free handler behavior.
 
 Do not compare schema keys with the registered template during discovery.
@@ -75,16 +93,22 @@ const input = defineInput({
 });
 ```
 
-For mixed-control forms, extract text inputs only. Ignore selects, uploads, and
-other controls when constructing schema input, while preserving access through
-native interaction getters. Do not reject a form merely for containing controls
-outside the initial extraction scope.
+Text displays carry no value and are skipped. A control type Hyperion does not
+know yet is skipped too, so a new Discord control never rejects a form; native
+getters still read it.
 
-An included text-input control must contain a string value. Missing or non-string
-values on an included control are input-processing errors and skip schema
-validation, resolution, and the handler. Do not coerce malformed values or treat
+Every extracted control must carry its documented shape. A missing value, a
+non-string text input or select value, a file upload whose IDs do not all resolve
+to attachments, a radio value that is neither a string nor `null`, or a
+non-boolean checkbox is an input-processing error and skips schema validation,
+resolution, and the handler. Do not coerce malformed values or treat
 them as absent controls. An entirely absent control remains an absent key for
-the schema to handle. Generated errors must not include submitted values.
+the schema to handle. Generated errors must not include submitted values or
+custom IDs.
+
+Forms that contain non-text controls produce more keys than when only text inputs
+were extracted. A schema that rejects unknown keys (a strict object) fails on
+those forms until it accepts the new keys.
 
 ## Complete handler example
 

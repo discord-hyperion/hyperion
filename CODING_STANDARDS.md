@@ -79,6 +79,19 @@ if (queue.running) {
 }
 ```
 
+Give every braced `if` block a blank line above and below, except at the start or
+end of the enclosing body and around its own `else` chain:
+
+```ts
+const entry = entries.get(name);
+
+if (!entry.ready) {
+    await entry.prepare();
+}
+
+entry.run();
+```
+
 Inline single statements only for `if` with `return`, `break`, `continue`, or a
 plain assignment. Use braces for loops and for `throw`:
 
