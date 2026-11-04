@@ -35,8 +35,10 @@ class WithParams extends ButtonHandler<typeof params> {
 
     async run(ctx: ButtonContext<typeof params>) {
         const [issues, value] = ctx.params;
+
         if (issues) {
             value satisfies undefined;
+
             return;
         }
 

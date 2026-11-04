@@ -18,6 +18,7 @@ type LogRecord = {
 
 const captureLogs = () => {
     const lines: string[] = [];
+
     return {
         lines,
         logging: {
@@ -40,12 +41,14 @@ test("records timed startup steps and preserves the original failure", async () 
     const result = await logs.step("Loading", "load", async () => 42);
     assert.equal(result, 42);
     const failure = new Error("Failed operation");
+
     await assert.rejects(
         logs.step("Deploying", "deploy", async () => {
             throw failure;
         }),
         error => error === failure,
     );
+
     const records = capture.records();
     assert.deepEqual(
         records.map(record => record.event),
@@ -111,12 +114,14 @@ test("supports silent logging and a pretty output destination", async () => {
 
 test("command context gets a correlated logger and completion timing", async t => {
     const capture = captureLogs();
+
     const client = await HyperionClient.create({
         root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: capture.logging,
     });
+
     t.after(() => client.destroy());
     class LoggedCommand extends Command {
         constructor() {
@@ -157,12 +162,14 @@ test("command context gets a correlated logger and completion timing", async t =
 
 test("errors stay visible at error level and users still receive error responses", async t => {
     const capture = captureLogs();
+
     const client = await HyperionClient.create({
         root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: { ...capture.logging, level: "error" },
     });
+
     t.after(() => client.destroy());
     class BrokenCommand extends Command {
         constructor() {
@@ -197,6 +204,7 @@ test("initialization reports missing directories and skips deployment", async t 
     const root = await createTempRoot(t, "hyperion-logging-");
     const capture = captureLogs();
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
@@ -204,6 +212,7 @@ test("initialization reports missing directories and skips deployment", async t 
         logging: capture.logging,
         commands: { applicationId: "123", token: "test-token" },
     });
+
     t.after(() => client.destroy());
     const events = capture.records().map(record => record.event);
     assert.ok(events.includes("commands.directory.missing"));
@@ -222,12 +231,14 @@ test("initialization reports missing directories and skips deployment", async t 
 
 test("login logs outcome without recording the token or returned credentials", async t => {
     const capture = captureLogs();
+
     const client = await HyperionClient.create({
         root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
         discord: { intents: [] },
         logging: capture.logging,
     });
+
     t.after(() => client.destroy());
     t.mock.method(Client.prototype, "login", async () => "fake-returned-token");
     assert.equal(await client.login("fake-input-token"), "fake-returned-token");

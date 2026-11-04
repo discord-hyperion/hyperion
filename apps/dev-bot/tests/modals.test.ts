@@ -11,6 +11,7 @@ import {
 
 const interaction = (phase = "new", message = "Private submitted text") => {
     const getTextInputValue = mock.fn((_customId: string) => message);
+
     return {
         ...createModalInteraction({
             id: "modal-submission",
@@ -31,12 +32,14 @@ const interaction = (phase = "new", message = "Private submitted text") => {
 
 test("development feedback command opens the modal and its filesystem handler processes submission", async t => {
     const root = new URL("../", import.meta.url);
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const {

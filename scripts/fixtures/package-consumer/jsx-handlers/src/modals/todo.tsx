@@ -27,6 +27,7 @@ export default class extends ModalHandler<typeof input> {
 
     async run(ctx: ModalContext<typeof input>) {
         const [issues, value] = ctx.input;
+
         if (issues) {
             await ctx.interaction.reply("Invalid submission");
 

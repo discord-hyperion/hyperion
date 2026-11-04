@@ -275,6 +275,7 @@ test("button invocations keep async state separate and never auto-acknowledge", 
         new TestButton(async ctx => {
             contexts.push(ctx);
             const id = await Promise.resolve(ctx.interaction.user.id);
+
             await ctx.interaction.showModal({
                 custom_id: id,
                 title: "Test",
@@ -284,10 +285,12 @@ test("button invocations keep async state separate and never auto-acknowledge", 
     );
     const first = interaction("new", "first");
     const second = interaction("new", "second");
+
     await Promise.all([
         dispatcher.dispatch(first.interaction),
         dispatcher.dispatch(second.interaction),
     ]);
+
     assert.notEqual(contexts[0], contexts[1]);
     assert.equal(first.showModal.mock.callCount(), 1);
     assert.equal(second.showModal.mock.callCount(), 1);

@@ -73,7 +73,9 @@ const fixture = async (t: TestContext) => {
         guardCalls.push(module.calls);
     }
     const assertLazy = () => {
-        for (const calls of guardCalls) assert.deepEqual(calls, []);
+        for (const calls of guardCalls) {
+            assert.deepEqual(calls, []);
+        }
     };
     assertLazy();
     const parent = registry.parents.get("ticket");
@@ -82,6 +84,7 @@ const fixture = async (t: TestContext) => {
     const view = registry.resolveSubcommand("ticket", "view", "settings");
     const update = registry.resolveSubcommand("ticket", "update", "settings");
     assert.ok(parent && group && close && view && update);
+
     return { root, registry, parent, group, close, view, update, assertLazy };
 };
 
@@ -98,9 +101,11 @@ const captureRest = (t: TestContext) => {
         "put",
         async (_route: unknown, options: { body: unknown }) => {
             bodies.push(options.body as Payload[]);
+
             return [];
         },
     );
+
     return { bodies, put };
 };
 const shape = (body: readonly Payload[]): unknown[] =>
@@ -177,8 +182,10 @@ test("group collisions retain both definition and direct leaf sources", async t 
         assert.ok(error instanceof Error);
         assert.ok(error.message.includes(leaf));
         assert.ok(error.message.includes(definition));
+
         return true;
     });
+
     assert.equal(registry.resolveGroup("ticket", "settings"), group);
     assert.equal(
         registry.resolveSubcommand("ticket", "view", "settings"),
@@ -207,22 +214,26 @@ test("deleting the last grouped leaf omits the unused group and keeps its defini
 
 test("replacement parent and group definitions are used by registration and dispatch", async t => {
     const { root } = await fixture(t);
+
     const client = await HyperionClient.create({
         name: "Mutation test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const events: string[] = [];
     const factory = (name: string) => () => {
         events.push(`${name} factory`);
+
         return defineGuard({
             name: "test-guard",
             description: "Allowed",
             run() {
                 events.push(`${name} guard`);
+
                 return true;
             },
         });
@@ -296,20 +307,25 @@ for (const definition of ["parent", "group"] as const) {
     test(`removing a ${definition} definition with remaining leaves rejects before REST`, async t => {
         const { registry, assertLazy } = await fixture(t);
         const { put } = captureRest(t);
-        if (definition === "parent") registry.parents.delete("ticket");
-        else
+
+        if (definition === "parent") {
+            registry.parents.delete("ticket");
+        } else {
             registry.groups.delete(
                 CommandRegistry.groupKey("ticket", "settings"),
             );
+        }
 
         assert.equal(
             registry.resolveSubcommand("ticket", "view", "settings"),
             undefined,
         );
+
         await assert.rejects(
             registry.register(credentials),
             new RegExp(`no ${definition} definition`, "i"),
         );
+
         assert.equal(put.mock.callCount(), 0);
         assertLazy();
     });
@@ -455,6 +471,7 @@ for (const group of [undefined, "settings"]) {
             registry.register(credentials),
             /no parent definition/i,
         );
+
         assert.equal(put.mock.callCount(), 0);
         assertLazy();
     });

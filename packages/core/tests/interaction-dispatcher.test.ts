@@ -40,6 +40,7 @@ test("passes a fresh context and preserves the command receiver", async t => {
         logging: false as const,
         discord: { intents: [] },
     });
+
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     const contexts: CommandContext[] = [];
@@ -68,6 +69,7 @@ test("ignores interactions other than slash commands and buttons", async t => {
         logging: false as const,
         discord: { intents: [] },
     });
+
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     const execute = mock.fn(async () => undefined);
@@ -87,6 +89,7 @@ test("acknowledges a stale command with a private unavailable response", async t
         logging: false as const,
         discord: { intents: [] },
     });
+
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     const fixture = createInteraction();
@@ -105,6 +108,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
             logging: false as const,
             discord: { intents: [] },
         });
+
         t.after(() => client.destroy());
         t.mock.method(client, "getOwnerId", async () => "test-owner");
         const failure = new Error("Internal service details");
@@ -139,6 +143,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
             fixture.followUp.mock.callCount(),
             phase === "replied" ? 1 : 0,
         );
+
         if (phase === "deferred") {
             assert.deepEqual(fixture.editReply.mock.calls[0]?.arguments[0], {
                 content,
@@ -160,6 +165,7 @@ test("falls back to a private follow-up when a deferred reply cannot take conten
         logging: false as const,
         discord: { intents: [] },
     });
+
     t.after(() => client.destroy());
     t.mock.method(client.logger, "child", () => client.logger);
     const errors = t.mock.method(client.logger, "error", () => undefined);
@@ -202,6 +208,7 @@ test("contains synchronous throws and failed error responses in the event listen
         logging: false as const,
         discord: { intents: [] },
     });
+
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     t.mock.method(client.logger, "child", () => client.logger);
@@ -231,6 +238,7 @@ test("does not acknowledge before a handler opens a modal", async t => {
         logging: false as const,
         discord: { intents: [] },
     });
+
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     const fixture = createInteraction();

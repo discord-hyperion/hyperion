@@ -46,6 +46,7 @@ for (const { folder, Handler, Registry, builder, componentType = "" } of [
         const root = await createTempRoot(t, "hyperion-validation-");
         const directory = path.join(root, "src", folder);
         await mkdir(directory, { recursive: true });
+
         await writeFile(
             path.join(directory, "handler.mjs"),
             `
@@ -57,17 +58,21 @@ export default class extends ${Handler} {
     async run() {}
 }`,
         );
+
         const enabled = isValidationEnabled();
         const registry = new Registry();
 
         try {
             enableValidators();
+
             await assert.rejects(registry.load(root), error => {
                 assert.ok(error instanceof Error);
                 assert.ok(error.cause instanceof Error);
                 assert.match(error.message, /handler\.mjs/);
+
                 return true;
             });
+
             assert.equal(registry.size, 0);
 
             disableValidators();
@@ -75,8 +80,11 @@ export default class extends ${Handler} {
             assert.equal(registry.size, 1);
             assert.ok(registry.has("handler"));
         } finally {
-            if (enabled) enableValidators();
-            else disableValidators();
+            if (enabled) {
+                enableValidators();
+            } else {
+                disableValidators();
+            }
         }
     });
 }

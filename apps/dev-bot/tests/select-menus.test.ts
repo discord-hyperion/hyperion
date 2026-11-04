@@ -25,6 +25,7 @@ test("development colour command and filesystem menu complete the selection flow
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(new URL("../", import.meta.url));
     const command = client.commands.get("colour");

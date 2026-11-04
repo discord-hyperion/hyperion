@@ -45,8 +45,9 @@ for (const invalid of [
     { ...beta, pre: { mode: "exit", tag: "beta" } },
     { ...beta, channel: "next" },
     { ...beta, version: "0.2.0-beta.01", expectedVersion: "0.2.0-beta.01" },
-])
+]) {
     assert.throws(() => validateRelease(invalid));
+}
 console.log(
     "PASS release guards: exact version, stable/beta branch and tag isolation",
 );
@@ -83,51 +84,63 @@ try {
     await mkdir(path.join(temporary, "packages/consumer"));
     await mkdir(path.join(temporary, "packages/peer-consumer"));
     await mkdir(path.join(temporary, "apps/dev-bot"), { recursive: true });
+
     await cp(
         path.join(root, ".changeset/config.json"),
         path.join(temporary, ".changeset/config.json"),
     );
+
     await cp(path.join(root, "biome.json"), path.join(temporary, "biome.json"));
+
     await symlink(
         path.join(root, "node_modules"),
         path.join(temporary, "node_modules"),
         "dir",
     );
+
     await write(".gitignore", "node_modules/\n");
+
     await write("package.json", {
         name: "release-verification",
         private: true,
         type: "module",
         packageManager: "pnpm@12.15.0",
     });
+
     await write(
         "pnpm-workspace.yaml",
         "packages:\n  - packages/*\n  - apps/*\n",
     );
+
     await write("packages/core/package.json", {
         name: "@hyperion/core",
         version: "0.1.0",
     });
+
     await write("packages/jsx/package.json", {
         name: "@hyperion/jsx",
         version: "0.0.0",
     });
+
     await write("packages/consumer/package.json", {
         name: "@hyperion/consumer",
         version: "1.0.0",
         dependencies: { "@hyperion/core": "workspace:^0.1.0" },
     });
+
     await write("packages/peer-consumer/package.json", {
         name: "@hyperion/peer-consumer",
         version: "1.0.0",
         peerDependencies: { "@hyperion/core": "^0.1.0" },
     });
+
     await write("apps/dev-bot/package.json", {
         name: "@hyperion/dev-bot",
         version: "0.0.0",
         private: true,
         dependencies: { "@hyperion/core": "workspace:*" },
     });
+
     run("git", ["init", "--quiet"]);
     run("git", ["add", "."]);
     run("git", [
@@ -235,10 +248,12 @@ try {
     cli("pre", "exit");
     cli("version");
     assert.equal((await read("packages/core/package.json")).version, "0.2.1");
+
     await assert.rejects(
         readFile(path.join(temporary, ".changeset/pre.json")),
         { code: "ENOENT" },
     );
+
     console.log(
         "PASS beta entry, versioning, and exit without publishing or changing the repository",
     );

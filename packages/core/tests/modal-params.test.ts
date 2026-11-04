@@ -120,6 +120,7 @@ describe("modal params dispatch", () => {
                     order.push("guard");
                     assert.deepEqual(ctx.params, [null, ticket]);
                     assert.equal("input" in ctx, false);
+
                     return true;
                 },
             });
@@ -151,6 +152,7 @@ describe("modal params dispatch", () => {
             createRenameModal(execute, [], {
                 resolve: (_value, ctx: never) => {
                     seen.push((ctx as RenameContext).params);
+
                     return "resolved";
                 },
             }),
@@ -170,6 +172,7 @@ describe("modal params dispatch", () => {
             assert.deepEqual(ctx.input, [null, { title: "New title" }]);
         });
         client.modals.routes.set(rename.id, createRenameModal(execute));
+
         await dispatcher.dispatch(
             submission(rename({ ticketId: "NOT-VALID", owner: "author" }))
                 .interaction,
@@ -264,6 +267,7 @@ describe("undecodable routes log for every kind", () => {
         await dispatcher.dispatch(
             createButtonInteraction({ customId: "pick" }).interaction,
         );
+
         await dispatcher.dispatch(
             createSelectInteraction(ComponentType.UserSelect, {
                 customId: "pick:a:b",
@@ -301,6 +305,7 @@ describe("modal params loading", () => {
             "hyperion-modal-params-",
             "modals",
         );
+
         const registry = new ModalRegistry();
         const params = await writeHandler(directory, source("{ params }"));
         await registry.load(root);
@@ -332,17 +337,20 @@ describe("modal params loading", () => {
         }
 
         await rm(params);
+
         await writeHandler(
             directory,
             source(
                 '{ params, builder: new ModalBuilder().setCustomId("other").setTitle("T").addLabelComponents(new LabelBuilder().setLabel("L").setTextInputComponent(new TextInputBuilder().setCustomId("x").setStyle(1))) }',
             ),
         );
+
         await assert.rejects(registry.load(root), error => {
             assert.match(
                 String((error as Error).cause),
                 /template custom ID must match its handler's route/,
             );
+
             return true;
         });
     });

@@ -30,6 +30,7 @@ test("classification owns executable kinds and ignores ordinary barrels before i
             parseCommandPath(filename),
         );
     }
+
     for (const filename of [
         "index.ts",
         "(general)/index.ts",
@@ -154,6 +155,7 @@ test("filesystem discovery preserves convention folders without importing module
         await mkdir(path.dirname(path.join(root, filename)), {
             recursive: true,
         });
+
         await writeFile(
             path.join(root, filename),
             'throw new Error("Must not import");',

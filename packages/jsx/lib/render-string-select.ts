@@ -8,6 +8,7 @@ import { validateComponent } from "./validate-component.ts";
 
 const plainString = (node: Node, prop: string) => {
     const value = node.props[prop];
+
     if (typeof value !== "string") {
         throw new JSXRenderError(
             `${node.path}.${prop}`,
@@ -23,9 +24,11 @@ const buildOption = (node: Node) => {
         const option = new StringSelectMenuOptionBuilder()
             .setLabel(plainString(node, "label"))
             .setValue(plainString(node, "value"));
+
         if (node.props.description !== undefined) {
             option.setDescription(plainString(node, "description"));
         }
+
         if (node.props.emoji !== undefined) {
             option.setEmoji(
                 structuredClone(node.props.emoji) as Parameters<
@@ -33,6 +36,7 @@ const buildOption = (node: Node) => {
                 >[0],
             );
         }
+
         if (node.props.default !== undefined) {
             option.setDefault(node.props.default as boolean);
         }
@@ -63,21 +67,26 @@ export const buildStringSelect = (node: Node) => {
             `${node.path}.options`,
             node.depth,
         );
+
         if (node.props.placeholder !== undefined) {
             menu.setPlaceholder(plainString(node, "placeholder"));
         }
+
         if (node.props.minValues !== undefined) {
             menu.setMinValues(node.props.minValues as number);
         }
+
         if (node.props.maxValues !== undefined) {
             menu.setMaxValues(node.props.maxValues as number);
         }
+
         if (node.props.disabled !== undefined) {
             menu.setDisabled(node.props.disabled as boolean);
         }
 
         for (const [index, option] of options.entries()) {
             const path = `${node.path}.options[${index}]`;
+
             if (
                 typeof option !== "object" ||
                 option.name !== "StringSelect.Option"
@@ -91,6 +100,7 @@ export const buildStringSelect = (node: Node) => {
             const current = { ...option, path };
             const value = plainString(current, "value");
             const duplicate = values.find(entry => entry.value === value);
+
             if (duplicate) {
                 throw new JSXRenderError(
                     path,
@@ -120,6 +130,7 @@ export const buildStringSelect = (node: Node) => {
 export const renderStringSelect = (view: Child): StringSelectMenuBuilder => {
     const roots = expand(view, "root");
     const root = roots[0];
+
     if (
         roots.length !== 1 ||
         !root ||

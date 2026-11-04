@@ -35,6 +35,7 @@ export default class RenameTicketButton extends ButtonHandler<
                 content: "This ticket button is out of date.",
                 flags: MessageFlags.Ephemeral,
             });
+
             return;
         }
 

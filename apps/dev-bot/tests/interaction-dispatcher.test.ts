@@ -22,11 +22,14 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
     const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-ping-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     await mkdir(path.join(root, "src", "commands"), { recursive: true });
+
     await writeFile(
         path.join(root, "src", "commands", "ping.mjs"),
         `export { default } from ${JSON.stringify(new URL("../src/commands/(general)/ping.ts", import.meta.url).href)};`,
     );
+
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     const client = await HyperionClient.create({
         name: "Test",
         logging: false as const,
@@ -38,6 +41,7 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
             guildIds: ["456"],
         },
     });
+
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     assert.equal(put.mock.callCount(), 1);

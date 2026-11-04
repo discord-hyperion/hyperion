@@ -43,6 +43,7 @@ const source = (type: CommandType, name = "inspect", extra = "") => {
             : type === ApplicationCommandType.User
               ? "UserContextCommandBuilder"
               : "MessageContextCommandBuilder";
+
     return `
         import { Command } from ${JSON.stringify(commandModule)};
         import { ${builder} } from ${JSON.stringify(buildersModule)};
@@ -61,19 +62,24 @@ const fixture = (t: TestContext) =>
 
 test("discovers all command types in the conventional folder and permits shared names", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "a-slash.mjs"),
         source(ApplicationCommandType.ChatInput),
     );
+
     await mkdir(path.join(directory, "nested"));
+
     await writeFile(
         path.join(directory, "nested", "b-user.mjs"),
         source(ApplicationCommandType.User),
     );
+
     await writeFile(
         path.join(directory, "nested", "c-message.mjs"),
         source(ApplicationCommandType.Message),
     );
+
     const registry = new CommandRegistry();
     await registry.load(new URL(`file://${root}/`));
 
@@ -102,10 +108,12 @@ test("discovers all command types in the conventional folder and permits shared 
 
 test("context names preserve capitalization and spaces", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "user.mjs"),
         source(ApplicationCommandType.User, "Inspect User"),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
     assert.equal(
@@ -122,6 +130,7 @@ test("context names preserve capitalization and spaces", async t => {
 
 test("a builder payload without a type defaults to chat-input commands", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "slash.mjs"),
         source(ApplicationCommandType.ChatInput).replace(
@@ -129,6 +138,7 @@ test("a builder payload without a type defaults to chat-input commands", async t
             'Object.assign(new ChatInputCommandBuilder(), { toJSON: () => ({ name: "inspect", description: "Inspect" }) })',
         ),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
 
@@ -158,6 +168,7 @@ for (const type of [
             registry.load(root),
             /Duplicate command name "inspect".*second.mjs/,
         );
+
         assert.equal(registry.resolve("inspect", type), original);
         assert.equal(registry.size, 1);
     });
@@ -188,6 +199,7 @@ for (const [label, contents] of [
             async () => {},
         );
         const put = t.mock.method(REST.prototype, "put", async () => []);
+
         await assert.rejects(
             HyperionClient.create({
                 name: "Test",
@@ -203,9 +215,11 @@ for (const [label, contents] of [
                     /Failed to load command.*broken.mjs/,
                 );
                 assert.ok(error.cause instanceof Error);
+
                 return true;
             },
         );
+
         assert.equal(destroy.mock.callCount(), 1);
         assert.equal(put.mock.callCount(), 0);
     });
@@ -213,13 +227,16 @@ for (const [label, contents] of [
 
 test("context-menu autocomplete is rejected without replacing existing handlers", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "valid.mjs"),
         source(ApplicationCommandType.User),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
     const original = registry.resolve("inspect", ApplicationCommandType.User);
+
     await writeFile(
         path.join(directory, "broken.mjs"),
         source(ApplicationCommandType.Message).replace(
@@ -251,20 +268,25 @@ for (const contextsOnly of [false, true]) {
                 ),
             );
         }
-        if (!contextsOnly)
+
+        if (!contextsOnly) {
             await writeFile(
                 path.join(directory, "slash.mjs"),
                 source(ApplicationCommandType.ChatInput),
             );
+        }
+
         const requests: unknown[] = [];
         const put = t.mock.method(
             REST.prototype,
             "put",
             async (_route: unknown, options: { body: unknown }) => {
                 requests.push(options.body);
+
                 return [];
             },
         );
+
         const client = await HyperionClient.create({
             name: "Test",
             root,
@@ -272,6 +294,7 @@ for (const contextsOnly of [false, true]) {
             logging: false,
             commands: { applicationId: "123", token: "test-token" },
         });
+
         t.after(() => client.destroy());
 
         assert.equal(put.mock.callCount(), 1);
@@ -300,11 +323,14 @@ for (const contextsOnly of [false, true]) {
 
 test("invalid context builders retain serialization source and prevent REST calls", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "invalid.mjs"),
         source(ApplicationCommandType.User, "x".repeat(33)),
     );
+
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     await assert.rejects(
         HyperionClient.create({
             name: "Test",
@@ -320,22 +346,27 @@ test("invalid context builders retain serialization source and prevent REST call
                 /Failed to serialize command builder.*invalid.mjs/,
             );
             assert.ok(error.cause instanceof Error);
+
             return true;
         },
     );
+
     assert.equal(put.mock.callCount(), 0);
 });
 
 test("indexed Discord validation failures identify the context-menu source even for shared names", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "a-user.mjs"),
         source(ApplicationCommandType.User),
     );
+
     await writeFile(
         path.join(directory, "b-message.mjs"),
         source(ApplicationCommandType.Message),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
     const failure = new DiscordAPIError(
@@ -359,12 +390,14 @@ test("indexed Discord validation failures identify the context-menu source even 
     t.mock.method(REST.prototype, "put", async () => {
         throw failure;
     });
+
     await assert.rejects(
         registry.register({ applicationId: "123", token: "test-token" }),
         error => {
             assert.ok(error instanceof Error);
             assert.match(error.message, /body\[1\]: "inspect".*b-message.mjs/);
             assert.equal(error.cause, failure);
+
             return true;
         },
     );

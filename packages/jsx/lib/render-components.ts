@@ -69,6 +69,7 @@ export const buildButton = (node: Node) => {
             "Link buttons cannot specify customId or style.",
         );
     }
+
     if (link && typeof node.props.url !== "string") {
         throw new JSXRenderError(
             node.path,
@@ -86,7 +87,10 @@ export const buildButton = (node: Node) => {
             node.depth,
             { plain: true },
         );
-        if (label.length) builder.setLabel(label);
+
+        if (label.length) {
+            builder.setLabel(label);
+        }
 
         if (node.props.emoji !== undefined) {
             builder.setEmoji(
@@ -95,6 +99,7 @@ export const buildButton = (node: Node) => {
                 >[0],
             );
         }
+
         if (node.props.disabled !== undefined) {
             builder.setDisabled(node.props.disabled as boolean);
         }
@@ -116,6 +121,7 @@ export const buildButton = (node: Node) => {
 /** Render one interactive button suitable for a registered core handler. */
 export const renderButton = (view: Child): CustomIdButtonBuilder => {
     const roots = expand(view, "root");
+
     if (roots.length !== 1) {
         throw new JSXRenderError(
             "root",
@@ -124,6 +130,7 @@ export const renderButton = (view: Child): CustomIdButtonBuilder => {
     }
 
     const builder = buildButton(buttonNode(roots[0], "Button"));
+
     if (!(builder instanceof CustomIdButtonBuilder)) {
         throw new JSXRenderError(
             "Button",
@@ -141,6 +148,7 @@ export type DeclaredIds = { id: string; path: string }[];
 /** Reject a custom ID already declared in the same render. */
 export const declareId = (ids: DeclaredIds, id: string, path: string) => {
     const duplicate = ids.find(entry => entry.id === id);
+
     if (duplicate) {
         throw new JSXRenderError(
             path,
@@ -158,6 +166,7 @@ export const buildRow = (root: Node, path: string, ids: DeclaredIds) => {
 
     for (const [childIndex, child] of children.entries()) {
         const childPath = `${path}.children[${childIndex}]`;
+
         if (
             typeof child !== "object" ||
             (child.name !== "Button" && child.name !== "StringSelect")
@@ -174,6 +183,7 @@ export const buildRow = (root: Node, path: string, ids: DeclaredIds) => {
             node.name === "StringSelect"
                 ? buildStringSelect(node)
                 : buildButton(node);
+
         if (
             control instanceof CustomIdButtonBuilder ||
             control instanceof StringSelectMenuBuilder
@@ -195,6 +205,7 @@ export const renderComponents = (view: Child): ActionRowBuilder[] => {
 
     for (const [index, root] of roots.entries()) {
         const path = `components[${index}]`;
+
         if (typeof root !== "object" || root.name !== "ActionRow") {
             throw new JSXRenderError(path, "Expected an explicit ActionRow.");
         }

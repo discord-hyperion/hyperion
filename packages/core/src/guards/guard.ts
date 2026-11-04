@@ -57,16 +57,19 @@ export const defineGuard = <Context = CommandContext>(
     if (typeof definition?.name !== "string" || definition.name === "") {
         throw new TypeError("Guards require a non-empty name.");
     }
+
     if (typeof definition.description !== "string") {
         throw new TypeError(
             `Guard "${definition.name}" requires a description.`,
         );
     }
+
     if (typeof definition.run !== "function") {
         throw new TypeError(
             `Guard "${definition.name}" requires a run() function.`,
         );
     }
+
     if (
         definition.onFail !== undefined &&
         typeof definition.onFail !== "function"

@@ -434,6 +434,7 @@ for (const phase of ["schema", "resolve"] as const) {
                         if (phase === "schema") {
                             throw failure;
                         }
+
                         return { value: values };
                     }),
                     resolve: async () => {
@@ -467,19 +468,23 @@ for (const kind of ["duplicate", "missing", "null", "number"] as const) {
         );
         const control = text("Private ID", "Private value");
         assert.equal(control.type, ComponentType.Label);
+
         if (control.type !== ComponentType.Label) {
             throw new Error("Fixture must be a label");
         }
+
         if (kind !== "duplicate") {
-            if (kind === "missing")
+            if (kind === "missing") {
                 Reflect.deleteProperty(control.component, "value");
-            else
+            } else {
                 Reflect.set(
                     control.component,
                     "value",
                     kind === "null" ? null : 42,
                 );
+            }
         }
+
         const data = kind === "duplicate" ? [control, control] : [control];
         // Exercise the SDK's real hoisting behavior, including silent overwrite.
         const resolver: ModalComponentResolver = Reflect.construct(
@@ -538,13 +543,15 @@ for (const acknowledgment of ["reply", "deferReply", "deferUpdate"] as const) {
                 }),
             }, async () => {}, [
                 check(async ctx => {
-                    if (acknowledgment === "reply")
+                    if (acknowledgment === "reply") {
                         await ctx.interaction.reply("Acknowledged");
-                    else if (acknowledgment === "deferReply")
+                    } else if (acknowledgment === "deferReply") {
                         await ctx.interaction.deferReply({
                             flags: MessageFlags.Ephemeral,
                         });
-                    else await ctx.interaction.deferUpdate();
+                    } else {
+                        await ctx.interaction.deferUpdate();
+                    }
 
                     return true;
                 }),
@@ -603,6 +610,7 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
     await mkdir(directory, { recursive: true });
     const core = new URL("../src/index.ts", import.meta.url).href;
     const builders = import.meta.resolve("@discordjs/builders");
+
     await writeFile(
         path.join(directory, "valid.mjs"),
         `
@@ -616,9 +624,11 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
         }
     `,
     );
+
     await client.modals.load(root);
     const previous = client.modals.get("registered");
     assert.ok(previous);
+
     await writeFile(
         path.join(directory, "invalid.mjs"),
         `
@@ -636,8 +646,10 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
         assert.match(error.message, /invalid.mjs/);
         assert.ok(error.cause instanceof TypeError);
         assert.match(error.cause.message, /Standard Schema/);
+
         return true;
     });
+
     assert.equal(client.modals.size, 1);
     assert.equal(client.modals.get("registered"), previous);
 });

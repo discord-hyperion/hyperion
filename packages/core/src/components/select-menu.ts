@@ -90,6 +90,7 @@ export abstract class SelectMenuHandler<
 
         for (const provider of this.guards) {
             if (typeof provider === "function") continue;
+
             if (!isGuard(provider)) {
                 throw new TypeError(
                     "Select menu guards must be guards from defineGuard() or guard factories.",

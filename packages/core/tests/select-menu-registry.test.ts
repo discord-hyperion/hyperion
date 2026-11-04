@@ -25,33 +25,41 @@ const userSource = (id: string) =>
 
 test("loads all supported selects together without REST registration", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "string.mjs"),
         source("colour.choose"),
     );
+
     await writeFile(
         path.join(directory, "user.mjs"),
         userSource("user.choose"),
     );
+
     await writeFile(
         path.join(directory, "role.mjs"),
         roleSource("role.choose"),
     );
+
     await writeFile(
         path.join(directory, "mentionable.mjs"),
         mentionableSource("mentionable.choose"),
     );
+
     await writeFile(
         path.join(directory, "channel.mjs"),
         channelSource("channel.choose"),
     );
+
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
 
     assert.equal(client.selectMenus.size, 5);
@@ -86,6 +94,7 @@ test("duplicate IDs across select types preserve the previous registry", async t
         registry.load(root),
         /Duplicate select menu custom ID/,
     );
+
     assert.equal(registry.get("shared"), original);
 });
 
@@ -95,6 +104,7 @@ test("invalid user select limits retain source context and previous handlers", a
     const registry = new SelectMenuRegistry();
     await registry.load(root);
     const original = registry.get("valid");
+
     await writeFile(
         path.join(directory, "invalid.mjs"),
         userSource("invalid").replace(
@@ -107,8 +117,10 @@ test("invalid user select limits retain source context and previous handlers", a
         assert.ok(error instanceof Error);
         assert.match(error.message, /Failed to load select menu.*invalid.mjs/);
         assert.ok(error.cause instanceof Error);
+
         return true;
     });
+
     assert.equal(registry.get("valid"), original);
 });
 
@@ -130,10 +142,12 @@ const channelSource = (id: string) =>
 
 test("duplicate channel IDs preserve previously loaded handlers", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "channel.mjs"),
         channelSource("shared"),
     );
+
     const registry = new SelectMenuRegistry();
     await registry.load(root);
     const original = registry.get("shared");
@@ -143,19 +157,23 @@ test("duplicate channel IDs preserve previously loaded handlers", async t => {
         registry.load(root),
         /Duplicate select menu custom ID/,
     );
+
     assert.equal(registry.get("shared"), original);
 });
 
 for (const setting of ["setMaxValues(26)", "setChannelTypes(999)"]) {
     test(`invalid channel ${setting} retains source context and previous handlers`, async t => {
         const { root, directory } = await fixture(t);
+
         await writeFile(
             path.join(directory, "valid.mjs"),
             channelSource("valid"),
         );
+
         const registry = new SelectMenuRegistry();
         await registry.load(root);
         const original = registry.get("valid");
+
         await writeFile(
             path.join(directory, "invalid.mjs"),
             channelSource("invalid").replace(
@@ -171,8 +189,10 @@ for (const setting of ["setMaxValues(26)", "setChannelTypes(999)"]) {
                 /Failed to load select menu.*invalid.mjs/,
             );
             assert.ok(error.cause instanceof Error);
+
             return true;
         });
+
         assert.equal(registry.get("valid"), original);
     });
 }
@@ -189,6 +209,7 @@ test("duplicate role IDs preserve previously loaded handlers", async t => {
         registry.load(root),
         /Duplicate select menu custom ID/,
     );
+
     assert.equal(registry.get("shared"), original);
 });
 
@@ -198,6 +219,7 @@ test("invalid role limits retain source context and previous handlers", async t 
     const registry = new SelectMenuRegistry();
     await registry.load(root);
     const original = registry.get("valid");
+
     await writeFile(
         path.join(directory, "invalid.mjs"),
         roleSource("invalid").replace(
@@ -210,8 +232,10 @@ test("invalid role limits retain source context and previous handlers", async t 
         assert.ok(error instanceof Error);
         assert.match(error.message, /Failed to load select menu.*invalid.mjs/);
         assert.ok(error.cause instanceof Error);
+
         return true;
     });
+
     assert.equal(registry.get("valid"), original);
 });
 
@@ -225,10 +249,12 @@ const mentionableSource = (id: string) =>
 
 test("duplicate mentionable IDs preserve previously loaded handlers", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "mentionable.mjs"),
         mentionableSource("shared"),
     );
+
     const registry = new SelectMenuRegistry();
     await registry.load(root);
     const original = registry.get("shared");
@@ -238,18 +264,22 @@ test("duplicate mentionable IDs preserve previously loaded handlers", async t =>
         registry.load(root),
         /Duplicate select menu custom ID/,
     );
+
     assert.equal(registry.get("shared"), original);
 });
 
 test("invalid mentionable limits retain source context and previous handlers", async t => {
     const { root, directory } = await fixture(t);
+
     await writeFile(
         path.join(directory, "valid.mjs"),
         mentionableSource("valid"),
     );
+
     const registry = new SelectMenuRegistry();
     await registry.load(root);
     const original = registry.get("valid");
+
     await writeFile(
         path.join(directory, "invalid.mjs"),
         mentionableSource("invalid").replace(
@@ -262,7 +292,9 @@ test("invalid mentionable limits retain source context and previous handlers", a
         assert.ok(error instanceof Error);
         assert.match(error.message, /Failed to load select menu.*invalid.mjs/);
         assert.ok(error.cause instanceof Error);
+
         return true;
     });
+
     assert.equal(registry.get("valid"), original);
 });

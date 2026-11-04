@@ -24,7 +24,9 @@ export const cooldown = ({ key, durationMs, entries }: CooldownOptions) => {
             const now = Date.now();
 
             for (const [entry, expiresAt] of entries) {
-                if (expiresAt <= now) entries.delete(entry);
+                if (expiresAt <= now) {
+                    entries.delete(entry);
+                }
             }
 
             if (entries.has(key)) return false;

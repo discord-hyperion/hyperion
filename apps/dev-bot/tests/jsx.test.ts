@@ -15,8 +15,10 @@ test("discovers the TSX demo and sends a native JSX embed through interaction di
             ".consumer-jsx-",
         ),
     );
+
     t.after(() => rm(root, { recursive: true, force: true }));
     await mkdir(path.join(root, "src/commands"), { recursive: true });
+
     await writeFile(
         path.join(root, "src/commands/jsx-demo.tsx"),
         `export { default } from ${JSON.stringify(new URL("../src/commands/jsx-demo.tsx", import.meta.url).href)};`,
@@ -28,6 +30,7 @@ test("discovers the TSX demo and sends a native JSX embed through interaction di
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
 

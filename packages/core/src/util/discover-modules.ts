@@ -26,8 +26,10 @@ export const discoverModules = async (
                     error.code === "ENOENT"
                 ) {
                     onMissing?.();
+
                     return [];
                 }
+
                 throw error;
             },
         );

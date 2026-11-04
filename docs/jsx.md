@@ -226,12 +226,19 @@ whitespace remain unchanged; use `Br` or explicit string spaces when intentional
 
 Props are shallow snapshots and read-only; objects/arrays nested inside them
 remain application-owned. Fetch async data before authoring/rendering. Promises,
-prebuilt builders, and arbitrary object children are rejected. A nesting limit
-rejects recursive component/child structures rather than exhausting the stack.
-Keys are ignored metadata and are not passed to components.
+prebuilt builders, and arbitrary object children are rejected; a component passed
+as a child instead of rendered (`{Card}` for `<Card />`) gets its own message. A
+nesting limit of 128 levels, counting arrays and component calls as well as
+elements, rejects recursive component/child structures rather than exhausting the
+stack. Keys are ignored metadata and are not passed to components.
 
-`JSXRenderError.path` identifies structural context. Generated messages exclude
-supplied text; native errors and errors thrown by application components remain
+Elements are recognized by module-private identity. Elements created by one
+installed copy of `@hyperion/jsx` are rejected by another copy (for example when
+two versions are installed), so keep a single version in an application.
+
+`JSXRenderError.path` identifies structural context. When an application
+component throws, the message names the component (its function name) at the
+parent's path. Generated messages exclude supplied text; native errors and errors thrown by application components remain
 available through `cause` and can include supplied values. The package does not
 log automatically. Native setters can fail before final serialization. Changes
 made to returned builders should be validated again when sending the reply.

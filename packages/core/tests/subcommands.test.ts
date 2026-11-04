@@ -70,19 +70,23 @@ const fixture = async (t: TestContext) => {
                     ...segments.slice(0, parentIndex + 1),
                 );
                 await mkdir(directory, { recursive: true });
+
                 await writeFile(
                     path.join(directory, "index.mjs"),
                     parentSource(),
                 );
             }
+
             definedParents.add(parent);
         }
 
         const filename = path.join(root, "src", "commands", relativePath);
         await mkdir(path.dirname(filename), { recursive: true });
         await writeFile(filename, source);
+
         return filename;
     };
+
     return { root, add };
 };
 
@@ -101,6 +105,7 @@ const interaction = (
             getSubcommandGroup: () => group,
         },
     };
+
     return autocomplete
         ? createAutocompleteInteraction(data)
         : createChatInputInteraction(data);
@@ -108,10 +113,12 @@ const interaction = (
 
 test("subcommands use folder parents and builder leaf names, preserving ordinary lookups", async t => {
     const { root, add } = await fixture(t);
+
     await add(
         "(category)/[tools]/different-filename.mjs",
         commandSource("ping"),
     );
+
     await add("[other]/ping.mjs", commandSource("ping"));
     await add("ping.mjs", standaloneSource("ping"));
     const registry = new CommandRegistry();
@@ -137,6 +144,7 @@ test("subcommands use folder parents and builder leaf names, preserving ordinary
 
 test("registration composes sibling subcommands into one parent and preserves options", async t => {
     const { root, add } = await fixture(t);
+
     await add(
         "[tools]/echo.mjs",
         commandSource(
@@ -144,6 +152,7 @@ test("registration composes sibling subcommands into one parent and preserves op
             '.addStringOptions(option => option.setName("query").setDescription("Search").setRequired(true).setAutocomplete(true))',
         ),
     );
+
     await add("[tools]/ping.mjs", commandSource("ping"));
     await add("standalone.mjs", standaloneSource("standalone"));
     const registry = new CommandRegistry();
@@ -159,6 +168,7 @@ test("registration composes sibling subcommands into one parent and preserves op
         token: "fake-token",
         guildIds: ["456"],
     });
+
     const body = put.mock.calls[0]?.arguments[1]?.body as {
         name: string;
         description?: string;
@@ -217,6 +227,7 @@ for (const scenario of [
                     "(other)/[tools]/duplicate.mjs",
                     commandSource("ping"),
                 );
+
                 break;
             case "standalone":
                 await add("tools.mjs", standaloneSource("tools"));
@@ -232,12 +243,14 @@ for (const scenario of [
                         'new UserContextCommandBuilder().setName("Inspect")',
                     ),
                 );
+
                 break;
             case "metadata":
                 await add(
                     "[tools]/restricted.mjs",
                     commandSource("restricted", ".setNSFW(true)"),
                 );
+
                 break;
             case "nested":
                 await add(
@@ -247,6 +260,7 @@ for (const scenario of [
                         '.addSubcommands(sub => sub.setName("child").setDescription("Nested"))',
                     ),
                 );
+
                 break;
         }
 
@@ -258,6 +272,7 @@ for (const scenario of [
 
 test("dispatch selects only the requested leaf and runs its guards", async t => {
     const { root, add } = await fixture(t);
+
     await add(
         "[tools]/ping.mjs",
         commandSource(
@@ -267,13 +282,16 @@ test("dispatch selects only the requested leaf and runs its guards", async t => 
             `guards: [ctx => defineGuard({ name: "test-guard", description: "Not allowed", run() { return ctx.interaction.user.id === "allowed"; } })],`,
         ),
     );
+
     await add("[tools]/other.mjs", commandSource("other"));
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const dispatcher = new InteractionDispatcher(client);
@@ -305,6 +323,7 @@ test("dispatch selects only the requested leaf and runs its guards", async t => 
 
 test("autocomplete resolves the leaf, skips guards, and falls back to empty choices", async t => {
     const { root, add } = await fixture(t);
+
     await add(
         "[tools]/search.mjs",
         commandSource(
@@ -314,13 +333,16 @@ test("autocomplete resolves the leaf, skips guards, and falls back to empty choi
             'guards: [() => { throw new Error("Guards must not run"); }],',
         ),
     );
+
     await add("[tools]/ping.mjs", commandSource("ping"));
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     await client.commands.load(root);
     const dispatcher = new InteractionDispatcher(client);
@@ -341,6 +363,7 @@ test("autocomplete resolves the leaf, skips guards, and falls back to empty choi
 
 test("subcommand serialization failures retain the leaf source and make no REST request", async t => {
     const { root, add } = await fixture(t);
+
     const source = await add(
         "[tools]/broken.mjs",
         commandSource(
@@ -348,6 +371,7 @@ test("subcommand serialization failures retain the leaf source and make no REST 
             '.addStringOptions(option => option.setName("query"))',
         ),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
     const put = t.mock.method(REST.prototype, "put", async () => []);
@@ -358,15 +382,18 @@ test("subcommand serialization failures retain the leaf source and make no REST 
             assert.ok(error instanceof Error);
             assert.ok(error.message.includes(source));
             assert.ok(error.cause instanceof Error);
+
             return true;
         },
     );
+
     assert.equal(put.mock.callCount(), 0);
 });
 
 test("context menus can share a filesystem parent's name", async t => {
     const { root, add } = await fixture(t);
     await add("[tools]/ping.mjs", commandSource("ping"));
+
     await add(
         "context.mjs",
         standaloneSource("tools").replace(
@@ -374,6 +401,7 @@ test("context menus can share a filesystem parent's name", async t => {
             'new UserContextCommandBuilder().setName("tools")',
         ),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
 
@@ -419,6 +447,7 @@ test("indexed Discord errors retain all contributing subcommand sources", async 
             assert.ok(error.message.includes('body[0]: "tools"'));
             assert.ok(error.message.includes(first));
             assert.ok(error.message.includes(second));
+
             return true;
         },
     );

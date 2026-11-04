@@ -157,7 +157,9 @@ for (const kind of selectKinds) {
                     kind.customId,
                     createMenu(kind, execute, [
                         () => {
-                            if (fails) throw new Error("Private guard failure");
+                            if (fails) {
+                                throw new Error("Private guard failure");
+                            }
 
                             return deny("Choose again.");
                         },
@@ -250,6 +252,7 @@ for (const kind of selectKinds) {
             );
             const first = kind.interaction({ ids: ["one"] });
             const second = kind.interaction({ ids: ["two", "three"] });
+
             await Promise.all([
                 dispatcher.dispatch(first.interaction),
                 dispatcher.dispatch(second.interaction),

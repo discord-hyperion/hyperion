@@ -62,6 +62,7 @@ export const contextMenuContracts = (
         guards: [
             ctx => {
                 ctx.interaction.targetUser.id satisfies string;
+
                 return ownerOnly;
             },
         ],
@@ -71,6 +72,7 @@ export const contextMenuContracts = (
         guards: [
             ctx => {
                 ctx.interaction.targetMessage.id satisfies string;
+
                 return ownerOnly;
             },
         ],

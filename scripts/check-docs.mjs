@@ -11,6 +11,7 @@ const markdown = (directory, recursive = true) =>
     readdirSync(path.join(root, directory), { withFileTypes: true }).flatMap(
         entry => {
             const full = path.join(root, directory, entry.name);
+
             if (entry.isDirectory()) {
                 return recursive
                     ? markdown(path.join(directory, entry.name))
@@ -72,6 +73,7 @@ const exportsOf = (entry, visited = new Set()) => {
             names.add(name);
         }
     }
+
     for (const [, list] of source.matchAll(
         /export\s+(?:type\s+)?\{([^}]*)\}/g,
     )) {
@@ -81,9 +83,13 @@ const exportsOf = (entry, visited = new Set()) => {
                 .split(/\s+as\s+/)
                 .at(-1)
                 ?.trim();
-            if (name) names.add(name);
+
+            if (name) {
+                names.add(name);
+            }
         }
     }
+
     for (const [, name] of source.matchAll(
         /export\s+(?:declare\s+)?(?:abstract\s+)?(?:const|let|class|type|interface|function|enum)\s+(\w+)/g,
     )) {
@@ -159,6 +165,7 @@ for (const file of files) {
                     .replace(/^\s*type\s+/, "")
                     .split(/\s+as\s+/)[0]
                     ?.trim();
+
                 if (name && !exported.has(name)) {
                     report(
                         file,
@@ -173,20 +180,24 @@ for (const file of files) {
 // The backlog lists only open work: planned items stay unticked, and shipped
 // items move to Implemented as one line that links their reference doc.
 const backlog = path.join(root, "docs/features.md");
+
 if (existsSync(backlog)) {
     let section = "";
 
     for (const line of readFileSync(backlog, "utf8").split("\n")) {
         const heading = line.match(/^## (.+)$/);
+
         if (heading) {
             section = heading[1].trim();
             continue;
         }
+
         if (!line.startsWith("- ")) continue;
 
         if (section === "Planned" && !line.startsWith("- [ ] ")) {
             report(backlog, `planned item is not an open "- [ ]": ${line}`);
         }
+
         if (section === "Implemented" && /^- \[/.test(line)) {
             report(backlog, `implemented item has a checkbox: ${line}`);
         }

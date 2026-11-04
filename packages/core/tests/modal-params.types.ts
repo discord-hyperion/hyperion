@@ -20,6 +20,7 @@ const input = defineInput({
     schema: v.object({ title: v.string() }),
     resolve: async ({ title }, ctx: ModalContext<undefined, typeof rename>) => {
         const [issues, params] = ctx.params;
+
         return { title, ticketId: issues ? undefined : params.ticketId };
     },
 });
@@ -38,6 +39,7 @@ export class RenameTicket extends ModalHandler<typeof input, typeof rename> {
                     ctx.params satisfies RenameContext["params"];
                     // @ts-expect-error Guards run before input processing.
                     ctx.input;
+
                     return paramOwner("owner");
                 },
             ],
@@ -46,8 +48,10 @@ export class RenameTicket extends ModalHandler<typeof input, typeof rename> {
 
     async run(ctx: RenameContext) {
         const [paramIssues, params] = ctx.params;
+
         if (paramIssues) {
             params satisfies undefined;
+
             return;
         }
 

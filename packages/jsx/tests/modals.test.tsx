@@ -36,13 +36,19 @@ const withValidation = (enabled: boolean, operation: () => void) => {
     const previous = isValidationEnabled();
 
     try {
-        if (enabled) enableValidators();
-        else disableValidators();
+        if (enabled) {
+            enableValidators();
+        } else {
+            disableValidators();
+        }
 
         operation();
     } finally {
-        if (previous) enableValidators();
-        else disableValidators();
+        if (previous) {
+            enableValidators();
+        } else {
+            disableValidators();
+        }
     }
 };
 

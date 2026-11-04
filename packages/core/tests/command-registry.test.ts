@@ -44,6 +44,7 @@ test("command discovery and deployment leave guard factories unevaluated", async
     );
     await writeFile(path.join(directory, "guarded.mjs"), source);
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     const client = await HyperionClient.create({
         name: "Test",
         logging: false,
@@ -55,6 +56,7 @@ test("command discovery and deployment leave guard factories unevaluated", async
             guildIds: ["456"],
         },
     });
+
     t.after(() => client.destroy());
     assert.equal(client.commands.get("guarded")?.guards.length, 1);
     assert.equal(put.mock.callCount(), 1);
@@ -68,10 +70,12 @@ test("discovers nested commands and skips non-command files", async t => {
     await writeFile(path.join(directory, "package.json"), '{"type":"module"}');
     await mkdir(path.join(directory, "nested"));
     await writeFile(path.join(directory, "ping.mjs"), commandSource("ping"));
+
     await writeFile(
         path.join(directory, "nested", "status.ts"),
         commandSource("status"),
     );
+
     for (const file of [
         "index.ts",
         "types.d.ts",
@@ -107,10 +111,12 @@ test("rejects invalid exports and skips missing command directories without REST
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     await writeFile(
         path.join(directory, "bad.mjs"),
         "export default class {};",
     );
+
     const registry = new CommandRegistry();
     await assert.rejects(registry.load(root), /Failed to load command/);
     await registry.load(path.join(root, "missing"));
@@ -129,6 +135,7 @@ test("initializes commands and bulk registers once per unique guild without logi
         "put",
         async (route: string, options: { body: unknown }) => {
             requests.push({ route, body: options.body });
+
             return [];
         },
     );
@@ -144,6 +151,7 @@ test("initializes commands and bulk registers once per unique guild without logi
             guildIds: ["456", "789", "456"],
         },
     });
+
     t.after(() => client.destroy());
     assert.equal(client.commands.has("ping"), true);
     assert.equal(client.isReady(), false);
@@ -174,14 +182,17 @@ test("supports global registration and rejects unsafe empty configuration", asyn
     await assert.rejects(registry.register(options), /No commands were found/);
     await writeFile(path.join(directory, "ping.mjs"), commandSource("ping"));
     await registry.load(root);
+
     await assert.rejects(
         registry.register({ ...options, guildIds: [] }),
         /at least one guild/,
     );
+
     await assert.rejects(
         registry.register({ ...options, token: "" }),
         /application ID and bot token/,
     );
+
     assert.equal(put.mock.callCount(), 0);
     await registry.register(options);
     assert.equal(put.mock.callCount(), 1);
@@ -196,6 +207,7 @@ test("initialization rejects when deployment fails", async t => {
     t.mock.method(REST.prototype, "put", async () => {
         throw new Error("Deployment failed");
     });
+
     await assert.rejects(
         HyperionClient.create({
             name: "Test",
@@ -267,9 +279,11 @@ test("maps indexed Discord errors to builder command source files", async t => {
             );
             assert.ok(error.message.includes("1.description"));
             assert.ok(!error.message.includes("a.mjs"));
+
             return true;
         },
     );
+
     assert.equal(put.mock.callCount(), 1);
 });
 
@@ -277,10 +291,12 @@ test("still rejects commands without an executable run method", async t => {
     const root = await createTempRoot(t, "hyperion-no-handler-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
+
     await writeFile(
         path.join(directory, "bad.mjs"),
         commandSource("ping").replace("async run() {}", ""),
     );
+
     await assert.rejects(new CommandRegistry().load(root), /run\(\) method/);
 });
 
@@ -288,11 +304,14 @@ test("initialization skips absent or empty conventional folders and ignores othe
     const root = await createTempRoot(t, "hyperion-conventions-");
     const put = t.mock.method(REST.prototype, "put", async () => []);
     await mkdir(path.join(root, "commands"));
+
     await writeFile(
         path.join(root, "commands", "ping.mjs"),
         commandSource("ping"),
     );
+
     await mkdir(path.join(root, "src", "helpers"), { recursive: true });
+
     await writeFile(
         path.join(root, "src", "helpers", "other.mjs"),
         'throw new Error("Not a command");',
@@ -319,6 +338,7 @@ test("initialization skips absent or empty conventional folders and ignores othe
         ...options,
         root: path.join(root, "absent"),
     });
+
     t.after(() => absentRoot.destroy());
     assert.equal(absentRoot.commands.size, 0);
     assert.equal(put.mock.callCount(), 0);
@@ -336,6 +356,7 @@ test("builder validation errors identify the source and prevent deployment", asy
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     const file = path.join(directory, "invalid.mjs");
+
     await writeFile(
         file,
         commandSource("ping").replace(
@@ -343,17 +364,21 @@ test("builder validation errors identify the source and prevent deployment", asy
             '.setDescription("")',
         ),
     );
+
     const registry = new CommandRegistry();
     await registry.load(root);
     const put = t.mock.method(REST.prototype, "put", async () => []);
+
     await assert.rejects(
         registry.register({ applicationId: "123", token: "test-token" }),
         (error: unknown) => {
             assert.ok(error instanceof Error);
             assert.ok(error.message.includes(file));
             assert.ok(error.cause instanceof Error);
+
             return true;
         },
     );
+
     assert.equal(put.mock.callCount(), 0);
 });

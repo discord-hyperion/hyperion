@@ -7,8 +7,10 @@ export const validateCommandInput = (
     chatInput = true,
 ) => {
     if (input === undefined) return undefined;
+
     if (!chatInput) {
         throw new TypeError("Input schemas require a chat-input command.");
     }
+
     return validateInput(input);
 };

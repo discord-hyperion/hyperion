@@ -40,11 +40,13 @@ const dry = () => JSON.parse(turbo(sourceTasks, ["--dry=json"])).tasks;
 const task = (tasks, id) => {
     const found = tasks.find(item => item.taskId === id);
     assert.ok(found, id);
+
     return found;
 };
 const cached = (tasks, ids, status) => {
-    for (const id of ids)
+    for (const id of ids) {
         assert.equal(task(tasks, id).cache.status, status, id);
+    }
 };
 const execute = tasks => turbo(tasks, ["--output-logs=errors-only"]);
 const mutate = async (label, relative, transform, affected, baseline) => {
@@ -152,6 +154,7 @@ try {
         coreAndBotChecks,
         baseline,
     );
+
     await mutate(
         "bot edit",
         "apps/dev-bot/index.ts",
@@ -159,6 +162,7 @@ try {
         botChecks,
         baseline,
     );
+
     await mutate(
         "shared fixture edit",
         "tests/fixtures/interactions.ts",
@@ -166,6 +170,7 @@ try {
         checks,
         baseline,
     );
+
     await mutate(
         "shared TypeScript config edit",
         "tsconfig.base.json",
@@ -173,28 +178,33 @@ try {
         checks,
         baseline,
     );
+
     await mutate(
         "framework dependency edit",
         "packages/core/package.json",
         text => {
             const manifest = JSON.parse(text);
             manifest.devDependencies.valibot = "1.5.0";
+
             return JSON.stringify(manifest);
         },
         coreAndBotChecks,
         baseline,
     );
+
     await mutate(
         "bot dependency edit",
         "apps/dev-bot/package.json",
         text => {
             const manifest = JSON.parse(text);
             manifest.dependencies.valibot = "1.5.0";
+
             return JSON.stringify(manifest);
         },
         botChecks,
         baseline,
     );
+
     await mutate(
         "JSX edit",
         "packages/jsx/lib/index.ts",
@@ -202,6 +212,7 @@ try {
         jsxAndBotChecks,
         baseline,
     );
+
     await mutate(
         "JSX manifest edit",
         "packages/jsx/package.json",
@@ -214,6 +225,7 @@ try {
         jsxAndBotChecks,
         baseline,
     );
+
     cached(dry(), coreChecks, "HIT");
 
     execute(["build"]);

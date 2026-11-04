@@ -163,6 +163,7 @@ const createFixture = <T>(
             payload && typeof payload === "object" && "flags" in payload
                 ? payload.flags
                 : undefined;
+
         return new MessageFlagsBitField(
             flags as ConstructorParameters<typeof MessageFlagsBitField>[0],
         ).has(MessageFlags.Ephemeral);
@@ -177,6 +178,7 @@ const createFixture = <T>(
                     handles[name] as (...args: unknown[]) => Promise<unknown>
                 )(...args);
                 transition(args);
+
                 return result;
             },
         });
@@ -202,6 +204,7 @@ const createFixture = <T>(
         for (const name of ["editReply", "followUp"] as const) {
             attach(name, () => Object.assign(interaction, { replied: true }));
         }
+
         if (kind === "component" || kind === "modal") {
             attach("deferUpdate", () =>
                 Object.assign(interaction, { deferred: true }),
@@ -210,6 +213,7 @@ const createFixture = <T>(
                 Object.assign(interaction, { replied: true }),
             );
         }
+
         if (kind !== "modal") {
             attach("showModal", () =>
                 Object.assign(interaction, { replied: true }),

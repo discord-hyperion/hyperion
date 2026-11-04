@@ -68,6 +68,7 @@ export const subcommandContracts = (
                             | null;
                         // @ts-expect-error Parent guards do not receive a context-menu target.
                         ctx.interaction.targetUser;
+
                         return ownerOnly;
                     },
                 ],
@@ -89,6 +90,7 @@ export const subcommandContracts = (
                             | null;
                         // @ts-expect-error Leaf guards do not receive autocomplete contexts.
                         ctx.interaction.respond([]);
+
                         return ownerOnly;
                     },
                 ],

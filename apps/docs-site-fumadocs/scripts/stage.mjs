@@ -53,6 +53,7 @@ const rewrite = (url, relative) => {
             ? `${repo}/blob/main/${path.posix.join("docs/guide", resolved)}${suffix}`
             : null;
     }
+
     if (!resolved.endsWith(".md")) return url;
 
     const relativeLink = path.posix.relative(
@@ -76,7 +77,9 @@ for (const file of files(source)) {
     const text = readFileSync(file, "utf8");
     const heading = text.match(/^# (.+)$/m);
 
-    if (!heading) throw new Error(`${relative} has no H1 to use as its title.`);
+    if (!heading) {
+        throw new Error(`${relative} has no H1 to use as its title.`);
+    }
 
     const title = heading[1].replaceAll("`", "");
     const body = outsideFences(text.replace(/^# .+\n+/m, ""), part =>

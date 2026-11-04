@@ -37,17 +37,20 @@ test("development profile command and button complete the async refresh flow", a
         const directory = path.join(root, "src", folder);
         await mkdir(directory, { recursive: true });
         const url = new URL(`../src/${modulePath}.ts`, import.meta.url);
+
         await writeFile(
             path.join(directory, `${file}.mjs`),
             `export { default } from ${JSON.stringify(url.href)};`,
         );
     }
+
     const client = await HyperionClient.create({
         name: "Test",
         root,
         discord: { intents: [] },
         logging: false,
     });
+
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "owner");
     await client.commands.load(root);

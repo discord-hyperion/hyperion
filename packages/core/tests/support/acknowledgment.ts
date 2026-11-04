@@ -44,6 +44,7 @@ export const assertPrivateFailure = (
         },
         phase,
     );
+
     if (phase === "defer-update") {
         assert.equal(fixture.editReply.mock.callCount(), 0, phase);
     }

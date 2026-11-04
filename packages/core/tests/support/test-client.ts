@@ -15,6 +15,7 @@ export const createTestClient = async (
     options: TestClientOptions = {},
 ) => {
     const records: Record<string, unknown>[] = [];
+
     const client = await HyperionClient.create({
         root: new URL("../fixtures/empty-bot/", import.meta.url),
         name: "Test",
@@ -26,6 +27,7 @@ export const createTestClient = async (
             destination: { write: line => records.push(JSON.parse(line)) },
         },
     });
+
     t.after(() => client.destroy());
 
     return { client, records, dispatcher: new InteractionDispatcher(client) };

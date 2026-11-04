@@ -71,6 +71,7 @@ const interaction = (type: ContextType, phase = "new", caller = "caller") => {
         replied: phase === "replied",
         ephemeral: phase === "deferred" ? false : null,
     };
+
     return type === ApplicationCommandType.User
         ? createUserContextInteraction({
               ...data,
@@ -98,6 +99,7 @@ for (const type of [
         const { client, records } = await createTestClient(t);
         const execute = mock.fn(async (ctx: MenuContext) => {
             assert.equal(ctx.client, client);
+
             if (ctx.interaction.isUserContextMenuCommand()) {
                 assert.equal(ctx.interaction.targetUser.id, "selected-user");
                 assert.equal(ctx.interaction.targetMember, null);
@@ -107,6 +109,7 @@ for (const type of [
                     "selected-message",
                 );
             }
+
             await ctx.interaction.reply(await Promise.resolve("Inspected"));
         });
         const command =
@@ -148,6 +151,7 @@ for (const type of [
         const later = mock.fn(() => deny());
         const factory = mock.fn(async (ctx: MenuContext) => {
             assert.equal(ctx.interaction.commandType, type);
+
             return deny();
         });
         const command =
@@ -283,6 +287,7 @@ test("shared context command names resolve independently and concurrent contexts
     );
     const user = interaction(ApplicationCommandType.User);
     const message = interaction(ApplicationCommandType.Message);
+
     await Promise.all([
         dispatcher.dispatch(user.interaction),
         dispatcher.dispatch(message.interaction),

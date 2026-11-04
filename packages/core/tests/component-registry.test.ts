@@ -19,10 +19,12 @@ for (const kind of componentKinds) {
             const { root, directory } = await fixture(t);
             await mkdir(path.join(directory, "nested"));
             await writeFile(path.join(directory, "first.mjs"), source("first"));
+
             await writeFile(
                 path.join(directory, "nested", "second.mjs"),
                 source("second"),
             );
+
             for (const file of [
                 "index.ts",
                 "types.d.ts",
@@ -33,10 +35,12 @@ for (const kind of componentKinds) {
                 await writeFile(path.join(directory, file), nodeModuleIgnored);
             }
             await mkdir(path.join(directory, "node_modules"));
+
             await writeFile(
                 path.join(directory, "node_modules", "ignored.mjs"),
                 nodeModuleIgnored,
             );
+
             const registry = new kind.Registry();
             await registry.load(new URL(`file://${root}/`));
 
@@ -55,16 +59,19 @@ for (const kind of componentKinds) {
                 registry.load(root),
                 new RegExp(`Duplicate ${noun} custom ID "same".*second.mjs`),
             );
+
             assert.equal(registry.get("same"), original);
         });
 
         test("custom IDs have no session-specific reserved prefix", async t => {
             const { root, directory } = await fixture(t);
             const customId = `hyperion:${folder.replace(/s$/, "")}:ordinary-handler:0`;
+
             await writeFile(
                 path.join(directory, "handler.mjs"),
                 source(customId),
             );
+
             const registry = new kind.Registry();
 
             await registry.load(root);
@@ -108,12 +115,14 @@ for (const kind of componentKinds) {
                         return true;
                     },
                 );
+
                 assert.equal(destroy.mock.callCount(), 1);
             });
         }
 
         test("loads handlers without command deployment and leaves guard factories lazy", async t => {
             const { root, directory } = await fixture(t);
+
             await writeFile(
                 path.join(directory, "lazy.mjs"),
                 source(
@@ -121,13 +130,16 @@ for (const kind of componentKinds) {
                     'guards: [() => { throw new Error("Not during startup"); }]',
                 ),
             );
+
             const put = t.mock.method(REST.prototype, "put", async () => []);
+
             const client = await HyperionClient.create({
                 name: "Test",
                 root,
                 discord: { intents: [] },
                 logging: false,
             });
+
             t.after(() => client.destroy());
 
             assert.equal(client[property].get("lazy")?.guards.length, 1);
@@ -142,10 +154,12 @@ for (const kind of componentKinds) {
             await rm(directory, { recursive: true });
             // A folder outside `src` must not be discovered.
             await mkdir(path.join(root, folder));
+
             await writeFile(
                 path.join(root, folder, "wrong.mjs"),
                 source("wrong-location"),
             );
+
             await registry.load(root);
 
             assert.equal(registry.size, 0);
@@ -159,6 +173,7 @@ for (const kind of componentKinds) {
             const { root, directory } = await fixture(t);
             const commands = path.join(root, "src", "commands");
             await mkdir(commands);
+
             await writeFile(
                 path.join(commands, "ping.mjs"),
                 `
@@ -170,10 +185,12 @@ for (const kind of componentKinds) {
         }
     `,
             );
+
             await writeFile(
                 path.join(directory, "bad.mjs"),
                 "export default class {};",
             );
+
             const put = t.mock.method(REST.prototype, "put", async () => []);
 
             await assert.rejects(
@@ -186,6 +203,7 @@ for (const kind of componentKinds) {
                 }),
                 new RegExp(`Failed to load ${noun}`),
             );
+
             assert.equal(put.mock.callCount(), 0);
         });
     });

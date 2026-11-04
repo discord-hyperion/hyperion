@@ -21,6 +21,7 @@ export abstract class EventHandler<Event extends EventName = EventName> {
         if (options.once !== undefined && typeof options.once !== "boolean") {
             throw new TypeError("Event handler once must be a boolean.");
         }
+
         this.once = options.once ?? false;
     }
 

@@ -60,6 +60,7 @@ const interaction = (
         type,
         focused: true as const,
     }));
+
     return {
         ...createAutocompleteInteraction({
             id: "autocomplete-request",
@@ -125,6 +126,7 @@ test("autocomplete listener preserves the receiver, skips command execution and 
 for (const missing of ["command", "hook", "response"]) {
     test(`missing autocomplete ${missing} receives empty choices`, async t => {
         const { client, dispatcher } = await setup(t);
+
         if (missing === "hook") {
             class NoAutocomplete extends Command {
                 constructor() {
@@ -144,6 +146,7 @@ for (const missing of ["command", "hook", "response"]) {
         } else if (missing === "response") {
             client.commands.set("search", new TestCommand(async () => {}));
         }
+
         const fixture = interaction();
         await dispatcher.dispatch(fixture.interaction);
 
@@ -210,6 +213,7 @@ test("a failure after responding does not attempt another autocomplete response"
 for (const hasHandler of [false, true]) {
     test(`expired autocomplete fallback is contained ${hasHandler ? "after a handler failure" : "without a handler"}`, async t => {
         const { client, records } = await setup(t);
+
         if (hasHandler) {
             client.commands.set(
                 "search",
@@ -218,6 +222,7 @@ for (const hasHandler of [false, true]) {
                 }),
             );
         }
+
         const fixture = interaction();
         fixture.respond.mock.mockImplementation(async () => {
             throw new Error("Expired interaction");
@@ -247,7 +252,9 @@ test("a rejected suggestion response falls back to empty choices", async t => {
     );
     const fixture = interaction();
     fixture.respond.mock.mockImplementation(async choices => {
-        if (choices.length) throw new Error("Response rejected");
+        if (choices.length) {
+            throw new Error("Response rejected");
+        }
     });
     await dispatcher.dispatch(fixture.interaction);
 
@@ -267,6 +274,7 @@ for (const type of [
                 const focused = ctx.interaction.options.getFocused();
                 assert.equal(focused.name, "amount");
                 assert.equal(focused.type, type);
+
                 await ctx.interaction.respond([
                     {
                         name: "One",
@@ -315,6 +323,7 @@ test("autocomplete retains subcommand options and creates separate concurrent co
             getSubcommandGroup: () => "catalog",
         });
     }
+
     await Promise.all([
         dispatcher.dispatch(first.interaction),
         dispatcher.dispatch(second.interaction),
@@ -360,6 +369,7 @@ test("malformed optional autocomplete hooks retain source context and the previo
     const commandModule = new URL("../src/commands/command.ts", import.meta.url)
         .href;
     const buildersModule = import.meta.resolve("@discordjs/builders");
+
     await writeFile(
         path.join(root, "src", "commands", "broken.mjs"),
         `
@@ -372,6 +382,7 @@ test("malformed optional autocomplete hooks retain source context and the previo
         }
     `,
     );
+
     const registry = new CommandRegistry();
     const original = new TestCommand(async () => {});
     registry.set("search", original);

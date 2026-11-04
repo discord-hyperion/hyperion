@@ -11,7 +11,10 @@ import { createTestClient } from "./support/test-client.ts";
 
 // The shared suite covers dispatch behaviour; these cover mixed user and role data.
 const mentionable = selectKinds.find(kind => kind.name === "mentionable");
-if (!mentionable) throw new Error("Missing mentionable select kind.");
+
+if (!mentionable) {
+    throw new Error("Missing mentionable select kind.");
+}
 
 const mixed = (ids = ["person", "role"]) => mentionable.interaction({ ids });
 

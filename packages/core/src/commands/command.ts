@@ -120,6 +120,7 @@ export abstract class Command<
 
         for (const provider of this.guards) {
             if (typeof provider === "function") continue;
+
             if (!isGuard(provider)) {
                 throw new TypeError(
                     "Command guards must be guards from defineGuard() or guard factories.",

@@ -68,6 +68,7 @@ export class HyperionClient extends Client {
 
         try {
             await client.init(options);
+
             return client;
         } catch (error) {
             try {
