@@ -24,6 +24,10 @@ jobs:
             - name: Check out repository
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
+                  # `changeset version` reads the commits that added each changeset.
+                  # Full history means it never fetches more, which would need the
+                  # credentials this checkout deliberately does not keep.
+                  fetch-depth: 0
                   persist-credentials: false
 
             - name: Set up pnpm and Node.js
