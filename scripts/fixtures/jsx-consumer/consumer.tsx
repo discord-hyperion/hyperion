@@ -12,6 +12,7 @@ import {
     renderModal,
     renderStringSelect,
     StringSelect,
+    type UserSelect,
 } from "@hyperion/jsx";
 
 const View: Component<{ name: string }> = ({ name }) => (
@@ -132,9 +133,9 @@ const invalidSelectTypes = () => {
     const optionChildren = { label: "Low", value: "low", children: "text" };
     // @ts-expect-error Options do not accept text children.
     optionChildren satisfies Parameters<typeof StringSelect.Option>[0];
-    // @ts-expect-error Message selects do not expose modal-only required.
-    ({ customId: "priority", required: true }) satisfies Parameters<
-        typeof StringSelect
+    // @ts-expect-error Entity-select defaults are ID strings.
+    ({ customId: "assignee", defaultUsers: [1] }) satisfies Parameters<
+        typeof UserSelect
     >[0];
 };
 void invalidSelectTypes;
