@@ -13,10 +13,12 @@ implemented item links a reference doc.
   - Add `input` to select-menu handlers, so `interaction.values` is validated like
     other input.
 - [ ] More JSX components.
-  - User, role, mentionable, and channel select menus for messages.
   - Premium buttons.
-  - Modal controls beyond labels, text inputs, and text displays: selects, file
-    uploads, radio groups, and checkboxes. Pairs with the modal input work above.
+  - Radio groups, checkbox groups, and checkboxes for modals (blocked: the pinned
+    `@discordjs/builders` has no builders for them yet). Core modal input already
+    extracts them.
+  - Standalone renderers for user, role, mentionable, and channel selects, so
+    select-menu handlers can keep them as templates like `renderStringSelect()`.
   - The layout-message `File` component, after attachment handling is designed.
 - [ ] Managed interactive collectors.
   - Needs a reason to exist first: a thin wrapper over discord.js collectors adds
@@ -59,8 +61,8 @@ implemented item links a reference doc.
   [modal input validation](modal-input-validation.md).
 - Filesystem event handlers. See [event handlers](event-handlers.md).
 - Logging. See [logging](logging.md).
-- `@hyperion/jsx`: embeds, text, buttons, string selects, modals, and layout
-  messages. See [JSX authoring](jsx.md),
+- `@hyperion/jsx`: embeds, text, buttons, all five select menus, modals with
+  selects and file uploads, and layout messages. See [JSX authoring](jsx.md),
   [message components](jsx-message-components.md),
   [select menus](jsx-select-menus.md), [modals](jsx-modals.md), and
   [layout messages](jsx-layout.md).

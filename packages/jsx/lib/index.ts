@@ -27,7 +27,15 @@ export {
     TextDisplay,
     Thumbnail,
 } from "./layout-components.ts";
-export { ActionRow, Button, StringSelect } from "./message-components.ts";
+export {
+    ActionRow,
+    Button,
+    ChannelSelect,
+    MentionableSelect,
+    RoleSelect,
+    StringSelect,
+    UserSelect,
+} from "./message-components.ts";
 export { Modal } from "./modal-components.ts";
 export { renderButton, renderComponents } from "./render-components.ts";
 export { renderEmbed } from "./render-embed.ts";

@@ -1,4 +1,5 @@
 import type {
+    ChannelSelectMenuBuilder,
     CustomIdButtonStyle,
     PrimaryButtonBuilder,
     StringSelectMenuOptionBuilder,
@@ -35,21 +36,32 @@ export const Button = primitive<ButtonProps>("Button", [
     "disabled",
 ]);
 
+/**
+ * Props every select menu shares. `disabled` is for messages and `required` for
+ * modals; rendering rejects each in the other place.
+ */
+type SelectProps = {
+    customId: string;
+    placeholder?: string | undefined;
+    minValues?: number | undefined;
+    maxValues?: number | undefined;
+    disabled?: boolean | undefined;
+    required?: boolean | undefined;
+};
+
+const selectProps = [
+    "customId",
+    "placeholder",
+    "minValues",
+    "maxValues",
+    "disabled",
+    "required",
+] as const;
+
 export const StringSelect = Object.assign(
-    primitive<{
-        children?: Child;
-        customId: string;
-        placeholder?: string | undefined;
-        minValues?: number | undefined;
-        maxValues?: number | undefined;
-        disabled?: boolean | undefined;
-    }>("StringSelect", [
+    primitive<SelectProps & { children?: Child }>("StringSelect", [
         "children",
-        "customId",
-        "placeholder",
-        "minValues",
-        "maxValues",
-        "disabled",
+        ...selectProps,
     ]),
     {
         Option: primitive<{
@@ -70,3 +82,34 @@ export const StringSelect = Object.assign(
         ]),
     },
 );
+
+/** Picks users; default selections are user IDs. */
+export const UserSelect = primitive<
+    SelectProps & { defaultUsers?: readonly string[] | undefined }
+>("UserSelect", [...selectProps, "defaultUsers"]);
+
+/** Picks roles; default selections are role IDs. */
+export const RoleSelect = primitive<
+    SelectProps & { defaultRoles?: readonly string[] | undefined }
+>("RoleSelect", [...selectProps, "defaultRoles"]);
+
+/** Picks users or roles; defaults are given separately as user and role IDs. */
+export const MentionableSelect = primitive<
+    SelectProps & {
+        defaultUsers?: readonly string[] | undefined;
+        defaultRoles?: readonly string[] | undefined;
+    }
+>("MentionableSelect", [...selectProps, "defaultUsers", "defaultRoles"]);
+
+/** Picks channels, optionally limited to some channel types. */
+export const ChannelSelect = primitive<
+    SelectProps & {
+        defaultChannels?: readonly string[] | undefined;
+        channelTypes?:
+            | readonly Exclude<
+                  Parameters<ChannelSelectMenuBuilder["addChannelTypes"]>[0],
+                  readonly unknown[]
+              >[]
+            | undefined;
+    }
+>("ChannelSelect", [...selectProps, "defaultChannels", "channelTypes"]);

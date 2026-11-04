@@ -1,7 +1,11 @@
 # JSX select menu design
 
-`@hyperion/jsx` supports message string selects through `StringSelect`,
-`StringSelect.Option`, `renderStringSelect()`, and the existing row renderer.
+`@hyperion/jsx` supports string selects through `StringSelect`,
+`StringSelect.Option`, `renderStringSelect()`, and the existing row renderer, and
+user, role, mentionable, and channel selects through `UserSelect`, `RoleSelect`,
+`MentionableSelect`, and `ChannelSelect` ([entity selects](#entity-selects)). The
+same components render in message action rows and in modal labels; see
+[JSX modals](jsx-modals.md#modal-controls).
 
 ## Existing foundation
 
@@ -19,7 +23,8 @@ boundaries. Native builders own payload validation; JSX adds structural and uniq
 
 - Initially support message string selects, including explicit options,
   single/multiple selection, placeholders, disabled state, and default selections.
-- Defer entity selects and modal select authoring to separate work.
+- Entity selects and modal placement were added later; see
+  [entity selects](#entity-selects) and [placement](#placement).
 - Use `StringSelect` with namespaced `StringSelect.Option` children inside
   existing action rows. Option labels are explicit plain-string props.
 - Preserve reusable synchronous authoring components, fragments, mapped options,
@@ -34,10 +39,9 @@ suitable for the existing core string-select handler. Use `renderComponents()`
 with an explicit action row when authoring a message.
 
 `StringSelect` requires `customId` and accepts optional `placeholder`, `minValues`,
-`maxValues`, and `disabled`. Supply options only through children; omit a parallel
+`maxValues`, `disabled`, and `required` (see [placement](#placement)). Supply options only through children; omit a parallel
 options-data prop. Leave optional native fields omitted unless supplied, preserve
-zero minimums and false disabled values, and omit numeric IDs and modal-only
-`required`.
+zero minimums and false disabled values, and omit numeric IDs.
 
 `StringSelect.Option` requires plain-string `label` and `value`, with optional
 plain-string `description`, native emoji data, and boolean `default`. It accepts
@@ -73,10 +77,10 @@ Complete-message limits remain caller-owned, as with existing button rendering.
 ## Structural and runtime contract
 
 `renderStringSelect()` requires exactly one `StringSelect` after expansion.
-`renderComponents()` accepts explicit rows containing buttons or string selects;
-select children expand to options only. Reject bare root selects/options, nested
-menus, option text/children, unsupported controls, unknown props, numeric IDs,
-modal-only props, prebuilt builders, and promises. Empty `renderComponents()`
+`renderComponents()` accepts explicit rows containing buttons or any select menu;
+string-select children expand to options only. Reject bare root selects/options,
+nested menus, option text/children, unsupported controls (including
+`Modal.FileUpload`), unknown props, numeric IDs, prebuilt builders, and promises. Empty `renderComponents()`
 roots continue returning `[]`; empty selects fail native option-count validation
 when enabled.
 
@@ -199,7 +203,8 @@ private environment files, bot startup, login, deployment, or publication.
 ## Props, defaults, and native limits
 
 - Menu: required plain-string `customId`; optional plain-string `placeholder`,
-  numeric `minValues`/`maxValues`, boolean `disabled`, and structural children.
+  numeric `minValues`/`maxValues`, boolean `disabled` and `required`, and
+  structural children.
 - Option: required plain-string `label`/`value`; optional plain-string
   `description`, native emoji object, and boolean `default`. No children.
 - Optional props supplied as undefined are skipped. Native fields remain omitted;
@@ -211,10 +216,42 @@ private environment files, bot startup, login, deployment, or publication.
 The installed builders require 1–25 options; label/value length is 1–100,
 optional description length is 1–100, custom ID length is 1–100, and optional
 placeholder length is at most 150 (including empty strings). Minimum values
-range from 0–25 and maximum values from 1–25. Native enum/entity selects, numeric
-IDs, modal-only `required`, and raw option-data props are outside this JSX API.
+range from 0–25 and maximum values from 1–25. Numeric IDs and raw option-data
+props are outside this JSX API.
 
 Native setters can retain emoji objects. Rendering clones emoji data and creates
 new option builders, so later application mutations cannot change already
 rendered output. Shared JSX descriptions may still reference application objects;
 a later render reads their current values without freezing them.
+
+## Entity selects
+
+`UserSelect`, `RoleSelect`, `MentionableSelect`, and `ChannelSelect` render fresh
+native `UserSelectMenuBuilder`, `RoleSelectMenuBuilder`,
+`MentionableSelectMenuBuilder`, and `ChannelSelectMenuBuilder`. They share the
+`StringSelect` menu props and take no children; Discord supplies the choices.
+
+| Component           | Extra props                       | Native setters                              |
+| ------------------- | --------------------------------- | ------------------------------------------- |
+| `UserSelect`        | `defaultUsers`                    | `setDefaultUsers()`                         |
+| `RoleSelect`        | `defaultRoles`                    | `setDefaultRoles()`                         |
+| `MentionableSelect` | `defaultUsers`, `defaultRoles`    | `addDefaultUsers()`, `addDefaultRoles()`    |
+| `ChannelSelect`     | `defaultChannels`, `channelTypes` | `setDefaultChannels()`, `setChannelTypes()` |
+
+Defaults are arrays of ID strings; anything else fails with a path ending in the
+prop name. `channelTypes` takes native `ChannelType` values and is cloned. The
+number of defaults must fall within `minValues`/`maxValues`, which native
+validation checks. There is no standalone `render…Select()` for entity selects;
+render them inside an `ActionRow` or a `Modal.Label`.
+
+## Placement
+
+Every select renders inside an `ActionRow` in a message (`renderComponents()` or
+a layout message) and inside a `Modal.Label` in a modal (`renderModal()`).
+Anywhere else in a layout message fails with "must be inside an ActionRow".
+- `disabled` is message-only. Discord rejects disabled components in modals, so
+  `renderModal()` rejects a `disabled` select with a path ending in `.disabled`.
+- `required` is modal-only in effect (Discord's default there is `true`). Discord
+  ignores it in messages, so message renderers pass it through rather than reject
+  it.
+- Custom IDs stay unique per render across every control kind.

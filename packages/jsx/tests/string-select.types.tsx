@@ -41,8 +41,7 @@ type OptionProps = Parameters<typeof StringSelect.Option>[0];
 const missingId = { children: [] };
 // @ts-expect-error Menus need custom IDs.
 missingId satisfies MenuProps;
-const modalOnly = { customId: "priority", required: true };
-// @ts-expect-error Required is modal-only.
+// The same StringSelect serves modals, where `required` applies.
 ({ customId: "priority", required: true }) satisfies MenuProps;
 const numericId = { customId: "priority", id: 1 };
 // @ts-expect-error Numeric IDs are not exposed.
@@ -70,4 +69,4 @@ const optionChildren = { label: "Low", value: "low", children: "text" };
 optionChildren satisfies OptionProps;
 // @ts-expect-error Options are JSX children, not a parallel data prop.
 ({ customId: "priority", options: [] }) satisfies MenuProps;
-void [modalOnly, numericId];
+void [numericId];

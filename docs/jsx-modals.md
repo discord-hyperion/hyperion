@@ -21,8 +21,9 @@ modal is distinct from adding a public standalone text-render API.
 ## Scope
 
 - Add modal authoring to `@hyperion/jsx`, using its existing runtime.
-- Initially cover text inputs and informational text. Embedded selects and other
-  controls remain deferred.
+- Cover text inputs and informational text first; selects and file uploads were
+  added later (see [modal controls](#modal-controls)). Radio groups, checkbox
+  groups, and checkboxes wait for `@discordjs/builders` support.
 - Use the accepted `Modal`, `Modal.Label`, `Modal.TextInput`, and
   `Modal.TextDisplay` vocabulary.
 
@@ -37,18 +38,18 @@ modal is distinct from adding a public standalone text-render API.
   validation/resolution, handler contexts, and routing unchanged. Modal input
   schemas are supported separately by core; see [modal input validation](modal-input-validation.md).
 
-- Require explicit `customId` props on the modal and every text input. Do not
+- Require explicit `customId` props on the modal and every modal control. Do not
   derive IDs from labels, ordering, or component positions.
-- Reject duplicate input custom IDs within one rendered modal, identifying both
-  structural locations. Separate modal renders may reuse the same IDs.
+- Reject duplicate control custom IDs within one rendered modal, across every
+  control kind, identifying both structural locations. Separate modal renders may reuse the same IDs.
 - Support existing escaped text composition and formatting components inside
   `Modal.TextDisplay`. Keep titles, labels, label descriptions, placeholders, and
   initial input values as plain strings. Do not add standalone text rendering.
 
 - Permit only labels and text displays directly under a modal. Each label must
-  resolve to exactly one text input. Expand fragments/reusable components before
-  checking structure; reject bare root text, unlabelled inputs, nested labels,
-  multiple inputs per label, and action-row wrappers in JSX.
+  resolve to exactly one modal control. Expand fragments/reusable components before
+  checking structure; reject bare root text, unlabelled controls, nested labels,
+  multiple controls per label, and action-row wrappers in JSX.
 - Default input style to short. Accept `"short"`, `"paragraph"`, and corresponding
   native enum values without requiring an enum import for ordinary authoring.
 - Inputs are required by default, matching Discord's effective default. Explicit
@@ -77,7 +78,7 @@ unknown-prop checks, and contextual `JSXRenderError` behavior. `renderModal()`
 resolves exactly one modal root, like the existing singular embed renderer.
 
 Call native `toJSON()` without an override, respecting the global validator
-setting. JSX structural checks, including duplicate input IDs, remain active when
+setting. JSX structural checks, including duplicate control IDs, remain active when
 native schema validators are disabled. Preserve native failures as causes;
 generated errors identify structural locations without echoing form values.
 Do not log automatically or silently truncate/discard content.
@@ -138,9 +139,9 @@ and submission remain separate interactions under the existing modal guide.
   formatted text displays, required defaults, and explicit optional inputs.
 - Verify both style strings and native enum values without adding a discord.js
   runtime dependency to the independent JSX package.
-- Cover root cardinality, direct-child restrictions, exactly one input per label,
+- Cover root cardinality, direct-child restrictions, exactly one control per label,
   fragments, reusable components, conditional omissions, and stable child order.
-- Reject duplicate input IDs with both paths, wrong nesting, unsupported controls,
+- Reject duplicate control IDs with both paths, wrong nesting, unsupported controls,
   numeric IDs, unknown props, and non-string metadata. Keep structural checks
   active when native schema validation is disabled.
 - Cover native length/count failures and validator-setting behavior without
@@ -167,15 +168,16 @@ Read-only investigation on 2026-10-31 checked the pinned
 - Modal validation requires a title of 1–45 characters, custom ID of 1–100, and
   1–5 top-level components. It accepts labels/text displays and legacy action
   rows; the JSX vocabulary need not expose every native form.
-- Labels require a label and exactly one supported child. Native labels support
-  text inputs plus additional controls outside the previously scoped JSX feature.
-  They do not accept text displays or nested labels.
+- Labels require a label and exactly one supported child. The installed native
+  label accepts text inputs, the five select kinds, and file uploads, but no radio
+  groups, checkbox groups, or checkboxes yet. It accepts no text displays or nested
+  labels.
 - Text inputs require a custom ID and style. No style default is supplied by the
   builder. Omitted `required` stays omitted in JSON; Discord documents its
   effective default as true. Initial value and placeholder are plain API strings.
 - Text displays require content and are documented as Markdown-formatted text
   usable in modals. JSX text composition therefore has a supported destination.
-- Native modal validation does not reject duplicate input custom IDs. Their
+- Native modal validation does not reject duplicate control custom IDs. Their
   rejection is a JSX structural rule rather than delegated validation.
 - Numeric component IDs differ from custom IDs. The builder supports optional
   numeric IDs, but Discord can generate them; this release omits JSX numeric IDs.
@@ -205,8 +207,9 @@ consumer verification boundary.
 | Component           | Props                                                                                               |
 | ------------------- | --------------------------------------------------------------------------------------------------- |
 | `Modal`             | Required `customId`, required `title`, structural children                                          |
-| `Modal.Label`       | Required plain `text`, optional plain `description`, exactly one input child                        |
+| `Modal.Label`       | Required plain `text`, optional plain `description`, exactly one modal control child                |
 | `Modal.TextInput`   | Required `customId`; optional `style`, `required`, `placeholder`, `value`, `minLength`, `maxLength` |
+| `Modal.FileUpload`  | Required `customId`; optional `minValues`, `maxValues`, `required`, `fileTypes`                     |
 | `Modal.TextDisplay` | Existing JSX text composition as children                                                           |
 
 Omitted style or `style="short"` maps to native Short (1); `style="paragraph"`
@@ -226,3 +229,31 @@ shape is not a promise that every Discord client/server accepts that interaction
 `renderModal()` never opens a form, submits values, or changes acknowledgment
 state. Continue following the [core modal guide](modals.md) when sending forms and
 responding to submissions.
+
+## Modal controls
+
+A `Modal.Label` holds exactly one modal control:
+
+| Child                                                            | Native label setter                      |
+| ---------------------------------------------------------------- | ---------------------------------------- |
+| `Modal.TextInput`                                                | `setTextInputComponent()`                |
+| `StringSelect`                                                   | `setStringSelectMenuComponent()`         |
+| `UserSelect`, `RoleSelect`, `MentionableSelect`, `ChannelSelect` | the matching `set…SelectMenuComponent()` |
+| `Modal.FileUpload`                                               | `setFileUploadComponent()`               |
+
+Selects are the same components used in message action rows; see
+[select placement](jsx-select-menus.md#placement). In a modal, `disabled` is
+rejected because Discord rejects disabled components there, and `required` applies
+(Discord's default is `true`).
+
+`Modal.FileUpload` renders a fresh native `FileUploadBuilder` and is modal-only:
+message renderers reject it with "can only appear in a modal Label".
+`fileTypes` takes `"image"`, `"video"`, `"audio"`, or a dot-prefixed extension
+such as `".pdf"`, and is cloned. Discord's limits (`minValues` 0–10,
+`maxValues` 1–10, at most 10 file types, and `minValues` at least 1 unless
+`required={false}`) are left to native validation.
+
+A failing control reports its path as `Modal.children[i].Label.<Control>`, where
+`<Control>` drops the `Modal.` prefix (`TextInput`, `FileUpload`, `UserSelect`).
+Submitted values arrive through core [modal input](modal-input-validation.md) or
+native interaction getters.

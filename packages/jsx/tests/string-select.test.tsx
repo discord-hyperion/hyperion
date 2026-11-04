@@ -306,7 +306,7 @@ test("bare menus and options need explicit rows in message rendering", () => {
     assert.deepEqual(renderComponents(null), []);
 });
 
-for (const prop of ["required", "id", "options", "onSelect"]) {
+for (const prop of ["id", "options", "onSelect"]) {
     test(`rejects unsupported menu prop ${prop}`, () => {
         fails(() =>
             renderStringSelect(
@@ -503,15 +503,6 @@ test("global validation settings retain structural and uniqueness checks", () =>
                     </Button>
                 </ActionRow>,
             ]),
-        );
-        fails(() =>
-            renderStringSelect(
-                jsx(StringSelect, {
-                    customId: "priority",
-                    required: true,
-                    children: option(),
-                }),
-            ),
         );
     } finally {
         if (enabled) {
