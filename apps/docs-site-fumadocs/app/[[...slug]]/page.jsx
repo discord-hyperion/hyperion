@@ -7,7 +7,7 @@ import {
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import { notFound } from "next/navigation";
 import { getMDXComponents } from "@/components/mdx";
-import { editUrl } from "@/lib/shared";
+import { editUrl, repoIsPublic } from "@/lib/shared";
 import { source } from "@/lib/source";
 
 export const dynamicParams = false;
@@ -32,12 +32,14 @@ export default async function Page(props) {
                     })}
                 />
             </DocsBody>
-            <a
-                href={editUrl(page.path)}
-                className="text-sm text-fd-muted-foreground underline"
-            >
-                Edit page
-            </a>
+            {repoIsPublic && (
+                <a
+                    href={editUrl(page.path)}
+                    className="text-sm text-fd-muted-foreground underline"
+                >
+                    Edit page
+                </a>
+            )}
         </DocsPage>
     );
 }

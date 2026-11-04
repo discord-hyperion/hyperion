@@ -1,6 +1,6 @@
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { Provider } from "@/components/provider";
-import { repo } from "@/lib/shared";
+import { repo, repoIsPublic } from "@/lib/shared";
 import { source } from "@/lib/source";
 import "./global.css";
 
@@ -17,7 +17,7 @@ export default function Layout({ children }) {
                     <DocsLayout
                         tree={source.getPageTree()}
                         nav={{ title: "Hyperion" }}
-                        githubUrl={repo}
+                        githubUrl={repoIsPublic ? repo : undefined}
                     >
                         {children}
                     </DocsLayout>
