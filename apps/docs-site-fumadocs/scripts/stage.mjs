@@ -2,8 +2,9 @@
 // stays authoritative: this copies it to content/docs (gitignored) and
 //   - adds the `title` frontmatter Fumadocs requires, taken from the first H1,
 //   - maps README.md to index.md and jsx.md to jsx/index.md (a folder index),
-//   - rewrites links to files outside the guide into GitHub URLs, and re-points
-//     in-guide .md links at the staged files so Fumadocs can resolve them,
+//   - rewrites links to files outside the guide into GitHub URLs (or plain text
+//     while the repository is private), and re-points in-guide .md links at the
+//     staged files so Fumadocs can resolve them,
 //   - writes meta.json files that give the sidebar its groups and order.
 // Only docs/guide is published; nothing else under docs/ is staged.
 import {
@@ -15,11 +16,11 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { repo, repoIsPublic } from "../lib/shared.js";
 
 const site = fileURLToPath(new URL("..", import.meta.url));
 const source = path.resolve(site, "../../docs/guide");
 const target = path.join(site, "content/docs");
-const repo = "https://github.com/favylicious/discord-hyperion";
 
 const files = directory =>
     readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -37,6 +38,7 @@ const staged = relative => {
     return relative;
 };
 
+/** The staged link target, or null to drop the link and keep its text. */
 const rewrite = (url, relative) => {
     if (/^([a-z][a-z+.-]*:|#|\/)/i.test(url)) return url;
 
@@ -47,7 +49,9 @@ const rewrite = (url, relative) => {
     );
 
     if (resolved.startsWith("..")) {
-        return `${repo}/blob/main/${path.posix.join("docs/guide", resolved)}${suffix}`;
+        return repoIsPublic
+            ? `${repo}/blob/main/${path.posix.join("docs/guide", resolved)}${suffix}`
+            : null;
     }
     if (!resolved.endsWith(".md")) return url;
 
@@ -76,10 +80,11 @@ for (const file of files(source)) {
 
     const title = heading[1].replaceAll("`", "");
     const body = outsideFences(text.replace(/^# .+\n+/m, ""), part =>
-        part.replace(
-            /\]\(([^)\s]+)\)/g,
-            (_, url) => `](${rewrite(url, relative)})`,
-        ),
+        part.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (_, label, url) => {
+            const target = rewrite(url, relative);
+
+            return target === null ? label : `[${label}](${target})`;
+        }),
     );
     const output = path.join(target, staged(relative));
 

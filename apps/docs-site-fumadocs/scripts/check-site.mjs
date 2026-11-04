@@ -3,6 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { repo, repoIsPublic } from "../lib/shared.js";
 import { serve } from "./serve.mjs";
 
 const site = fileURLToPath(new URL("..", import.meta.url));
@@ -10,7 +11,6 @@ const repoRoot = path.resolve(site, "../..");
 const guide = path.join(repoRoot, "docs/guide");
 const dist = path.join(site, process.env.DIST ?? "out");
 const base = (process.env.SITE_BASE ?? "/discord-hyperion").replace(/\/$/, "");
-const repo = "https://github.com/favylicious/discord-hyperion";
 
 const results = [];
 const check = (name, ok, detail = "") => {
@@ -215,18 +215,27 @@ check(
         : `${fences} fences`,
 );
 
-// 4. Edit links point at the original Markdown, not the staged copy.
+// 4. Edit links point at the original Markdown, not the staged copy. While the
+//    repository is private, no page links into it at all.
 const editLink = (route, original) =>
     readFileSync(path.join(dist, route, "index.html"), "utf8").includes(
         `${repo}/edit/main/docs/guide/${original}`,
     );
 
-check(
-    "edit links point at the original Markdown",
-    editLink("jsx/embeds", "jsx/embeds.md") &&
-        editLink("jsx", "jsx.md") &&
-        editLink("", "README.md"),
-);
+if (repoIsPublic) {
+    check(
+        "edit links point at the original Markdown",
+        editLink("jsx/embeds", "jsx/embeds.md") &&
+            editLink("jsx", "jsx.md") &&
+            editLink("", "README.md"),
+    );
+} else {
+    check(
+        "no page links into the private repository",
+        github === 0,
+        `${github} GitHub links`,
+    );
+}
 
 // 5. Local search: the exported index covers the guide and can be queried like the browser does,
 //    from the base path the site is deployed under, with no server endpoint.
