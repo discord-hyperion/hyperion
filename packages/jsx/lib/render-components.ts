@@ -5,10 +5,10 @@ import {
     LinkButtonBuilder,
     PrimaryButtonBuilder,
     SecondaryButtonBuilder,
-    StringSelectMenuBuilder,
     SuccessButtonBuilder,
 } from "@discordjs/builders";
 import { JSXRenderError } from "./error.ts";
+import { buildSelect, selectNames } from "./render-select.ts";
 import { buildStringSelect } from "./render-string-select.ts";
 import { type Child, expand, type Node, type Value } from "./runtime.ts";
 import { renderTextContent } from "./text.ts";
@@ -167,27 +167,34 @@ export const buildRow = (root: Node, path: string, ids: DeclaredIds) => {
     for (const [childIndex, child] of children.entries()) {
         const childPath = `${path}.children[${childIndex}]`;
 
+        if (typeof child === "object" && child.name === "Modal.FileUpload") {
+            throw new JSXRenderError(
+                childPath,
+                "A Modal.FileUpload can only appear in a modal Label.",
+            );
+        }
+
         if (
             typeof child !== "object" ||
-            (child.name !== "Button" && child.name !== "StringSelect")
+            (child.name !== "Button" && !selectNames.has(child.name))
         ) {
             throw new JSXRenderError(
                 childPath,
-                "Expected a Button or StringSelect.",
+                "Expected a Button or select menu.",
             );
         }
 
         const location = `${childPath}.${child.name}`;
         const node = { ...child, path: location };
+        const select = selectNames.has(node.name);
         const control =
             node.name === "StringSelect"
-                ? buildStringSelect(node)
-                : buildButton(node);
+                ? buildStringSelect(node, "message")
+                : select
+                  ? buildSelect(node, "message")
+                  : buildButton(node);
 
-        if (
-            control instanceof CustomIdButtonBuilder ||
-            control instanceof StringSelectMenuBuilder
-        ) {
+        if (select || control instanceof CustomIdButtonBuilder) {
             declareId(ids, node.props.customId as string, location);
         }
 

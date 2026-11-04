@@ -1,4 +1,4 @@
-import type { TextInputBuilder } from "@discordjs/builders";
+import type { FileUploadBuilder, TextInputBuilder } from "@discordjs/builders";
 import { type Child, primitive } from "./runtime.ts";
 
 type Children = { children?: Child };
@@ -33,5 +33,23 @@ export const Modal = Object.assign(
             "maxLength",
         ]),
         TextDisplay: primitive<Children>("Modal.TextDisplay", ["children"]),
+        FileUpload: primitive<{
+            customId: string;
+            minValues?: number | undefined;
+            maxValues?: number | undefined;
+            required?: boolean | undefined;
+            fileTypes?:
+                | readonly Exclude<
+                      Parameters<FileUploadBuilder["addFileTypes"]>[0],
+                      readonly unknown[]
+                  >[]
+                | undefined;
+        }>("Modal.FileUpload", [
+            "customId",
+            "minValues",
+            "maxValues",
+            "required",
+            "fileTypes",
+        ]),
     },
 );

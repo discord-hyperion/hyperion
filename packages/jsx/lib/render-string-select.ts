@@ -3,21 +3,13 @@ import {
     StringSelectMenuOptionBuilder,
 } from "@discordjs/builders";
 import { JSXRenderError } from "./error.ts";
+import {
+    applySelectProps,
+    type Placement,
+    plainString,
+} from "./render-select.ts";
 import { type Child, expand, type Node } from "./runtime.ts";
 import { validateComponent } from "./validate-component.ts";
-
-const plainString = (node: Node, prop: string) => {
-    const value = node.props[prop];
-
-    if (typeof value !== "string") {
-        throw new JSXRenderError(
-            `${node.path}.${prop}`,
-            "Expected an explicit plain string.",
-        );
-    }
-
-    return value;
-};
 
 const buildOption = (node: Node) => {
     try {
@@ -56,11 +48,9 @@ const buildOption = (node: Node) => {
 };
 
 /** Construct without serializing; containing rows validate their children. */
-export const buildStringSelect = (node: Node) => {
+export const buildStringSelect = (node: Node, placement: Placement) => {
     try {
-        const menu = new StringSelectMenuBuilder().setCustomId(
-            plainString(node, "customId"),
-        );
+        const menu = new StringSelectMenuBuilder();
         const values: { value: string; path: string }[] = [];
         const options = expand(
             node.props.children,
@@ -68,21 +58,7 @@ export const buildStringSelect = (node: Node) => {
             node.depth,
         );
 
-        if (node.props.placeholder !== undefined) {
-            menu.setPlaceholder(plainString(node, "placeholder"));
-        }
-
-        if (node.props.minValues !== undefined) {
-            menu.setMinValues(node.props.minValues as number);
-        }
-
-        if (node.props.maxValues !== undefined) {
-            menu.setMaxValues(node.props.maxValues as number);
-        }
-
-        if (node.props.disabled !== undefined) {
-            menu.setDisabled(node.props.disabled as boolean);
-        }
+        applySelectProps(menu, node, placement);
 
         for (const [index, option] of options.entries()) {
             const path = `${node.path}.options[${index}]`;
@@ -140,7 +116,10 @@ export const renderStringSelect = (view: Child): StringSelectMenuBuilder => {
         throw new JSXRenderError("root", "Expected exactly one StringSelect.");
     }
 
-    const builder = buildStringSelect({ ...root, path: "StringSelect" });
+    const builder = buildStringSelect(
+        { ...root, path: "StringSelect" },
+        "message",
+    );
     validateComponent(builder, "StringSelect");
 
     return builder;

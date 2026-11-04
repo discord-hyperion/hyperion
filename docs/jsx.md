@@ -11,8 +11,9 @@ resolve JavaScript and declarations in `dist`.
   supersedes the earlier proposal to keep it inside `@hyperion/core`.
 - Use namespaced structural components such as `Embed.Title` and `Embed.Field`.
 - Embed authoring uses `renderEmbed()`. Modal authoring uses `renderModal()` with
-  text inputs and informational text; see [JSX modals](jsx-modals.md). Other modal
-  controls and standalone text rendering are outside the current API.
+  text inputs, selects, file uploads, and informational text; see
+  [JSX modals](jsx-modals.md). Radio groups, checkbox groups, checkboxes, and
+  standalone text rendering are outside the current API.
 - Message authoring uses `ActionRow`, `Button`, and `renderComponents()`.
   `renderButton()` supplies interactive handler templates; see [JSX message components](jsx-message-components.md).
 - Message string selects use `StringSelect.Option` children and `renderStringSelect()`
@@ -89,8 +90,8 @@ resolve JavaScript and declarations in `dist`.
 - Validate structural nesting at runtime and use native builder `toJSON()`
   validation while respecting the SDK validator setting. Report invalid output.
 - Preserve shared modal definitions and existing handler routing. Inserting
-  prebuilt builders, React lifecycle behavior, automatic rerendering, and entity
-  select-menu authoring remain deferred. Layout messages (Components V2) are
+  prebuilt builders, React lifecycle behavior, and automatic rerendering remain
+  deferred. Entity selects are covered by [JSX select menus](jsx-select-menus.md#entity-selects). Layout messages (Components V2) are
   rendered by `renderMessage()`; see [JSX layout messages](jsx-layout.md).
 - Verify automatic-runtime source and published consumption, opt-in TSX handlers,
   and performance before making compatibility or speed claims.

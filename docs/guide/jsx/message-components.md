@@ -51,9 +51,28 @@ const components = renderComponents(
 ```
 
 The picks arrive in `interaction.values`. With `minValues={0}`, people can also
-clear their choice. A menu fills a whole row, so give it one to itself. User,
-role, mentionable, and channel menus don't have JSX components yet; use the
-native builders for those.
+clear their choice. A menu fills a whole row, so give it one to itself.
+
+To let people pick users, roles, or channels, use `UserSelect`, `RoleSelect`,
+`MentionableSelect`, or `ChannelSelect`. Discord fills in the choices, so they
+take no options. Pre-select some with ID arrays:
+
+```tsx
+import { ActionRow, ChannelSelect, renderComponents } from "@hyperion/jsx";
+import { ChannelType } from "discord.js";
+
+const components = renderComponents(
+    <ActionRow>
+        <ChannelSelect
+            customId="report.channel"
+            channelTypes={[ChannelType.GuildText]}
+            defaultChannels={[interaction.channelId]}
+        />
+    </ActionRow>,
+);
+```
+
+The same select components also work inside [modals](modals.md).
 
 ## Before you send
 
@@ -68,4 +87,4 @@ native builders for those.
 Using Hyperion? Handlers can keep these controls as
 [templates](../jsx-with-hyperion.md#buttons-and-menus-as-templates). The
 references cover [buttons](../../jsx-message-components.md) and
-[string selects](../../jsx-select-menus.md) in full.
+[select menus](../../jsx-select-menus.md) in full.

@@ -84,7 +84,13 @@ const misplaced = (node: Node, allowed: string) => {
             return "A Thumbnail can only be a Section accessory.";
         case "Button":
         case "StringSelect":
+        case "UserSelect":
+        case "RoleSelect":
+        case "MentionableSelect":
+        case "ChannelSelect":
             return `A ${node.name} must be inside an ActionRow.`;
+        case "Modal.FileUpload":
+            return "A Modal.FileUpload can only appear in a modal Label.";
         case "Container":
             return "A Container can only appear at the top level, not inside another Container.";
         default:
