@@ -2,7 +2,9 @@ import { ChannelSelectMenuBuilder } from "@discordjs/builders";
 import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
 import { ChannelType, ComponentType } from "discord.js";
 
-export default class ChooseChannel extends SelectMenuHandler<ComponentType.ChannelSelect> {
+type ChooseChannelSpec = { componentType: ComponentType.ChannelSelect };
+
+export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> {
     constructor() {
         super({
             customId: "channel.choose",
@@ -15,7 +17,7 @@ export default class ChooseChannel extends SelectMenuHandler<ComponentType.Chann
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.ChannelSelect>) {
+    async run(ctx: SelectMenuContext<ChooseChannelSpec>) {
         const names = ctx.interaction.values.map(id => {
             const channel = ctx.interaction.channels.get(id);
 

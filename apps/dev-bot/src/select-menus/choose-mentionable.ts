@@ -2,7 +2,11 @@ import { MentionableSelectMenuBuilder } from "@discordjs/builders";
 import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseMentionable extends SelectMenuHandler<ComponentType.MentionableSelect> {
+type ChooseMentionableSpec = {
+    componentType: ComponentType.MentionableSelect;
+};
+
+export default class ChooseMentionable extends SelectMenuHandler<ChooseMentionableSpec> {
     constructor() {
         super({
             customId: "mentionable.choose",
@@ -14,7 +18,7 @@ export default class ChooseMentionable extends SelectMenuHandler<ComponentType.M
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.MentionableSelect>) {
+    async run(ctx: SelectMenuContext<ChooseMentionableSpec>) {
         const { values, users, roles } = ctx.interaction;
         const names = values.map(
             id => users.get(id)?.username ?? roles.get(id)?.name ?? id,

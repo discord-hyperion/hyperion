@@ -15,7 +15,9 @@ const input = defineInput({
     defer: true,
 });
 
-export default class extends ModalHandler<typeof input> {
+type CreateTodoSpec = { input: typeof input };
+
+export default class extends ModalHandler<CreateTodoSpec> {
     constructor() {
         super({
             customId: "todo.create",
@@ -24,7 +26,7 @@ export default class extends ModalHandler<typeof input> {
         });
     }
 
-    async run(ctx: ModalContext<typeof input>) {
+    async run(ctx: ModalContext<CreateTodoSpec>) {
         const [issues, value] = ctx.input;
 
         if (issues) {

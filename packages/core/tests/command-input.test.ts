@@ -126,6 +126,15 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
         assert.throws(
             () =>
                 new Handler({
+                    schema,
+                    // @ts-expect-error Exercise runtime rejection for JavaScript callers.
+                    defer: "update",
+                }),
+            /no message to update/,
+        );
+        assert.throws(
+            () =>
+                new Handler({
                     schema: {
                         "~standard": {
                             // @ts-expect-error Exercise runtime rejection for JavaScript callers.

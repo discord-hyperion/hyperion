@@ -15,9 +15,9 @@ export const renameTicket = defineParams({
     schema: ticketSchema,
 });
 
-export default class RenameTicketButton extends ButtonHandler<
-    typeof renameTicket
-> {
+type RenameTicketButtonSpec = { params: typeof renameTicket };
+
+export default class RenameTicketButton extends ButtonHandler<RenameTicketButtonSpec> {
     constructor() {
         super({
             params: renameTicket,
@@ -27,7 +27,7 @@ export default class RenameTicketButton extends ButtonHandler<
         });
     }
 
-    async run(ctx: ButtonContext<typeof renameTicket>) {
+    async run(ctx: ButtonContext<RenameTicketButtonSpec>) {
         const [issues, params] = ctx.params;
 
         if (issues) {

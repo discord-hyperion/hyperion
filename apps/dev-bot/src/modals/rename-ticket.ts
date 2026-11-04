@@ -32,15 +32,14 @@ const input = defineInput({
     }),
 });
 
-export type RenameTicketContext = ModalContext<
-    typeof input,
-    typeof renameTicketForm
->;
+type RenameTicketSpec = {
+    params: typeof renameTicketForm;
+    input: typeof input;
+};
 
-export default class RenameTicketModal extends ModalHandler<
-    typeof input,
-    typeof renameTicketForm
-> {
+export type RenameTicketContext = ModalContext<RenameTicketSpec>;
+
+export default class RenameTicketModal extends ModalHandler<RenameTicketSpec> {
     constructor() {
         super({
             params: renameTicketForm,

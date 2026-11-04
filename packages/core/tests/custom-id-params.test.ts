@@ -27,12 +27,12 @@ const todoDone = defineParams({
     }),
 });
 
-type TodoContext = ButtonContext<typeof todoDone>;
+type TodoContext = ButtonContext<{ params: typeof todoDone }>;
 
-class TodoButton extends ButtonHandler<typeof todoDone> {
+class TodoButton extends ButtonHandler<{ params: typeof todoDone }> {
     constructor(
         private readonly execute: (ctx: TodoContext) => Promise<void>,
-        guards: ButtonHandler<typeof todoDone>["guards"] = [],
+        guards: ButtonHandler<{ params: typeof todoDone }>["guards"] = [],
     ) {
         super({ params: todoDone, guards });
     }
@@ -226,7 +226,7 @@ describe("button params loading", () => {
     test("a handler cannot declare both a customId and params", () => {
         assert.throws(
             () =>
-                new (class extends ButtonHandler<typeof todoDone> {
+                new (class extends ButtonHandler<{ params: typeof todoDone }> {
                     constructor() {
                         super({ params: todoDone, customId: "x" } as never);
                     }
@@ -361,7 +361,7 @@ describe("button params dispatch", () => {
         const execute = mock.fn(async () => {});
         client.buttons.routes.set(
             "boom",
-            new (class extends ButtonHandler<typeof boom> {
+            new (class extends ButtonHandler<{ params: typeof boom }> {
                 constructor() {
                     super({ params: boom });
                 }

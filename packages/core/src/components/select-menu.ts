@@ -6,15 +6,27 @@ import type {
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
 import { ComponentType, type MappedInteractionTypes } from "discord.js";
+import type {
+    CommandInputDefinition,
+    InputDefer,
+} from "../commands/command-input.ts";
 import type { InteractionContext } from "../contexts/index.ts";
 import { isGuard } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
-import {
-    type ParamsDefinition,
-    type ParamsResult,
-    validateParams,
-} from "./custom-id-params.ts";
+import { validateInput } from "../util/validate-input.ts";
+import { type ParamsDefinition, validateParams } from "./custom-id-params.ts";
 import { handlerCustomId } from "./handler-options.ts";
+import type {
+    AnyInputDefinition,
+    EmptySpec,
+    InputContext,
+    InputOptions,
+    KnownKeys,
+    ParamsContext,
+    ParamsOptions,
+    SpecInput,
+    SpecParams,
+} from "./handler-spec.ts";
 
 export type SelectMenuType =
     | ComponentType.StringSelect
@@ -39,38 +51,72 @@ type SelectMenuBuilders = {
     [ComponentType.MentionableSelect]: MentionableSelectMenuBuilder;
 };
 
-export type SelectMenuContext<
+/** The keys a select-menu handler's type argument may set. */
+export type SelectMenuSpec = {
+    componentType?: SelectMenuType;
+    params?: ParamsDefinition;
+    input?: AnyInputDefinition;
+};
+
+type SpecType<Spec> = Spec extends {
+    componentType: infer Type extends SelectMenuType;
+}
+    ? Type
+    : ComponentType.StringSelect;
+
+/** The context guards and input resolvers see: params, never input. */
+type SelectMenuParamsContext<
     Type extends SelectMenuType = ComponentType.StringSelect,
     Params extends ParamsDefinition | undefined = undefined,
-> = InteractionContext<MappedInteractionTypes[Type]> &
-    (Params extends ParamsDefinition
-        ? { readonly params: ParamsResult<Params> }
-        : unknown);
+> = InteractionContext<MappedInteractionTypes[Type]> & ParamsContext<Params>;
+
+export type SelectMenuInputDefinition<
+    Type extends SelectMenuType = ComponentType.StringSelect,
+    Params extends ParamsDefinition | undefined = undefined,
+> = CommandInputDefinition<SelectMenuParamsContext<Type, Params>, InputDefer>;
+
+/** A select-menu type argument: known keys, and input whose resolver accepts the context. */
+export type ValidSelectMenuSpec<Spec> = SelectMenuSpec &
+    KnownKeys<Spec, SelectMenuSpec> & {
+        input?: SelectMenuInputDefinition<SpecType<Spec>, SpecParams<Spec>>;
+    };
+
+export type SelectMenuContext<
+    Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
+> = SelectMenuParamsContext<SpecType<Spec>, SpecParams<Spec>> &
+    InputContext<SpecInput<Spec>>;
 
 export type SelectMenuHandlerOptions<
-    Type extends SelectMenuType = ComponentType.StringSelect,
-    Params extends ParamsDefinition | undefined = undefined,
+    Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
 > = {
-    componentType: Type;
+    componentType: SpecType<Spec>;
     /** Optional template; callers get copies through `client.selectMenus.build()`. */
-    builder?: SelectMenuBuilders[Type];
-    guards?: readonly GuardProvider<SelectMenuContext<Type, Params>>[];
-} & (Params extends ParamsDefinition
-    ? { params: Params; customId?: never }
-    : { customId: string; params?: never });
+    builder?: SelectMenuBuilders[SpecType<Spec>];
+    /** Guards run before input, so they see params but never `ctx.input`. */
+    guards?: readonly GuardProvider<
+        SelectMenuParamsContext<SpecType<Spec>, SpecParams<Spec>>
+    >[];
+} & InputOptions<
+    SpecInput<Spec>,
+    SelectMenuInputDefinition<SpecType<Spec>, SpecParams<Spec>>
+> &
+    ParamsOptions<SpecParams<Spec>>;
 
 export abstract class SelectMenuHandler<
-    Type extends SelectMenuType = ComponentType.StringSelect,
-    Params extends ParamsDefinition | undefined = undefined,
+    Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
 > {
-    readonly builder: SelectMenuBuilders[Type] | undefined;
-    readonly componentType: Type;
+    readonly builder: SelectMenuBuilders[SpecType<Spec>] | undefined;
+    readonly componentType: SpecType<Spec>;
     readonly params: ParamsDefinition | undefined;
     /** The exact custom ID, or the route for a params handler. */
     readonly customId: string;
-    readonly guards: readonly GuardProvider<SelectMenuContext<Type, Params>>[];
+    readonly guards: readonly GuardProvider<
+        SelectMenuParamsContext<SpecType<Spec>, SpecParams<Spec>>
+    >[];
 
-    protected constructor(options: SelectMenuHandlerOptions<Type, Params>) {
+    readonly input: AnyInputDefinition | undefined;
+
+    protected constructor(options: SelectMenuHandlerOptions<Spec>) {
         if (!selectMenuTypes.includes(options.componentType)) {
             throw new TypeError(
                 "Select menu handlers require a select componentType.",
@@ -85,6 +131,10 @@ export abstract class SelectMenuHandler<
         );
         this.componentType = options.componentType;
         this.builder = options.builder;
+        this.input = validateInput(
+            options.input as SelectMenuInputDefinition | undefined,
+            { update: true },
+        );
 
         this.guards = Object.freeze([...(options.guards ?? [])]);
 
@@ -99,12 +149,12 @@ export abstract class SelectMenuHandler<
         }
     }
 
-    abstract run(ctx: SelectMenuContext<Type, Params>): Promise<void>;
+    abstract run(ctx: SelectMenuContext<Spec>): Promise<void>;
 }
 
 export type AnySelectMenuHandler =
-    | SelectMenuHandler<ComponentType.StringSelect>
-    | SelectMenuHandler<ComponentType.UserSelect>
-    | SelectMenuHandler<ComponentType.RoleSelect>
-    | SelectMenuHandler<ComponentType.MentionableSelect>
-    | SelectMenuHandler<ComponentType.ChannelSelect>;
+    | SelectMenuHandler<{ componentType: ComponentType.StringSelect }>
+    | SelectMenuHandler<{ componentType: ComponentType.UserSelect }>
+    | SelectMenuHandler<{ componentType: ComponentType.RoleSelect }>
+    | SelectMenuHandler<{ componentType: ComponentType.MentionableSelect }>
+    | SelectMenuHandler<{ componentType: ComponentType.ChannelSelect }>;

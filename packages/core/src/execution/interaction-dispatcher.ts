@@ -13,7 +13,7 @@ import { Command, type CommandType, Subcommand } from "../commands/index.ts";
 import {
     ModalHandler,
     type ParamsDefinition,
-    type SelectMenuHandler,
+    SelectMenuHandler,
     type SelectMenuType,
 } from "../components/index.ts";
 import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
@@ -22,6 +22,7 @@ import { GuardPipeline } from "./guard-pipeline.ts";
 import { resolveCommandInput } from "./resolve-command-input.ts";
 import { resolveModalInput } from "./resolve-modal-input.ts";
 import { resolveParams } from "./resolve-params.ts";
+import { resolveSelectMenuInput } from "./resolve-select-menu-input.ts";
 
 type HandlerKind = "command" | "button" | "select-menu" | "modal";
 
@@ -74,7 +75,9 @@ export class InteractionDispatcher {
             });
 
             await this.execute(
-                selectMenu as SelectMenuHandler<SelectMenuType>,
+                selectMenu as SelectMenuHandler<{
+                    componentType: SelectMenuType;
+                }>,
                 { client: this.client, interaction, logger },
                 "select-menu",
                 [],
@@ -408,6 +411,19 @@ export class InteractionDispatcher {
 
                 // Input resolvers see params; guards never see input.
                 const input = await resolveModalInput(handler, {
+                    ...current,
+                    interaction,
+                });
+
+                handlerContext = { ...current, input };
+            } else if (
+                handler instanceof SelectMenuHandler &&
+                interaction.isSelectMenu() &&
+                handler.input
+            ) {
+                stage = "input";
+
+                const input = await resolveSelectMenuInput(handler, {
                     ...current,
                     interaction,
                 });

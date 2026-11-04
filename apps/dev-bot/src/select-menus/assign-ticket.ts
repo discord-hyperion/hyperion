@@ -14,15 +14,14 @@ export const assignTicket = defineParams({
     schema: ticketSchema,
 });
 
-export type AssignTicketContext = SelectMenuContext<
-    ComponentType.UserSelect,
-    typeof assignTicket
->;
+type AssignTicketSpec = {
+    componentType: ComponentType.UserSelect;
+    params: typeof assignTicket;
+};
 
-export default class AssignTicketMenu extends SelectMenuHandler<
-    ComponentType.UserSelect,
-    typeof assignTicket
-> {
+export type AssignTicketContext = SelectMenuContext<AssignTicketSpec>;
+
+export default class AssignTicketMenu extends SelectMenuHandler<AssignTicketSpec> {
     constructor() {
         super({
             componentType: ComponentType.UserSelect,

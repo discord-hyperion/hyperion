@@ -1,9 +1,16 @@
-import type { CommandInputDefinition } from "../commands/command-input.ts";
+import type {
+    CommandInputDefinition,
+    InputDefer,
+} from "../commands/command-input.ts";
 
-/** Validate and snapshot configuration without evaluating application code. */
-export const validateInput = <Context>(
-    input: CommandInputDefinition<Context> | undefined,
-) => {
+/**
+ * Validate and snapshot configuration without evaluating application code.
+ * `update` allows `defer: "update"`, which needs a message to update.
+ */
+export const validateInput = <Context, Defer extends InputDefer>(
+    input: CommandInputDefinition<Context, Defer> | undefined,
+    { update = false } = {},
+): CommandInputDefinition<Context, Defer> | undefined => {
     if (input === undefined) return undefined;
 
     if (!input || typeof input !== "object") {
@@ -16,8 +23,22 @@ export const validateInput = <Context>(
         throw new TypeError("Input must implement Standard Schema v1.");
     }
 
-    if (input.defer !== undefined && typeof input.defer !== "boolean") {
-        throw new TypeError("Input deferral must be a boolean.");
+    if (input.defer === "update" && !update) {
+        throw new TypeError(
+            'Command input cannot defer with "update"; there is no message to update.',
+        );
+    }
+
+    if (
+        input.defer !== undefined &&
+        typeof input.defer !== "boolean" &&
+        input.defer !== "update"
+    ) {
+        throw new TypeError(
+            update
+                ? 'Input deferral must be a boolean or "update".'
+                : "Input deferral must be a boolean.",
+        );
     }
 
     if (input.resolve !== undefined && typeof input.resolve !== "function") {
@@ -33,6 +54,7 @@ export const validateInput = <Context>(
     return Object.freeze({
         schema: input.schema,
         ...(input.resolve === undefined ? {} : { resolve: input.resolve }),
-        defer: input.defer ?? false,
+        // An omitted deferral is `false`, which every deferral mode includes.
+        defer: input.defer ?? (false as Defer),
     });
 };

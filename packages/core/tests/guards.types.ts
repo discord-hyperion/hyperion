@@ -36,31 +36,38 @@ export const guardContracts = (entries: Map<string, number>) => {
     const inferred = defineGuard({
         name: "inferred",
         description: "x",
-        run: (ctx: ButtonContext<typeof ticket>) => ctx.params[0] === null,
+        run: (ctx: ButtonContext<{ params: typeof ticket }>) =>
+            ctx.params[0] === null,
     });
-    inferred satisfies Guard<ButtonContext<typeof ticket>>;
+    inferred satisfies Guard<ButtonContext<{ params: typeof ticket }>>;
 
     // Explicit generic.
-    const explicit = defineGuard<SelectMenuContext<ComponentType.UserSelect>>({
+    const explicit = defineGuard<
+        SelectMenuContext<{ componentType: ComponentType.UserSelect }>
+    >({
         name: "explicit",
         description: "x",
         run: ctx => ctx.interaction.users.size > 0,
         onFail: async ctx => {
-            ctx.interaction
-                .users satisfies SelectMenuContext<ComponentType.UserSelect>["interaction"]["users"];
+            ctx.interaction.users satisfies SelectMenuContext<{
+                componentType: ComponentType.UserSelect;
+            }>["interaction"]["users"];
         },
     });
 
-    const buttonGuards: GuardProvider<ButtonContext<typeof ticket>>[] = [
+    const buttonGuards: GuardProvider<
+        ButtonContext<{ params: typeof ticket }>
+    >[] = [
         inferred,
         ownerOnly,
         paramOwner("owner"),
         cooldown({ key: "k", durationMs: 1, entries: entries as never }),
     ];
     // @ts-expect-error A select-menu guard cannot guard a button.
-    const wrongKind: Guard<ButtonContext<typeof ticket>> = explicit;
+    const wrongKind: Guard<ButtonContext<{ params: typeof ticket }>> = explicit;
     // @ts-expect-error The key must exist in the params.
-    const wrongKey: Guard<ButtonContext<typeof ticket>> = paramOwner("missing");
+    const wrongKey: Guard<ButtonContext<{ params: typeof ticket }>> =
+        paramOwner("missing");
 
     // @ts-expect-error Guards require a name.
     defineGuard({ description: "x", run: () => true });

@@ -38,7 +38,7 @@ export const modalInputContracts = (
     });
     input satisfies ModalInputOptions<typeof schema>;
 
-    class CreateTodo extends ModalHandler<typeof input> {
+    class CreateTodo extends ModalHandler<{ input: typeof input }> {
         constructor() {
             super({
                 customId: "todo.create",
@@ -55,7 +55,7 @@ export const modalInputContracts = (
             });
         }
 
-        async run(ctx: ModalContext<typeof input>) {
+        async run(ctx: ModalContext<{ input: typeof input }>) {
             const [issues, value] = ctx.input;
 
             if (issues) {
@@ -78,7 +78,9 @@ export const modalInputContracts = (
 
     registry.set("todo.create", new CreateTodo());
     const withoutResolver = defineInput({ schema });
-    const passthrough = (ctx: ModalContext<typeof withoutResolver>) => {
+    const passthrough = (
+        ctx: ModalContext<{ input: typeof withoutResolver }>,
+    ) => {
         const [issues, value] = ctx.input;
         if (issues) return;
         value.deadline satisfies Date;
@@ -86,14 +88,16 @@ export const modalInputContracts = (
     };
     const missingInput = { builder: new ModalBuilder() };
     // @ts-expect-error Typed modals require input configuration.
-    missingInput satisfies ModalHandlerOptions<typeof input>;
+    missingInput satisfies ModalHandlerOptions<{ input: typeof input }>;
     const configured = { builder: new ModalBuilder(), input };
     // @ts-expect-error Schema-free modal definitions cannot configure input.
     configured satisfies ModalHandlerOptions;
     // @ts-expect-error Schema-free contexts have no input.
     plain.input;
     // @ts-expect-error Command resolvers cannot serve modal submissions.
-    type _WrongContext = ModalHandler<ReturnType<typeof commandInput>>;
+    type _WrongContext = ModalHandler<{
+        input: ReturnType<typeof commandInput>;
+    }>;
     const wrongCommand = { builder: new ChatInputCommandBuilder(), input };
     // @ts-expect-error Modal resolvers cannot serve chat-input commands.
     wrongCommand satisfies ConstructorParameters<typeof InputCommand>[0];
@@ -129,7 +133,7 @@ export const contextFreeModalResolver = (
         schema,
         resolve: async ({ name }) => ({ todo: { name } }),
     });
-    class ContextFree extends ModalHandler<typeof input> {
+    class ContextFree extends ModalHandler<{ input: typeof input }> {
         constructor() {
             super({
                 customId: "todo.create",
@@ -137,7 +141,7 @@ export const contextFreeModalResolver = (
                 input,
             });
         }
-        async run(ctx: ModalContext<typeof input>) {
+        async run(ctx: ModalContext<{ input: typeof input }>) {
             const [issues, value] = ctx.input;
             if (issues) return;
             value.todo.name satisfies string;

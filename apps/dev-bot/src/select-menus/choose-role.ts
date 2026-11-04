@@ -2,7 +2,9 @@ import { RoleSelectMenuBuilder } from "@discordjs/builders";
 import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseRole extends SelectMenuHandler<ComponentType.RoleSelect> {
+type ChooseRoleSpec = { componentType: ComponentType.RoleSelect };
+
+export default class ChooseRole extends SelectMenuHandler<ChooseRoleSpec> {
     constructor() {
         super({
             customId: "role.choose",
@@ -14,7 +16,7 @@ export default class ChooseRole extends SelectMenuHandler<ComponentType.RoleSele
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.RoleSelect>) {
+    async run(ctx: SelectMenuContext<ChooseRoleSpec>) {
         const roleNames = ctx.interaction.roles.map(role => role.name);
 
         await ctx.interaction.update({

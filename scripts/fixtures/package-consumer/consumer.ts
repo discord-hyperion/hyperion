@@ -5,8 +5,10 @@ import {
     defineInput,
     type EventContext,
     EventHandler,
+    type SelectMenuContext,
+    SelectMenuHandler,
 } from "@hyperion/core";
-import type { Events } from "discord.js";
+import { ComponentType, type Events } from "discord.js";
 import * as v from "valibot";
 
 const input = defineInput({
@@ -44,3 +46,27 @@ class ReadyHandler extends EventHandler<Events.ClientReady> {
     }
 }
 void ReadyHandler;
+
+const priority = defineInput({
+    schema: v.array(v.picklist(["low", "high"])),
+    defer: "update",
+});
+type PrioritySpec = { input: typeof priority };
+
+export class PriorityMenu extends SelectMenuHandler<PrioritySpec> {
+    constructor() {
+        super({
+            customId: "priority",
+            componentType: ComponentType.StringSelect,
+            input: priority,
+        });
+    }
+    async run(ctx: SelectMenuContext<PrioritySpec>) {
+        const [issues, value] = ctx.input;
+        if (issues) return;
+        value satisfies ("low" | "high")[];
+    }
+}
+
+// @ts-expect-error A misspelled type-argument key is rejected, not ignored.
+export type Misspelled = SelectMenuContext<{ inptu: typeof priority }>;

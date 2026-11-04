@@ -18,16 +18,25 @@ const rename = defineParams({
 
 const input = defineInput({
     schema: v.object({ title: v.string() }),
-    resolve: async ({ title }, ctx: ModalContext<undefined, typeof rename>) => {
+    resolve: async (
+        { title },
+        ctx: ModalContext<{ params: typeof rename }>,
+    ) => {
         const [issues, params] = ctx.params;
 
         return { title, ticketId: issues ? undefined : params.ticketId };
     },
 });
 
-type RenameContext = ModalContext<typeof input, typeof rename>;
+type RenameContext = ModalContext<{
+    input: typeof input;
+    params: typeof rename;
+}>;
 
-export class RenameTicket extends ModalHandler<typeof input, typeof rename> {
+export class RenameTicket extends ModalHandler<{
+    input: typeof input;
+    params: typeof rename;
+}> {
     constructor() {
         super({
             params: rename,
@@ -74,7 +83,7 @@ export const modalParamsContracts = (registry: ModalRegistry) => {
     registry.build(rename, { ticketId: "a1b2c3d4" });
 
     // @ts-expect-error A resolver that reads params needs a params handler.
-    class Literal extends ModalHandler<typeof input> {
+    class Literal extends ModalHandler<{ input: typeof input }> {
         constructor() {
             // @ts-expect-error The same mismatch rejects the input option.
             super({ customId: "literal", input });
@@ -83,7 +92,7 @@ export const modalParamsContracts = (registry: ModalRegistry) => {
         async run() {}
     }
 
-    class Both extends ModalHandler<undefined, typeof rename> {
+    class Both extends ModalHandler<{ params: typeof rename }> {
         constructor() {
             // @ts-expect-error Params handlers cannot also declare a literal custom ID.
             super({ params: rename, customId: "ticket.rename" });
@@ -92,7 +101,7 @@ export const modalParamsContracts = (registry: ModalRegistry) => {
         async run() {}
     }
 
-    class Typo extends ModalHandler<undefined, typeof rename> {
+    class Typo extends ModalHandler<{ params: typeof rename }> {
         constructor() {
             // @ts-expect-error The key must exist in the params.
             super({ params: rename, guards: [paramOwner("ownr")] });

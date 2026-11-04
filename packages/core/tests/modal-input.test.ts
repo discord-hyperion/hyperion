@@ -49,11 +49,11 @@ const schema = (
 ): StandardSchemaV1 => ({
     "~standard": { version: 1, vendor: "test", validate },
 });
-class InputModal extends ModalHandler<ModalInputOptions> {
+class InputModal extends ModalHandler<{ input: ModalInputOptions }> {
     constructor(
         input: ModalInputOptions,
         private readonly execute: (
-            ctx: ModalContext<ModalInputOptions>,
+            ctx: ModalContext<{ input: ModalInputOptions }>,
         ) => Promise<void>,
         guards: readonly GuardProvider<ModalContext>[] = [],
     ) {
@@ -65,7 +65,7 @@ class InputModal extends ModalHandler<ModalInputOptions> {
         });
     }
 
-    run(ctx: ModalContext<ModalInputOptions>) {
+    run(ctx: ModalContext<{ input: ModalInputOptions }>) {
         return this.execute(ctx);
     }
 }
@@ -378,11 +378,11 @@ test("schemas own missing-field defaults, trimming, and successful output withou
             description: v.optional(v.string(), "Default"),
         }),
     });
-    class Typed extends ModalHandler<typeof input> {
+    class Typed extends ModalHandler<{ input: typeof input }> {
         constructor() {
             super({ customId: "todo.create", builder: builder(), input });
         }
-        async run(ctx: ModalContext<typeof input>) {
+        async run(ctx: ModalContext<{ input: typeof input }>) {
             assert.deepEqual(ctx.input, [
                 null,
                 { name: "Todo", description: "Default" },
@@ -402,10 +402,12 @@ test("schema issues reach the handler unchanged and skip resolution and automati
     const { client, dispatcher, records } = await createTestClient(t);
     const issues = [{ message: "Private validation detail", path: ["name"] }];
     const resolve = mock.fn(async () => "must not run");
-    const run = mock.fn(async (ctx: ModalContext<ModalInputOptions>) => {
-        assert.equal(ctx.input[0], issues);
-        assert.equal(ctx.input[1], undefined);
-    });
+    const run = mock.fn(
+        async (ctx: ModalContext<{ input: ModalInputOptions }>) => {
+            assert.equal(ctx.input[0], issues);
+            assert.equal(ctx.input[1], undefined);
+        },
+    );
     client.modals.set(
         "todo.create",
         new InputModal({ schema: schema(() => ({ issues })), resolve }, run),
@@ -578,7 +580,7 @@ for (const acknowledgment of ["reply", "deferReply", "deferUpdate"] as const) {
 
 test("configuration is snapshotted while schemas remain shared and invocation inputs are fresh", async t => {
     const { client, dispatcher } = await createTestClient(t);
-    const contexts: ModalContext<ModalInputOptions>[] = [];
+    const contexts: ModalContext<{ input: ModalInputOptions }>[] = [];
     const originalSchema = schema(values => ({ value: values }));
     const options = { schema: originalSchema, defer: false };
     const modal = new InputModal(options, async ctx => {
