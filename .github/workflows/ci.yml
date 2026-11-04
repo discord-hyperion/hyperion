@@ -21,6 +21,7 @@ jobs:
         outputs:
             code: ${{ steps.classify.outputs.code }}
             site: ${{ steps.classify.outputs.site }}
+            cache: ${{ steps.classify.outputs.cache }}
 
         steps:
             - name: Check out repository
@@ -93,6 +94,8 @@ jobs:
               run: pnpm verify:release
 
             - name: Verify cache correctness
+              # Only when Turbo, package, or TypeScript config changes; see docs/ci.md.
+              if: needs.changes.outputs.cache == 'true'
               run: pnpm verify:cache
 
             - name: Verify packed package consumers

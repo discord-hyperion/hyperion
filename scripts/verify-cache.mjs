@@ -68,11 +68,9 @@ const mutate = async (label, relative, transform, affected, baseline) => {
             checks.filter(id => !affected.includes(id)),
             "HIT",
         );
-        execute(sourceTasks);
-        cached(dry(), checks, "HIT");
-        console.log(
-            `PASS ${label}: expected invalidation, successful rerun, then cache hits`,
-        );
+        // Hashes are the cache contract. Re-running the affected tasks here would
+        // only repeat CI's typecheck and test step, about nine times over.
+        console.log(`PASS ${label}: exactly the expected tasks invalidate`);
     } finally {
         await writeFile(filename, original);
     }

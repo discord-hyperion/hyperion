@@ -6,8 +6,10 @@ import path from "node:path";
 import { after, describe, test } from "node:test";
 import {
     isDocsPath,
+    needsCacheCheck,
     needsCodeChecks,
     needsSiteBuild,
+    touchesCache,
     touchesCode,
     touchesSite,
 } from "./ci-changes.mjs";
@@ -91,6 +93,42 @@ describe("site classification", () => {
     });
 });
 
+describe("cache classification", () => {
+    test("files that decide task hashes run the cache verification", () => {
+        for (const file of [
+            "turbo.json",
+            "package.json",
+            "packages/core/package.json",
+            "apps/dev-bot/package.json",
+            "tsconfig.base.json",
+            "packages/jsx/tsconfig.build.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            ".gitignore",
+            "scripts/verify-cache.mjs",
+            ".github/workflows/ci.yml",
+        ]) {
+            assert.ok(touchesCache([file]), file);
+        }
+    });
+
+    test("source, test, and documentation edits skip it", () => {
+        for (const file of [
+            "packages/core/src/index.ts",
+            "packages/jsx/tests/embeds.test.tsx",
+            "apps/dev-bot/src/commands/ping.ts",
+            "scripts/check-docs.mjs",
+            "docs/ci.md",
+        ]) {
+            assert.equal(touchesCache([file]), false, file);
+        }
+    });
+
+    test("an empty change list runs it", () => {
+        assert.equal(touchesCache([]), true);
+    });
+});
+
 describe("comparing commits", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "hyperion-ci-changes-"));
     const git = (...args) =>
@@ -138,6 +176,11 @@ describe("comparing commits", () => {
         assert.equal(needsSiteBuild(start, docsOnly, root), false);
         assert.equal(needsSiteBuild(mixed, guide, root), true);
         assert.equal(needsCodeChecks(mixed, guide, root), false);
+    });
+
+    test("only cache inputs run the cache verification", () => {
+        assert.equal(needsCacheCheck(start, mixed, root), false);
+        assert.equal(needsCacheCheck("", mixed, root), true);
     });
 
     test("an unknown base builds the site", () => {

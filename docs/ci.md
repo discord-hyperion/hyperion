@@ -32,6 +32,20 @@ files) also runs everything, so a mistake can only run too much, never too littl
 The script has its own tests (`scripts/ci-changes.test.mjs`), which the `Code` job
 runs, so changing it always runs them.
 
+## Cache verification
+
+The `Code` job runs `pnpm verify:cache` only when a change touches something that
+decides Turborepo task hashes: `turbo.json`, any `package.json` or `tsconfig*.json`,
+`pnpm-lock.yaml`, `pnpm-workspace.yaml`, `.gitignore`, the script itself, or a
+workflow. `scripts/ci-changes.mjs` reports this as `cache=`, and an unknown
+comparison runs it.
+
+The script copies the workspace to a temporary directory, runs every typecheck
+and test once cold, and checks the cached replay and restored builds. For each of
+eight representative edits, it then asserts from a dry run that exactly the
+expected tasks change hash and the rest stay cache hits. It does not re-run the
+tasks after each edit; the typecheck and test step already proves they pass.
+
 ## Documentation site
 
 `Docs site` runs when a change touches `docs/guide/`, `apps/docs-site-fumadocs/`,
