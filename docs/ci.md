@@ -62,3 +62,5 @@ formatting pass.
 The documentation check verifies relative links, Markdown heading anchors, and
 named imports from the public Hyperion exports in supported fenced examples.
 It is a static check of the documented imports, not full snippet typechecking.
+
+<!-- Throwaway line to exercise the docs-only CI skip; this branch is never merged. -->
