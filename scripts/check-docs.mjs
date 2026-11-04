@@ -170,6 +170,41 @@ for (const file of files) {
     }
 }
 
+// The backlog lists only open work: planned items stay unticked, and shipped
+// items move to Implemented as one line that links their reference doc.
+const backlog = path.join(root, "docs/features.md");
+if (existsSync(backlog)) {
+    let section = "";
+
+    for (const line of readFileSync(backlog, "utf8").split("\n")) {
+        const heading = line.match(/^## (.+)$/);
+        if (heading) {
+            section = heading[1].trim();
+            continue;
+        }
+        if (!line.startsWith("- ")) continue;
+
+        if (section === "Planned" && !line.startsWith("- [ ] ")) {
+            report(backlog, `planned item is not an open "- [ ]": ${line}`);
+        }
+        if (section === "Implemented" && /^- \[/.test(line)) {
+            report(backlog, `implemented item has a checkbox: ${line}`);
+        }
+    }
+
+    // Implemented items may wrap, so check each whole item for a doc link.
+    const implemented =
+        readFileSync(backlog, "utf8").split(/^## Implemented$/m)[1] ?? "";
+    for (const item of implemented.split(/^- /m).slice(1)) {
+        if (!/\]\([^)\s]+\.md(#[^)]*)?\)/.test(item)) {
+            report(
+                backlog,
+                `implemented item links no reference doc: ${item.split("\n")[0]}`,
+            );
+        }
+    }
+}
+
 if (problems.length > 0) {
     console.error(problems.join("\n"));
     console.error(`\n${problems.length} documentation problem(s).`);

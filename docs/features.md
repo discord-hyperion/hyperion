@@ -1,54 +1,70 @@
 # Feature list
 
-## Implemented
-
-- [x] Independent `@hyperion/jsx` package for native embed, modal, and message component authoring, text
-  composition, automatic JSX runtimes, and TSX/JSX handler discovery. See [JSX authoring](jsx.md).
-
-- [x] Filesystem event handlers with typed contexts, filename ordering, per-event
-  FIFO queues, one-shot handlers, reloads, and bounded shutdown draining. See
-  [event handlers](event-handlers.md).
+The backlog lists only work that is still open. When a pull request ships or drops
+part of an item, it deletes that bullet in the same pull request; when the last
+bullet goes, the item moves to [Implemented](#implemented) as one line linking its
+reference doc. Reference docs describe what exists; this page never repeats them.
+`scripts/check-docs.mjs` checks the shape: every planned item is unticked, and every
+implemented item links a reference doc.
 
 ## Planned
 
-- [x] Typed custom-ID data exposed through interaction handlers. Buttons, select menus, modals, and the `paramOwner()` guard are implemented. JSX controls take encoded IDs directly (`customId={closeTicket(ticket)}`), so no separate JSX encoder helper is planned. See [custom-ID params](custom-id-params.md).
-  - Separate handler definitions from visible button builders; handlers must not require a template button.
-  - Let commands or shared views create multiple controls, with each custom ID carrying its own data.
-  - Declare parameter contracts through handlers and expose validated invocation-local values through `ctx.params`.
-  - Support validator-agnostic schemas through Standard Schema, including defaults and transformations.
-  - Preserve primitive types, escape delimiters, and enforce Discord's custom-ID length limit without base64.
-  - Keep literal custom IDs compatible, validate before guards, and leave unmatched interactions to application listeners.
-  - Apply the design across buttons, select menus, and modals without retaining per-message handler state.
-- [ ] Reusable typed input validation and transformation.
-  - Chat-input commands and subcommands now support optional Standard Schema-compatible schemas, whole-input resolution after validation, inferred handler input through `defineInput`, and handler-owned validation responses. See [typed command input](input-validation.md).
-  - Modal handlers now support text-input schemas, optional whole-input resolution,
-    and inferred submission results; see [modal input validation](modal-input-validation.md).
-  - Extend validation to additional modal control types.
-  - Support application-defined resolvers, including asynchronous validation.
-  - Keep expected validation failures separate from unexpected errors across input sources.
-- [x] Guard definitions through `defineGuard()`. Guards are execution checks defined as frozen definitions rather than classes; the built-ins are `ownerOnly`, `cooldown()`, and `paramOwner()`. See [guards](guards.md) and [ADR 0003](adr/0003-guards-are-definitions-not-classes.md).
-- [x] Intuitive, declarative embed creation API. Superseded by `@hyperion/jsx`: `renderEmbed()` and reusable JSX components cover typed, declarative embeds with native builder output. Further message layout work, including Components V2, continues under JSX authoring.
-- [ ] Further JSX authoring through `@hyperion/jsx`.
-  - Native embeds, modal labels/text inputs/informational text, escaped text composition, reusable components, and TSX/JSX handlers are implemented; see the [JSX guide](jsx.md) and [JSX modals](jsx-modals.md).
-  - Action rows, interactive buttons, link buttons, and message string selects are implemented; see
-    [JSX message components](jsx-message-components.md) and [JSX select menus](jsx-select-menus.md).
-  - Layout messages (Components V2) with containers, sections, text displays, thumbnails, media galleries, separators, headings, and subtext are implemented; see [JSX layout messages](jsx-layout.md). The `File` component remains deferred until attachment handling is designed.
-  - Entity selects, premium buttons, and additional modal controls remain deferred.
-    Standalone text formatting was dropped.
+- [ ] Typed input for more interaction sources.
+  - Extract modal controls other than text inputs: string, user, role, mentionable,
+    and channel selects, file uploads, radio groups, checkbox groups, and
+    checkboxes. They are readable only through native getters today. Decide whether
+    schemas receive IDs or resolved objects for entity selects and uploads.
+  - Add `input` to select-menu handlers, so `interaction.values` is validated like
+    other input.
+- [ ] More JSX components.
+  - User, role, mentionable, and channel select menus for messages.
+  - Premium buttons.
+  - Modal controls beyond labels, text inputs, and text displays: selects, file
+    uploads, radio groups, and checkboxes. Pairs with the modal input work above.
+  - The layout-message `File` component, after attachment handling is designed.
 - [ ] Managed interactive collectors.
-  - Provide a simple abstraction for creating, tracking, stopping, and cleaning up collectors.
-  - Make ownership, timeouts, completion, cancellation, and shutdown cleanup explicit.
-  - Keep collector lifecycles separate from stateless filesystem handlers; persistent application state remains application-owned.
+  - Needs a reason to exist first: a thin wrapper over discord.js collectors adds
+    little.
+  - Make ownership, timeouts, completion, cancellation, and shutdown cleanup
+    explicit, separate from stateless filesystem handlers.
 - [ ] Integrated development workflow for generated types (deferred).
-  - Generate declarations during project setup and before development starts.
-    - Watch handler additions, edits, renames, and deletions to keep autocomplete synchronized.
-    - Run generation in a fresh worker or process to avoid stale module imports.
-    - Provide standalone type generation for CI without starting or logging in the bot.
-    - Scaffold TypeScript inclusion and generated-file exclusions for editor tooling.
-    - Produce deterministic output, skip unchanged files, and write updates atomically.
-    - Consider a `hyperion dev` CLI that manages generation, watching, and the bot process.
-    - Explore statically inspectable handler metadata as an alternative to executing constructors.
+  - Generate declarations during setup and before development starts.
+  - Watch handler additions, edits, renames, and deletions to keep autocomplete
+    synchronized, generating in a fresh process to avoid stale imports.
+  - Provide standalone generation for CI without starting or logging in the bot.
+  - Scaffold TypeScript inclusion and generated-file exclusions for editors.
+  - Produce deterministic output, skip unchanged files, and write atomically.
+  - Consider a `hyperion dev` CLI that manages generation, watching, and the bot.
+  - Explore statically inspectable handler metadata instead of executing
+    constructors.
 - [ ] Generated API reference (blocked).
-  - Publish symbol-level reference pages for `@hyperion/core` and `@hyperion/jsx` beside the guide, generated from the source with TypeDoc.
-  - Blocked until TypeDoc supports TypeScript 7, which Hyperion uses; the inspected TypeDoc release allows only 5.x through 6.0.x. Recheck the upstream tracking issue before starting. See [documentation site generators](research/documentation-site-generators.md#typedoc-is-complementary-with-a-ts7-blocker).
-  - Decide where the output lives (a separate API prefix on the guide site is the least integration) and keep the guide the home for explanation; the API reference only lists symbols.
+  - Publish symbol-level reference pages for `@hyperion/core` and `@hyperion/jsx`
+    beside the guide, generated with TypeDoc.
+  - Blocked until TypeDoc supports TypeScript 7; the inspected release allows only
+    5.x through 6.0.x. Recheck the upstream tracking issue before starting. See
+    [documentation site generators](research/documentation-site-generators.md#typedoc-is-complementary-with-a-ts7-blocker).
+  - Decide where the output lives; a separate API prefix on the guide site is the
+    least integration. The guide stays the home for explanation.
+
+## Implemented
+
+- Chat-input commands, subcommands, and deployment. See
+  [command registration](command-registration.md) and [command paths](command-paths.md).
+- Subcommand groups. See [subcommand groups](subcommand-groups.md).
+- Context-menu commands with typed lookup. See
+  [context-menu commands](context-menu-commands.md).
+- Autocomplete routing. See [autocomplete](autocomplete.md).
+- Button, select-menu, and modal handlers with templates and `build()`. See
+  [buttons](buttons.md), [select menus](select-menus.md), and [modals](modals.md).
+- Typed custom-ID params. See [custom-ID params](custom-id-params.md).
+- Guards through `defineGuard()`. See [guards](guards.md).
+- Typed input for commands and modal text inputs, with async resolvers. See
+  [typed command input](input-validation.md) and
+  [modal input validation](modal-input-validation.md).
+- Filesystem event handlers. See [event handlers](event-handlers.md).
+- Logging. See [logging](logging.md).
+- `@hyperion/jsx`: embeds, text, buttons, string selects, modals, and layout
+  messages. See [JSX authoring](jsx.md),
+  [message components](jsx-message-components.md),
+  [select menus](jsx-select-menus.md), [modals](jsx-modals.md), and
+  [layout messages](jsx-layout.md).

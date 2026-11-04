@@ -36,6 +36,8 @@ Use this template for writing the PR body:
 
 Skip all preambles and keep prose brief. Use the user's domain language from `GLOSSARY.md`.
 
+Before writing the body, check whether the change ships or drops part of an item in `docs/features.md`. If it does and the branch doesn't update the list yet, update it first (see AGENTS.md).
+
 ### Summary
 
 Pick the smallest view that makes the key point clear.
