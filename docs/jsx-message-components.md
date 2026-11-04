@@ -1,100 +1,62 @@
-# JSX message component design
+# JSX message components
 
-`@hyperion/jsx` supports native action-row and button authoring through
-`ActionRow`, `Button`, `renderComponents()`, and `renderButton()`. Message string
-selects also compose within rows; see [JSX select menus](jsx-select-menus.md).
+`ActionRow` and `Button` describe message controls. `renderComponents()` renders
+explicit action rows; `renderButton()` renders one interactive button as a core
+handler template. Selects compose inside the same rows; see
+[select menus](jsx-select-menus.md). Shared runtime behaviour is in
+[JSX authoring](jsx.md#runtime-behaviour).
 
-## Existing foundation
+## Renderers
 
-The independent `@hyperion/jsx` package renders embeds and modals to native
-builders. It provides synchronous reusable components, fragments, conditional
-children, fresh output, structural errors, and native validation. See
-[JSX authoring](jsx.md).
+`renderComponents(view)` returns fresh `ActionRowBuilder[]`. The root takes only
+`ActionRow`s, composed through fragments, arrays, reusable components, and
+conditional children; bare buttons are never packed into rows automatically. An
+empty root returns `[]`, which clears a message's controls.
 
-Core button handlers retain shared native builders, exact custom-ID routing,
-guards, and invocation-local contexts. Application-owned persistent state and
-authorization remain separate from form or message rendering. See
-[buttons](buttons.md).
+`renderButton(view)` takes exactly one interactive button and returns its native
+custom-ID button builder, suitable as a core `ButtonHandler` template. Link
+buttons render only inside `renderComponents()`, because they cannot reach a
+handler.
 
-Managed collectors and the local verification helper were declined. This design
-does not revive either feature or the deferred custom-ID data feature.
+## Buttons
 
-## Scope
+| Variant     | Required                                                                                   | Optional                            |
+| ----------- | ------------------------------------------------------------------------------------------ | ----------------------------------- |
+| Interactive | `customId`; `style`: `primary`, `secondary`, `success`, `danger`, or the native enum value | label children, `emoji`, `disabled` |
+| Link        | `url` (HTTP, HTTPS, or Discord URL, checked natively)                                      | label children, `emoji`, `disabled` |
+- There is no default style. A link button with `customId` or `style`, or any
+  conflicting variant props, throws.
+- Labels are plain-text children: literal interpolation, fragments, and reusable
+  components, concatenated without separators and kept unescaped. Formatting
+  components such as `Bold` throw. There is no `label` prop. An empty label omits
+  the field, so emoji-only buttons work; a button with neither fails native
+  validation.
+- `emoji` takes the native object (`name`, `id`, `animated`); builders validate it.
+- Omitted or `undefined` `disabled` leaves the field out (calling the native
+  `setDisabled(undefined)` would set it to true). Explicit `false` stays `false`.
+  `disabled` is presentation only: check authorization again when the click
+  arrives.
+- There is no numeric `id`, SKU (premium) button, or click-callback prop.
 
-- Initially support action rows, interactive buttons, and link buttons.
-- String selects are supported separately; defer entity selects, premium purchase
-  buttons, and Components V2 layouts.
-- Produce native builders without changing handler templates, routing, guards,
-  acknowledgment, or native collectors. Do not add click callbacks or automatic
-  registration.
-- Per-user disabled state is presentation. Application handlers remain
-  responsible for checking current authorization.
+## Rows and uniqueness
 
-## Rendering API
+- An `ActionRow` holds buttons or select menus; a select fills a row by itself,
+  which native row validation enforces. Bare buttons at the root, nested rows, text
+  outside buttons, `Modal.FileUpload`, prebuilt builders, and promises throw.
+- Interactive custom IDs must be unique across every button and select in one
+  render. A duplicate throws with both structural paths, without the ID itself.
+  Separate renders may reuse IDs; nothing is generated or checked globally.
+- Each row is validated with native `toJSON()`, which also validates its buttons;
+  `renderButton()` validates its button once.
+- Whole-message limits stay with the caller: a classic message holds five rows,
+  and the renderer neither checks controls appended later nor truncates or
+  repacks rows.
 
-`renderComponents()` accepts explicit action rows and returns fresh native
-`ActionRowBuilder[]`. Fragments, arrays, reusable synchronous components, and
-conditional children compose rows without automatically packing bare buttons.
-An empty root returns `[]`, permitting callers to clear message controls.
+Native limits: labels 1–80 characters, custom IDs 1–100, and 1–5 buttons per row.
+JSX does not repeat these schemas. Native validation also rejects explicit `null`
+for `disabled` when validators are enabled.
 
-`renderButton()` accepts exactly one interactive button and returns a native
-custom-ID button builder suitable for a core button handler. Link buttons are
-supported within `renderComponents()` but rejected by `renderButton()` because
-they cannot define interaction handlers.
-
-Labels use plain-text children, including literal interpolation, fragments, and
-reusable components. Preserve text without Markdown escaping. Reject formatting
-primitives such as `Bold`, and omit a separate `label` prop. Emoji-only buttons
-may omit label children.
-
-Interactive buttons require an explicit `customId` and style. Accept `primary`,
-`secondary`, `success`, and `danger` plus their native enum values. Link buttons
-are selected by a `url` prop and do not accept custom IDs or interactive styles.
-Reject conflicting variant props rather than silently ignoring them.
-
-Accept the native emoji object (`name`, `id`, `animated`) and delegate emoji
-validation to builders. Do not add an emoji-string parser.
-
-Reject duplicate interactive custom IDs across buttons and selects in all rows within one
-`renderComponents()` call, identifying both structural paths without echoing
-supplied values. Separate renders may reuse IDs. Do not generate IDs or impose
-global uniqueness.
-
-## Validation and composition
-
-Validate each row through native `toJSON()` without an override. Let row
-serialization validate its buttons, avoiding a separate validation pass for each
-nested button. Validate standalone `renderButton()` output once. Respect the
-native global validator setting. JSX structure, variant suitability, unknown
-props, and duplicate-ID checks remain active when native validation is disabled.
-
-Whole-message constraints belong to the caller. Document the five-row limit for
-legacy messages; this renderer does not validate a complete message or controls
-appended afterward. Do not silently truncate or repack rows.
-
-Omit numeric component `id` props. Keep routing custom IDs explicit. Both variants
-accept optional boolean `disabled`; skip its setter for omitted/undefined values,
-preserve explicit false, and let native validation reject malformed values.
-
-Accept only action rows at the message-render root and buttons or string selects
-within each row. A select occupies a row by itself under native row validation.
-Reject bare buttons, nested rows, text outside buttons, unsupported controls,
-prebuilt builders, and promises. Continue supporting fragments, synchronous
-reusable components, arrays, conditional omissions, ignored keys, and the existing
-nesting limit. Labels concatenate their expanded plain-text children without
-automatic separators; zero remains text, while nullish/boolean children are
-omitted. Omitted label children permit emoji-only buttons; native builders own
-label/emoji presence and length constraints.
-
-Keep output independently fresh on repeated renders, including nested builders.
-Wrap failures in `JSXRenderError` with structural paths and original causes;
-generated messages do not echo supplied values, and native causes remain
-inspectable. Do not log automatically. Returned builders can be composed through
-native APIs after rendering; that subsequent composition is caller-owned.
-
-## Handler authoring example
-
-The single-button renderer supplies a template for a core handler:
+## Handler template
 
 ```tsx
 import { ButtonHandler, type ButtonContext } from "@hyperion/core";
@@ -118,11 +80,11 @@ export default class extends ButtonHandler {
 }
 ```
 
-The JSX `Button` describes a visible control; core's `ButtonHandler` processes its
-clicks. Discovery and guards stay unchanged. Do not store per-user values on the
-shared handler; use `client.buttons.build()` for a fresh copy of its template.
+The JSX `Button` describes the visible control; core's `ButtonHandler` handles
+its clicks. Don't store per-user values on the shared template; use
+`client.buttons.build()` for a fresh copy.
 
-## Message authoring example
+## Message example
 
 ```tsx
 import type { CommandContext } from "@hyperion/core";
@@ -153,64 +115,6 @@ export const showProfileControls = async (
 };
 ```
 
-The interactive button targets the handler above by exact custom ID. The link
-button navigates without invoking a handler. Applications may instead use native
-collectors; avoid processing the same interaction in both a handler and a
-collector. Recheck authorization when processing clicks, even if a button was
-disabled according to a status read when rendering.
-
-## Verification scope
-
-Cover all four interactive variants, links, string/native styles, literal labels,
-emoji-only buttons, omitted/false/null disabled values, conflicting props, native
-validation failures, and validator-disabled structural checks. Verify duplicate
-IDs across rows, both reported paths, separate-render reuse, empty roots,
-composition/nesting errors, and fresh independent output.
-
-Test public authoring types and negative cases before implementation, including
-the custom-ID builder return type accepted by core handlers. JSX elements erase
-some source prop detail, so structural/variant restrictions also need runtime
-tests. Preserve standalone operation without core, React, or a discord.js runtime
-dependency. Verify source/packed consumers, automatic runtime entry points,
-native builder identity, and reply/update type compatibility.
-
-Update the JSX guide's deferred scope, backlog, and standalone package examples.
-Add a JSX minor changeset and an isolated example using existing exact-ID routing.
-Run required type/tests/Biome checks and package-consumer verification without
-startup, private credentials, login, deployment, or publishing.
-
-## Documentation requirements
-
-Document both renderers with imports and complete usage examples: a registered
-core handler authored through `renderButton()`, a multi-row message authored
-through `renderComponents()`, and link buttons that do not dispatch interactions.
-Explain the distinction between authoring components and core handlers, required
-builder types, fresh per-message state, native collector compatibility, and
-application-owned authorization. State empty-root behavior, plain labels, and
-unsupported nesting/controls explicitly.
-
-## Verified implementation constraints
-
-The installed builders provide concrete interactive button variants and a link
-variant. Omitted disabled props must skip the native setter, because calling
-`setDisabled(undefined)` sets true. Native rows validate button counts and child
-schemas but do not reject duplicate button custom IDs. Native message reply and
-update types accept arrays of action-row builders.
-
-## Props and defaults
-
-- `ActionRow` accepts structural children only; each expanded child must be a button.
-- Interactive `Button` requires `customId` and `style`. There is no default style.
-- Link `Button` requires `url`, with neither `style` nor `customId`. Native URL
-  validation supports HTTP, HTTPS, and Discord URLs; masked-link text formatting
-  has a separate HTTP(S)-only policy.
-- Both variants accept label children, native emoji data, and optional `disabled`.
-  Omitted or undefined disabled props leave the native field omitted. Explicit
-  false stays false. Empty composed labels omit the label field, permitting
-  emoji-only buttons; a button with neither label nor emoji fails native validation.
-- There is no `label`, numeric `id`, SKU, or click-callback prop.
-
-The installed builders enforce labels of 1–80 characters, interactive custom IDs
-of 1–100 characters, and 1–5 buttons per row. JSX does not reproduce these schemas.
-Native disabled validation also rejects explicit null when enabled. Errors include
-structural paths; native validation causes may contain supplied values.
+The interactive button reaches the handler above by exact custom ID; the link
+button navigates without an interaction. Native collectors also work, but only
+one of a collector and a handler should acknowledge a given interaction.

@@ -68,8 +68,9 @@ await ctx.interaction.reply(
 | `MediaGallery.Item` | `url`, `description?`, `spoiler?`                   | `MediaGalleryItemBuilder` |
 | `Separator`         | `divider?: boolean`, `spacing?: "small" \| "large"` | `SeparatorBuilder`        |
 
-The existing `ActionRow`, `Button`, and `StringSelect` render unchanged at the top
-level or inside a `Container`. `File` is not implemented: it requires uploaded
+`ActionRow`, `Button`, and every select menu render at the top level or inside a
+`Container`, as in [message components](jsx-message-components.md) and
+[select menus](jsx-select-menus.md). `File` is not implemented: it requires uploaded
 attachments, and Discord only shows attachments that a component references.
 Media URLs may still be `attachment://name` references; uploading the file in
 `files` remains the caller's responsibility.
@@ -84,8 +85,8 @@ Checked at render time, throwing `JSXRenderError` with a structural path:
   a `Thumbnail` or a `Button` (interactive or link).
 - `Thumbnail` appears only as a section accessory.
 - `MediaGallery` has one to ten `MediaGallery.Item` children.
-- `Button` and `StringSelect` appear only inside an `ActionRow`, or a button as an
-  accessory.
+- `Button` and the select menus appear only inside an `ActionRow`, or a button as
+  an accessory. `Modal.FileUpload` throws; it belongs in modals.
 - At most 40 components, counting every nested component, row child, and
   accessory. Gallery items are not components and do not count.
 - Interactive custom IDs are unique across the whole render, including
