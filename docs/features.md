@@ -48,3 +48,7 @@
     - Produce deterministic output, skip unchanged files, and write updates atomically.
     - Consider a `hyperion dev` CLI that manages generation, watching, and the bot process.
     - Explore statically inspectable handler metadata as an alternative to executing constructors.
+- [ ] Generated API reference (blocked).
+  - Publish symbol-level reference pages for `@hyperion/core` and `@hyperion/jsx` beside the guide, generated from the source with TypeDoc.
+  - Blocked until TypeDoc supports TypeScript 7, which Hyperion uses; the inspected TypeDoc release allows only 5.x through 6.0.x. Recheck the upstream tracking issue before starting. See [documentation site generators](research/documentation-site-generators.md#typedoc-is-complementary-with-a-ts7-blocker).
+  - Decide where the output lives (a separate API prefix on the guide site is the least integration) and keep the guide the home for explanation; the API reference only lists symbols.
