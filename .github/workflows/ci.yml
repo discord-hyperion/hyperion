@@ -14,8 +14,55 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    checks:
-        name: Checks
+    changes:
+        name: Changes
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        outputs:
+            code: ${{ steps.classify.outputs.code }}
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  # Full history, so the comparison needs no later fetch (and no credentials).
+                  fetch-depth: 0
+                  persist-credentials: false
+
+            - name: Decide whether the code checks are needed
+              id: classify
+              env:
+                  BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+              run: node scripts/ci-changes.mjs "$BASE" "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+    lint:
+        name: Lint and docs
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up pnpm and Node.js
+              uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+              with:
+                  runtime: node@24
+                  cache: true
+                  install: false
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Lint, format, and documentation check
+              run: pnpm check
+
+    code:
+        name: Code
+        needs: changes
+        if: needs.changes.outputs.code == 'true'
         runs-on: ubuntu-latest
         timeout-minutes: 10
 
@@ -38,6 +85,9 @@ jobs:
             - name: Type check and test all packages
               run: pnpm exec turbo run typecheck test --cache=local:rw
 
+            - name: Test CI helper scripts
+              run: node --test scripts/*.test.mjs
+
             - name: Verify release tooling
               run: pnpm verify:release
 
@@ -47,5 +97,20 @@ jobs:
             - name: Verify packed package consumers
               run: pnpm verify:package
 
-            - name: Lint and format check
-              run: pnpm check
+    # One stable result for the whole workflow, so a future branch protection rule
+    # can require `Checks` regardless of which jobs a change needed. A skipped job
+    # passes; a failed or cancelled one fails.
+    checks:
+        name: Checks
+        if: always()
+        needs: [changes, lint, code]
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - name: Fail if any job failed or was cancelled
+              if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+              run: exit 1
+
+            - name: Every required job passed or was skipped
+              run: echo "changes=${{ needs.changes.result }} lint=${{ needs.lint.result }} code=${{ needs.code.result }}"
