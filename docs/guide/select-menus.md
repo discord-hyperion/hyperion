@@ -40,12 +40,14 @@ export default class ChooseColour extends SelectMenuHandler {
 
 ## The other kinds
 
-For user, role, mentionable, and channel menus, pass the kind as a generic too.
-That types `ctx.interaction` correctly, so `.users`, `.roles`, or `.channels`
-are right there:
+For user, role, mentionable, and channel menus, also put the kind in the type
+argument. That types `ctx.interaction` correctly, so `.users`, `.roles`, or
+`.channels` are right there:
 
 ```ts
-export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSelect> {
+type ChooseUserSpec = { componentType: ComponentType.UserSelect };
+
+export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
             customId: "user.choose",
@@ -56,7 +58,7 @@ export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSele
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.UserSelect>) {
+    async run(ctx: SelectMenuContext<ChooseUserSpec>) {
         const names = ctx.interaction.users.map(user => user.username);
         await ctx.interaction.update({
             content: `Selected: ${names.join(", ")}`,
@@ -91,6 +93,50 @@ await ctx.interaction.reply({
 ```
 
 A menu takes up a whole row on its own.
+
+## Checking the pick
+
+Values come from the user's client, so an old message or a tampered request can
+send something your menu never offered. Add `input` to check them first, the same
+way as [command input](input.md):
+
+```ts
+const input = defineInput({
+    schema: v.pipe(v.array(v.picklist(["blue", "green"])), v.length(1)),
+});
+
+type ChooseColourSpec = { input: typeof input };
+
+export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
+    constructor() {
+        super({
+            customId: "colour.choose",
+            componentType: ComponentType.StringSelect,
+            input,
+        });
+    }
+
+    async run(ctx: SelectMenuContext<ChooseColourSpec>) {
+        const [issues, colours] = ctx.input;
+
+        if (issues) {
+            await ctx.interaction.reply({
+                content: "That colour isn't on the list.",
+                flags: MessageFlags.Ephemeral,
+            });
+
+            return;
+        }
+
+        await ctx.interaction.update({ content: `You chose ${colours[0]}.` });
+    }
+}
+```
+
+The schema gets the picked values as a list of strings. For user, role,
+mentionable, and channel menus that's the selected IDs. Add
+`defer: "update"` to acknowledge before slow work and finish with
+`editReply()`.
 
 ## Menus with data
 

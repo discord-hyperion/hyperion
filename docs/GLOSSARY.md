@@ -145,6 +145,11 @@ The application values supplied to one modal handler after submission validation
 and any application resolution have completed.
 _Avoid_: Raw submitted values, form controls
 
+**Validated select-menu input**:
+The application values supplied to one select-menu handler after the selection is
+validated and any application resolution has completed.
+_Avoid_: Raw selected values, choices
+
 **Modal control**:
 A control inside a modal label that submits a value: a text input, select menu,
 file upload, radio group, checkbox group, or checkbox.

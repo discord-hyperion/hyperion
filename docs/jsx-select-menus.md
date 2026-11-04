@@ -116,7 +116,8 @@ export default class extends SelectMenuHandler {
 ```
 
 The handler context is the native `StringSelectMenuInteraction`; option values
-are strings, not inferred literal unions.
+are strings, not inferred literal unions. To validate them, add core
+[select-menu input](select-menus.md#validate-the-selection).
 
 ## Message example
 

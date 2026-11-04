@@ -123,10 +123,12 @@ const input = defineInput({
     schema: v.object({ title: v.pipe(v.string(), v.trim(), v.minLength(1)) }),
 });
 
-export default class RenameTicket extends ModalHandler<
-    typeof input,
-    typeof renameTicketForm
-> {
+type RenameTicketSpec = {
+    params: typeof renameTicketForm;
+    input: typeof input;
+};
+
+export default class RenameTicket extends ModalHandler<RenameTicketSpec> {
     constructor() {
         super({
             params: renameTicketForm,
@@ -138,7 +140,7 @@ export default class RenameTicket extends ModalHandler<
         });
     }
 
-    async run(ctx: ModalContext<typeof input, typeof renameTicketForm>) {
+    async run(ctx: ModalContext<RenameTicketSpec>) {
         const [paramIssues, params] = ctx.params; // Which ticket, from the custom ID.
         const [inputIssues, value] = ctx.input; // The new title, from the form.
     }
@@ -165,12 +167,17 @@ Factories do not run during discovery. A rejection or exception stops later
 guards and the handler. A custom `onFail(ctx)` owns the rejection response.
 Guards on the originating command or component do not automatically apply to
 the modal submission; declare submission guards on the `ModalHandler` itself.
+Opener guards decide who sees the form; submission guards decide what gets
+accepted. The form can stay open while roles or application state change, and
+the submitted custom ID comes from the client, so check again on submission.
 
-Without `input.defer: true`, Hyperion does not automatically acknowledge submissions. Use `reply()` or
+Without `input.defer`, Hyperion does not automatically acknowledge submissions. Use `reply()` or
 `deferReply()` followed by `editReply()` for a separate response. For a modal
 opened from a message component, narrow with `ctx.interaction.isFromMessage()`
 before using `update()` to change the source message. A deferred message update
-can be completed with `editReply()`.
+can be completed with `editReply()`. `input.defer: "update"` makes that
+deferral automatic; it fails at the `input` stage for a modal not opened from a
+message component.
 
 Guard and handler failures use the shared error pipeline: new interactions get
 an ephemeral reply, deferred replies are edited, and replied interactions or
@@ -178,11 +185,19 @@ deferred message updates receive ephemeral follow-ups. An error after
 `deferUpdate()` never overwrites the source message. Failed error responses are
 logged and contained.
 
+## Type arguments
+
+`ModalHandler` and `ModalContext` take one object type argument with the
+optional keys `params` and `input`, named like the constructor options. With no
+type argument there are neither. Name the object once with a type alias and pass
+it to both. Unknown keys are type errors, as is an input whose resolver expects
+other params.
+
 ## Typed submission input
 
 Modal handlers can optionally configure `input` with a Standard Schema-compatible
-schema, private deferral, and whole-input resolution. Use `defineInput`,
-`ModalHandler<typeof input>`, and `ModalContext<typeof input>` to infer handler
+schema, deferral, and whole-input resolution. Use `defineInput`,
+`ModalHandler<{ input: typeof input }>`, and `ModalContext<{ input: typeof input }>` to infer handler
 values. The optional `builder` supplies the shared form template; `customId` or
 `params` defines routing. Keep a template to use `client.modals.build()`, or author
 the form separately with a matching custom ID and text-input IDs.

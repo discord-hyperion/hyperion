@@ -60,10 +60,28 @@ selected values in that array. `componentType` is always declared, and a templat
 must match it. Templates are shared: callers get copies through `build()`, so
 never mutate the template itself.
 
+## Type arguments
+
+`SelectMenuHandler` and `SelectMenuContext` take one object type argument with
+optional keys, named like the constructor options:
+
+| Key             | Type                         | Default                      |
+| --------------- | ---------------------------- | ---------------------------- |
+| `componentType` | a select `ComponentType`     | `ComponentType.StringSelect` |
+| `params`        | `typeof` a params definition | no `ctx.params`              |
+| `input`         | `typeof` an input definition | no `ctx.input`               |
+
+With no type argument, the handler is a string select without params or input.
+Name the object once with a type alias and pass it to both the handler and its
+context. Unknown keys are type errors, so a misspelled `inptu` fails to compile
+instead of meaning "no input". An input whose resolver expects another select
+type or other params is also a type error. See the
+[type-argument decision](adr/0004-component-handlers-take-one-object-type-argument.md).
+
 ## Define a user handler
 
-Set the generic component type on the handler and its context, and pass the
-same `componentType`. This pairs a `UserSelectMenuBuilder` template with a Discord.js `UserSelectMenuInteraction`, including
+Set `componentType` in the type argument and pass the same value to the
+constructor. This pairs a `UserSelectMenuBuilder` template with a Discord.js `UserSelectMenuInteraction`, including
 resolved `.users` and `.members` collections alongside the selected IDs in
 `.values`. Member data depends on guild context; do not assume every selected
 user has a cached guild member.
@@ -73,7 +91,9 @@ import { UserSelectMenuBuilder } from "@discordjs/builders";
 import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSelect> {
+type ChooseUserSpec = { componentType: ComponentType.UserSelect };
+
+export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
             customId: "user.choose",
@@ -85,7 +105,7 @@ export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSele
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.UserSelect>) {
+    async run(ctx: SelectMenuContext<ChooseUserSpec>) {
         const names = ctx.interaction.users.map(user => user.username);
 
         await ctx.interaction.update({
@@ -97,7 +117,7 @@ export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSele
 ```
 
 Discord supplies the user options; do not call `addOptions()` on a user builder.
-String selects use the default generic.
+String selects need no type argument.
 All supported types share `client.selectMenus` and must have unique IDs within it. The
 registry returns a union of typed handlers; narrow `menu.componentType` before
 accessing type-specific template methods. Dispatch checks the ID and component
@@ -116,7 +136,9 @@ import { RoleSelectMenuBuilder } from "@discordjs/builders";
 import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseRole extends SelectMenuHandler<ComponentType.RoleSelect> {
+type ChooseRoleSpec = { componentType: ComponentType.RoleSelect };
+
+export default class ChooseRole extends SelectMenuHandler<ChooseRoleSpec> {
     constructor() {
         super({
             customId: "role.choose",
@@ -128,7 +150,7 @@ export default class ChooseRole extends SelectMenuHandler<ComponentType.RoleSele
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.RoleSelect>) {
+    async run(ctx: SelectMenuContext<ChooseRoleSpec>) {
         const names = ctx.interaction.roles.map(role => role.name);
 
         await ctx.interaction.update({
@@ -157,7 +179,9 @@ import { MentionableSelectMenuBuilder } from "@discordjs/builders";
 import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseMentionable extends SelectMenuHandler<ComponentType.MentionableSelect> {
+type ChooseMentionableSpec = { componentType: ComponentType.MentionableSelect };
+
+export default class ChooseMentionable extends SelectMenuHandler<ChooseMentionableSpec> {
     constructor() {
         super({
             customId: "mentionable.choose",
@@ -169,7 +193,7 @@ export default class ChooseMentionable extends SelectMenuHandler<ComponentType.M
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.MentionableSelect>) {
+    async run(ctx: SelectMenuContext<ChooseMentionableSpec>) {
         const { values, users, roles } = ctx.interaction;
         const names = values.map(
             id => users.get(id)?.username ?? roles.get(id)?.name ?? id,
@@ -201,7 +225,9 @@ import { ChannelSelectMenuBuilder } from "@discordjs/builders";
 import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
 import { ChannelType, ComponentType } from "discord.js";
 
-export default class ChooseChannel extends SelectMenuHandler<ComponentType.ChannelSelect> {
+type ChooseChannelSpec = { componentType: ComponentType.ChannelSelect };
+
+export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> {
     constructor() {
         super({
             customId: "channel.choose",
@@ -214,7 +240,7 @@ export default class ChooseChannel extends SelectMenuHandler<ComponentType.Chann
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.ChannelSelect>) {
+    async run(ctx: SelectMenuContext<ChooseChannelSpec>) {
         const names = ctx.interaction.values.map(id => {
             const channel = ctx.interaction.channels.get(id);
             return channel && "name" in channel ? (channel.name ?? id) : id;
@@ -273,10 +299,12 @@ export const assignTicket = defineParams({
     schema: v.object({ ticketId: v.string(), owner: v.string() }),
 });
 
-export default class AssignTicket extends SelectMenuHandler<
-    ComponentType.UserSelect,
-    typeof assignTicket
-> {
+type AssignTicketSpec = {
+    componentType: ComponentType.UserSelect;
+    params: typeof assignTicket;
+};
+
+export default class AssignTicket extends SelectMenuHandler<AssignTicketSpec> {
     constructor() {
         super({
             componentType: ComponentType.UserSelect,
@@ -286,9 +314,7 @@ export default class AssignTicket extends SelectMenuHandler<
         });
     }
 
-    async run(
-        ctx: SelectMenuContext<ComponentType.UserSelect, typeof assignTicket>,
-    ) {
+    async run(ctx: SelectMenuContext<AssignTicketSpec>) {
         const [issues, params] = ctx.params; // From the custom ID.
         const assignee = ctx.interaction.users.first(); // From the click.
     }
@@ -304,20 +330,92 @@ and may also carry a template, which
 encoded custom ID. Routes are unique across every select type. A click
 of another select type is unmatched before its params are decoded.
 
+## Validate the selection
+
+Selected values come from the client, so a stale menu or a forged interaction
+can send values the menu never offered. Add `input` to validate them before the
+handler runs, with the same [`defineInput`](input-validation.md) as commands and
+modals:
+
+```ts
+import { StringSelectMenuBuilder } from "@discordjs/builders";
+import {
+    defineInput,
+    type SelectMenuContext,
+    SelectMenuHandler,
+} from "@hyperion/core";
+import { ComponentType, MessageFlags } from "discord.js";
+import * as v from "valibot";
+
+const input = defineInput({
+    schema: v.pipe(v.array(v.picklist(["blue", "green", "red"])), v.length(1)),
+});
+
+type ChooseColourSpec = { input: typeof input };
+
+export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
+    constructor() {
+        super({
+            customId: "colour.choose",
+            componentType: ComponentType.StringSelect,
+            builder: new StringSelectMenuBuilder().addOptions(
+                { label: "Blue", value: "blue" },
+                { label: "Green", value: "green" },
+                { label: "Red", value: "red" },
+            ),
+            input,
+        });
+    }
+
+    async run(ctx: SelectMenuContext<ChooseColourSpec>) {
+        const [issues, colours] = ctx.input;
+
+        if (issues) {
+            await ctx.interaction.reply({
+                content: "That colour isn't on the list.",
+                flags: MessageFlags.Ephemeral,
+            });
+
+            return;
+        }
+
+        await ctx.interaction.update({ content: `You chose ${colours[0]}.` });
+    }
+}
+```
+
+- The schema receives a copy of `interaction.values`: a `string[]` of the picked
+  option values, or of the selected IDs for user, role, mentionable, and channel
+  selects. An empty selection is `[]`. It is the same shape the select has
+  inside a modal.
+- Processing runs after params and guards:
+  `params → guards → optional deferral → schema → resolver → handler`. Guards
+  and the resolver see `ctx.params` but never `ctx.input`.
+- A resolver can read resolved entities from `ctx.interaction` (`.users`,
+  `.members`, `.roles`, `.channels`), for example to turn IDs into members.
+- `ctx.input` is `[null, value]` after success, or `[issues, undefined]` when the
+  schema fails. Schema issues reach the handler, which owns the response. A
+  schema or resolver that throws skips the handler and reports the `input`
+  stage through the error pipeline.
+- `defer: true` privately defers a reply. `defer: "update"` calls
+  `deferUpdate()` instead, so the handler finishes with `editReply()` on the
+  menu's message. Neither defers an interaction that a guard already
+  acknowledged.
+- Nothing checks that the schema suits the select type; a picklist on a user
+  select simply reports issues for every ID.
+
 ## Guards, async work, and errors
 
 The optional `guards` array accepts instances or lazy async factories for
 `Guard<SelectMenuContext>` (string selects) or
-`Guard<SelectMenuContext<ComponentType.UserSelect>>` (user selects), or
-`Guard<SelectMenuContext<ComponentType.RoleSelect>>` (role selects), or
-`Guard<SelectMenuContext<ComponentType.MentionableSelect>>` (mentionable selects), or
-`Guard<SelectMenuContext<ComponentType.ChannelSelect>>` (channel selects).
+`Guard<SelectMenuContext<{ componentType: … }>>` with the handler's select type.
 Shared guards such as `ownerOnly` also work. Every component
 must declare its own guards; a command's guards do not apply to its menus.
 
 Handlers control acknowledgment. Use `update()` for immediate message changes,
 `deferUpdate()` before slow work followed by `editReply()`, or `showModal()` to
-open a modal. Hyperion does not acknowledge before running the handler.
+open a modal. Hyperion acknowledges before the handler only when `input.defer` is
+set; see [validate the selection](#validate-the-selection).
 
 Guard and handler failures use the shared error pipeline: an initial reply is
 private, deferred replies are edited, and replied interactions or deferred
@@ -331,11 +429,10 @@ state in application-owned storage rather than fields on a shared handler.
 ## JSX string-select authoring
 
 `@hyperion/jsx` can author a native string-select template with
-`renderStringSelect()` and `StringSelect.Option` children. Use the same view inside
-an `ActionRow` with `renderComponents()` for a fresh message instance. Existing
-exact-ID/type routing, guards, selected string values, acknowledgment, and native
-collectors remain unchanged; JSX does not introduce handler callbacks or schemas.
+`renderStringSelect()` and `StringSelect.Option` children, and every select type
+inside an `ActionRow` with `renderComponents()` for a fresh message instance.
+Routing, guards, input, acknowledgment, and native collectors are unchanged; JSX
+renders builders and adds no handler callbacks.
 
-See [JSX select menus](jsx-select-menus.md) for complete handler/message examples,
-props, defaults, uniqueness scopes, native validator gaps, and `/jsx-select`.
-Entity selects and modal select authoring remain outside the JSX API.
+See [JSX select menus](jsx-select-menus.md) for complete handler and message
+examples, props, defaults, and uniqueness scopes.
