@@ -44,7 +44,9 @@ Read the relevant reference before implementation or review:
 
 ## Documentation
 
-`docs/*.md` are reference docs for contributors and agents: precise and complete.
+`docs/*.md` are reference docs for contributors and agents: precise and complete,
+and written as the current contract. Design history and rejected options belong in
+ADRs (`docs/adr/`) and git history.
 `docs/guide/` is the human-facing guide. When behavior changes, update the
 reference doc, then the matching guide page following
 [the writing style](docs/writing-style.md). The guide may omit details but must
@@ -76,6 +78,10 @@ pnpm typecheck
 pnpm test
 pnpm check
 ```
+
+When public types or package exports change, also run `pnpm verify:package`: its
+packed-consumer fixtures in `scripts/fixtures/` assert published declarations,
+including expected type errors.
 
 If the package-manager wrapper is unavailable, use:
 
