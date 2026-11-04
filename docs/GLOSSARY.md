@@ -145,12 +145,17 @@ The application values supplied to one modal handler after submission validation
 and any application resolution have completed.
 _Avoid_: Raw submitted values, form controls
 
+**Modal control**:
+A control inside a modal label that submits a value: a text input, select menu,
+file upload, radio group, checkbox group, or checkbox.
+_Avoid_: Field, form field, input
+
 **Text input**:
-A form control for entering a short or multiline text value.
+A modal control for entering a short or multiline text value.
 _Avoid_: Command option, submitted value
 
 **Label**:
-The visible name and optional explanatory text associated with a form control.
+The visible name and optional explanatory text associated with a modal control.
 _Avoid_: Custom ID, placeholder
 
 **Text display**:

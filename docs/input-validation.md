@@ -138,7 +138,7 @@ the base class. No class factory or `CommandContextFor` helper is introduced.
 - Definitions and schemas are shared; invocation input and contexts are fresh.
   Constructors copy/freeze the input configuration without freezing application
   schema objects or executing validation and resolution.
-- Discovery and deployment never execute schemas or resolvers. Modal submissions support the same policy with text-input extraction; see
+- Discovery and deployment never execute schemas or resolvers. Modal submissions support the same policy, extracting every modal control; see
   [modal input validation](modal-input-validation.md). Custom-ID parameters remain
   deferred.
 

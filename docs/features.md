@@ -10,10 +10,6 @@ implemented item links a reference doc.
 ## Planned
 
 - [ ] Typed input for more interaction sources.
-  - Extract modal controls other than text inputs: string, user, role, mentionable,
-    and channel selects, file uploads, radio groups, checkbox groups, and
-    checkboxes. They are readable only through native getters today. Decide whether
-    schemas receive IDs or resolved objects for entity selects and uploads.
   - Add `input` to select-menu handlers, so `interaction.values` is validated like
     other input.
 - [ ] More JSX components.
@@ -58,7 +54,7 @@ implemented item links a reference doc.
   [buttons](buttons.md), [select menus](select-menus.md), and [modals](modals.md).
 - Typed custom-ID params. See [custom-ID params](custom-id-params.md).
 - Guards through `defineGuard()`. See [guards](guards.md).
-- Typed input for commands and modal text inputs, with async resolvers. See
+- Typed input for commands and every modal control, with async resolvers. See
   [typed command input](input-validation.md) and
   [modal input validation](modal-input-validation.md).
 - Filesystem event handlers. See [event handlers](event-handlers.md).
