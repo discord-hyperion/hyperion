@@ -31,7 +31,10 @@ your bot needs next.
 
 - [Events](events.md): react to Discord events like `messageCreate`.
 - [Logging](logging.md)
-- [JSX](jsx.md): write embeds, buttons, and forms as JSX.
+- [JSX guide](jsx.md): embeds, buttons, layout messages, and forms as JSX. It
+  works with any discord.js bot.
+- [JSX with Hyperion](jsx-with-hyperion.md): keep JSX controls and forms as
+  handler templates.
 
 Looking for exact contracts, edge cases, or how something is implemented? The
 reference docs one folder up (`docs/*.md`) cover every detail.

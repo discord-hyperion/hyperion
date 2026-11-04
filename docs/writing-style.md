@@ -78,16 +78,23 @@ These belong in reference docs, ADRs, or git history, not the guide:
 
 ## Avoid duplication
 
-Each topic has one home in the guide. Other pages link to it in one sentence:
+Each topic has one home in the guide. Other pages link to it in one sentence.
+A package README introduces the package, shows one or two examples, and links to
+the guide; it doesn't repeat the guide.
 
-| Topic                                  | Home                                 |
-| -------------------------------------- | ------------------------------------ |
-| Replying, deferring, and error replies | [responding.md](guide/responding.md) |
-| Guards and their state                 | [guards.md](guide/guards.md)         |
-| Data in custom IDs                     | [custom-ids.md](guide/custom-ids.md) |
-| Typed input                            | [input.md](guide/input.md)           |
-| JSX authoring                          | [jsx.md](guide/jsx.md)               |
-| Logging                                | [logging.md](guide/logging.md)       |
+| Topic                                  | Home                                                     |
+| -------------------------------------- | -------------------------------------------------------- |
+| Replying, deferring, and error replies | [responding.md](guide/responding.md)                     |
+| Guards and their state                 | [guards.md](guide/guards.md)                             |
+| Data in custom IDs                     | [custom-ids.md](guide/custom-ids.md)                     |
+| Typed input                            | [input.md](guide/input.md)                               |
+| JSX setup and rendering                | [jsx.md](guide/jsx.md)                                   |
+| Embed text and reusable JSX views      | [embeds.md](guide/jsx/embeds.md)                         |
+| JSX buttons and menus                  | [message-components.md](guide/jsx/message-components.md) |
+| Layout messages                        | [layout-messages.md](guide/jsx/layout-messages.md)       |
+| JSX with Hyperion handlers             | [jsx-with-hyperion.md](guide/jsx-with-hyperion.md)       |
+| JSX form authoring                     | [modals.md](guide/jsx/modals.md)                         |
+| Logging                                | [logging.md](guide/logging.md)                           |
 
 ## Example rewrite
 
