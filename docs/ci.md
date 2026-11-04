@@ -3,13 +3,14 @@
 [GitHub Actions](../.github/workflows/ci.yml) runs on pull requests, pushes to
 `main`, and manual dispatch. Every job uses Node.js 24 and the pnpm version pinned
 in `package.json`, caches the pnpm store, and installs with
-`pnpm install --frozen-lockfile`. It has four jobs:
+`pnpm install --frozen-lockfile`. It has five jobs:
 
 | Job             | Runs                                    | What it does                                                                                                      |
 | --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `Changes`       | Always                                  | Compares the commits and decides whether the code checks are needed                                               |
 | `Lint and docs` | Always                                  | `pnpm check`: Biome, plus the documentation check (`scripts/check-docs.mjs`: links, anchors, and example imports) |
 | `Code`          | Unless the change is documentation-only | Type checking and isolated tests, the CI helper tests, and the release, cache, and packed-consumer verification   |
+| `Docs site`     | When the guide or site build changes    | Builds the Fumadocs site (`apps/docs-site-fumadocs`) and runs its 14 output checks                                |
 | `Checks`        | Always, last                            | The single result for the workflow                                                                                |
 
 The `Code` job runs the same commands as local verification:
@@ -30,6 +31,23 @@ comparison (a manual run, a first push, an unreachable base commit, or no change
 files) also runs everything, so a mistake can only run too much, never too little.
 The script has its own tests (`scripts/ci-changes.test.mjs`), which the `Code` job
 runs, so changing it always runs them.
+
+## Documentation site
+
+`Docs site` runs when a change touches `docs/guide/`, `apps/docs-site-fumadocs/`,
+`pnpm-lock.yaml`, `pnpm-workspace.yaml`, the root `package.json`, or anything under
+`.github/workflows/`. It runs `site:build` and `site:check` at the site root, the
+same way the published site is built. `scripts/ci-changes.mjs` decides this alongside the `Code`
+rule, so a guide-only change runs `Lint and docs` and `Docs site` but not `Code`.
+It builds only; it never publishes.
+
+Publishing is a separate workflow, [`pages.yml`](../.github/workflows/pages.yml). On
+pushes to `main` that touch the guide or the site, it builds, runs the same checks,
+and uploads `out/` to the Cloudflare Pages project `hyperion-docs`
+(`hyperion-docs-6h7.pages.dev`) with Wrangler. It needs the `CLOUDFLARE_API_TOKEN`
+repository secret, a token with only the account permission Cloudflare Pages: Edit.
+The account ID is not secret and is written in the workflow. Pull requests are
+never published.
 
 `Checks` waits for the other jobs. A skipped job counts as passing; a failed or
 cancelled one fails the result. It keeps the name `CI / Checks` whichever jobs a

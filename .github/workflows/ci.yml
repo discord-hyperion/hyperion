@@ -20,6 +20,7 @@ jobs:
         timeout-minutes: 5
         outputs:
             code: ${{ steps.classify.outputs.code }}
+            site: ${{ steps.classify.outputs.site }}
 
         steps:
             - name: Check out repository
@@ -29,7 +30,7 @@ jobs:
                   fetch-depth: 0
                   persist-credentials: false
 
-            - name: Decide whether the code checks are needed
+            - name: Decide which jobs the change needs
               id: classify
               env:
                   BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -97,13 +98,46 @@ jobs:
             - name: Verify packed package consumers
               run: pnpm verify:package
 
+    site:
+        name: Docs site
+        needs: changes
+        if: needs.changes.outputs.site == 'true'
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        env:
+            NEXT_TELEMETRY_DISABLED: "1"
+            # Build the way the published site is built: at the root of pages.dev.
+            SITE_BASE: ""
+
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up pnpm and Node.js
+              uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+              with:
+                  runtime: node@24
+                  cache: true
+                  install: false
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Build the site
+              run: pnpm --filter @hyperion/docs-site-fumadocs site:build
+
+            - name: Check the built site
+              run: pnpm --filter @hyperion/docs-site-fumadocs site:check
+
     # One stable result for the whole workflow, so a future branch protection rule
     # can require `Checks` regardless of which jobs a change needed. A skipped job
     # passes; a failed or cancelled one fails.
     checks:
         name: Checks
         if: always()
-        needs: [changes, lint, code]
+        needs: [changes, lint, code, site]
         runs-on: ubuntu-latest
         timeout-minutes: 5
 
@@ -113,4 +147,4 @@ jobs:
               run: exit 1
 
             - name: Every required job passed or was skipped
-              run: echo "changes=${{ needs.changes.result }} lint=${{ needs.lint.result }} code=${{ needs.code.result }}"
+              run: echo "changes=${{ needs.changes.result }} lint=${{ needs.lint.result }} code=${{ needs.code.result }} site=${{ needs.site.result }}"
