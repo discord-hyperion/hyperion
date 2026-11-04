@@ -36,10 +36,19 @@ expressions, no `public`, formatting), so they are not repeated here.
 
 ## Layout
 
-Group related statements and separate phases (validation, mutations, logging,
-later operations) with a blank line, following the registry loaders.
+`scripts/check-layout.mjs` enforces the mechanical layout rules in `pnpm check`,
+the pre-commit hook, and CI, and `pnpm check:fix` applies them:
+- a blank line around braced `if` blocks, between consecutive blocks (`for`, `if`,
+  `try`, `while`, `switch`), before a `return` that follows other statements, and
+  around awaited calls of four or more lines, except at the start or end of a body
+  or within an `else`/`catch` chain;
+- braces on loop bodies, and on `if` bodies other than `return`, `break`,
+  `continue`, or a plain assignment (so `throw` is always braced).
 
-Group simple assignments, and separate awaited results from them:
+Reviewers own the judgement calls the check cannot see. Group related statements
+and separate phases (validation, mutations, logging, later operations) with a
+blank line, following the registry loaders. Group simple assignments, and
+separate awaited results from them:
 
 ```ts
 const x = 0;
@@ -52,63 +61,12 @@ const value = result.value;
 this.total = x;
 ```
 
-Give multi-line awaited calls (four or more lines) a blank line above and below.
-
-Put a blank line before a function's `return` when the body has other statements:
-
-```ts
-const total = () => {
-    let sum = 0;
-
-    sum += values.length;
-
-    return sum;
-};
-```
-
-Separate consecutive blocks (`for`, `if`, `try`) with a blank line, except when one
-block directly follows its opening keyword's body or chains with `else`/`catch`:
-
-```ts
-for (const entry of entries) {
-    // …
-}
-
-if (queue.running) {
-    // …
-}
-```
-
-Give every braced `if` block a blank line above and below, except at the start or
-end of the enclosing body and around its own `else` chain:
-
-```ts
-const entry = entries.get(name);
-
-if (!entry.ready) {
-    await entry.prepare();
-}
-
-entry.run();
-```
-
-Inline single statements only for `if` with `return`, `break`, `continue`, or a
-plain assignment. Use braces for loops and for `throw`:
+Group consecutive inline guards together without blank lines between them:
 
 ```ts
 if (!x) return;
 if (!y) continue;
-
-for (const entry of entries) {
-    entry.run();
-}
-
-if (invalid) {
-    throw new TypeError("…");
-}
 ```
-
-Group consecutive inline guards together without blank lines between them.
 
 ## Documentation
 

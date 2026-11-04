@@ -1,6 +1,7 @@
 // Format and fix only files touched on this branch, staged or not, plus new
-// files. Repo-wide writes reformat unrelated work; use `pnpm check:fix:all`
-// when that is genuinely intended.
+// files: layout fixes (scripts/check-layout.mjs) first, then Biome. Repo-wide
+// writes reformat unrelated work; use `pnpm check:fix:all` when that is
+// genuinely intended.
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -34,6 +35,20 @@ const targets = [...files]
 if (targets.length === 0) {
     console.log(`No files changed relative to ${base}.`);
     process.exit(0);
+}
+
+const code = targets.filter(file => /\.(ts|tsx|js|jsx|mjs)$/.test(file));
+
+if (code.length > 0) {
+    execFileSync(
+        process.execPath,
+        [
+            fileURLToPath(new URL("check-layout.mjs", import.meta.url)),
+            "--fix",
+            ...code,
+        ],
+        { cwd: root, stdio: "inherit" },
+    );
 }
 
 const biome = fileURLToPath(

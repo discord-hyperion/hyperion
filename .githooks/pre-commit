@@ -4,4 +4,5 @@ set -e
 
 ./node_modules/.bin/biome check --staged --no-errors-on-unmatched --files-ignore-unknown=true
 node scripts/check-docs.mjs
+node scripts/check-layout.mjs
 ./node_modules/.bin/tsc --noEmit
