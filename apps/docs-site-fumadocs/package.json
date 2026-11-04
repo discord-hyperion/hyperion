@@ -1,0 +1,25 @@
+{
+    "name": "@hyperion/docs-site-fumadocs",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "site:stage": "node scripts/stage.mjs",
+        "site:build": "node scripts/stage.mjs && next build",
+        "site:check": "node scripts/check-site.mjs",
+        "site:serve": "node scripts/serve.mjs"
+    },
+    "dependencies": {
+        "fumadocs-core": "^16.17.10",
+        "fumadocs-mdx": "^15.4.10",
+        "fumadocs-ui": "^16.17.10",
+        "next": "^16.4.2",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "^4.3.3",
+        "postcss": "^8.5.31",
+        "tailwindcss": "^4.3.3"
+    }
+}

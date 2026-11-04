@@ -1,30 +1,37 @@
 # Documentation site generators for Hyperion
 
 Researched **2026-11-04** against repository files and current primary sources.
-This is a research recommendation, not an implemented migration. No candidate was
-installed, built, or started; dependency resolution and repository compatibility
-remain to test. Rankings below are judgments about Hyperion's needs, not measured
-performance or popularity.
+This is a research recommendation, not an adopted migration. The sections up to
+"Implementation outline" were written before any candidate was installed. A
+Fumadocs prototype followed the same day; see
+[Fumadocs results](#prototype-results-fumadocs). Rankings are judgments about
+Hyperion's needs, not measured performance or popularity.
 
 ## Recommendation
 
-1. **Astro Starlight** is the preferred starting point for a polished guide with
-   local search and limited custom application code. Accept a content-loading
-   adapter and title metadata rather than moving the authoritative Markdown.
-2. **VitePress** is the closest challenger, and may be preferable if keeping the
-   current directory structure and Markdown editing experience is the overriding
-   constraint. Accept Vue as the docs customization stack and maintain explicit
-   navigation.
-3. **Docusaurus** becomes preferable if independently versioned documentation
+Use **Fumadocs** for the guide. The prototype below met the acceptance list, and
+it is the generator the discord.js guide itself uses. Plan for its costs: it is a
+React application to maintain (the prototype took 15 files and about 380 lines),
+it exports static HTML only, search needs explicit configuration (index code
+blocks, and pass the index URL under a base path), and the exported site is
+larger than a content-only generator's. These are the details under
+[Fumadocs results](#prototype-results-fumadocs).
+
+Alternatives, if the constraints change:
+1. **VitePress** may be preferable if keeping the current directory structure and
+   Markdown editing experience is the overriding constraint. Accept Vue as the
+   docs customization stack and maintain explicit navigation.
+2. **Docusaurus** becomes preferable if independently versioned documentation
    becomes an immediate requirement. Its version snapshots and multiple docs
    instances address that requirement directly, at the cost of more configuration
    and either external search or a community local-search dependency.
 
 Rspress is a credible alternative when React customization, built-in version
-routing, and an official TypeDoc integration matter together. Fumadocs is best
-reserved for a documentation product requiring custom React layouts or integration
-with an existing web application. Neither adds enough value to displace the first
-two for today's guide. Supporting sources and qualifications follow.
+routing, and an official TypeDoc integration matter together. Supporting sources
+and qualifications follow.
+
+Before adopting: choose a host, add a docs build to CI and Turbo with explicit
+inputs, and test what the prototype did not (see "Not tested" below).
 
 ## Repository constraints
 
@@ -56,19 +63,14 @@ The unrelated JSX README rewrite must remain untouched.
 additional package or explicit application wiring. Operational costs are inferred
 from those requirements, not benchmarked.
 
-| Candidate  | Markdown and code                                    | Search without a service                          | Navigation and customization                           | Versioning and API path                                               | Fit / operating cost                                        |
-| ---------- | ---------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Starlight  | `.md`; Expressive Code fences; tabs use components   | Default Pagefind                                  | Explicit or generated sidebar; CSS and Astro overrides | Plan archive policy separately; community `starlight-typedoc`         | Best guide default; Astro/content adapter to maintain       |
-| VitePress  | Markdown routes; highlighted fences and code groups  | Built-in MiniSearch option                        | Explicit grouped/path-specific sidebars; Vue theme     | Plan archive policy separately; third-party TypeDoc Markdown theme    | Strong preservation fit; Vue/Vite tooling                   |
-| Docusaurus | `.md` can use CommonMark mode; React/MDX optional    | Community plugins; official Algolia integration   | Docs sidebars and React theme customization            | Built-in snapshots and multi-instance docs; third-party TypeDoc theme | Strong versioning case; more plugin/configuration ownership |
-| Rspress    | Markdown/MDX; code fences and React tabs             | Built-in search; optional official Algolia plugin | Conventional navigation and React theme overrides      | Built-in version directories; official TypeDoc plugin                 | Competitive integrated feature set; Rsbuild stack           |
-| Fumadocs   | Markdown/MDX content source; code and tab components | Static browser index requires configuration       | Page tree and application layouts; React               | Design archives explicitly; assess separate API pipeline              | Most application flexibility; most assembly for this scope  |
+| Candidate  | Markdown and code                                    | Search without a service                          | Navigation and customization                       | Versioning and API path                                               | Fit / operating cost                                        |
+| ---------- | ---------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------- |
+| VitePress  | Markdown routes; highlighted fences and code groups  | Built-in MiniSearch option                        | Explicit grouped/path-specific sidebars; Vue theme | Plan archive policy separately; third-party TypeDoc Markdown theme    | Strong preservation fit; Vue/Vite tooling                   |
+| Docusaurus | `.md` can use CommonMark mode; React/MDX optional    | Community plugins; official Algolia integration   | Docs sidebars and React theme customization        | Built-in snapshots and multi-instance docs; third-party TypeDoc theme | Strong versioning case; more plugin/configuration ownership |
+| Rspress    | Markdown/MDX; code fences and React tabs             | Built-in search; optional official Algolia plugin | Conventional navigation and React theme overrides  | Built-in version directories; official TypeDoc plugin                 | Competitive integrated feature set; Rsbuild stack           |
+| Fumadocs   | Markdown/MDX content source; code and tab components | Static browser index requires configuration       | Page tree and application layouts; React           | Design archives explicitly; assess separate API pipeline              | Most application flexibility; most assembly for this scope  |
 
-Sources: Starlight [authoring](https://starlight.astro.build/guides/authoring-content/),
-[configuration](https://starlight.astro.build/reference/configuration/),
-[search](https://starlight.astro.build/guides/site-search/), and
-[tabs](https://starlight.astro.build/components/tabs/);
-VitePress [Markdown](https://vitepress.dev/guide/markdown),
+Sources: VitePress [Markdown](https://vitepress.dev/guide/markdown),
 [search](https://vitepress.dev/reference/default-theme-search), and
 [sidebar](https://vitepress.dev/reference/default-theme-sidebar);
 Docusaurus [Markdown modes](https://docusaurus.io/docs/markdown-features),
@@ -82,31 +84,6 @@ Fumadocs [overview](https://www.fumadocs.dev/docs),
 [static build](https://www.fumadocs.dev/docs/deploying/static).
 
 ## Authoring and migration tradeoffs
-
-### Starlight
-
-Starlight supports ordinary Markdown and frontmatter, with syntax highlighting,
-line/text emphasis, and code frames through Expressive Code. Its content model
-expects metadata such as a title; the default content location is not Hyperion's
-existing guide directory. Prototype an external collection loader or deterministic
-staging adapter that supplies titles and maps README to the landing route.
-Do not maintain hand-edited copies. [Authoring documentation](https://starlight.astro.build/guides/authoring-content/)
-and [page model](https://starlight.astro.build/guides/pages/).
-
-Explicit sidebar groups can retain Basics, Interactions, Making it safe, and
-Everything else; autogenerated entries can cover a later API section. Start with
-CSS customization; component overrides introduce additional coupling to theme
-updates. Tabs are available as Starlight components, so adopting them usually
-means MDX or another supported component authoring format on selected pages.
-Keep simple examples in `.md` rather than converting the entire guide for tabs.
-[Configuration](https://starlight.astro.build/reference/configuration/),
-[customization](https://starlight.astro.build/guides/customization/), and
-[tabs](https://starlight.astro.build/components/tabs/).
-
-Pagefind provides default static full-text search, and individual pages or regions
-can be excluded. The official DocSearch plugin is an optional external alternative.
-This gives the proposed guide no search-service operating requirement.
-[Search documentation](https://starlight.astro.build/guides/site-search/).
 
 ### VitePress
 
@@ -183,12 +160,11 @@ use the chosen branch for development docs. Do not simply strip `.md` from
 small, explicit reference allowlist. This is a proposed migration policy, not a
 feature automatically supplied by any candidate.
 
-Static self-hosting is viable: Starlight generates HTML, VitePress documents static
+Static self-hosting is viable: VitePress documents static
 deployment, Docusaurus emits a static build, Rspress is an SSG, and Fumadocs has an
 explicit static-export path. GitHub Pages is a possible target, not a selected
 host. Test both root and repository subpath URLs, assets, search indexes, refreshes,
 and 404 behavior before choosing deployment settings.
-[Starlight pages](https://starlight.astro.build/guides/pages/),
 [VitePress deployment](https://vitepress.dev/guide/deploy),
 [Docusaurus deployment](https://docusaurus.io/docs/deployment),
 [Rspress introduction](https://rspress.rs/guide/start/introduction), and
@@ -199,7 +175,7 @@ Discord prerelease baseline. Avoid one site snapshot per independent patch.
 Later archive meaningful supported combinations; do not create a Cartesian product
 of package releases. Give generated API pages separate package/version paths.
 Docusaurus snapshots and Rspress version directories assist routing, but neither
-chooses this compatibility policy. Starlight/VitePress archives could use separate
+chooses this compatibility policy. VitePress archives could use separate
 build prefixes or a tested community integration; Fumadocs could implement them
 in application routing. Those are design options, not verified native snapshot
 features. [Docusaurus policy caveats](https://docusaurus.io/docs/versioning) and
@@ -211,11 +187,10 @@ TypeDoc generates symbol reference documentation, not the explanation and workfl
 content in the guide. Its default HTML output could live under a separate API
 prefix, minimizing theme integration. Markdown output requires
 `typedoc-plugin-markdown`; that project supplies companion VitePress and
-Docusaurus integrations. Starlight has the third-party `starlight-typedoc` plugin;
-Rspress supplies an official plugin. None establishes compiler compatibility.
+Docusaurus integrations. Rspress supplies an official plugin. None establishes
+compiler compatibility.
 [TypeDoc overview](https://typedoc.org/documents/Overview.html),
-[Markdown plugin](https://typedoc-plugin-markdown.org/docs),
-[Starlight plugin repository](https://github.com/HiDeoo/starlight-typedoc), and
+[Markdown plugin](https://typedoc-plugin-markdown.org/docs), and
 [Rspress integration](https://www.rspress.dev/plugin/official-plugins/typedoc).
 
 **TS7 support is not verified and must not be assumed.** The inspected upstream
@@ -238,8 +213,9 @@ also need TS7 checks; highlighting a TSX fence does not test compiler support.
 ## Implementation outline and prototype acceptance
 
 Create a private docs workspace with its own config and build output, preserving
-the root package-manager pin and source-first bot workflow. Prototype Starlight
-first, with VitePress as the comparison if its content adapter proves intrusive.
+the root package-manager pin and source-first bot workflow. Prototype one
+candidate first, and a second for comparison if its content adapter proves
+intrusive.
 Keep guide Markdown authoritative, metadata minimal, and generated staging files
 ignored. Add a dedicated Turbo docs build with explicit content/config inputs;
 never import or initialize the dev bot during documentation builds.
@@ -264,3 +240,67 @@ This research adds only this note. Validation consists of targeted Biome checkin
 the existing documentation link/import checker, and whitespace checks. Installation,
 rendered appearance, dependency compatibility, static search behavior, and API
 extraction remain prototype questions; no performance claims are established.
+
+## Prototype results (Fumadocs)
+
+Built on 2026-11-04 in `apps/docs-site-fumadocs`, following the acceptance list
+above, because the discord.js guide itself uses Fumadocs. Fumadocs 16.17 on
+Next.js 16.4 (static export) with React 19 and Tailwind 4, built at two
+deployment shapes: a repository subpath (`/discord-hyperion`) and the site root.
+It is a throwaway proof, not wired into CI, Turbo, or a host, and it uses
+JavaScript only, because the root `tsc` includes `apps/**/*.ts(x)`.
+
+**Setup and compatibility.** The first build worked, and all original lockfile
+entries stayed intact. Fumadocs' own `next-static` example pins TypeScript
+`^7.0.2`, and the Next build's TypeScript step ran against 7.0.2 here without
+trouble. No TypeScript files were involved, and Twoslash was not tested.
+
+**Results**, from the Fumadocs `scripts/check-site.mjs`, at both `/discord-hyperion`
+and `/`: 14 of 14 pass. They cover the guide's pages, the allowlist, links and
+anchors, code fidelity, edit links, and five search queries, plus a check that
+the built client fetches its index from the deployment's base path. Search
+was queried through Fumadocs' own static search client in Node. The checker also
+failed correctly on a deliberately broken copy. A desktop view and a phone-sized
+view were inspected: grouped sidebar, outline, edit link, previous/next cards,
+and mobile menu all work.
+
+**Measured here** (build time includes staging, warm cache):
+- 9 direct dependencies, and 15 files with about 380 lines of site code.
+- A build takes about 4.9 s.
+- The export is 5.7 MB: 2 MB HTML, 2.3 MB per-page RSC payloads used for
+  client-side navigation, and 1 MB JavaScript.
+- The search index is one 504 KB JSON file, loaded on the first search.
+- Relative `.md` links between guide pages are resolved by `createRelativeLink`,
+  so staging only maps folder indexes and links outside the guide.
+- The sidebar comes from `meta.json` files, which staging generates.
+- A leading `// path` comment in a code block is not turned into a frame title.
+
+**Findings.**
+- By default Fumadocs does not index code blocks, so a search for `ButtonHandler`
+  (which appears only in examples) found nothing. Setting
+  `remarkStructureOptions.types` to include `code` fixed it. The docs warn that
+  collection-level `mdxOptions` remove the default plugins, so the option has to
+  be set globally with `defineConfig`.
+- On a subpath deployment the static search client ignores Next's `basePath`: its
+  default URL only knows Vite's base. Without passing `from` yourself, search
+  requests `/api/search` and fails. The export writes the index as a file, so the
+  URL must not end in a slash.
+- Folder index pages need a `jsx/index.md`, and giving both a separator and its
+  folder the name "JSX" produced a nested "JSX, JSX" in the sidebar. This is a
+  configuration choice that can be fixed.
+- A page URL without its trailing slash returns 404 on a plain static server;
+  how a real host redirects was not tested.
+- Collection-level options, folder indexes, and the search base path are the
+  places where a newcomer needs the docs open; none was a blocker.
+
+**Not tested.** The search dialog's behaviour in a browser (the same client code
+was queried in Node, and the built script and server were checked), keyboard
+navigation, contrast, dark mode, a real host, `next start`, Twoslash, TypeDoc, and
+VitePress.
+
+**Assessment (judgement, not measurement).** Fumadocs meets the acceptance list
+for the guide, at the cost of more assembly (see the measurements above). It is a
+React application, which pays off for custom layouts, interactive components, or
+an existing Next.js app, as in discord.js. Fumadocs is now the recommended
+generator (see Recommendation); that choice was made by the maintainer after this
+prototype, and the measurements above are the cost to plan for.

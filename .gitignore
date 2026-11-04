@@ -11,3 +11,11 @@ packages/*/dist/
 
 # Temporary working notes and prototypes
 /.scratch/
+
+# Fumadocs prototype (generated)
+apps/docs-site-fumadocs/content/
+apps/docs-site-fumadocs/.next/
+apps/docs-site-fumadocs/.source/
+apps/docs-site-fumadocs/out/
+apps/docs-site-fumadocs/out-*/
+apps/docs-site-fumadocs/next-env.d.ts
