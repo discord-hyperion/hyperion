@@ -2,7 +2,9 @@ import { UserSelectMenuBuilder } from "@discordjs/builders";
 import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSelect> {
+type ChooseUserSpec = { componentType: ComponentType.UserSelect };
+
+export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
             customId: "user.choose",
@@ -14,7 +16,7 @@ export default class ChooseUser extends SelectMenuHandler<ComponentType.UserSele
         });
     }
 
-    async run(ctx: SelectMenuContext<ComponentType.UserSelect>) {
+    async run(ctx: SelectMenuContext<ChooseUserSpec>) {
         const usernames = ctx.interaction.users.map(user => user.username);
 
         await ctx.interaction.update({

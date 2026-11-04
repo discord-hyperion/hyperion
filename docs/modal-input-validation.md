@@ -16,7 +16,7 @@ resolution through the existing input pipeline.
 
 Use the existing [typed command input](input-validation.md) contract for modal
 submissions with `defineInput({ schema, defer, resolve })`, a grouped `input`
-configuration, `ModalHandler<typeof input>`, and `ModalContext<typeof input>`. Preserve
+configuration, `ModalHandler<{ input: typeof input }>`, and `ModalContext<{ input: typeof input }>`. Preserve
 the readonly `[issues, value]` handler contract and existing handlers without
 input configuration.
 
@@ -50,7 +50,8 @@ Schemas own normalization, defaults, and application constraints.
 
 Use guards → optional private deferral → extraction → schema validation → optional
 whole-input resolution → handler. `defer: true` privately defers the submission
-while preserving an existing acknowledgment. Omission or `false` leaves
+while preserving an existing acknowledgment; `defer: "update"` defers an update
+to the source message of a modal opened from a message component. Omission or `false` leaves
 acknowledgment to the application. Guards and resolvers receive the original
 modal context without `ctx.input`.
 
@@ -126,7 +127,9 @@ const input = defineInput({
     defer: true,
 });
 
-export default class extends ModalHandler<typeof input> {
+type TodoSpec = { input: typeof input };
+
+export default class extends ModalHandler<TodoSpec> {
     constructor() {
         super({
             customId: "todo.create",
@@ -135,7 +138,7 @@ export default class extends ModalHandler<typeof input> {
         });
     }
 
-    async run(ctx: ModalContext<typeof input>) {
+    async run(ctx: ModalContext<TodoSpec>) {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.editReply({

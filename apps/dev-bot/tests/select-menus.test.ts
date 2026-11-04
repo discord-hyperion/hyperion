@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
-import { ComponentType } from "discord.js";
+import { ComponentType, MessageFlags } from "discord.js";
 import {
     createChatInputInteraction,
     createSelectInteraction,
@@ -62,4 +62,30 @@ test("development colour command and filesystem menu complete the selection flow
         template,
     );
     assert.equal(fixture.reply.mock.callCount(), 0);
+});
+
+test("the colour menu validates its selection before the handler runs", async t => {
+    const client = await HyperionClient.create({
+        name: "Test",
+        root: new URL("../", import.meta.url),
+        discord: { intents: [] },
+        logging: false,
+    });
+
+    t.after(() => client.destroy());
+    await client.selectMenus.load(new URL("../", import.meta.url));
+    const dispatcher = new InteractionDispatcher(client);
+    const fixture = createSelectInteraction(ComponentType.StringSelect, {
+        customId: "colour.choose",
+        values: ["purple"],
+        user: { id: "user" },
+    });
+
+    await dispatcher.dispatch(fixture.interaction);
+
+    assert.equal(fixture.update.mock.callCount(), 0);
+    assert.deepEqual(fixture.reply.mock.calls[0]?.arguments[0], {
+        content: "That colour isn't on the list.",
+        flags: MessageFlags.Ephemeral,
+    });
 });

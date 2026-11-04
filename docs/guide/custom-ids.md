@@ -75,9 +75,9 @@ characters, and Hyperion throws if you go over, so keep values short.
 Give the handler `params` instead of a `customId`:
 
 ```ts
-export default class CloseTicketButton extends ButtonHandler<
-    typeof closeTicket
-> {
+type CloseTicketButtonSpec = { params: typeof closeTicket };
+
+export default class CloseTicketButton extends ButtonHandler<CloseTicketButtonSpec> {
     constructor() {
         super({
             params: closeTicket,
@@ -86,7 +86,7 @@ export default class CloseTicketButton extends ButtonHandler<
         });
     }
 
-    async run(ctx: ButtonContext<typeof closeTicket>) {
+    async run(ctx: ButtonContext<CloseTicketButtonSpec>) {
         const [issues, params] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({
@@ -107,8 +107,9 @@ export default class CloseTicketButton extends ButtonHandler<
 `ctx.params` is `[issues, value]`, the same shape as [typed input](input.md). If
 the custom ID fails the schema, you get the issues and decide what to say.
 
-Select menus and modals work the same way: `SelectMenuHandler<Type, typeof params>`
-and `ModalHandler<typeof input, typeof params>`.
+Select menus and modals work the same way: put `params` in the type argument
+next to their other keys, such as `{ componentType, params }` for a user select
+or `{ params, input }` for a modal.
 
 ## Don't trust the custom ID
 

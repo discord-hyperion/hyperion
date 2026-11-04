@@ -74,12 +74,14 @@ const input = defineInput({
     schema: v.object({ title: v.pipe(v.string(), v.trim(), v.minLength(1)) }),
 });
 
-export default class CreateTodo extends ModalHandler<typeof input> {
+type CreateTodoSpec = { input: typeof input };
+
+export default class CreateTodo extends ModalHandler<CreateTodoSpec> {
     constructor() {
         super({ customId: "todo.create", builder: todoForm, input });
     }
 
-    async run(ctx: ModalContext<typeof input>) {
+    async run(ctx: ModalContext<CreateTodoSpec>) {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.reply({
@@ -121,10 +123,12 @@ export const renameTicketForm = defineParams({
     schema: v.object({ ticketId: v.string(), owner: v.string() }),
 });
 
-export default class RenameTicket extends ModalHandler<
-    typeof input,
-    typeof renameTicketForm
-> {
+type RenameTicketSpec = {
+    input: typeof input;
+    params: typeof renameTicketForm;
+};
+
+export default class RenameTicket extends ModalHandler<RenameTicketSpec> {
     constructor() {
         super({
             params: renameTicketForm,
@@ -134,7 +138,7 @@ export default class RenameTicket extends ModalHandler<
         });
     }
 
-    async run(ctx: ModalContext<typeof input, typeof renameTicketForm>) {
+    async run(ctx: ModalContext<RenameTicketSpec>) {
         const [paramIssues, params] = ctx.params; // which ticket
         const [inputIssues, value] = ctx.input; // what the user typed
     }
@@ -153,6 +157,8 @@ for how params work.
 ## Guards and responses
 
 Guards on the command or button that opened the form don't apply to the
-submission, so add them to the modal handler too. Responding works as usual,
+submission, so add them to the modal handler too. The opener's guards decide who
+sees the form; the modal's guards decide what gets accepted. A form can stay open
+for a while, and things like roles can change before it's submitted. Responding works as usual,
 see [responding](responding.md). To change the message the form was opened
 from, check `ctx.interaction.isFromMessage()` and then call `update()`.

@@ -20,11 +20,11 @@ export const closeTicket = defineParams({
     schema: ticketSchema,
 });
 
-export type CloseTicketContext = ButtonContext<typeof closeTicket>;
+type CloseTicketSpec = { params: typeof closeTicket };
 
-export default class CloseTicketButton extends ButtonHandler<
-    typeof closeTicket
-> {
+export type CloseTicketContext = ButtonContext<CloseTicketSpec>;
+
+export default class CloseTicketButton extends ButtonHandler<CloseTicketSpec> {
     constructor() {
         super({
             params: closeTicket,

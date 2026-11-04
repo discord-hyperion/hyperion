@@ -49,7 +49,10 @@ const input = defineInput({
     schema: v.object({ title: v.pipe(v.string(), v.minLength(1)) }),
 });
 
-type RenameContext = ModalContext<typeof input, typeof rename>;
+type RenameContext = ModalContext<{
+    input: typeof input;
+    params: typeof rename;
+}>;
 type Run = (ctx: RenameContext) => Promise<void>;
 
 const form = () =>
@@ -65,12 +68,15 @@ const form = () =>
 
 const createRenameModal = (
     execute: Run,
-    guards: readonly Guard<ModalContext<undefined, typeof rename>>[] = [],
+    guards: readonly Guard<ModalContext<{ params: typeof rename }>>[] = [],
     options: {
         resolve?: (value: { title: string }, ctx: never) => unknown;
     } = {},
 ) =>
-    new (class extends ModalHandler<typeof input, typeof rename> {
+    new (class extends ModalHandler<{
+        input: typeof input;
+        params: typeof rename;
+    }> {
         constructor() {
             super({
                 params: rename,
@@ -113,10 +119,10 @@ describe("modal params dispatch", () => {
         const { client, dispatcher, records } = await createTestClient(t);
         const order: string[] = [];
         const seesParams = () =>
-            defineGuard<ModalContext<undefined, typeof rename>>({
+            defineGuard<ModalContext<{ params: typeof rename }>>({
                 name: "SeesParams",
                 description: "Denied",
-                run(ctx: ModalContext<undefined, typeof rename>) {
+                run(ctx: ModalContext<{ params: typeof rename }>) {
                     order.push("guard");
                     assert.deepEqual(ctx.params, [null, ticket]);
                     assert.equal("input" in ctx, false);
@@ -241,7 +247,7 @@ describe("undecodable routes log for every kind", () => {
         const { client, dispatcher, records } = await createTestClient(t);
         client.buttons.routes.set(
             pick.id,
-            new (class extends ButtonHandler<typeof pick> {
+            new (class extends ButtonHandler<{ params: typeof pick }> {
                 constructor() {
                     super({ params: pick });
                 }
@@ -250,10 +256,10 @@ describe("undecodable routes log for every kind", () => {
         );
         client.selectMenus.routes.set(
             pick.id,
-            new (class extends SelectMenuHandler<
-                ComponentType.UserSelect,
-                typeof pick
-            > {
+            new (class extends SelectMenuHandler<{
+                componentType: ComponentType.UserSelect;
+                params: typeof pick;
+            }> {
                 constructor() {
                     super({
                         componentType: ComponentType.UserSelect,
@@ -358,7 +364,7 @@ describe("modal params loading", () => {
     test("a modal cannot declare both a customId and params", () => {
         assert.throws(
             () =>
-                new (class extends ModalHandler<undefined, typeof rename> {
+                new (class extends ModalHandler<{ params: typeof rename }> {
                     constructor() {
                         super({ params: rename, customId: "x" } as never);
                     }
@@ -380,7 +386,7 @@ describe("build(definition, values)", () => {
             name: "button",
             registry: () => new ButtonRegistry(),
             handler: (template?: PrimaryButtonBuilder) =>
-                new (class extends ButtonHandler<typeof pick> {
+                new (class extends ButtonHandler<{ params: typeof pick }> {
                     constructor() {
                         super({
                             params: pick,
@@ -395,10 +401,10 @@ describe("build(definition, values)", () => {
             name: "select menu",
             registry: () => new SelectMenuRegistry(),
             handler: (template?: UserSelectMenuBuilder) =>
-                new (class extends SelectMenuHandler<
-                    ComponentType.UserSelect,
-                    typeof pick
-                > {
+                new (class extends SelectMenuHandler<{
+                    componentType: ComponentType.UserSelect;
+                    params: typeof pick;
+                }> {
                     constructor() {
                         super({
                             componentType: ComponentType.UserSelect,
@@ -414,7 +420,7 @@ describe("build(definition, values)", () => {
             name: "modal",
             registry: () => new ModalRegistry(),
             handler: (template?: ModalBuilder) =>
-                new (class extends ModalHandler<undefined, typeof pick> {
+                new (class extends ModalHandler<{ params: typeof pick }> {
                     constructor() {
                         super({
                             params: pick,

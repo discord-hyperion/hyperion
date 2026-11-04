@@ -16,7 +16,9 @@ import {
 import type { GuardProvider } from "../../src/guards/index.ts";
 import type { Phase } from "./acknowledgment.ts";
 
-export type AnySelectContext = SelectMenuContext<SelectMenuType>;
+export type AnySelectContext = SelectMenuContext<{
+    componentType: SelectMenuType;
+}>;
 export type SelectFixture = ReturnType<
     typeof createSelectInteraction<SelectMenuType>
 >;
@@ -204,19 +206,27 @@ export const createMenu = (
 
     // The kind table pairs each builder with its matching select type, which a
     // union-typed table entry cannot express to the compiler.
-    return new (class extends SelectMenuHandler<ComponentType.StringSelect> {
+    return new (class extends SelectMenuHandler<{
+        componentType: ComponentType.StringSelect;
+    }> {
         constructor() {
             super({
                 customId: kind.customId,
                 componentType: kind.type as ComponentType.StringSelect,
                 builder: builder as StringSelectMenuBuilder,
                 guards: guards as readonly GuardProvider<
-                    SelectMenuContext<ComponentType.StringSelect>
+                    SelectMenuContext<{
+                        componentType: ComponentType.StringSelect;
+                    }>
                 >[],
             });
         }
 
-        run(ctx: SelectMenuContext<ComponentType.StringSelect>) {
+        run(
+            ctx: SelectMenuContext<{
+                componentType: ComponentType.StringSelect;
+            }>,
+        ) {
             return execute.call(this, ctx as AnySelectContext);
         }
     })();

@@ -94,7 +94,9 @@ export const todoDone = defineParams({
     schema: v.object({ owner: v.string(), todoId: v.string() }),
 });
 
-export default class TodoDone extends ButtonHandler<typeof todoDone> {
+type TodoDoneSpec = { params: typeof todoDone };
+
+export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
     constructor() {
         super({
             params: todoDone,
@@ -102,7 +104,7 @@ export default class TodoDone extends ButtonHandler<typeof todoDone> {
         });
     }
 
-    async run(ctx: ButtonContext<typeof todoDone>) {
+    async run(ctx: ButtonContext<TodoDoneSpec>) {
         const [issues, params] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({

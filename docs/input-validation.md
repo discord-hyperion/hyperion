@@ -43,6 +43,12 @@ or `false` leaves acknowledgment to the application. Acknowledgment by a guard
 is preserved; automatic deferral never acknowledges twice. Applications needing
 public responses manage acknowledgment themselves.
 
+`defer: "update"` calls `deferUpdate()` instead, for handlers that finish by
+editing the message the interaction came from. Select menus and modals accept
+it. A modal not opened from a message component has no message to update, so
+the deferral throws and reports the `input` stage. Commands reject it in their
+constructor, and `Command`/`Subcommand` reject it as a type error.
+
 ## Handler results and failures
 
 `ctx.input` is a readonly discriminated tuple:
@@ -138,16 +144,25 @@ the base class. No class factory or `CommandContextFor` helper is introduced.
 - Definitions and schemas are shared; invocation input and contexts are fresh.
   Constructors copy/freeze the input configuration without freezing application
   schema objects or executing validation and resolution.
-- Discovery and deployment never execute schemas or resolvers. Modal submissions support the same policy, extracting every modal control; see
-  [modal input validation](modal-input-validation.md). Custom-ID parameters remain
-  deferred.
+- Discovery and deployment never execute schemas or resolvers.
 
-## Modal reuse
+## Modals and select menus
 
-Modal handlers also accept `input` and use `ModalHandler<typeof input>` with
-`ModalContext<typeof input>`. Use the same `defineInput` helper. When a modal
-resolver uses context, annotate its second parameter as `ctx: ModalContext`;
-schema values and resolver results remain inferred. Unannotated resolver context
-continues to default to the chat-input command context for compatibility.
-See [modal input validation](modal-input-validation.md) for submission extraction,
-empty/missing fields, and an example.
+Modal and select-menu handlers also accept `input`, with the same `defineInput`
+helper. Pass it in the handler's object type argument:
+`ModalHandler<{ input: typeof input }>` with `ModalContext<{ input: typeof input }>`,
+or `SelectMenuHandler<{ input: typeof input }>` with the matching
+`SelectMenuContext`. Their pipeline adds custom-ID params first:
+`params → guards → optional deferral → extract → schema → resolve → handler`.
+
+| Handler     | The schema receives                                                      |
+| ----------- | ------------------------------------------------------------------------ |
+| Modal       | an object keyed by modal-control custom ID                               |
+| Select menu | a copy of `interaction.values`: picked values, or IDs for entity selects |
+
+When a resolver uses context, annotate its second parameter (`ctx: ModalContext`
+or `ctx: SelectMenuContext<…>`); schema values and resolver results remain
+inferred. Unannotated resolver context defaults to the chat-input command
+context for compatibility. See
+[modal input validation](modal-input-validation.md) and
+[select menus](select-menus.md#validate-the-selection).

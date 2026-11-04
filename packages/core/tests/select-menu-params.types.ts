@@ -22,12 +22,15 @@ const counted = defineParams({
     schema: v.object({ owner: v.pipe(v.string(), v.toNumber()) }),
 });
 
-type AssignContext = SelectMenuContext<ComponentType.UserSelect, typeof assign>;
+type AssignContext = SelectMenuContext<{
+    componentType: ComponentType.UserSelect;
+    params: typeof assign;
+}>;
 
-export class Assign extends SelectMenuHandler<
-    ComponentType.UserSelect,
-    typeof assign
-> {
+export class Assign extends SelectMenuHandler<{
+    componentType: ComponentType.UserSelect;
+    params: typeof assign;
+}> {
     constructor() {
         super({
             componentType: ComponentType.UserSelect,
@@ -58,10 +61,10 @@ export const selectContracts = (plain: SelectMenuContext) => {
     // @ts-expect-error A template is optional, so it may be undefined.
     new Assign().builder.toJSON();
 
-    class Mismatched extends SelectMenuHandler<
-        ComponentType.UserSelect,
-        typeof assign
-    > {
+    class Mismatched extends SelectMenuHandler<{
+        componentType: ComponentType.UserSelect;
+        params: typeof assign;
+    }> {
         constructor() {
             super({
                 // @ts-expect-error The component type must match the generic.
@@ -73,10 +76,10 @@ export const selectContracts = (plain: SelectMenuContext) => {
         async run() {}
     }
 
-    class Both extends SelectMenuHandler<
-        ComponentType.UserSelect,
-        typeof assign
-    > {
+    class Both extends SelectMenuHandler<{
+        componentType: ComponentType.UserSelect;
+        params: typeof assign;
+    }> {
         constructor() {
             super({
                 componentType: ComponentType.UserSelect,
@@ -89,10 +92,10 @@ export const selectContracts = (plain: SelectMenuContext) => {
         async run() {}
     }
 
-    class WithTemplate extends SelectMenuHandler<
-        ComponentType.UserSelect,
-        typeof assign
-    > {
+    class WithTemplate extends SelectMenuHandler<{
+        componentType: ComponentType.UserSelect;
+        params: typeof assign;
+    }> {
         constructor() {
             super({
                 componentType: ComponentType.UserSelect,
@@ -108,22 +111,22 @@ export const selectContracts = (plain: SelectMenuContext) => {
 };
 
 export const paramOwnerContracts = () => {
-    class Typo extends ButtonHandler<typeof assign> {
+    class Typo extends ButtonHandler<{ params: typeof assign }> {
         constructor() {
             // @ts-expect-error The key must exist in the params.
             super({ params: assign, guards: [paramOwner("ownr")] });
         }
 
-        async run(_ctx: ButtonContext<typeof assign>) {}
+        async run(_ctx: ButtonContext<{ params: typeof assign }>) {}
     }
 
-    class NotAString extends ButtonHandler<typeof counted> {
+    class NotAString extends ButtonHandler<{ params: typeof counted }> {
         constructor() {
             // @ts-expect-error The owner param must be a string.
             super({ params: counted, guards: [paramOwner("owner")] });
         }
 
-        async run(_ctx: ButtonContext<typeof counted>) {}
+        async run(_ctx: ButtonContext<{ params: typeof counted }>) {}
     }
 
     return [Typo, NotAString];

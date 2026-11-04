@@ -28,12 +28,12 @@ export const encoderContracts = () => {
     params satisfies ParamsDefinition;
 };
 
-class WithParams extends ButtonHandler<typeof params> {
+class WithParams extends ButtonHandler<{ params: typeof params }> {
     constructor() {
         super({ params });
     }
 
-    async run(ctx: ButtonContext<typeof params>) {
+    async run(ctx: ButtonContext<{ params: typeof params }>) {
         const [issues, value] = ctx.params;
 
         if (issues) {
@@ -50,7 +50,7 @@ class WithParams extends ButtonHandler<typeof params> {
 }
 
 export const handlerContracts = (plain: ButtonContext) => {
-    new WithParams() satisfies ButtonHandler<typeof params>;
+    new WithParams() satisfies ButtonHandler<{ params: typeof params }>;
     // @ts-expect-error Literal handler contexts carry no params.
     plain.params;
     // @ts-expect-error A template is optional, so it may be undefined.
@@ -69,7 +69,7 @@ export class Literal extends ButtonHandler {
 }
 
 export const exclusiveOptions = () => {
-    class Both extends ButtonHandler<typeof params> {
+    class Both extends ButtonHandler<{ params: typeof params }> {
         constructor() {
             super({
                 params,

@@ -3,40 +3,43 @@ import type { ButtonInteraction } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
 import { isGuard } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
-import {
-    type ParamsDefinition,
-    type ParamsResult,
-    validateParams,
-} from "./custom-id-params.ts";
+import { type ParamsDefinition, validateParams } from "./custom-id-params.ts";
 import { handlerCustomId } from "./handler-options.ts";
+import type {
+    EmptySpec,
+    KnownKeys,
+    ParamsContext,
+    ParamsOptions,
+    SpecParams,
+} from "./handler-spec.ts";
 
-export type ButtonContext<
-    Params extends ParamsDefinition | undefined = undefined,
-> = InteractionContext<ButtonInteraction> &
-    (Params extends ParamsDefinition
-        ? { readonly params: ParamsResult<Params> }
-        : unknown);
+/** The keys a button handler's type argument may set. */
+export type ButtonSpec = { params?: ParamsDefinition };
+
+/** A button type argument with only known keys. */
+export type ValidButtonSpec<Spec> = ButtonSpec & KnownKeys<Spec, ButtonSpec>;
+
+export type ButtonContext<Spec extends ValidButtonSpec<Spec> = EmptySpec> =
+    InteractionContext<ButtonInteraction> & ParamsContext<SpecParams<Spec>>;
 
 export type ButtonHandlerOptions<
-    Params extends ParamsDefinition | undefined = undefined,
+    Spec extends ValidButtonSpec<Spec> = EmptySpec,
 > = {
     /** Optional template; callers get copies through `client.buttons.build()`. */
     builder?: CustomIdButtonBuilder;
-    guards?: readonly GuardProvider<ButtonContext<Params>>[];
-} & (Params extends ParamsDefinition
-    ? { params: Params; customId?: never }
-    : { customId: string; params?: never });
+    guards?: readonly GuardProvider<ButtonContext<Spec>>[];
+} & ParamsOptions<SpecParams<Spec>>;
 
 export abstract class ButtonHandler<
-    Params extends ParamsDefinition | undefined = undefined,
+    Spec extends ValidButtonSpec<Spec> = EmptySpec,
 > {
     readonly builder: CustomIdButtonBuilder | undefined;
     readonly params: ParamsDefinition | undefined;
     /** The exact custom ID, or the route for a params handler. */
     readonly customId: string;
-    readonly guards: readonly GuardProvider<ButtonContext<Params>>[];
+    readonly guards: readonly GuardProvider<ButtonContext<Spec>>[];
 
-    protected constructor(options: ButtonHandlerOptions<Params>) {
+    protected constructor(options: ButtonHandlerOptions<Spec>) {
         this.params = validateParams(options.params);
         this.customId = handlerCustomId(
             "Button",
@@ -57,5 +60,5 @@ export abstract class ButtonHandler<
         }
     }
 
-    abstract run(ctx: ButtonContext<Params>): Promise<void>;
+    abstract run(ctx: ButtonContext<Spec>): Promise<void>;
 }

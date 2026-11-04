@@ -101,12 +101,14 @@ encoder, but cannot be used with `build()`.
 ## Handler
 
 ```ts
-export default class TodoDone extends ButtonHandler<typeof todoDoneId> {
+type TodoDoneSpec = { params: typeof todoDoneId };
+
+export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
     constructor() {
         super({ params: todoDoneId });
     }
 
-    async run(ctx: ButtonContext<typeof todoDoneId>) {
+    async run(ctx: ButtonContext<TodoDoneSpec>) {
         const [issues, value] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({
@@ -240,8 +242,9 @@ Select menus reuse the codec, route lookup, pipeline, and `ctx.params` tuple.
   (`super({ componentType: ComponentType.UserSelect, params })`).
   A click whose `componentType` differs is unmatched, and the type is checked
   before decoding, so the schema never runs for the wrong kind.
-- Typing gains a second generic: `SelectMenuHandler<Type, Params>` and
-  `SelectMenuContext<Type, Params>`. `Params` defaults to none.
+- Typing adds a `params` key to the type argument:
+  `SelectMenuHandler<{ componentType: Type; params: typeof definition }>` and the
+  matching `SelectMenuContext`. Without it there are no params.
 - Routes are unique per registry, as literal custom IDs are today. All five
   select types share `client.selectMenus`, so routes are unique across them and
   across literal select IDs. A button and a select menu may share a route.
@@ -256,14 +259,15 @@ user.
 match → decode → params validate → guards → input (defer, extract, validate, resolve) → handler
 ```
 
-- Typing gains a second generic: `ModalHandler<Input, Params>` and
-  `ModalContext<Input, Params>`. `Params` defaults to none.
+- Typing adds a `params` key to the type argument:
+  `ModalHandler<{ params: typeof definition; input: typeof input }>` and the
+  matching `ModalContext`. Without it there are no params.
 - Guards see `ctx.params` but never `ctx.input`, so `paramOwner()` works unchanged
   and rejects before any input processing.
 - Input runs even when params have issues, so the handler receives both tuples.
   An input resolver receives the params-bearing context. A resolver that reads
   `ctx.params` must handle issues itself, and annotating it as
-  `ctx: ModalContext<undefined, typeof params>` only compiles on a handler with
+  `ctx: ModalContext<{ params: typeof params }>` only compiles on a handler with
   those params.
 - Exceptions report `stage: "params"` or `stage: "input"`.
 - The form stays on the handler as its template, because `input` reads the
@@ -276,7 +280,7 @@ match → decode → params validate → guards → input (defer, extract, valid
 ## Guard typing
 
 Guards that read `ctx.params` are typed through the same definition, for example
-`Guard<ButtonContext<typeof todoDoneId>>`, so a guard written for one params
+`Guard<ButtonContext<{ params: typeof todoDoneId }>>`, so a guard written for one params
 handler cannot be attached to a handler with different params.
 
 ## paramOwner()

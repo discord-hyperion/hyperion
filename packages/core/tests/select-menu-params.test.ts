@@ -31,7 +31,10 @@ const schema: StandardSchemaV1<Record<string, string>, { owner: string }> = {
 };
 const pick = defineParams({ id: "pick", keys: ["owner"], schema });
 
-type PickContext = SelectMenuContext<ComponentType.StringSelect, typeof pick>;
+type PickContext = SelectMenuContext<{
+    componentType: ComponentType.StringSelect;
+    params: typeof pick;
+}>;
 type Run = (ctx: PickContext) => Promise<void>;
 
 /** A params menu of any kind; the generic is fixed because kinds are a runtime table. */
@@ -40,10 +43,10 @@ const createParamsMenu = (
     execute: Run,
     guards: readonly GuardProvider<PickContext>[] = [],
 ) =>
-    new (class extends SelectMenuHandler<
-        ComponentType.StringSelect,
-        typeof pick
-    > {
+    new (class extends SelectMenuHandler<{
+        componentType: ComponentType.StringSelect;
+        params: typeof pick;
+    }> {
         constructor() {
             super({
                 componentType: kind.type as ComponentType.StringSelect,
@@ -137,10 +140,10 @@ for (const kind of selectKinds) {
 describe("select menu params definitions", () => {
     test("handlers require exactly one of a customId or params, and a select type", () => {
         const construct = (options: object) =>
-            new (class extends SelectMenuHandler<
-                ComponentType.StringSelect,
-                typeof pick
-            > {
+            new (class extends SelectMenuHandler<{
+                componentType: ComponentType.StringSelect;
+                params: typeof pick;
+            }> {
                 constructor() {
                     super(options as never);
                 }
@@ -227,12 +230,12 @@ test("paramOwner works on button params with the default description", async t =
     const execute = mock.fn(async () => {});
     client.buttons.routes.set(
         pick.id,
-        new (class extends ButtonHandler<typeof pick> {
+        new (class extends ButtonHandler<{ params: typeof pick }> {
             constructor() {
                 super({ params: pick, guards: [paramOwner("owner")] });
             }
 
-            run(_ctx: ButtonContext<typeof pick>) {
+            run(_ctx: ButtonContext<{ params: typeof pick }>) {
                 return execute();
             }
         })() as never,

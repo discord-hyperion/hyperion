@@ -91,6 +91,10 @@ context, if you need it.
 Lookups can be slow. `defer: true` makes Hyperion defer privately before
 validating, so reply with `editReply()` afterwards. See [responding](responding.md).
 
+Select menus and modals opened from a message usually update that message
+instead. For those, `defer: "update"` defers the update, and `editReply()` then
+edits the message. Commands have no message to update, so they don't accept it.
+
 ## The order things happen
 
 ```
@@ -101,8 +105,9 @@ Guards run first and never see `ctx.input`, so a rejected user never triggers
 your lookups. If the schema or resolver _throws_ (rather than reporting issues),
 the user gets the generic error message.
 
-## Subcommands, modals, and context menus
+## Subcommands, modals, select menus, and context menus
 
 - Subcommands work the same way: `Subcommand<typeof input>`.
 - Modal forms use the same `defineInput()`; see [modals](modals.md#validating-the-fields).
+- Select menus too; see [select menus](select-menus.md#checking-the-pick).
 - Context-menu commands have no options, so they don't take input.

@@ -12,8 +12,9 @@ import type {
     SelectMenuType,
 } from "../src/components/index.ts";
 
-type Builder<Type extends SelectMenuType> =
-    SelectMenuHandlerOptions<Type>["builder"];
+type Builder<Type extends SelectMenuType> = SelectMenuHandlerOptions<{
+    componentType: Type;
+}>["builder"];
 type Expect<Condition extends true> = Condition;
 
 // Every select handler type rejects the builders of the other four select types.
@@ -32,10 +33,14 @@ export type NoCrossKindBuilders = Expect<
 // Checked by tsc; this function is never invoked at runtime.
 export const selectMenuContracts = (
     stringCtx: SelectMenuContext,
-    userCtx: SelectMenuContext<ComponentType.UserSelect>,
-    roleCtx: SelectMenuContext<ComponentType.RoleSelect>,
-    mentionableCtx: SelectMenuContext<ComponentType.MentionableSelect>,
-    channelCtx: SelectMenuContext<ComponentType.ChannelSelect>,
+    userCtx: SelectMenuContext<{ componentType: ComponentType.UserSelect }>,
+    roleCtx: SelectMenuContext<{ componentType: ComponentType.RoleSelect }>,
+    mentionableCtx: SelectMenuContext<{
+        componentType: ComponentType.MentionableSelect;
+    }>,
+    channelCtx: SelectMenuContext<{
+        componentType: ComponentType.ChannelSelect;
+    }>,
 ) => {
     stringCtx.interaction.values satisfies string[];
     channelCtx.interaction.values satisfies string[];
@@ -68,7 +73,9 @@ export const selectMenuContracts = (
     // @ts-expect-error String selects do not expose resolved users.
     stringCtx.interaction.users;
 
-    const userOptions: SelectMenuHandlerOptions<ComponentType.UserSelect> = {
+    const userOptions: SelectMenuHandlerOptions<{
+        componentType: ComponentType.UserSelect;
+    }> = {
         customId: "user",
         componentType: ComponentType.UserSelect,
         builder: new UserSelectMenuBuilder(),
@@ -85,7 +92,9 @@ export const selectMenuContracts = (
         builder: new StringSelectMenuBuilder(),
     };
 
-    const roleOptions: SelectMenuHandlerOptions<ComponentType.RoleSelect> = {
+    const roleOptions: SelectMenuHandlerOptions<{
+        componentType: ComponentType.RoleSelect;
+    }> = {
         customId: "role",
         componentType: ComponentType.RoleSelect,
         builder: new RoleSelectMenuBuilder(),
@@ -97,40 +106,43 @@ export const selectMenuContracts = (
         ],
     };
 
-    const mentionableOptions: SelectMenuHandlerOptions<ComponentType.MentionableSelect> =
-        {
-            customId: "mentionable",
-            componentType: ComponentType.MentionableSelect,
-            builder: new MentionableSelectMenuBuilder(),
-            guards: [
-                ctx => {
-                    ctx.interaction.users.size satisfies number;
-                    ctx.interaction.roles.size satisfies number;
-                    throw new Error("Type contract only");
-                },
-            ],
-        };
+    const mentionableOptions: SelectMenuHandlerOptions<{
+        componentType: ComponentType.MentionableSelect;
+    }> = {
+        customId: "mentionable",
+        componentType: ComponentType.MentionableSelect,
+        builder: new MentionableSelectMenuBuilder(),
+        guards: [
+            ctx => {
+                ctx.interaction.users.size satisfies number;
+                ctx.interaction.roles.size satisfies number;
+                throw new Error("Type contract only");
+            },
+        ],
+    };
 
-    const mismatchedTemplate: SelectMenuHandlerOptions<ComponentType.UserSelect> =
-        {
-            customId: "user",
-            componentType: ComponentType.UserSelect,
-            // @ts-expect-error The template must match the declared select type.
-            builder: new RoleSelectMenuBuilder(),
-        };
+    const mismatchedTemplate: SelectMenuHandlerOptions<{
+        componentType: ComponentType.UserSelect;
+    }> = {
+        customId: "user",
+        componentType: ComponentType.UserSelect,
+        // @ts-expect-error The template must match the declared select type.
+        builder: new RoleSelectMenuBuilder(),
+    };
 
-    const channelOptions: SelectMenuHandlerOptions<ComponentType.ChannelSelect> =
-        {
-            customId: "channel",
-            componentType: ComponentType.ChannelSelect,
-            builder: new ChannelSelectMenuBuilder(),
-            guards: [
-                ctx => {
-                    ctx.interaction.channels.size satisfies number;
-                    throw new Error("Type contract only");
-                },
-            ],
-        };
+    const channelOptions: SelectMenuHandlerOptions<{
+        componentType: ComponentType.ChannelSelect;
+    }> = {
+        customId: "channel",
+        componentType: ComponentType.ChannelSelect,
+        builder: new ChannelSelectMenuBuilder(),
+        guards: [
+            ctx => {
+                ctx.interaction.channels.size satisfies number;
+                throw new Error("Type contract only");
+            },
+        ],
+    };
     // @ts-expect-error Channel selects do not expose resolved users.
     channelCtx.interaction.users;
     // @ts-expect-error Channel selects do not expose resolved roles.

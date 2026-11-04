@@ -10,7 +10,9 @@ const input = defineInput({
     }),
 });
 
-export default class extends ModalHandler<typeof input> {
+type TodoSpec = { input: typeof input };
+
+export default class extends ModalHandler<TodoSpec> {
     constructor() {
         super({
             customId: "consumer.modal",
@@ -25,7 +27,7 @@ export default class extends ModalHandler<typeof input> {
         });
     }
 
-    async run(ctx: ModalContext<typeof input>) {
+    async run(ctx: ModalContext<TodoSpec>) {
         const [issues, value] = ctx.input;
 
         if (issues) {

@@ -9,9 +9,6 @@ implemented item links a reference doc.
 
 ## Planned
 
-- [ ] Typed input for more interaction sources.
-  - Add `input` to select-menu handlers, so `interaction.values` is validated like
-    other input.
 - [ ] More JSX components.
   - Premium buttons.
   - Radio groups, checkbox groups, and checkboxes for modals (blocked: the pinned
@@ -56,9 +53,10 @@ implemented item links a reference doc.
   [buttons](buttons.md), [select menus](select-menus.md), and [modals](modals.md).
 - Typed custom-ID params. See [custom-ID params](custom-id-params.md).
 - Guards through `defineGuard()`. See [guards](guards.md).
-- Typed input for commands and every modal control, with async resolvers. See
-  [typed command input](input-validation.md) and
-  [modal input validation](modal-input-validation.md).
+- Typed input for commands, every modal control, and select menus, with async
+  resolvers. See [typed command input](input-validation.md),
+  [modal input validation](modal-input-validation.md), and
+  [select menus](select-menus.md#validate-the-selection).
 - Filesystem event handlers. See [event handlers](event-handlers.md).
 - Logging. See [logging](logging.md).
 - `@hyperion/jsx`: embeds, text, buttons, all five select menus, modals with

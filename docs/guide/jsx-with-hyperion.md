@@ -88,7 +88,9 @@ export const closeTicket = defineParams({
     schema: v.object({ ticketId: v.string() }),
 });
 
-export default class CloseTicket extends ButtonHandler<typeof closeTicket> {
+type CloseTicketSpec = { params: typeof closeTicket };
+
+export default class CloseTicket extends ButtonHandler<CloseTicketSpec> {
     constructor() {
         super({
             params: closeTicket,
@@ -100,7 +102,7 @@ export default class CloseTicket extends ButtonHandler<typeof closeTicket> {
         });
     }
 
-    async run(ctx: ButtonContext<typeof closeTicket>) {
+    async run(ctx: ButtonContext<CloseTicketSpec>) {
         const [issues, params] = ctx.params;
         if (issues) return;
 
