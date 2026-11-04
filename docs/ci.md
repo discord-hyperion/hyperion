@@ -5,13 +5,13 @@
 in `package.json`, caches the pnpm store, and installs with
 `pnpm install --frozen-lockfile`. It has five jobs:
 
-| Job             | Runs                                    | What it does                                                                                                      |
-| --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `Changes`       | Always                                  | Compares the commits and decides whether the code checks are needed                                               |
-| `Lint and docs` | Always                                  | `pnpm check`: Biome, plus the documentation check (`scripts/check-docs.mjs`: links, anchors, and example imports) |
-| `Code`          | Unless the change is documentation-only | Type checking and isolated tests, the CI helper tests, and the release, cache, and packed-consumer verification   |
-| `Docs site`     | When the guide or site build changes    | Builds the Fumadocs site (`apps/docs-site-fumadocs`) and runs its 14 output checks                                |
-| `Checks`        | Always, last                            | The single result for the workflow                                                                                |
+| Job             | Runs                                    | What it does                                                                                                                                                |
+| --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Changes`       | Always                                  | Compares the commits and decides whether the code checks are needed                                                                                         |
+| `Lint and docs` | Always                                  | `pnpm check`: Biome, the documentation check (`scripts/check-docs.mjs`: links, anchors, example imports), and the layout check (`scripts/check-layout.mjs`) |
+| `Code`          | Unless the change is documentation-only | Type checking and isolated tests, the CI helper tests, and the release, cache, and packed-consumer verification                                             |
+| `Docs site`     | When the guide or site build changes    | Builds the Fumadocs site (`apps/docs-site-fumadocs`) and runs its 14 output checks                                                                          |
+| `Checks`        | Always, last                            | The single result for the workflow                                                                                                                          |
 
 The `Code` job runs the same commands as local verification:
 
@@ -31,6 +31,20 @@ comparison (a manual run, a first push, an unreachable base commit, or no change
 files) also runs everything, so a mistake can only run too much, never too little.
 The script has its own tests (`scripts/ci-changes.test.mjs`), which the `Code` job
 runs, so changing it always runs them.
+
+## Cache verification
+
+The `Code` job runs `pnpm verify:cache` only when a change touches something that
+decides Turborepo task hashes: `turbo.json`, any `package.json` or `tsconfig*.json`,
+`pnpm-lock.yaml`, `pnpm-workspace.yaml`, `.gitignore`, the script itself, or a
+workflow. `scripts/ci-changes.mjs` reports this as `cache=`, and an unknown
+comparison runs it.
+
+The script copies the workspace to a temporary directory, runs every typecheck
+and test once cold, and checks the cached replay and restored builds. For each of
+eight representative edits, it then asserts from a dry run that exactly the
+expected tasks change hash and the rest stay cache hits. It does not re-run the
+tasks after each edit; the typecheck and test step already proves they pass.
 
 ## Documentation site
 
@@ -68,11 +82,11 @@ only job that needs requiring.
 `pnpm install` configures Git to use the tracked `.githooks/` directory through
 the root `prepare` script. For an existing installation, run `pnpm run prepare`
 once to enable the hook. The pre-commit hook checks staged files with Biome,
-checks documentation, and typechecks the workspace. Tests remain a CI gate.
+checks documentation and layout, and typechecks the workspace. Tests remain a CI gate.
 Documentation and type checks inspect the working tree, so they do not validate
 an isolated snapshot of a partially staged commit.
 
-`pnpm check:fix` fixes files changed on the branch relative to local `main`,
+`pnpm check:fix` applies layout fixes and then Biome to files changed on the branch relative to local `main`,
 including staged, unstaged, and untracked files. It skips deleted files and
 private environment files. Use `pnpm check:fix:all` for an intentional repository-wide
 formatting pass.

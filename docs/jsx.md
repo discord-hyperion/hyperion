@@ -1,110 +1,88 @@
-# JSX authoring design
+# JSX authoring
 
-`@hyperion/jsx` is an independent JSX runtime for native Discord embeds, modals, and message controls. It has
-no dependency on `@hyperion/core` or React. Implementation lives in
-`packages/jsx/lib`; local workspace imports resolve source, and published imports
-resolve JavaScript and declarations in `dist`.
+`@hyperion/jsx` is a JSX runtime that renders native Discord builders for
+embeds, modals, message controls, and layout messages. It depends on neither
+`@hyperion/core` nor React. Implementation lives in `packages/jsx/lib`; workspace
+imports resolve source, and published imports resolve JavaScript and declarations
+in `dist`. See [runtime research](research/jsx-runtimes.md) for why it is a
+Hyperion-owned runtime.
 
-## Current decisions
+## Renderers
 
-- Publish JSX authoring as a separate workspace package, `@hyperion/jsx`. This
-  supersedes the earlier proposal to keep it inside `@hyperion/core`.
-- Use namespaced structural components such as `Embed.Title` and `Embed.Field`.
-- Embed authoring uses `renderEmbed()`. Modal authoring uses `renderModal()` with
-  text inputs, selects, file uploads, and informational text; see
-  [JSX modals](jsx-modals.md). Radio groups, checkbox groups, checkboxes, and
-  standalone text rendering are outside the current API.
-- Message authoring uses `ActionRow`, `Button`, and `renderComponents()`.
-  `renderButton()` supplies interactive handler templates; see [JSX message components](jsx-message-components.md).
-- Message string selects use `StringSelect.Option` children and `renderStringSelect()`
-  for handler templates; see [JSX select menus](jsx-select-menus.md).
+Every renderer evaluates its view at call time and returns fresh native builders,
+validated with `toJSON()`.
 
-- Export `renderEmbed()` from `@hyperion/jsx`; each call returns a fresh native
-  `EmbedBuilder`, validated with `toJSON()` and available for customization.
-- Support root `color`, `url`, and `timestamp` props plus `Embed.Author`,
-  `Embed.Title`, `Embed.Description`, `Embed.Field`, `Embed.Thumbnail`,
-  `Embed.Image`, and `Embed.Footer` children.
-- Permit repeated fields. Reject duplicate singleton sections with an error
-  identifying the section instead of replacing earlier content.
+| Renderer                   | Returns                    | Reference                                       |
+| -------------------------- | -------------------------- | ----------------------------------------------- |
+| `renderEmbed(view)`        | `EmbedBuilder`             | [Embeds](#embeds)                               |
+| `renderComponents(view)`   | `ActionRowBuilder[]`       | [Message components](jsx-message-components.md) |
+| `renderButton(view)`       | a custom-ID button builder | [Message components](jsx-message-components.md) |
+| `renderStringSelect(view)` | `StringSelectMenuBuilder`  | [Select menus](jsx-select-menus.md)             |
+| `renderModal(view)`        | `ModalBuilder`             | [Modals](jsx-modals.md)                         |
+| `renderMessage(view)`      | `{ components, flags }`    | [Layout messages](jsx-layout.md)                |
 
-- Support `Bold`, `Italic`, `Underline`, `Strikethrough`, `Spoiler`, `Br`, `Code`,
-  `CodeBlock`, `Link`, `Raw`, `UserMention`, `RoleMention`, and `ChannelMention`
-  inside embeds and modal text displays. No standalone `renderText()` is exported.
-- Allow fragments and reusable components at the render root, provided they
-  resolve to exactly one embed. Reject empty roots, multiple embeds, and text
-  outside the embed. Allow composed/mapped fields inside an embed.
+There is no standalone text renderer and no classic `createElement` API. Native
+builders stay fully supported; returned builders can be changed through native
+APIs, and changes made after rendering should be validated again before sending.
 
-- Keep `@hyperion/jsx` usable independently of `@hyperion/core`; use compatible
-  native builders without a runtime framework dependency.
-- Include TSX handler discovery in this PR, opted into through JSX compiler
-  configuration and `.tsx` files. Do not require a framework flag or development
-  build. Verify command paths and event priorities as well as file discovery.
+## Setup
 
-- Accept text composition in field names through the `name` prop, including
-  formatting components; use the same escaping rules as field values.
-- Keep titles, author names, and footer text plain. Preserve literal text without
-  Markdown escaping and reject formatting components in these contexts.
-- Reevaluate reusable components on every render; do not cache their results.
-  Return independent builders. Expose read-only component props without
-  deep-freezing application-owned objects passed through those props.
+```json
+{
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "jsxImportSource": "@hyperion/jsx"
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.jsx"]
+}
+```
 
-- Reject backticks and line breaks inside `Code`; reject triple backticks inside
-  `CodeBlock`. Preserve code text rather than Markdown-escaping or rewriting it.
-- Restrict `Link` destinations to absolute HTTP(S) URLs. Encode destination
-  characters that interfere with masked-link syntax; escape labels separately.
-  Keep native image/icon URL rules separate, including attachment URLs.
-- Throw `JSXRenderError` with a structural path and original `cause`. Generated
-  messages do not echo supplied text; native causes remain inspectable. Do not
-  log automatically.
+`react-jsx` names the automatic transform; it adds no React dependency. Authoring
+imports use the package root; the compiler imports the `jsx-runtime` and
+`jsx-dev-runtime` subpaths, both public.
 
-- Use the automatic JSX transform with `jsx: react-jsx` and
-  `jsxImportSource: @hyperion/jsx`. Export production and development runtime
-  subpaths; omit a classic `createElement` API from this PR.
-- Discover both `.tsx` and `.jsx` handlers. Preserve test/declaration/barrel
-  exclusions and command parent/group and event numeric-priority semantics.
-- Integrate independent JSX versions/changesets, source/published exports,
-  standalone packed consumers, and cache/release tooling in this PR. Actual
-  publication remains a separate action.
+Include dynamically discovered handlers in the runner's compiler configuration,
+not only the entry point. From the workspace root, use its JSX-aware configuration
+or pass the application's config with `tsx --tsconfig`. Source execution needs no
+build; compile to JavaScript for plain Node.
 
-- Reject unknown props at runtime. Accept JSX `key` as ignored metadata; it does
-  not affect output or introduce reconciliation.
-- Match core's initial Node 24.17.0+, TypeScript 7.x verification baseline and exact
-  compatible builder prerelease. Declare the builder as a peer dependency.
-  Additional SDK/version support requires separate verification.
-- Include a reproducible comparison against equivalent native builders, recording
-  runtime versions and separating tree creation, rendering, and validation where
-  practical. Measure overhead without promising a speed advantage.
+The package targets Node 24.17.0+ and TypeScript 7.x. It declares the exact
+matching `@discordjs/builders` prerelease as a peer dependency and depends on the
+matching `@discordjs/formatters` prerelease. Other SDK versions are unverified.
 
-## Retained behavior
+## Handler discovery
 
-- Use a small Hyperion-owned runtime without React. Keep native builder authoring
-  supported.
-- Support synchronous reusable function components, props, children, fragments,
-  conditionals, and array mapping. Fetch asynchronous data before composition.
-- Evaluate components at explicit render time. Renderers return fresh native
-  embed, modal, button, or action-row builders; standalone string rendering is not provided.
-- Flatten nested children; omit nullish values and booleans; preserve zero. Use
-  normal JSX whitespace handling and explicit line breaks.
-- Escape literal Markdown by default; expose explicit formatting, raw text, and
-  mention components. Mention authoring does not override `allowedMentions`.
-- Validate structural nesting at runtime and use native builder `toJSON()`
-  validation while respecting the SDK validator setting. Report invalid output.
-- Preserve shared modal definitions and existing handler routing. Inserting
-  prebuilt builders, React lifecycle behavior, and automatic rerendering remain
-  deferred. Entity selects are covered by [JSX select menus](jsx-select-menus.md#entity-selects). Layout messages (Components V2) are
-  rendered by `renderMessage()`; see [JSX layout messages](jsx-layout.md).
-- Verify automatic-runtime source and published consumption, opt-in TSX handlers,
-  and performance before making compatibility or speed claims.
+Core discovers `.tsx` and `.jsx` handlers alongside `.ts` and `.js` once the
+compiler configuration above is in place; there is no framework flag. Test,
+declaration, and barrel exclusions apply unchanged, as do command parent/group
+indexes and numeric event priorities. See [architecture](architecture.md).
 
-See [runtime research](research/jsx-runtimes.md), [architecture](architecture.md),
-and [modals](modals.md) for the existing constraints and evidence.
+## Runtime behaviour
 
-## Public API example
+- Components are synchronous functions of props. Reusable components are
+  re-evaluated on every render; results are never cached.
+- Children flatten through arrays and fragments. `null`, `undefined`, and booleans
+  are omitted; zero is kept. JSX whitespace rules apply; use `Br` or explicit
+  string spaces for intentional breaks.
+- Props are shallow, read-only snapshots. Objects and arrays inside them remain
+  application-owned and are not frozen.
+- Unknown props throw. `key` is accepted as ignored metadata: it is not passed to
+  components and does not affect output.
+- Promises, prebuilt builders, and arbitrary objects as children throw; fetch
+  asynchronous data before rendering. A component passed as a child instead of
+  rendered (`{Card}` for `<Card />`) throws its own message.
+- Nesting is limited to 128 levels, counting arrays and component calls as well as
+  elements, so recursive structures throw instead of exhausting the stack.
+- Elements are recognized by module-private identity. Elements from one installed
+  copy of `@hyperion/jsx` are rejected by another copy (for example when two
+  versions are installed), so keep a single version in an application.
+
+## Embeds
 
 ```tsx
 import { Bold, Br, Embed, Link, renderEmbed, UserMention } from "@hyperion/jsx";
 
-const view = (
+const embed = renderEmbed(
     <Embed color={0x57f287} timestamp={new Date()}>
         <Embed.Title>{todo.name}</Embed.Title>
         <Embed.Description>
@@ -118,145 +96,80 @@ const view = (
             {todo.deadline ?? "None"}
         </Embed.Field>
         <Embed.Footer text="Hyperion Todos" />
-    </Embed>
+    </Embed>,
 );
-
-const embed = renderEmbed(view);
 ```
 
-Set `jsx` to `react-jsx` and `jsxImportSource` to `@hyperion/jsx` in the consumer's
-TypeScript configuration. The option name does not introduce a React dependency.
-Authoring imports use the package root. Compiler imports use the `jsx-runtime`
-and `jsx-dev-runtime` subpaths.
+- `Embed` takes `color`, `url`, and `timestamp`, with `Embed.Author` (`name`,
+  `url?`, `iconURL?`), `Embed.Title`, `Embed.Description`, `Embed.Field` (`name`,
+  `inline?`, value children), `Embed.Thumbnail` (`url`), `Embed.Image` (`url`),
+  and `Embed.Footer` (`text`, `iconURL?`) children.
+- The root may be fragments or reusable components but must resolve to exactly one
+  `Embed`. Empty roots, several embeds, and text outside the embed throw.
+- Fields may repeat and may be composed or mapped; order is preserved. Every other
+  section is a singleton, and a duplicate throws instead of replacing the first.
+- Descriptions and field values take rich text (see below). Field names take rich
+  text through the `name` prop, with the same escaping. Titles take plain children
+  (strings, numbers, fragments, or components returning plain text); author names
+  and footer text are plain string props. Plain contexts keep text literal without
+  Markdown escaping and reject formatting components.
+- A builder validates one embed. Discord's 6,000-character limit spans every embed
+  in a message, which a single-embed renderer cannot check.
 
-## Verification and completion criteria
+## Text composition
 
-- Verify deferred evaluation, readonly props, nested arrays/fragments, conditional
-  children, zero preservation, repeated component evaluation, and independent
-  returned builders. Reject promises and unsupported objects/builders.
-- Cover single-root enforcement, wrong nesting, duplicate singleton sections,
-  unknown props, mapped field order, and ignored keys.
-- Cover literal escaping, plain metadata, rich field names/values, raw text,
-  mention formatting, explicit breaks, code delimiters, and encoded HTTP(S) links.
-- Check native builder identity, response-type compatibility, native validation
-  failures and causes, and respect for disabled SDK validators. A successful
-  single-embed render does not validate an entire multi-embed reply.
-- Verify production/development automatic runtimes and NodeNext types, including
-  negative cases, without React or a required source-development build.
-- Prove standalone source and packed consumption without core, with published
-  JavaScript/declarations and no repository path aliases.
-- Exercise TSX/JSX discovery exclusions, command parent/group indexes, module-name
-  extraction, and numeric event priorities.
-- Extend cache acceptance and independent release verification for the new
-  package without publication. Keep bot tests isolated from private credentials,
-  Discord login, and command deployment.
-- Run required type, test, formatting, package, cache, and release checks, and
-  record the equivalent-output native-builder benchmark.
+`Bold`, `Italic`, `Underline`, `Strikethrough`, `Spoiler`, `Br`, `Code`,
+`CodeBlock`, `Link`, `Raw`, `UserMention`, `RoleMention`, and `ChannelMention` work
+in embed descriptions and field values, modal text displays, and layout
+`TextDisplay`s. `H1`–`H3` and `Subtext` add line-level formatting; see
+[layout messages](jsx-layout.md#headings-and-subtext).
+- Literal text is Markdown-escaped: backslashes and the punctuation used for
+  formatting, links, headings, and lists. Escaping applies to literal text only,
+  never a second time to generated formatting. Unicode and compiler whitespace are
+  kept.
+- The renderer escapes each literal before composing, because the SDK's
+  `escapeMarkdown()` recognizes only complete constructs: two separate `"|"`
+  children would otherwise join into `"||"`, and isolated brackets would break a
+  link label.
+- `Code` rejects backticks and line breaks; `CodeBlock` rejects triple backticks.
+  Code is kept, not escaped. `CodeBlock.language` is one identifier of letters,
+  digits, underscores, plus signs, or hyphens. `Raw`, `Code`, and `CodeBlock` take
+  string content.
+- `Link` takes absolute HTTP(S) URLs only. Characters that break masked-link syntax
+  are encoded, labels are escaped separately and may be formatted, and nested links
+  throw. Image and icon URLs follow native rules instead, including attachment URLs.
+- Mention IDs are non-empty digit strings. That checks syntax, not that the user,
+  role, or channel exists. Mentions don't override `allowedMentions`; set it on the
+  response.
+- `Raw` bypasses escaping deliberately.
 
-These checks run without bot startup, private credentials, login, deployment, or
-publication. The new package starts at 0.0.0; its minor changeset proposes its
-first 0.1.0 release through the normal reviewed version workflow.
+Formatting delegates to `@discordjs/formatters` after these checks (italic uses
+the SDK's `_text_` form). The SDK helpers don't enforce the code-delimiter,
+HTTP(S), link-nesting, or mention-ID rules, so those checks stay in Hyperion.
 
-## Verified integration facts
+## Errors and validation
 
-Read-only investigation on 2026-10-31 established:
-- The pinned v15 installation exports `EmbedBuilder` from `@discordjs/builders`,
-  not from `discord.js`. Native `toJSON()` respects the global validation setting
-  when called without an override. Timestamp setters can fail before serialization.
-- A builder validates one embed's length. Discord's aggregate 6,000-character
-  limit spans every embed in a message; a singular renderer lacks that message
-  context and cannot establish full reply validity.
-- Official Discord Markdown documentation does not provide a definitive
-  per-embed-property formatting matrix or exhaustive code/link escaping grammar.
-  Text-context and delimiter policies require explicit design and verification.
-- TSX handler support touches shared discovery, command parent/group index
-  classification and extension stripping, event numeric-priority parsing, and
-  TypeScript inclusion/configuration. Changing discovery alone is insufficient.
-- Consumer, cache, and release tooling currently assumes core/two packages in
-  several places. Adding an independently publishable JSX package requires
-  explicit source/packed runtime and declaration checks, cache coverage, and independent
-  release-tooling coverage.
+Failures throw `JSXRenderError` with a structural `path` and the original `cause`.
+When an application component throws, the message names the component (its
+function name) at the parent's path. Generated messages never include supplied
+text; native causes and errors thrown by application components can. The package
+never logs.
 
-Sources: installed `@discordjs/builders` implementation/types;
+Renderers call native `toJSON()` without an override, so they respect the global
+validator setting. JSX structural checks (nesting, unknown props, singletons,
+duplicate IDs) stay active when native validators are disabled. Native setters can
+fail before serialization; for example, timestamp setters.
+
+The pinned v15 install exports `EmbedBuilder` from `@discordjs/builders`, not
+`discord.js`.
+
+## Performance
+
+`packages/jsx/benchmarks` compares rendering with equivalent native builders,
+recording runtime versions and separating tree creation, rendering, and
+validation. It measures overhead; it makes no speed claims.
+
+Sources: installed `@discordjs/builders` and `@discordjs/formatters`;
 [Discord Markdown guide](https://support.discord.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline),
 [message formatting](https://docs.discord.com/developers/reference#message-formatting),
-[embed reference](https://docs.discord.com/developers/resources/message#embed-object);
-`packages/core/src/util/discover-modules.ts`,
-`packages/core/src/registries/parse-command-path.ts`,
-`packages/core/src/events/load-event-handlers.ts`,
-`scripts/verify-package.mjs`, `scripts/verify-cache.mjs`,
-`scripts/check-release.mjs`, and `.github/workflows/publish.yml`.
-
-## Configuration and diagnostics
-
-```json
-{
-    "compilerOptions": {
-        "jsx": "react-jsx",
-        "jsxImportSource": "@hyperion/jsx"
-    },
-    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.jsx"]
-}
-```
-
-Include dynamically discovered handlers in the runner's compiler configuration,
-not only the application entry point. When running from the workspace root, use
-its JSX-aware configuration or select the application's config explicitly with
-`tsx --tsconfig`. Source execution needs no preliminary build. Compile automatic
-JSX to JavaScript for plain Node execution. Production and development automatic
-runtime imports are both public subpaths.
-
-`Embed.Author` accepts `name`, optional `url`, and optional `iconURL` props.
-`Embed.Footer` accepts `text` and optional `iconURL`. `Embed.Image` and
-`Embed.Thumbnail` accept `url`. Fields accept `name`, optional `inline`, and value
-children. Plain titles accept literal child strings/numbers, fragments, and
-components returning plain text. Author names and footer text are string props.
-
-`Raw`, `Code`, and `CodeBlock` require string content. `CodeBlock.language`, when
-provided, is a single identifier containing letters, digits, underscores, plus
-signs, or hyphens. Code is preserved rather than escaped. Links may contain
-formatted labels, but nested links are rejected; `Raw` deliberately bypasses
-ordinary Markdown handling. Mention IDs must be nonempty digit strings. These
-checks establish syntax, not the existence of Discord users, roles, or channels.
-
-Literal Markdown escaping covers backslashes and punctuation used for formatting,
-links, headings, and lists. It is applied only to literal text, not a second time
-to generated formatting. It is not an authorization or mention-delivery policy:
-set `allowedMentions` on the response as needed. Unicode and compiler-produced
-whitespace remain unchanged; use `Br` or explicit string spaces when intentional.
-
-Props are shallow snapshots and read-only; objects/arrays nested inside them
-remain application-owned. Fetch async data before authoring/rendering. Promises,
-prebuilt builders, and arbitrary object children are rejected; a component passed
-as a child instead of rendered (`{Card}` for `<Card />`) gets its own message. A
-nesting limit of 128 levels, counting arrays and component calls as well as
-elements, rejects recursive component/child structures rather than exhausting the
-stack. Keys are ignored metadata and are not passed to components.
-
-Elements are recognized by module-private identity. Elements created by one
-installed copy of `@hyperion/jsx` are rejected by another copy (for example when
-two versions are installed), so keep a single version in an application.
-
-`JSXRenderError.path` identifies structural context. When an application
-component throws, the message names the component (its function name) at the
-parent's path. Generated messages exclude supplied text; native errors and errors thrown by application components remain
-available through `cause` and can include supplied values. The package does not
-log automatically. Native setters can fail before final serialization. Changes
-made to returned builders should be validated again when sending the reply.
-
-## Native formatter reuse
-
-The package directly depends on the matching pinned `@discordjs/formatters`
-prerelease. Formatting components delegate bold, italic, underline,
-strikethrough, spoiler, inline code, fenced code, links, and mentions to its
-helpers after JSX-specific validation. Italic uses the SDK's `_text_` syntax.
-
-Literal escaping remains JSX-specific. The SDK's `escapeMarkdown()` recognizes
-complete constructs: escaping two separate `"|"` children independently can
-still concatenate to `"||"`. It also does not escape isolated brackets for use
-inside a generated link label. The renderer escapes literal syntax characters
-before composition so fragments cannot accidentally assemble Markdown.
-
-SDK helpers format strings without enforcing this package's code-delimiter,
-HTTP(S), link-nesting, or mention-ID constraints. These checks and structural
-error paths remain in Hyperion. `Raw` remains the explicit escape hatch.
+and the [embed reference](https://docs.discord.com/developers/resources/message#embed-object).
