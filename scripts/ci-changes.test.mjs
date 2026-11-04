@@ -4,7 +4,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { after, describe, test } from "node:test";
-import { isDocsPath, needsCodeChecks, touchesCode } from "./ci-changes.mjs";
+import {
+    isDocsPath,
+    needsCodeChecks,
+    needsSiteBuild,
+    touchesCode,
+    touchesSite,
+} from "./ci-changes.mjs";
 
 describe("path classification", () => {
     test("documentation paths skip the code checks", () => {
@@ -54,6 +60,37 @@ describe("path classification", () => {
     });
 });
 
+describe("site classification", () => {
+    test("the guide, the site app, and build inputs build the site", () => {
+        for (const file of [
+            "docs/guide/buttons.md",
+            "docs/guide/jsx/embeds.md",
+            "apps/docs-site-fumadocs/lib/source.js",
+            "pnpm-lock.yaml",
+            "package.json",
+            ".github/workflows/pages.yml",
+        ]) {
+            assert.ok(touchesSite([file]), file);
+        }
+    });
+
+    test("other changes leave the site alone", () => {
+        for (const file of [
+            "docs/buttons.md",
+            "docs/research/documentation-site-generators.md",
+            "AGENTS.md",
+            "packages/core/src/index.ts",
+            "apps/dev-bot/src/commands/ping.ts",
+        ]) {
+            assert.equal(touchesSite([file]), false, file);
+        }
+    });
+
+    test("an empty change list builds the site", () => {
+        assert.equal(touchesSite([]), true);
+    });
+});
+
 describe("comparing commits", () => {
     const root = mkdtempSync(path.join(os.tmpdir(), "hyperion-ci-changes-"));
     const git = (...args) =>
@@ -84,6 +121,7 @@ describe("comparing commits", () => {
     const start = commit("start", { "docs/a.md": "a", "src/a.ts": "a" });
     const docsOnly = commit("docs", { "docs/a.md": "b", "AGENTS.md": "x" });
     const mixed = commit("mixed", { "docs/a.md": "c", "src/a.ts": "b" });
+    const guide = commit("guide", { "docs/guide/a.md": "a" });
 
     after(() => rmSync(root, { recursive: true, force: true }));
 
@@ -94,6 +132,17 @@ describe("comparing commits", () => {
     test("a range with code runs the code checks", () => {
         assert.equal(needsCodeChecks(start, mixed, root), true);
         assert.equal(needsCodeChecks(docsOnly, mixed, root), true);
+    });
+
+    test("only guide changes build the site", () => {
+        assert.equal(needsSiteBuild(start, docsOnly, root), false);
+        assert.equal(needsSiteBuild(mixed, guide, root), true);
+        assert.equal(needsCodeChecks(mixed, guide, root), false);
+    });
+
+    test("an unknown base builds the site", () => {
+        assert.equal(needsSiteBuild("", guide, root), true);
+        assert.equal(needsSiteBuild("f".repeat(40), guide, root), true);
     });
 
     test("an unknown, missing, or all-zero base runs the code checks", () => {
