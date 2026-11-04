@@ -27,11 +27,24 @@ when ranges still accept an update. Its experimental peer option is covered by
 `pnpm verify:release`; recheck it when upgrading Changesets. Do not merge generated
 peer-range widening without evidence of support.
 
-GitHub must allow Actions to create pull requests. PR events created with the
-default GitHub token may not start other workflows. A maintainer can dispatch CI
-on the generated PR branch from the Actions UI (or use `gh workflow run ci.yml
---ref <version-pr-branch>`), verify checks on its exact head, and then merge.
-Merging the version PR does not publish anything.
+The workflow has two requirements that nothing else reports:
+- **Repository setting:** Settings → Actions → General → Workflow permissions →
+  "Allow GitHub Actions to create and approve pull requests" must be on, or the
+  run fails with "GitHub Actions is not permitted to create or approve pull
+  requests".
+- **Full history:** its checkout uses `fetch-depth: 0`. `changeset version` reads
+  the commit that added each changeset; in a shallow clone it fetches more history,
+  which fails ("could not read Username") because the checkout keeps no
+  credentials.
+
+The version PR is opened with the default GitHub token, so GitHub holds its CI
+run for approval (`action_required`) instead of starting it, and the PR shows no
+checks. Approve it with **Approve and run workflows** on the PR (or
+`gh api -X POST repos/<owner>/<repo>/actions/runs/<run-id>/approve`); its checks
+then appear on the PR as usual. Alternatively, dispatch CI on
+the branch (`gh workflow run ci.yml --ref changeset-release/main`); a dispatched
+run checks the exact head commit but is not listed on the PR, so verify it in the
+Actions tab. Merging the version PR does not publish anything.
 
 ## Maintainer setup before enabling publication
 
