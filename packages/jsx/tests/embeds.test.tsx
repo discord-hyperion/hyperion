@@ -436,11 +436,21 @@ test("contains thrown components, rejects asynchronous/unsupported children and 
             assert.ok(error instanceof JSXRenderError);
             assert.equal(error.cause, original);
             assert.ok(!error.message.includes("private"));
+            assert.match(error.message, /Authoring component "Broken" failed/);
 
             return true;
         },
     );
     assert.throws(() => renderEmbed(<Recursive />), /Nesting limit/);
+    assert.throws(
+        () =>
+            renderEmbed(
+                <Embed>
+                    <Embed.Description>{Broken as never}</Embed.Description>
+                </Embed>,
+            ),
+        /got a component; render it as <Component \/>/,
+    );
 
     for (const value of [
         Promise.resolve("x"),

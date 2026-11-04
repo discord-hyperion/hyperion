@@ -14,14 +14,17 @@ export type Child =
 export type Component<Props = Record<string, unknown>> = (
     props: Readonly<Props>,
 ) => Child;
+/** Any component, with its props type erased so registries can hold them together. */
+type AnyComponent = Component<never>;
+
 export type Element = {
     readonly [element]: true;
-    readonly type: Component<never> | typeof Fragment;
+    readonly type: AnyComponent | typeof Fragment;
     readonly props: Readonly<Record<string, unknown>>;
 };
 
 type Definition = { name: string; props: readonly string[] };
-const definitions = new WeakMap<Component<never>, Definition>();
+const definitions = new WeakMap<AnyComponent, Definition>();
 
 export const jsx = (
     type: Element["type"],
@@ -52,8 +55,9 @@ export const primitive = <Props>(
     props: readonly string[],
 ): Component<Props> => {
     const component: Component<Props> = values =>
-        jsx(component as Component<never>, values as Record<string, unknown>);
-    definitions.set(component as Component<never>, { name, props });
+        jsx(component as AnyComponent, values as Record<string, unknown>);
+
+    definitions.set(component as AnyComponent, { name, props });
 
     return component;
 };
@@ -66,9 +70,15 @@ export type Node = {
 };
 export type Value = string | number | Node;
 
+/**
+ * How deep `expand` may recurse. Each array level and each authoring-component call
+ * counts, not only elements, so this bounds recursive components as well.
+ */
+const maxDepth = 128;
+
 /** Expand only the current level; renderers decide which children are valid. */
 export const expand = (child: unknown, path: string, depth = 0): Value[] => {
-    if (depth > 128) {
+    if (depth > maxDepth) {
         throw new JSXRenderError(
             path,
             "Nesting limit exceeded; check for recursive components or children.",
@@ -82,6 +92,13 @@ export const expand = (child: unknown, path: string, depth = 0): Value[] => {
     if (Array.isArray(child)) {
         return child.flatMap((value, index) =>
             expand(value, `${path}[${index}]`, depth + 1),
+        );
+    }
+
+    if (typeof child === "function") {
+        throw new JSXRenderError(
+            path,
+            "Expected JSX content but got a component; render it as <Component /> instead.",
         );
     }
 
@@ -144,7 +161,11 @@ export const expand = (child: unknown, path: string, depth = 0): Value[] => {
     try {
         result = node.type(node.props as never);
     } catch (cause) {
-        throw new JSXRenderError(path, "Authoring component failed.", {
+        // Name the component, which is code rather than supplied text, so a parent
+        // with several custom components shows which one failed.
+        const name = node.type.name ? ` "${node.type.name}"` : "";
+
+        throw new JSXRenderError(path, `Authoring component${name} failed.`, {
             cause,
         });
     }
