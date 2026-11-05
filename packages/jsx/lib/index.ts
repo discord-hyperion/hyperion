@@ -40,6 +40,12 @@ export { Modal } from "./modal-components.ts";
 export { renderButton, renderComponents } from "./render-components.ts";
 export { renderEmbed } from "./render-embed.ts";
 export {
+    renderChannelSelect,
+    renderMentionableSelect,
+    renderRoleSelect,
+    renderUserSelect,
+} from "./render-entity-select.ts";
+export {
     type EphemeralLayoutMessage,
     type LayoutComponent,
     type LayoutMessage,

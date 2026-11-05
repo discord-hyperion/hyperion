@@ -3,16 +3,23 @@ import {
     ActionRow,
     Bold,
     Button,
+    ChannelSelect,
     type Component,
     Embed,
+    MentionableSelect,
     Modal,
+    RoleSelect,
     renderButton,
+    renderChannelSelect,
     renderComponents,
     renderEmbed,
+    renderMentionableSelect,
     renderModal,
+    renderRoleSelect,
     renderStringSelect,
+    renderUserSelect,
     StringSelect,
-    type UserSelect,
+    UserSelect,
 } from "@hyperion/jsx";
 
 const View: Component<{ name: string }> = ({ name }) => (
@@ -124,6 +131,27 @@ const selectRows: import("@discordjs/builders").ActionRowBuilder[] =
 
 if (select.toJSON().options.length !== 2 || selectRows.length !== 1) {
     throw new Error("Unexpected string select output.");
+}
+
+const entitySelects: [
+    import("@discordjs/builders").UserSelectMenuBuilder,
+    import("@discordjs/builders").RoleSelectMenuBuilder,
+    import("@discordjs/builders").MentionableSelectMenuBuilder,
+    import("@discordjs/builders").ChannelSelectMenuBuilder,
+] = [
+    renderUserSelect(<UserSelect customId="standalone.user" />),
+    renderRoleSelect(<RoleSelect customId="standalone.role" />),
+    renderMentionableSelect(
+        <MentionableSelect customId="standalone.mentionable" />,
+    ),
+    renderChannelSelect(<ChannelSelect customId="standalone.channel" />),
+];
+
+if (
+    entitySelects.map(menu => menu.toJSON().custom_id).join() !==
+    "standalone.user,standalone.role,standalone.mentionable,standalone.channel"
+) {
+    throw new Error("Unexpected entity select output.");
 }
 
 const invalidSelectTypes = () => {
