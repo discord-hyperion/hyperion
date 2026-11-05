@@ -113,7 +113,7 @@ try {
     run("git", ["init", "--quiet"]);
     run("pnpm", [
         "install",
-        "--offline",
+        "--prefer-offline",
         "--frozen-lockfile",
         "--ignore-scripts",
     ]);

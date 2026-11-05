@@ -87,7 +87,8 @@ artifact contracts every time. Packed verification runs outside Turbo, uncached;
 do not run it concurrently with a build that writes the same `dist` directory.
 
 `pnpm verify:cache` copies the controlled source/configuration inputs into a
-disposable workspace and installs offline with a frozen lockfile. It verifies:
+disposable workspace and installs with a frozen lockfile, preferring the local
+store and fetching only what it lacks. It verifies:
 - Cold source checks without `dist`, followed by unchanged-run cache replay.
 - Framework edits invalidate core and bot checks; JSX edits invalidate JSX and bot
   checks. Bot edits invalidate only bot checks.
