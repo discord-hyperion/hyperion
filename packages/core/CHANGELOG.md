@@ -15,7 +15,8 @@
   ```ts
   // Before
   type Menu = SelectMenuHandler<ComponentType.UserSelect, typeof params>;
-    // After
+
+  // After
   type MenuSpec = {
       componentType: ComponentType.UserSelect;
       params: typeof params;
