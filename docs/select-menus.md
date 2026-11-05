@@ -426,10 +426,11 @@ Use `ctx.logger` for correlated logs. Selected values are not logged by the
 framework. Handlers stay stateless: fetch async data and persist application
 state in application-owned storage rather than fields on a shared handler.
 
-## JSX string-select authoring
+## JSX select authoring
 
-`@hyperion/jsx` can author a native string-select template with
-`renderStringSelect()` and `StringSelect.Option` children, and every select type
+`@hyperion/jsx` can author a native template for every select type with
+`renderStringSelect()`, `renderUserSelect()`, `renderRoleSelect()`,
+`renderMentionableSelect()`, and `renderChannelSelect()`, and render any of them
 inside an `ActionRow` with `renderComponents()` for a fresh message instance.
 Routing, guards, input, acknowledgment, and native collectors are unchanged; JSX
 renders builders and adds no handler callbacks.

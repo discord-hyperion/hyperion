@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { StringSelectMenuBuilder } from "@discordjs/builders";
+import {
+    StringSelectMenuBuilder,
+    UserSelectMenuBuilder,
+} from "@discordjs/builders";
 import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
 import {
     ActionRow,
@@ -142,6 +145,9 @@ try {
         selection as unknown as StringSelectMenuInteraction,
     );
     assert.deepEqual(selections, [{ content: "Priority: high" }]);
+    const assignee = client.selectMenus.get("consumer.assignee");
+    assert.ok(assignee?.builder instanceof UserSelectMenuBuilder);
+    assert.equal(assignee.componentType, ComponentType.UserSelect);
 
     const replies: unknown[] = [];
     const submission = {

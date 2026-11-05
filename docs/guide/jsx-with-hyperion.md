@@ -62,7 +62,9 @@ await ctx.interaction.reply({
 
 `build()` gives you a fresh copy with the custom ID filled in, so you can change
 its label or disable it without touching the shared template.
-`renderStringSelect()` does the same job for select menus. The core guide's
+`renderStringSelect()` does the same job for select menus, and so do
+`renderUserSelect()`, `renderRoleSelect()`, `renderMentionableSelect()`, and
+`renderChannelSelect()` for the other kinds. The core guide's
 [buttons](buttons.md) and [select menus](select-menus.md) pages cover routing,
 guards, and responding.
 

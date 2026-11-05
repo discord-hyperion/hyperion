@@ -4,7 +4,9 @@
 `MentionableSelect`, and `ChannelSelect` describe select menus. They render inside
 a message `ActionRow` through `renderComponents()` or a layout message, and inside
 a `Modal.Label` through `renderModal()`; see [placement](#placement).
-`renderStringSelect()` renders one string select as a core handler template.
+`renderStringSelect()`, `renderUserSelect()`, `renderRoleSelect()`,
+`renderMentionableSelect()`, and `renderChannelSelect()` each render one select as
+a core handler template.
 Shared runtime behaviour is in [JSX authoring](jsx.md#runtime-behaviour).
 
 ## Shared menu props
@@ -58,9 +60,8 @@ their choices, so they take no children.
 
 Defaults are arrays of ID strings; anything else throws with a path ending in the
 prop name. `channelTypes` takes native `ChannelType` values and is cloned. The
-number of defaults must fall within `minValues`/`maxValues`, which native
-validation checks. There is no standalone renderer for entity selects; render them
-inside an `ActionRow` or a `Modal.Label`.
+number of defaults isn't checked against `minValues`/`maxValues`; native
+validation doesn't check it either, so keep them consistent.
 
 ## Placement
 
@@ -76,8 +77,13 @@ inside an `ActionRow` or a `Modal.Label`.
 
 ## Rendering and validation
 
-`renderStringSelect()` requires exactly one `StringSelect` after expansion and
-validates it once with `toJSON()`. Inside rows, the row's validation covers its
+Each standalone renderer requires exactly one select of its own kind after
+expansion, renders it for a message, and validates it once with `toJSON()`. Any
+other root, including a different select kind, throws at `root` with "Expected
+exactly one UserSelect." (naming the renderer's kind). Each returns its own
+builder: `StringSelectMenuBuilder`, `UserSelectMenuBuilder`,
+`RoleSelectMenuBuilder`, `MentionableSelectMenuBuilder`, or
+`ChannelSelectMenuBuilder`, which must match the handler's `componentType`. Inside rows, the row's validation covers its
 select. Bare selects or options at the root, nested menus, option text, unknown
 props, prebuilt builders, and promises throw. Duplicate option values and IDs are
 checked even when native validators are disabled.
@@ -118,6 +124,37 @@ export default class extends SelectMenuHandler {
 The handler context is the native `StringSelectMenuInteraction`; option values
 are strings, not inferred literal unions. To validate them, add core
 [select-menu input](select-menus.md#validate-the-selection).
+
+Entity selects work the same way with their own renderer and `componentType`:
+
+```tsx
+import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { UserSelect, renderUserSelect } from "@hyperion/jsx";
+import { ComponentType } from "discord.js";
+
+type ChooseUserSpec = { componentType: ComponentType.UserSelect };
+
+export default class extends SelectMenuHandler<ChooseUserSpec> {
+    constructor() {
+        super({
+            customId: "user.choose",
+            componentType: ComponentType.UserSelect,
+            builder: renderUserSelect(
+                <UserSelect customId="user.choose" maxValues={1} />,
+            ),
+        });
+    }
+
+    async run(ctx: SelectMenuContext<ChooseUserSpec>) {
+        const names = ctx.interaction.users.map(user => user.username);
+
+        await ctx.interaction.update({
+            content: `Selected: ${names.join(", ") || "None"}.`,
+            allowedMentions: { parse: [] },
+        });
+    }
+}
+```
 
 ## Message example
 
