@@ -22,6 +22,11 @@ implemented item links a reference doc.
     little.
   - Make ownership, timeouts, completion, cancellation, and shutdown cleanup
     explicit, separate from stateless filesystem handlers.
+- [ ] `@hyperion/sqlite`, an optional package of table helpers over
+  `better-sqlite3`.
+  - Designed and ready to build: see
+    [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
+    database-free.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete

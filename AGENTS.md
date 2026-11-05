@@ -40,7 +40,9 @@ Read the relevant reference before implementation or review:
 - Logging, sensitive data handling, or startup indicators:
   [Logging](docs/logging.md).
 - Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
-  work: [Feature backlog](docs/features.md). Database support remains out of scope.
+  work: [Feature backlog](docs/features.md). Core stays database-free; an optional
+  SQLite package is planned in
+  [ADR 0005](docs/adr/0005-optional-sqlite-package-on-better-sqlite3.md).
 
 ## Documentation
 
