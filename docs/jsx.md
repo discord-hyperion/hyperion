@@ -12,14 +12,15 @@ Hyperion-owned runtime.
 Every renderer evaluates its view at call time and returns fresh native builders,
 validated with `toJSON()`.
 
-| Renderer                   | Returns                    | Reference                                       |
-| -------------------------- | -------------------------- | ----------------------------------------------- |
-| `renderEmbed(view)`        | `EmbedBuilder`             | [Embeds](#embeds)                               |
-| `renderComponents(view)`   | `ActionRowBuilder[]`       | [Message components](jsx-message-components.md) |
-| `renderButton(view)`       | a custom-ID button builder | [Message components](jsx-message-components.md) |
-| `renderStringSelect(view)` | `StringSelectMenuBuilder`  | [Select menus](jsx-select-menus.md)             |
-| `renderModal(view)`        | `ModalBuilder`             | [Modals](jsx-modals.md)                         |
-| `renderMessage(view)`      | `{ components, flags }`    | [Layout messages](jsx-layout.md)                |
+| Renderer                                                                  | Returns                     | Reference                                       |
+| ------------------------------------------------------------------------- | --------------------------- | ----------------------------------------------- |
+| `renderEmbed(view)`                                                       | `EmbedBuilder`              | [Embeds](#embeds)                               |
+| `renderComponents(view)`                                                  | `ActionRowBuilder[]`        | [Message components](jsx-message-components.md) |
+| `renderButton(view)`                                                      | a custom-ID button builder  | [Message components](jsx-message-components.md) |
+| `renderStringSelect(view)`                                                | `StringSelectMenuBuilder`   | [Select menus](jsx-select-menus.md)             |
+| `renderUserSelect(view)` and the role, mentionable, and channel renderers | the matching select builder | [Select menus](jsx-select-menus.md)             |
+| `renderModal(view)`                                                       | `ModalBuilder`              | [Modals](jsx-modals.md)                         |
+| `renderMessage(view)`                                                     | `{ components, flags }`     | [Layout messages](jsx-layout.md)                |
 
 There is no standalone text renderer and no classic `createElement` API. Native
 builders stay fully supported; returned builders can be changed through native

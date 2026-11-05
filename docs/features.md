@@ -14,9 +14,11 @@ implemented item links a reference doc.
   - Radio groups, checkbox groups, and checkboxes for modals (blocked: the pinned
     `@discordjs/builders` has no builders for them yet). Core modal input already
     extracts them.
-  - Standalone renderers for user, role, mentionable, and channel selects, so
-    select-menu handlers can keep them as templates like `renderStringSelect()`.
   - The layout-message `File` component, after attachment handling is designed.
+- [ ] Optional custom IDs in handler templates.
+  - Core sets the handler's custom ID on every copy of a template, yet JSX buttons
+    and selects still require `customId`, so templates repeat it. Let standalone
+    renderers omit it without loosening rows and modals.
 - [ ] Managed interactive collectors.
   - Needs a reason to exist first: a thin wrapper over discord.js collectors adds
     little.
