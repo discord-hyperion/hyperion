@@ -75,6 +75,32 @@ Every write is checked against the schema first. If it doesn't pass, you get a
 `update` and `delete` need a filter, so a typo can't wipe a table. When you really
 mean everything, call `todos.deleteAll()`.
 
+## Quick values
+
+Not everything needs a table. For settings, flags, and cooldowns, use a
+key-value namespace:
+
+```ts fragment
+const cooldowns = db.kv("cooldowns", v.number());
+
+if (cooldowns.has(userId)) {
+    await interaction.reply("Slow down a little!");
+
+    return;
+}
+
+cooldowns.set(userId, Date.now(), { ttl: 30_000 });
+```
+
+There's no migration to write: Hyperion keeps every namespace in one table of
+its own. Keys are strings, and values are plain JSON, so objects, arrays,
+strings, numbers, booleans, and `null`. Something JSON would change, like a
+`Date`, throws instead of quietly coming back as a string.
+
+`ttl` is how long the key lives, in milliseconds. Once it's up, the key reads as
+missing. The schema is optional; without one, values come back as `unknown`.
+`entries()` lists a namespace and `clear()` empties it.
+
 ## Queries
 
 For anything the helpers don't cover, write SQL with the `sql` tag:
