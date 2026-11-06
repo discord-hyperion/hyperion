@@ -1,4 +1,9 @@
-import { createDatabase, sql, type Table } from "@hyperion/sqlite";
+import {
+    createDatabase,
+    type KeyValueStore,
+    sql,
+    type Table,
+} from "@hyperion/sqlite";
 import * as v from "valibot";
 
 const schema = v.object({
@@ -45,7 +50,21 @@ void [
 ];
 
 // Type-only checks: never called.
+const cooldowns: KeyValueStore<number, number> = db.kv("cooldowns", v.number());
+const until: number = cooldowns.set("user", 1, { ttl: 1_000 });
+const cooldown: number | undefined = cooldowns.get("user");
+const pairs: [string, number][] = cooldowns.entries();
+const anything: unknown = db.kv("flags").get("x");
+
+void [until, cooldown, pairs, anything];
+
 const rejected = () => {
+    // @ts-expect-error values match the schema
+    cooldowns.set("user", "1");
+    // @ts-expect-error keys are strings
+    cooldowns.get(1);
+    // @ts-expect-error ttl is a number
+    cooldowns.set("user", 1, { ttl: "1s" });
     // @ts-expect-error the key names a schema column
     db.table("counters", schema, { key: "missing" });
     // @ts-expect-error filters name schema columns

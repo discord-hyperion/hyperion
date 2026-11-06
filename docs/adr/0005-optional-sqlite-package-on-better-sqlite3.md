@@ -16,7 +16,9 @@ Core stays database-free. Storage ships as a separate, optional package,
   accepting a native addon and pnpm's build approval.
 - **Key-value store.** A quick.db or Keyv style `get("key")` store was rejected
   for v1: Keyv already covers it, and `@keyv/sqlite` runs on `better-sqlite3`.
-  Table helpers filter on real columns, which a key-value store can't.
+  Table helpers filter on real columns, which a key-value store can't. It was
+  later added beside them; see
+  [ADR 0007](0007-key-value-namespaces-on-the-sqlite-package.md).
 - **Name.** `kv` was rejected because it promises a key-value store.
 
 ## Decisions
@@ -83,5 +85,4 @@ Queries and safety:
   packed-consumer fixture for `verify:package`. AGENTS.md and the feature list
   then say core stays database-free and point here.
 - Later, not v1: client integration (close on shutdown, logging), slow-query
-  logging, typed constraint errors, date and JSON column helpers, and a
-  key-value store.
+  logging, typed constraint errors, and date and JSON column helpers.
