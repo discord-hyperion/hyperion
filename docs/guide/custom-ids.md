@@ -81,7 +81,9 @@ export default class CloseTicketButton extends ButtonHandler<CloseTicketButtonSp
     constructor() {
         super({
             params: closeTicket,
-            builder: new DangerButtonBuilder().setLabel("Close"),
+            builder: new DangerButtonBuilder()
+                .setCustomId(closeTicket.id)
+                .setLabel("Close"),
             guards: [paramOwner("owner")],
         });
     }

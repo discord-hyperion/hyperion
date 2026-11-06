@@ -6,9 +6,10 @@ ticket it closes), put it in the [custom ID](custom-ids.md) or your own storage.
 
 ## A button handler
 
-Put handlers in `src/buttons`. Each one says which custom ID it handles, and can
-optionally carry a **template** in `builder`: the reusable button design kept
-with the handler in `client.buttons`. Your commands send copies of that template.
+Put handlers in `src/buttons`. Each one says which custom ID it handles, either
+as `customId` or through a **template** in `builder`: the reusable button design
+kept with the handler in `client.buttons`. With a template, its custom ID is the
+handler's. Your commands send copies of that template.
 
 ```ts
 // src/buttons/refresh-profile.ts
@@ -18,8 +19,9 @@ import { type ButtonContext, ButtonHandler } from "@hyperion/core";
 export default class RefreshProfile extends ButtonHandler {
     constructor() {
         super({
-            customId: "profile.refresh",
-            builder: new PrimaryButtonBuilder().setLabel("Refresh profile"),
+            builder: new PrimaryButtonBuilder()
+                .setCustomId("profile.refresh")
+                .setLabel("Refresh profile"),
         });
     }
 
@@ -30,7 +32,8 @@ export default class RefreshProfile extends ButtonHandler {
 ```
 
 The custom ID has to match exactly: `profile.refresh` only handles
-`profile.refresh`. You don't need to set it on the template; Hyperion fills it in.
+`profile.refresh`. Set it in one place: on the template if there is one, otherwise
+as `customId`. Giving both is an error.
 
 Link and premium buttons don't send clicks to your bot, so they can't have
 handlers.
@@ -81,7 +84,7 @@ Add `guards` to restrict who can click. A command's guards don't carry over to
 the buttons it sends, so protect the button itself:
 
 ```ts
-super({ customId: "profile.refresh", guards: [ownerOnly] });
+super({ builder: refreshButton, guards: [ownerOnly] });
 ```
 
 See [guards](guards.md) for writing your own, and [responding](responding.md)

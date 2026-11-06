@@ -15,10 +15,6 @@ implemented item links a reference doc.
     `@discordjs/builders` has no builders for them yet). Core modal input already
     extracts them.
   - The layout-message `File` component, after attachment handling is designed.
-- [ ] Optional custom IDs in handler templates.
-  - Core sets the handler's custom ID on every copy of a template, yet JSX buttons
-    and selects still require `customId`, so templates repeat it. Let standalone
-    renderers omit it without loosening rows and modals.
 - [ ] Managed interactive collectors.
   - Needs a reason to exist first: a thin wrapper over discord.js collectors adds
     little.
@@ -56,7 +52,8 @@ implemented item links a reference doc.
 - Context-menu commands with typed lookup. See
   [context-menu commands](context-menu-commands.md).
 - Autocomplete routing. See [autocomplete](autocomplete.md).
-- Button, select-menu, and modal handlers with templates and `build()`. See
+- Button, select-menu, and modal handlers with templates and `build()`; a
+  template's custom ID is its handler's. See
   [buttons](buttons.md), [select menus](select-menus.md), and [modals](modals.md).
 - Typed custom-ID params. See [custom-ID params](custom-id-params.md).
 - Guards through `defineGuard()`. See [guards](guards.md).

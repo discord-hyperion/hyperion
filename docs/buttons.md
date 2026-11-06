@@ -41,8 +41,8 @@ The shared template stays unchanged.
 
 ## Define a handler
 
-A handler declares where clicks route with `customId`. It may also offer an
-optional [template](GLOSSARY.md#components): an interactive builder from the
+A handler declares where clicks route with `customId`, or with the custom ID of
+its [template](GLOSSARY.md#components): an interactive builder from the
 installed discord.js v15 builder package (`PrimaryButtonBuilder`,
 `SecondaryButtonBuilder`, `SuccessButtonBuilder`, or `DangerButtonBuilder`).
 Link and premium buttons do not dispatch custom-ID interactions and cannot be
@@ -55,8 +55,9 @@ import { ButtonHandler, type ButtonContext } from "@hyperion/core";
 export default class RefreshButton extends ButtonHandler {
     constructor() {
         super({
-            customId: "profile.refresh",
-            builder: new PrimaryButtonBuilder().setLabel("Refresh profile"),
+            builder: new PrimaryButtonBuilder()
+                .setCustomId("profile.refresh")
+                .setLabel("Refresh profile"),
         });
     }
 
@@ -75,8 +76,16 @@ export default class RefreshButton extends ButtonHandler {
 
 Handlers are stored in `client.buttons`, a Discord `Collection` keyed by exact
 custom ID. `profile.refresh` matches only that ID; suffixes, wildcards, and regex
-routing are not interpreted. Keep IDs stable after construction. The template may
-omit its custom ID; if it sets one, it must equal `customId`. Unmatched buttons are ignored so application-owned collectors
+routing are not interpreted. Keep IDs stable after construction.
+
+A handler gets its ID from exactly one source: `customId`, a template whose
+custom ID becomes the handler's, or `params`, whose route the optional template
+must carry as its custom ID. Passing `customId` beside a template is a type error
+and throws. So does a template without a custom ID, or a params template whose
+custom ID isn't the route. Loading also rejects a template whose custom ID changed
+after construction.
+
+Unmatched buttons are ignored so application-owned collectors
 and listeners can handle them. Avoid having a collector and a Hyperion handler
 both acknowledge the same ID.
 
@@ -100,7 +109,9 @@ export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
     constructor() {
         super({
             params: todoDone,
-            builder: new PrimaryButtonBuilder().setLabel("Done"),
+            builder: new PrimaryButtonBuilder()
+                .setCustomId(todoDone.id)
+                .setLabel("Done"),
         });
     }
 
