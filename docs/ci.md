@@ -56,10 +56,11 @@ rule, so a guide-only change runs `Lint and docs` and `Docs site` but not `Code`
 It builds only; it never publishes.
 
 Publishing is a separate workflow, [`pages.yml`](../.github/workflows/pages.yml). On
-pushes to `main` that touch the guide or the site, it builds, runs the same checks,
-and uploads `out/` to the Cloudflare Pages project `hyperion-docs`
+pushes to `main` that touch the same inputs, apart from other workflows, it
+builds, runs the same checks, and uploads `out/` to the Cloudflare Pages project `hyperion-docs`
 (`hyperion-docs-6h7.pages.dev`) with Wrangler. It needs the `CLOUDFLARE_API_TOKEN`
 repository secret, a token with only the account permission Cloudflare Pages: Edit.
+Only the publish step receives it, since install and build run third-party code.
 The account ID is not secret and is written in the workflow. Pull requests are
 never published.
 

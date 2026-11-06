@@ -26,9 +26,6 @@ implemented item links a reference doc.
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
 - [ ] Maintenance: checks and contributor docs, one area per branch.
-  - Pages workflow: scope `CLOUDFLARE_API_TOKEN` to the publish step, not the
-    whole job, and add root `package.json` and `pnpm-workspace.yaml` to its
-    `paths` to match `scripts/ci-changes.mjs`.
   - Client init: finish all local loading, events included, before deploying
     commands. Test: an invalid event handler makes zero deployment calls.
   - Params docs: validation runs the application's schema (async steps included)
