@@ -22,7 +22,7 @@ your bot needs next.
 - [Data in custom IDs](custom-ids.md): one handler for many buttons, each with its own data.
 - [Autocomplete](autocomplete.md)
 
-## Making it safe
+## Validation
 
 - [Guards](guards.md): checks that run before your handler.
 - [Typed input](input.md): validate command options and form fields with a schema.
@@ -31,11 +31,14 @@ your bot needs next.
 
 - [Events](events.md): react to Discord events like `messageCreate`.
 - [Logging](logging.md)
-- [Storing data](storing-data.md): keep data in SQLite with validated tables.
-- [JSX guide](jsx.md): embeds, buttons, layout messages, and forms as JSX. It
-  works with any discord.js bot.
-- [JSX with Hyperion](jsx-with-hyperion.md): keep JSX controls and forms as
-  handler templates.
+
+## Packages
+
+Optional packages that work with any discord.js bot, and fit Hyperion well.
+- [JSX](jsx.md): embeds, buttons, layout messages, and forms as JSX.
+  [JSX with Hyperion](jsx-with-hyperion.md) keeps them as handler templates.
+- [SQLite](storing-data.md): keep data in SQLite with validated tables and
+  key-value namespaces.
 
 ## How-to
 

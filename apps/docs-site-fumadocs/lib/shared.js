@@ -5,9 +5,21 @@ export const repo = "https://github.com/favylicious/discord-hyperion";
 // plain text. Set to true when the repository is public.
 export const repoIsPublic = false;
 
+// Guide files staged somewhere other than their own path. Everything else keeps
+// its path under docs/guide.
+const moved = {
+    "README.md": "index.md",
+    "jsx.md": "jsx/index.md",
+    "jsx-with-hyperion.md": "jsx/with-hyperion.md",
+};
+
+/** Where a guide file is staged, relative to the content folder. */
+export const staged = original => moved[original] ?? original;
+
 /** Where a page's original Markdown lives, so edit links skip the staged copy. */
 export const editUrl = path => {
-    const original = path === "index.md" ? "README.md" : path;
+    const original =
+        Object.keys(moved).find(file => moved[file] === path) ?? path;
 
-    return `${repo}/edit/main/docs/guide/${original.replace(/^jsx\/index\.md$/, "jsx.md")}`;
+    return `${repo}/edit/main/docs/guide/${original}`;
 };

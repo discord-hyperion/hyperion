@@ -3,7 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { repo, repoIsPublic } from "../lib/shared.js";
+import { repo, repoIsPublic, staged } from "../lib/shared.js";
 import { serve } from "./serve.mjs";
 
 const site = fileURLToPath(new URL("..", import.meta.url));
@@ -44,9 +44,8 @@ const decode = text =>
 // 1. Only the guide is published, and every guide page has a route.
 const expected = walk(guide, ".md").map(file => {
     const relative = path.relative(guide, file).split(path.sep).join("/");
-    const route = relative.replace(/\.md$/, "");
 
-    return route === "README" ? "" : route;
+    return staged(relative).replace(/(^|\/)index\.md$|\.md$/, "");
 });
 const isPage = file => !/^(_next|api|_not-found|404)(\/|\.|$)/.test(file);
 const built = walk(dist, ".html")
@@ -232,6 +231,7 @@ if (repoIsPublic) {
         "edit links point at the original Markdown",
         editLink("jsx/embeds", "jsx/embeds.md") &&
             editLink("jsx", "jsx.md") &&
+            editLink("jsx/with-hyperion", "jsx-with-hyperion.md") &&
             editLink("", "README.md"),
     );
 } else {
@@ -276,7 +276,7 @@ try {
         ["defineGuard", "/guards"],
         ["ButtonHandler", "/buttons"],
         ["renderMessage", "/jsx/layout-messages"],
-        ["awaitModalSubmit", "/jsx/modals"],
+        ["fileTypes", "/jsx/modals"],
         ["paramOwner", "/custom-ids"],
     ]) {
         const found = await client.search(term);
