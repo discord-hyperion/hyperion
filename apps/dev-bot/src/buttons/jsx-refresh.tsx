@@ -4,7 +4,6 @@ import { Button, renderButton } from "@hyperion/jsx";
 export default class extends ButtonHandler {
     constructor() {
         super({
-            customId: "jsx.refresh",
             builder: renderButton(
                 <Button
                     customId="jsx.refresh"

@@ -1,4 +1,7 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
+import {
+    ChatInputCommandBuilder,
+    StringSelectMenuBuilder,
+} from "@discordjs/builders";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type {
     ComponentType,
@@ -15,6 +18,7 @@ import {
     ModalHandler,
     type SelectMenuContext,
     SelectMenuHandler,
+    type SelectMenuHandlerOptions,
 } from "../src/index.ts";
 
 const priority = defineInput({
@@ -114,6 +118,14 @@ export const specContracts = (plain: SelectMenuContext) => {
     type _ModalTypo = ModalContext<{ parms: typeof ticket }>;
     // @ts-expect-error Buttons take no input.
     type _ButtonInput = ButtonContext<{ input: typeof priority }>;
+    const both = {
+        customId: "todo.priority",
+        componentType: 3 as ComponentType.StringSelect,
+        builder: new StringSelectMenuBuilder().setCustomId("todo.priority"),
+        input: priority,
+    };
+    // @ts-expect-error A template supplies the custom ID, so customId is rejected.
+    both satisfies SelectMenuHandlerOptions<Priority>;
     // @ts-expect-error The resolver needs a user select with params.
     type _WrongMenu = SelectMenuHandler<{ input: typeof assignee }>;
 

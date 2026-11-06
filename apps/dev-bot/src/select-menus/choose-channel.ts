@@ -7,9 +7,9 @@ type ChooseChannelSpec = { componentType: ComponentType.ChannelSelect };
 export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> {
     constructor() {
         super({
-            customId: "channel.choose",
             componentType: ComponentType.ChannelSelect,
             builder: new ChannelSelectMenuBuilder()
+                .setCustomId("channel.choose")
                 .setPlaceholder("Choose text or voice channels")
                 .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
                 .setMinValues(0)

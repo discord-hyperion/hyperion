@@ -24,7 +24,8 @@ for (const { folder, Handler, Registry, builder, componentType = "" } of [
         Handler: "ButtonHandler",
         Registry: ButtonRegistry,
         // An 81-character label fails native validation.
-        builder: 'new PrimaryButtonBuilder().setLabel("x".repeat(81))',
+        builder:
+            'new PrimaryButtonBuilder().setCustomId("handler").setLabel("x".repeat(81))',
     },
     {
         folder: "select-menus",
@@ -32,14 +33,14 @@ for (const { folder, Handler, Registry, builder, componentType = "" } of [
         componentType: "componentType: 3, ",
         Registry: SelectMenuRegistry,
         builder:
-            'new StringSelectMenuBuilder().setPlaceholder("x".repeat(151)).addOptions({ label: "Test", value: "test" })',
+            'new StringSelectMenuBuilder().setCustomId("handler").setPlaceholder("x".repeat(151)).addOptions({ label: "Test", value: "test" })',
     },
     {
         folder: "modals",
         Handler: "ModalHandler",
         Registry: ModalRegistry,
         builder:
-            'new ModalBuilder().setTitle("x".repeat(46)).addLabelComponents(new LabelBuilder().setLabel("Input").setTextInputComponent(new TextInputBuilder().setCustomId("field").setStyle(TextInputStyle.Short)))',
+            'new ModalBuilder().setCustomId("handler").setTitle("x".repeat(46)).addLabelComponents(new LabelBuilder().setLabel("Input").setTextInputComponent(new TextInputBuilder().setCustomId("field").setStyle(TextInputStyle.Short)))',
     },
 ]) {
     test(`${folder} use native validation and respect explicit global opt-out`, async t => {
@@ -54,7 +55,7 @@ import { ${Handler} } from ${JSON.stringify(library)};
 import { PrimaryButtonBuilder, StringSelectMenuBuilder, ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(builders)};
 import { TextInputStyle } from ${JSON.stringify(discord)};
 export default class extends ${Handler} {
-    constructor() { super({ customId: "handler", ${componentType}builder: ${builder} }); }
+    constructor() { super({ ${componentType}builder: ${builder} }); }
     async run() {}
 }`,
         );

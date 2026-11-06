@@ -17,9 +17,9 @@ type ChooseColourSpec = { input: typeof input };
 export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
     constructor() {
         super({
-            customId: "colour.choose",
             componentType: ComponentType.StringSelect,
             builder: new StringSelectMenuBuilder()
+                .setCustomId("colour.choose")
                 .setPlaceholder("Choose a colour")
                 .addOptions(
                     { label: "Blue", value: "blue" },

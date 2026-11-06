@@ -8,11 +8,21 @@ export type Template = {
     setCustomId: (customId: string) => unknown;
 };
 
-/** The exact custom ID, or the route for a params handler. */
+const templateCustomId = (template: Template | undefined) => {
+    const id = template?.toJSON(false).custom_id;
+
+    return id === "" ? undefined : id;
+};
+
+/**
+ * The exact custom ID, the route for a params handler, or the template's custom
+ * ID when the handler gives neither.
+ */
 export const handlerCustomId = (
     kind: string,
     customId: unknown,
     params: ParamsDefinition | undefined,
+    template: Template | undefined,
 ) => {
     if (customId !== undefined && params !== undefined) {
         throw new TypeError(
@@ -20,10 +30,30 @@ export const handlerCustomId = (
         );
     }
 
-    const id = params?.id ?? customId;
+    if (customId !== undefined && template !== undefined) {
+        throw new TypeError(
+            `${kind} handlers with a template take its custom ID; remove customId.`,
+        );
+    }
+
+    if (params !== undefined && template !== undefined) {
+        const route = templateCustomId(template);
+
+        if (route !== params.id) {
+            throw new TypeError(
+                route === undefined
+                    ? `${kind} templates need the params route "${params.id}" as their custom ID.`
+                    : `${kind} template custom ID "${route}" doesn't match the params route "${params.id}".`,
+            );
+        }
+    }
+
+    const id = params?.id ?? customId ?? templateCustomId(template);
 
     if (typeof id !== "string" || id === "") {
-        throw new TypeError(`${kind} handlers require a customId or params.`);
+        throw new TypeError(
+            `${kind} handlers require a customId, params, or a template with a custom ID.`,
+        );
     }
 
     if (id.length > maxCustomIdLength) {

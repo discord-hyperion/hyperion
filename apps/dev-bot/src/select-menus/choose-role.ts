@@ -7,9 +7,9 @@ type ChooseRoleSpec = { componentType: ComponentType.RoleSelect };
 export default class ChooseRole extends SelectMenuHandler<ChooseRoleSpec> {
     constructor() {
         super({
-            customId: "role.choose",
             componentType: ComponentType.RoleSelect,
             builder: new RoleSelectMenuBuilder()
+                .setCustomId("role.choose")
                 .setPlaceholder("Choose a role")
                 .setMinValues(1)
                 .setMaxValues(1),

@@ -133,7 +133,6 @@ describe("button params routing", () => {
         const literal = new (class extends ButtonHandler {
             constructor() {
                 super({
-                    customId: "todo.done:1:2:3",
                     builder: new PrimaryButtonBuilder()
                         .setCustomId("todo.done:1:2:3")
                         .setLabel("Literal"),

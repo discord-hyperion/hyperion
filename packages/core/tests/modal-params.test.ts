@@ -55,8 +55,10 @@ type RenameContext = ModalContext<{
 }>;
 type Run = (ctx: RenameContext) => Promise<void>;
 
-const form = () =>
+/** A form template; a params handler's template carries its route. */
+const form = (route = "ticket.rename") =>
     new ModalBuilder()
+        .setCustomId(route)
         .setTitle("Rename ticket")
         .addLabelComponents(
             new LabelBuilder()
@@ -354,7 +356,7 @@ describe("modal params loading", () => {
         await assert.rejects(registry.load(root), error => {
             assert.match(
                 String((error as Error).cause),
-                /template custom ID must match its handler's route/,
+                /template custom ID "other" doesn't match the params route "a\.route"/,
             );
 
             return true;
@@ -395,7 +397,8 @@ describe("build(definition, values)", () => {
                     }
                     async run() {}
                 })(),
-            template: () => new PrimaryButtonBuilder().setLabel("Pick"),
+            template: () =>
+                new PrimaryButtonBuilder().setCustomId("pick").setLabel("Pick"),
         },
         {
             name: "select menu",
@@ -414,7 +417,10 @@ describe("build(definition, values)", () => {
                     }
                     async run() {}
                 })(),
-            template: () => new UserSelectMenuBuilder().setPlaceholder("Pick"),
+            template: () =>
+                new UserSelectMenuBuilder()
+                    .setCustomId("pick")
+                    .setPlaceholder("Pick"),
         },
         {
             name: "modal",
@@ -429,7 +435,7 @@ describe("build(definition, values)", () => {
                     }
                     async run() {}
                 })(),
-            template: form,
+            template: () => form("pick"),
         },
     ] as const;
 
@@ -448,10 +454,20 @@ describe("build(definition, values)", () => {
 
             assert.equal(first.toJSON().custom_id, "pick:a%3Ab");
             assert.equal(second.toJSON().custom_id, "pick:c");
-            assert.equal(handler.builder?.toJSON(false).custom_id, undefined);
+            assert.equal(handler.builder?.toJSON(false).custom_id, "pick");
             assert.throws(
                 () => registry.build("pick"),
                 /belongs to a params handler/,
+            );
+        });
+
+        test(`${kind.name}: a template must carry the params route`, () => {
+            const template = kind.template();
+            template.setCustomId("other");
+
+            assert.throws(
+                () => kind.handler(template as never),
+                /template custom ID "other" doesn't match the params route "pick"/,
             );
         });
 

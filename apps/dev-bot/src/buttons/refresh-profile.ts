@@ -8,8 +8,9 @@ import { type ButtonContext, ButtonHandler, ownerOnly } from "@hyperion/core";
 export default class RefreshProfileButton extends ButtonHandler {
     constructor() {
         super({
-            customId: "profile.refresh",
-            builder: new PrimaryButtonBuilder().setLabel("Refresh profile"),
+            builder: new PrimaryButtonBuilder()
+                .setCustomId("profile.refresh")
+                .setLabel("Refresh profile"),
             guards: [ownerOnly],
         });
     }

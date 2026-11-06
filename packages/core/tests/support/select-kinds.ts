@@ -211,7 +211,6 @@ export const createMenu = (
     }> {
         constructor() {
             super({
-                customId: kind.customId,
                 componentType: kind.type as ComponentType.StringSelect,
                 builder: builder as StringSelectMenuBuilder,
                 guards: guards as readonly GuardProvider<

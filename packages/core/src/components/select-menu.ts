@@ -23,7 +23,7 @@ import type {
     InputOptions,
     KnownKeys,
     ParamsContext,
-    ParamsOptions,
+    RouteOptions,
     SpecInput,
     SpecParams,
 } from "./handler-spec.ts";
@@ -90,8 +90,6 @@ export type SelectMenuHandlerOptions<
     Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
 > = {
     componentType: SpecType<Spec>;
-    /** Optional template; callers get copies through `client.selectMenus.build()`. */
-    builder?: SelectMenuBuilders[SpecType<Spec>];
     /** Guards run before input, so they see params but never `ctx.input`. */
     guards?: readonly GuardProvider<
         SelectMenuParamsContext<SpecType<Spec>, SpecParams<Spec>>
@@ -100,7 +98,7 @@ export type SelectMenuHandlerOptions<
     SpecInput<Spec>,
     SelectMenuInputDefinition<SpecType<Spec>, SpecParams<Spec>>
 > &
-    ParamsOptions<SpecParams<Spec>>;
+    RouteOptions<SpecParams<Spec>, SelectMenuBuilders[SpecType<Spec>]>;
 
 export abstract class SelectMenuHandler<
     Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
@@ -128,6 +126,7 @@ export abstract class SelectMenuHandler<
             "Select menu",
             options.customId,
             this.params,
+            options.builder,
         );
         this.componentType = options.componentType;
         this.builder = options.builder;

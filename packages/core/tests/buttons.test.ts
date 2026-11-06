@@ -38,7 +38,6 @@ class TestButton extends ButtonHandler {
         guards: readonly GuardProvider<ButtonContext>[] = [],
     ) {
         super({
-            customId: "refresh",
             builder: new PrimaryButtonBuilder()
                 .setCustomId("refresh")
                 .setLabel("Refresh"),

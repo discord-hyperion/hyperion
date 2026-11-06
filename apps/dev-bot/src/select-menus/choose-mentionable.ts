@@ -9,9 +9,9 @@ type ChooseMentionableSpec = {
 export default class ChooseMentionable extends SelectMenuHandler<ChooseMentionableSpec> {
     constructor() {
         super({
-            customId: "mentionable.choose",
             componentType: ComponentType.MentionableSelect,
             builder: new MentionableSelectMenuBuilder()
+                .setCustomId("mentionable.choose")
                 .setPlaceholder("Choose users or roles")
                 .setMinValues(0)
                 .setMaxValues(5),

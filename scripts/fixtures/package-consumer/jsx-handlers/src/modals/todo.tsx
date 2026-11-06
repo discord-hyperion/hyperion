@@ -15,7 +15,6 @@ type TodoSpec = { input: typeof input };
 export default class extends ModalHandler<TodoSpec> {
     constructor() {
         super({
-            customId: "consumer.modal",
             builder: renderModal(
                 <Modal customId="consumer.modal" title="Consumer modal">
                     <Modal.Label text="Name">

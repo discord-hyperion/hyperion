@@ -9,7 +9,7 @@ import type {
     EmptySpec,
     KnownKeys,
     ParamsContext,
-    ParamsOptions,
+    RouteOptions,
     SpecParams,
 } from "./handler-spec.ts";
 
@@ -25,10 +25,8 @@ export type ButtonContext<Spec extends ValidButtonSpec<Spec> = EmptySpec> =
 export type ButtonHandlerOptions<
     Spec extends ValidButtonSpec<Spec> = EmptySpec,
 > = {
-    /** Optional template; callers get copies through `client.buttons.build()`. */
-    builder?: CustomIdButtonBuilder;
     guards?: readonly GuardProvider<ButtonContext<Spec>>[];
-} & ParamsOptions<SpecParams<Spec>>;
+} & RouteOptions<SpecParams<Spec>, CustomIdButtonBuilder>;
 
 export abstract class ButtonHandler<
     Spec extends ValidButtonSpec<Spec> = EmptySpec,
@@ -45,6 +43,7 @@ export abstract class ButtonHandler<
             "Button",
             options.customId,
             this.params,
+            options.builder,
         );
         this.builder = options.builder;
         this.guards = Object.freeze([...(options.guards ?? [])]);

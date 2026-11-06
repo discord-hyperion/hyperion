@@ -20,7 +20,6 @@ export const modalContracts = (ctx: ModalContext) => {
     }
 
     const options: ModalHandlerOptions = {
-        customId: "feedback.submit",
         builder: new ModalBuilder().setCustomId("feedback.submit"),
         guards: [
             ctx => {
@@ -33,9 +32,8 @@ export const modalContracts = (ctx: ModalContext) => {
         ],
     };
     const wrongBuilder: ModalHandlerOptions = {
-        customId: "feedback.submit",
         // @ts-expect-error Modal templates must be ModalBuilder instances.
-        builder: new TextInputBuilder(),
+        builder: new TextInputBuilder().setCustomId("feedback.submit"),
     };
     // @ts-expect-error Modal submissions use the v15 components resolver, not fields.
     ctx.interaction.fields;

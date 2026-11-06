@@ -30,7 +30,6 @@ class TestModal extends ModalHandler {
         guards: readonly GuardProvider<ModalContext>[] = [],
     ) {
         super({
-            customId: "feedback.submit",
             builder: new ModalBuilder()
                 .setCustomId("feedback.submit")
                 .setTitle("Feedback")
@@ -133,7 +132,6 @@ test("embedded selects are resolved by the modal without invoking message select
     class MessageMenu extends SelectMenuHandler {
         constructor() {
             super({
-                customId: "colour.choose",
                 componentType: ComponentType.StringSelect,
                 builder,
             });
@@ -145,7 +143,6 @@ test("embedded selects are resolved by the modal without invoking message select
     class EmbeddedModal extends ModalHandler {
         constructor() {
             super({
-                customId: "feedback.submit",
                 builder: new ModalBuilder()
                     .setCustomId("feedback.submit")
                     .setTitle("Choose a colour")
