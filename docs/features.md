@@ -15,11 +15,6 @@ implemented item links a reference doc.
     `@discordjs/builders` has no builders for them yet). Core modal input already
     extracts them.
   - The layout-message `File` component, after attachment handling is designed.
-- [ ] Managed interactive collectors.
-  - Needs a reason to exist first: a thin wrapper over discord.js collectors adds
-    little.
-  - Make ownership, timeouts, completion, cancellation, and shutdown cleanup
-    explicit, separate from stateless filesystem handlers.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete
