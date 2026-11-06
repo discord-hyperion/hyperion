@@ -26,6 +26,21 @@ implemented item links a reference doc.
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
 - [ ] Maintenance: checks and contributor docs, one area per branch.
+  - Pages workflow: scope `CLOUDFLARE_API_TOKEN` to the publish step, not the
+    whole job, and add root `package.json` and `pnpm-workspace.yaml` to its
+    `paths` to match `scripts/ci-changes.mjs`.
+  - Client init: finish all local loading, events included, before deploying
+    commands. Test: an invalid event handler makes zero deployment calls.
+  - Params docs: validation runs the application's schema (async steps included)
+    before guards, and doesn't use `resolveInput`'s helper. State purity as the
+    caller's job, and that `paramOwner()` compares a forgeable ID, not ownership.
+    Same fix for the comment at `interaction-dispatcher.ts` "no application code".
+  - `docs/command-registration.md`: list `.tsx` and `.jsx` as supported extensions.
+  - Dispatcher: keep the `interactionCreate` listener and remove it in
+    `cleanup()`. Test: no listener remains after `destroy()`.
+  - `defineParams()`: reject `__proto__` and other reserved keys, which
+    `decodeParams()` silently drops.
+  - Startup logs: count params handlers in `.routes` alongside `size`.
   - Type-check `ts`/`tsx` code blocks in `docs/` and `docs/guide/` against the
     workspace packages, with a fence marker to skip deliberately partial blocks.
     Today `check-docs.mjs` checks only imports and exported names.
