@@ -8,7 +8,7 @@ application with a bot token, and a server to test in.
 Hyperion finds your code by folder. Everything lives under `src`, next to your
 entry file:
 
-```text
+```files
 my-bot/
 ├── index.ts
 └── src/
@@ -82,8 +82,9 @@ in is a separate step.
 Passing `guildIds` deploys to those servers only, which updates instantly and is
 perfect while you develop. Leave it out to deploy globally.
 
-> **Watch out:** deploying replaces _all_ commands in that scope, including ones
-> you registered some other way.
+> [!WARNING]
+> Deploying replaces _all_ commands in that scope, including ones you registered
+> some other way.
 
 Hyperion doesn't read `.env` files for you. Set the variables however you
 normally start your bot.
