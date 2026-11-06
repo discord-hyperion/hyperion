@@ -1,9 +1,6 @@
-import { setTimeout } from "node:timers/promises";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { ParentCommand } from "@hyperion/core";
 import {
-    type InferInput,
-    type InferOutput,
     isoTimestamp,
     maxLength,
     minLength,
@@ -42,33 +39,6 @@ export const todoSchema = object({
 
 export const getTodoSchema = pick(todoSchema, ["id"]);
 export const createTodoSchema = omit(todoSchema, ["id"]);
-
-export type Todo = InferOutput<typeof todoSchema>;
-export type CreateTodo = InferInput<typeof createTodoSchema>;
-
-export const fakeApi = {
-    getTodo: async (id: string): Promise<Todo | null> => {
-        await setTimeout(1500);
-
-        return {
-            id,
-            title: "Todo 1",
-            description: "This is the todo description",
-            deadline: "2026-10-30T00:00:00.000Z",
-        } satisfies Todo;
-    },
-
-    createTodo: async ({ deadline, title, description }: CreateTodo) => {
-        await setTimeout(1500);
-
-        return {
-            id: "1058925",
-            title,
-            deadline,
-            description,
-        } satisfies Todo;
-    },
-};
 
 export default class extends ParentCommand {
     constructor() {

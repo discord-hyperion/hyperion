@@ -1,11 +1,19 @@
+import { randomUUID } from "node:crypto";
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
 import { type CommandContext, defineInput, Subcommand } from "@hyperion/core";
-import { createTodoSchema, fakeApi } from "./index.ts";
+import { todos } from "../../../database.ts";
+import { createTodoSchema } from "./index.ts";
 
 const input = defineInput({
     schema: createTodoSchema,
     defer: true,
-    resolve: opts => fakeApi.createTodo(opts),
+    resolve: ({ title, deadline, description }) =>
+        todos.set({
+            id: randomUUID().slice(0, 8),
+            title,
+            deadline,
+            description: description ?? null,
+        }),
 });
 
 export default class extends Subcommand<typeof input> {
@@ -47,7 +55,8 @@ export default class extends Subcommand<typeof input> {
         }
 
         await ctx.interaction.editReply({
-            content: Object.values(value).join("\n"),
+            content: `Created todo ${value.id}: ${value.title}`,
+            allowedMentions: { parse: [] },
         });
     }
 }

@@ -25,7 +25,7 @@ const markdown = (directory, recursive = true) =>
 const files = [
     ...markdown("docs"),
     ...["AGENTS.md", "CODING_STANDARDS.md"].map(file => path.join(root, file)),
-    ...["core", "jsx"].map(name =>
+    ...["core", "jsx", "sqlite"].map(name =>
         path.join(root, "packages", name, "README.md"),
     ),
 ].filter(file => existsSync(file));
@@ -102,6 +102,9 @@ const exportsOf = (entry, visited = new Set()) => {
 const packages = {
     "@hyperion/core": exportsOf(path.join(root, "packages/core/src/index.ts")),
     "@hyperion/jsx": exportsOf(path.join(root, "packages/jsx/lib/index.ts")),
+    "@hyperion/sqlite": exportsOf(
+        path.join(root, "packages/sqlite/lib/index.ts"),
+    ),
 };
 
 /** Bare specifiers must name an installed package (or a Node built-in). */
@@ -112,7 +115,13 @@ const installed = specifier => {
         ? specifier.split("/").slice(0, 2).join("/")
         : specifier.split("/")[0];
 
-    return [".", "apps/dev-bot", "packages/core", "packages/jsx"].some(base =>
+    return [
+        ".",
+        "apps/dev-bot",
+        "packages/core",
+        "packages/jsx",
+        "packages/sqlite",
+    ].some(base =>
         existsSync(path.join(root, base, "node_modules", name, "package.json")),
     );
 };

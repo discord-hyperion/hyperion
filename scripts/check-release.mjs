@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 export const releasePackage = name => {
-    const packages = { "@hyperion/core": "core", "@hyperion/jsx": "jsx" };
+    const packages = {
+        "@hyperion/core": "core",
+        "@hyperion/jsx": "jsx",
+        "@hyperion/sqlite": "sqlite",
+    };
     assert.ok(
         Object.hasOwn(packages, name),
         "Select a supported public package.",

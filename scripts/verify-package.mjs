@@ -31,7 +31,7 @@ const temporary = await realpath(
 );
 
 const packages = await Promise.all(
-    ["jsx", "core"].map(async name => ({
+    ["jsx", "core", "sqlite"].map(async name => ({
         name,
         directory: path.join(root, "packages", name),
         manifest: JSON.parse(
@@ -43,19 +43,24 @@ const packages = await Promise.all(
     })),
 );
 
+const fixtures = {
+    jsx: "jsx-consumer",
+    core: "package-consumer",
+    sqlite: "sqlite-consumer",
+};
+// The file each consumer runs with tsx, from source and then packed.
+const runs = {
+    jsx: ["consumer.tsx", "consumer.tsx"],
+    core: ["jsx-integration.tsx", "consumer.ts"],
+    sqlite: ["consumer.ts", "consumer.ts"],
+};
 const sources = [];
 const run = (command, args, cwd) =>
     execFileSync(command, args, { cwd, stdio: "inherit", timeout: 120_000 });
 const configure = async (directory, name) => {
-    await cp(
-        path.join(
-            root,
-            "scripts/fixtures",
-            name === "jsx" ? "jsx-consumer" : "package-consumer",
-        ),
-        directory,
-        { recursive: true },
-    );
+    await cp(path.join(root, "scripts/fixtures", fixtures[name]), directory, {
+        recursive: true,
+    });
 
     await writeFile(
         path.join(directory, "tsconfig.json"),
@@ -120,7 +125,7 @@ try {
     }
 
     for (const item of packages) {
-        // Core's integration consumer uses the bot's explicit dependencies; standalone JSX uses only itself.
+        // Core's integration consumer uses the bot's explicit dependencies; JSX and SQLite use only themselves.
         const home =
             item.name === "core"
                 ? path.join(root, "apps/dev-bot")
@@ -134,11 +139,7 @@ try {
             ["--import", "tsx", path.join(source, "smoke.mjs")],
             home,
         );
-        tsx(
-            source,
-            item.name === "jsx" ? "consumer.tsx" : "jsx-integration.tsx",
-            home,
-        );
+        tsx(source, runs[item.name][0], home);
         console.log(
             `PASS ${item.manifest.name} source consumption without dist or path aliases`,
         );
@@ -198,7 +199,11 @@ try {
     for (const item of packages) {
         const consumer = path.join(temporary, `${item.name}-consumer`);
         await configure(consumer, item.name);
-        const selected = item.name === "jsx" ? [item] : packages;
+        // Core's consumer also integrates JSX; the others stand alone.
+        const selected =
+            item.name === "core"
+                ? packages.filter(pkg => pkg.name !== "sqlite")
+                : [item];
         const dependencies = Object.assign(
             {},
             ...selected.map(pkg => ({
@@ -216,7 +221,7 @@ try {
                 packageManager: workspace.packageManager,
                 dependencies: {
                     ...dependencies,
-                    ...(item.name === "core"
+                    ...(item.name !== "jsx"
                         ? {
                               valibot: packages.find(pkg => pkg.name === "core")
                                   .manifest.devDependencies.valibot,
@@ -250,7 +255,7 @@ try {
         pnpm(["install", "--offline", "--frozen-lockfile", "--ignore-scripts"]);
         run(process.execPath, [path.join(consumer, "smoke.mjs")], consumer);
         types(consumer);
-        tsx(consumer, item.name === "jsx" ? "consumer.tsx" : "consumer.ts");
+        tsx(consumer, runs[item.name][1]);
 
         if (item.name === "core") {
             tsx(consumer, "jsx-integration.tsx");

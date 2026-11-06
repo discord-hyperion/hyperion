@@ -125,6 +125,7 @@ meta("", {
         "---Everything else---",
         "events",
         "logging",
+        "storing-data",
         "---JSX---",
         "jsx",
         "jsx-with-hyperion",

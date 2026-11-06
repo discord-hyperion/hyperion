@@ -1,8 +1,8 @@
 # Release operations
 
-Public packages use independent Changesets versions. The initial package is
-`@hyperion/core` at 0.1.0; `@hyperion/jsx` starts at 0.0.0 with a minor changeset
-proposing its first 0.1.0 release. The workspace root is private. While core
+Public packages use independent Changesets versions. A new package, such as
+`@hyperion/sqlite`, starts at 0.0.0 with a minor changeset proposing its first
+0.1.0 release. The workspace root is private. While core
 is 0.x, project policy uses minor bumps for breaking changes and patch bumps for
 compatible fixes; these are review decisions.
 
@@ -75,7 +75,7 @@ remains the workspace package manager.
 ## Manual publication
 
 After a reviewed version PR is merged, dispatch **Publish package** at the reviewed
-branch/commit with the selected package (`@hyperion/core` or `@hyperion/jsx`), its
+branch/commit with the selected package (`@hyperion/core`, `@hyperion/jsx`, or `@hyperion/sqlite`), its
 exact reviewed version, and the `latest` channel. The release guard
 requires main, a non-prerelease version matching the manifest, no prerelease state,
 and no pending unversioned notes. The job also requires the enable variable and
@@ -87,7 +87,7 @@ consumer verification. The latter retains the exact tarball it verified via
 that file with public access and provenance; it does not repack the source tree.
 No normal PR or version workflow can invoke that step.
 
-The workflow verifies both packages and retains both tarballs, then publishes only
+The workflow verifies every public package and retains each tarball, then publishes only
 the selected package's exact verified artifact. Package selection is allowlisted;
 the version guard reads the selected manifest. Configure trusted publishing and
 bootstrap each npm package independently before enabling publication. It does not create

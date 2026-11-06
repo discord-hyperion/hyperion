@@ -32,7 +32,7 @@ const files = [
     ...markdown("docs").filter(
         file => !/[/\\]docs[/\\](adr|research)[/\\]/.test(file),
     ),
-    ...["core", "jsx"].map(name =>
+    ...["core", "jsx", "sqlite"].map(name =>
         path.join(root, "packages", name, "README.md"),
     ),
 ].filter(file => existsSync(file));

@@ -1,13 +1,13 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Optional SQLite package on better-sqlite3
 
 Core stays database-free. Storage ships as a separate, optional package,
 `@hyperion/sqlite`, that doesn't depend on core, like `@hyperion/jsx`. It wraps
-`better-sqlite3` with table helpers over real rows. The design is settled; it is
-not built yet. Build it from this record without re-deciding it.
+`better-sqlite3` with table helpers over real rows. The contract lives in
+[SQLite storage](../sqlite.md).
 
 ## Considered options
 
@@ -22,8 +22,9 @@ not built yet. Build it from this record without re-deciding it.
 ## Decisions
 
 Packaging:
-- `better-sqlite3` is a peer dependency. The install docs cover
-  `pnpm approve-builds`.
+- `better-sqlite3` is a peer dependency. Version 13 ships prebuilt binaries
+  without an install script, so the `pnpm approve-builds` step this record first
+  expected isn't needed.
 - No integration with the Hyperion client in v1. Apps call `db.close()` from
   their own shutdown code.
 

@@ -8,13 +8,16 @@ indicate that a feature is implemented.
 ## Package boundaries
 
 The pnpm workspace contains `@hyperion/core` in `packages/core`, the independent
-`@hyperion/jsx` authoring package in `packages/jsx`. Shared tooling, documentation,
+`@hyperion/jsx` authoring package in `packages/jsx`, and the independent
+`@hyperion/sqlite` storage package in `packages/sqlite`. Shared tooling, documentation,
 and interaction mocks stay at the root. Add future utility or plugin packages when they have a
 concrete responsibility.
 
 JSX implementation lives in `packages/jsx/lib`, with its own public root and
 compiler runtime exports. It depends on native builders rather than core; see
-[JSX authoring](jsx.md). Applications can consume both packages.
+[JSX authoring](jsx.md). SQLite lives in `packages/sqlite/lib` and depends only
+on `better-sqlite3` and Standard Schema; see [SQLite storage](sqlite.md).
+Applications can consume any combination of the packages.
 
 Framework responsibilities remain split across `client`, `commands`, `components`,
 `contexts`, `guards`, `events`, `registries`, `execution`, `logging`, and `util`.
@@ -24,7 +27,8 @@ through a workspace dependency. Local exports resolve source directly, so tsx
 development requires no compilation. Internal imports use relative `.ts` paths;
 repository-only TypeScript path aliases are unnecessary.
 
-Framework tests live in `packages/core/tests` and `packages/jsx/tests`.
+Framework tests live in `packages/core/tests`, `packages/jsx/tests`, and
+`packages/sqlite/tests`.
 Shared interaction mocks live in `tests/fixtures`. Root
 TypeScript settings are inherited by package configs. Run `pnpm typecheck`,
 `pnpm test`, and `pnpm check` from the root. See [package development](package-development.md)
