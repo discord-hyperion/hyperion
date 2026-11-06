@@ -25,9 +25,6 @@ implemented item links a reference doc.
   - Designed and ready to build: see
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
-- [ ] Maintenance: checks and contributor docs, one area per branch.
-  - Grilling skill: cite the `file:line` that shows current behaviour before
-    stating it.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete

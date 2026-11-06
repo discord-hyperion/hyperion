@@ -17,6 +17,9 @@ context, not the current API.
 
 ## Before changing a subsystem
 
+When you state how the code behaves today, in a design discussion or anywhere
+else, cite the `file:line` that shows it.
+
 Read the relevant reference before implementation or review:
 - Client lifecycle, registry discovery, or package boundaries:
   [Architecture](docs/architecture.md).
