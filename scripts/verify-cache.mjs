@@ -15,12 +15,16 @@ const checks = [
     "@hyperion/dev-bot#test",
     "@hyperion/jsx#typecheck",
     "@hyperion/jsx#test",
+    "@hyperion/sqlite#typecheck",
+    "@hyperion/sqlite#test",
 ];
 const coreChecks = checks.slice(0, 2);
 const botChecks = checks.slice(2, 4);
-const jsxChecks = checks.slice(4);
+const jsxChecks = checks.slice(4, 6);
+const sqliteChecks = checks.slice(6);
 const coreAndBotChecks = [...coreChecks, ...botChecks];
 const jsxAndBotChecks = [...jsxChecks, ...botChecks];
+const sqliteAndBotChecks = [...sqliteChecks, ...botChecks];
 const run = (command, args) =>
     execFileSync(command, args, {
         cwd: directory,
@@ -97,6 +101,11 @@ try {
         "packages/jsx/lib",
         "packages/jsx/tests",
         "packages/jsx/benchmarks",
+        "packages/sqlite/package.json",
+        "packages/sqlite/tsconfig.json",
+        "packages/sqlite/tsconfig.build.json",
+        "packages/sqlite/lib",
+        "packages/sqlite/tests",
         "apps/dev-bot/package.json",
         "apps/dev-bot/tsconfig.json",
         "apps/dev-bot/index.ts",
@@ -140,7 +149,7 @@ try {
     });
     cached(dry(), checks, "HIT");
     const replay = execute(sourceTasks);
-    assert.match(replay, /6 cached, 6 total/);
+    assert.match(replay, /8 cached, 8 total/);
     console.log(
         "PASS cold source checks without dist, parallel graph, unchanged-run cache replay",
     );
@@ -224,12 +233,20 @@ try {
         baseline,
     );
 
+    await mutate(
+        "SQLite edit",
+        "packages/sqlite/lib/index.ts",
+        text => `${text}\n// Cache verification.\n`,
+        sqliteAndBotChecks,
+        baseline,
+    );
+
     cached(dry(), coreChecks, "HIT");
 
     execute(["build"]);
     const emitted = [];
 
-    for (const name of ["core", "jsx"]) {
+    for (const name of ["core", "jsx", "sqlite"]) {
         const directoryName = path.join(directory, "packages", name, "dist");
         emitted.push(
             await readFile(path.join(directoryName, "index.js"), "utf8"),
@@ -238,9 +255,9 @@ try {
     }
 
     const restored = execute(["build"]);
-    assert.match(restored, /2 cached, 2 total/);
+    assert.match(restored, /3 cached, 3 total/);
 
-    for (const [index, name] of ["core", "jsx"].entries()) {
+    for (const [index, name] of ["core", "jsx", "sqlite"].entries()) {
         const directoryName = path.join(directory, "packages", name, "dist");
         assert.equal(
             await readFile(path.join(directoryName, "index.js"), "utf8"),
@@ -252,7 +269,7 @@ try {
     await access(path.join(directory, "packages/jsx/dist/jsx-runtime.d.ts"));
     await access(path.join(directory, "packages/jsx/dist/jsx-dev-runtime.js"));
     console.log(
-        "PASS cached builds restore both packages and JSX runtime subpaths",
+        "PASS cached builds restore every package and JSX runtime subpaths",
     );
 } finally {
     await rm(directory, { recursive: true, force: true });

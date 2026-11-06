@@ -8,7 +8,7 @@ on:
                 required: true
                 default: "@hyperion/core"
                 type: choice
-                options: ["@hyperion/core", "@hyperion/jsx"]
+                options: ["@hyperion/core", "@hyperion/jsx", "@hyperion/sqlite"]
             version:
                 description: Exact reviewed version of the selected package
                 required: true
@@ -80,6 +80,7 @@ jobs:
                   case "$RELEASE_PACKAGE" in
                       @hyperion/core) PACKAGE_KEY=core ;;
                       @hyperion/jsx) PACKAGE_KEY=jsx ;;
+                      @hyperion/sqlite) PACKAGE_KEY=sqlite ;;
                       *) exit 1 ;;
                   esac
                   pnpm --package=npm@11.21.0 dlx npm publish "$RUNNER_TEMP/hyperion-release/hyperion-$PACKAGE_KEY-$EXPECTED_VERSION.tgz" --access public --tag "$RELEASE_CHANNEL" --provenance --ignore-scripts
