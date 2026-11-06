@@ -131,9 +131,10 @@ work from an earlier attachment still belongs to that earlier definition.
 
 ## Initialization and reload
 
-Load and validate all event definitions during client initialization. Attach
-owned listeners at the end of successful initialization, before `create()` returns
-and before login. Events emitted before attachment are not replayed.
+Load and validate all event definitions during client initialization, after the
+component registries and before command deployment, so an invalid event handler
+fails `create()` without any deployment request. Owned listeners attach then,
+before login. Events emitted before attachment are not replayed.
 
 `load()` stages a complete replacement. Validation or import failures leave the
 working definitions/listeners active. On success, swap future dispatch to the

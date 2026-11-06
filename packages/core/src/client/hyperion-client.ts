@@ -106,6 +106,13 @@ export class HyperionClient extends Client {
             this.modals.load(options.root),
         );
 
+        // Every local definition is validated before the first remote request.
+        // The dispatcher attaches first so it stays ahead of event listeners.
+        this.dispatcher.attach();
+        await this.logging.step("Loading events", "events.load", () =>
+            this.events.load(),
+        );
+
         if (options.commands) {
             if (this.commands.size > 0) {
                 const registration = options.commands;
@@ -122,11 +129,6 @@ export class HyperionClient extends Client {
                 );
             }
         }
-
-        this.dispatcher.attach();
-        await this.logging.step("Loading events", "events.load", () =>
-            this.events.load(),
-        );
 
         this.logger.info(
             {

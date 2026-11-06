@@ -117,7 +117,7 @@ Registration errors retain Discord's original error as their cause and include
 the target route. Indexed validation errors also identify the corresponding
 command name and source file, for example `body[2]: "ping" (/path/to/ping.ts)`.
 
-All files load before any deployment request is sent. Providing `guildIds`
+All files load before any deployment request is sent, event handlers included. Providing `guildIds`
 performs one bulk overwrite per unique guild. Omitting `guildIds` performs a
 global bulk overwrite. An explicitly empty guild list is rejected.
 
