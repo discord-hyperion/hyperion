@@ -43,7 +43,9 @@ Read the relevant reference before implementation or review:
 - Logging, sensitive data handling, or startup indicators:
   [Logging](docs/logging.md).
 - Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
-  work: [Feature backlog](docs/features.md). Core stays database-free.
+  work: [Feature backlog](docs/features.md).
+- Storage, `@hyperion/sqlite`, or migrations: [SQLite storage](docs/sqlite.md).
+  Core stays database-free.
 
 ## Documentation
 
