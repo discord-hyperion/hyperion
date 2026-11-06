@@ -29,8 +29,6 @@ implemented item links a reference doc.
   - Type-check `ts`/`tsx` code blocks in `docs/` and `docs/guide/` against the
     workspace packages, with a fence marker to skip deliberately partial blocks.
     Today `check-docs.mjs` checks only imports and exported names.
-  - Fail `check-docs.mjs` on a blank line inside a `.changeset/*.md` code block:
-    Changesets collapses it in the generated changelog.
   - Grilling skill: cite the `file:line` that shows current behaviour before
     stating it.
   - `docs/ci.md`: read a failed job's log with

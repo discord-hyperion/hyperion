@@ -9,6 +9,8 @@ compatible fixes; these are review decisions.
 ## Changes and reviewed version PRs
 
 Run `pnpm changeset` with a public package change and commit its release note.
+Keep code blocks in a release note free of blank lines: Changesets drops them in
+the changelog, so `pnpm check` rejects them.
 Choose every affected public package, its bump type, and a user-facing summary.
 Tooling-only changes do not need a package release.
 
