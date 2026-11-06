@@ -4,9 +4,14 @@ For control and handler terminology, see the [component glossary](GLOSSARY.md#co
 
 Hyperion loads default-exported `SelectMenuHandler` subclasses from
 `<root>/src/select-menus`, recursively. Missing directories are optional. Each
-handler needs a zero-argument constructor, a unique `customId` (or params), its
-`componentType`, and `run(ctx)`. It may also offer an optional
-[template](GLOSSARY.md#components) builder of the same select type. Invalid
+handler needs a zero-argument constructor, a unique ID, its `componentType`, and
+`run(ctx)`. It may also offer an optional [template](GLOSSARY.md#components)
+builder of the same select type. A handler gets its ID from exactly one source: `customId`, a template whose
+custom ID becomes the handler's, or `params`, whose route the optional template
+must carry as its custom ID. Passing `customId` beside a template is a type error
+and throws. So does a template without a custom ID, or a params template whose
+custom ID isn't the route. Loading also rejects a template whose custom ID changed
+after construction. Invalid
 templates and duplicate IDs fail startup
 before command deployment. Loading is atomic: a failed reload preserves the
 previous registry.
@@ -34,9 +39,9 @@ import { ComponentType } from "discord.js";
 export default class ChooseColour extends SelectMenuHandler {
     constructor() {
         super({
-            customId: "colour.choose",
             componentType: ComponentType.StringSelect,
             builder: new StringSelectMenuBuilder()
+                .setCustomId("colour.choose")
                 .setPlaceholder("Choose a colour")
                 .addOptions(
                     { label: "Blue", value: "blue" },
@@ -96,9 +101,9 @@ type ChooseUserSpec = { componentType: ComponentType.UserSelect };
 export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
-            customId: "user.choose",
             componentType: ComponentType.UserSelect,
             builder: new UserSelectMenuBuilder()
+                .setCustomId("user.choose")
                 .setPlaceholder("Choose a user")
                 .setMinValues(1)
                 .setMaxValues(1),
@@ -141,9 +146,9 @@ type ChooseRoleSpec = { componentType: ComponentType.RoleSelect };
 export default class ChooseRole extends SelectMenuHandler<ChooseRoleSpec> {
     constructor() {
         super({
-            customId: "role.choose",
             componentType: ComponentType.RoleSelect,
             builder: new RoleSelectMenuBuilder()
+                .setCustomId("role.choose")
                 .setPlaceholder("Choose a role")
                 .setMinValues(1)
                 .setMaxValues(1),
@@ -184,9 +189,9 @@ type ChooseMentionableSpec = { componentType: ComponentType.MentionableSelect };
 export default class ChooseMentionable extends SelectMenuHandler<ChooseMentionableSpec> {
     constructor() {
         super({
-            customId: "mentionable.choose",
             componentType: ComponentType.MentionableSelect,
             builder: new MentionableSelectMenuBuilder()
+                .setCustomId("mentionable.choose")
                 .setPlaceholder("Choose users or roles")
                 .setMinValues(0)
                 .setMaxValues(5),
@@ -230,9 +235,9 @@ type ChooseChannelSpec = { componentType: ComponentType.ChannelSelect };
 export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> {
     constructor() {
         super({
-            customId: "channel.choose",
             componentType: ComponentType.ChannelSelect,
             builder: new ChannelSelectMenuBuilder()
+                .setCustomId("channel.choose")
                 .setPlaceholder("Choose text or voice channels")
                 .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
                 .setMinValues(0)
@@ -309,7 +314,9 @@ export default class AssignTicket extends SelectMenuHandler<AssignTicketSpec> {
         super({
             componentType: ComponentType.UserSelect,
             params: assignTicket,
-            builder: new UserSelectMenuBuilder().setPlaceholder("Assign to…"),
+            builder: new UserSelectMenuBuilder()
+                .setCustomId(assignTicket.id)
+                .setPlaceholder("Assign to…"),
             guards: [paramOwner("owner")],
         });
     }
@@ -356,13 +363,14 @@ type ChooseColourSpec = { input: typeof input };
 export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
     constructor() {
         super({
-            customId: "colour.choose",
             componentType: ComponentType.StringSelect,
-            builder: new StringSelectMenuBuilder().addOptions(
-                { label: "Blue", value: "blue" },
-                { label: "Green", value: "green" },
-                { label: "Red", value: "red" },
-            ),
+            builder: new StringSelectMenuBuilder()
+                .setCustomId("colour.choose")
+                .addOptions(
+                    { label: "Blue", value: "blue" },
+                    { label: "Green", value: "green" },
+                    { label: "Red", value: "red" },
+                ),
             input,
         });
     }

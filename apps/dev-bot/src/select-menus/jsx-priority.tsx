@@ -6,7 +6,6 @@ import { JsxPriority } from "../views/jsx-priority.tsx";
 export default class extends SelectMenuHandler {
     constructor() {
         super({
-            customId: "jsx.priority",
             componentType: ComponentType.StringSelect,
             builder: renderStringSelect(<JsxPriority />),
         });

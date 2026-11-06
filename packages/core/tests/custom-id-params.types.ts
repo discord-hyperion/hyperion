@@ -60,8 +60,7 @@ export const handlerContracts = (plain: ButtonContext) => {
 export class Literal extends ButtonHandler {
     constructor() {
         super({
-            customId: "x",
-            builder: new PrimaryButtonBuilder().setLabel("x"),
+            builder: new PrimaryButtonBuilder().setCustomId("x").setLabel("x"),
         });
     }
 

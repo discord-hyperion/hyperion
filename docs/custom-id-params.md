@@ -131,9 +131,10 @@ export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
   from its custom ID and `input` from its fields.
 - Handlers without `params` keep literal custom-ID routing and expose no
   `ctx.params`.
-- A handler declares either `customId` (literal) or `params`, never both. Either
-  kind may carry a template; commands set a params control's custom ID with the
-  encoder.
+- A handler declares either `customId` (literal) or `params`, never both, or
+  takes its literal ID from a template. A params handler's template must carry
+  the route as its custom ID; `build(definition, values)` replaces it with the
+  encoded ID. Commands set a params control's custom ID with the encoder.
 
 ## Pipeline
 

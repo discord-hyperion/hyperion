@@ -7,7 +7,6 @@ type ChooseUserSpec = { componentType: ComponentType.UserSelect };
 export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
-            customId: "user.choose",
             componentType: ComponentType.UserSelect,
             builder: renderUserSelect(
                 <UserSelect

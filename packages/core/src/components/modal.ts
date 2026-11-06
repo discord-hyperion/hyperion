@@ -20,7 +20,7 @@ import type {
     InputOptions,
     KnownKeys,
     ParamsContext,
-    ParamsOptions,
+    RouteOptions,
     SpecInput,
     SpecParams,
 } from "./handler-spec.ts";
@@ -68,15 +68,14 @@ export type ModalContext<Spec extends ValidModalSpec<Spec> = EmptySpec> =
 
 export type ModalHandlerOptions<Spec extends ValidModalSpec<Spec> = EmptySpec> =
     {
-        /**
-         * Optional form template; callers get copies through `client.modals.build()`.
-         * Recommended, since `input` reads the form's modal-control custom IDs.
-         */
-        builder?: ModalBuilder;
         /** Guards run before input, so they see params but never `ctx.input`. */
         guards?: readonly GuardProvider<ModalParamsContext<SpecParams<Spec>>>[];
     } & InputOptions<SpecInput<Spec>, ModalInputDefinition<SpecParams<Spec>>> &
-        ParamsOptions<SpecParams<Spec>>;
+        /*
+         * A form template (`builder`) is recommended, since `input` reads its
+         * modal-control custom IDs; callers get copies through `client.modals.build()`.
+         */
+        RouteOptions<SpecParams<Spec>, ModalBuilder>;
 
 export abstract class ModalHandler<
     Spec extends ValidModalSpec<Spec> = EmptySpec,
@@ -93,7 +92,12 @@ export abstract class ModalHandler<
 
     protected constructor(options: ModalHandlerOptions<Spec>) {
         this.params = validateParams(options.params);
-        this.customId = handlerCustomId("Modal", options.customId, this.params);
+        this.customId = handlerCustomId(
+            "Modal",
+            options.customId,
+            this.params,
+            options.builder,
+        );
         this.builder = options.builder;
         this.input = validateInput(
             options.input as ModalInputDefinition | undefined,

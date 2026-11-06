@@ -16,8 +16,9 @@ import { Client, Events } from "discord.js";
 class ExampleButton extends ButtonHandler {
     constructor() {
         super({
-            customId: "button",
-            builder: new PrimaryButtonBuilder().setLabel("Button"),
+            builder: new PrimaryButtonBuilder()
+                .setCustomId("button")
+                .setLabel("Button"),
         });
     }
     async run() {}
@@ -25,8 +26,7 @@ class ExampleButton extends ButtonHandler {
 class ExampleModal extends ModalHandler {
     constructor() {
         super({
-            customId: "modal",
-            builder: new ModalBuilder().setTitle("Modal"),
+            builder: new ModalBuilder().setCustomId("modal").setTitle("Modal"),
         });
     }
     async run() {}

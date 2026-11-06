@@ -5,7 +5,6 @@ import { ComponentType } from "discord.js";
 export default class extends SelectMenuHandler {
     constructor() {
         super({
-            customId: "consumer.priority",
             componentType: ComponentType.StringSelect,
             builder: renderStringSelect(
                 <StringSelect customId="consumer.priority">

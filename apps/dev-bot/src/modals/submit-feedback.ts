@@ -9,8 +9,8 @@ import { MessageFlags, TextInputStyle } from "discord.js";
 export default class SubmitFeedback extends ModalHandler {
     constructor() {
         super({
-            customId: "feedback.submit",
             builder: new ModalBuilder()
+                .setCustomId("feedback.submit")
                 .setTitle("Feedback")
                 .addLabelComponents(
                     new LabelBuilder()

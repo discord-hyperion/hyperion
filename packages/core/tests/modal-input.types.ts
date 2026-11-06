@@ -41,8 +41,7 @@ export const modalInputContracts = (
     class CreateTodo extends ModalHandler<{ input: typeof input }> {
         constructor() {
             super({
-                customId: "todo.create",
-                builder: new ModalBuilder(),
+                builder: new ModalBuilder().setCustomId("todo.create"),
                 input,
                 guards: [
                     ctx => {
@@ -136,8 +135,7 @@ export const contextFreeModalResolver = (
     class ContextFree extends ModalHandler<{ input: typeof input }> {
         constructor() {
             super({
-                customId: "todo.create",
-                builder: new ModalBuilder(),
+                builder: new ModalBuilder().setCustomId("todo.create"),
                 input,
             });
         }

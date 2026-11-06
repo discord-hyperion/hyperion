@@ -116,7 +116,7 @@ const builder = renderModal(<TodoForm />);
 ```
 
 Pass this builder as a core `ModalHandler` template:
-`super({ customId: "todo.create", builder })`. Core's `ModalHandler` and JSX's
+`super({ builder })`; the handler takes the form's custom ID, `todo.create`. Core's `ModalHandler` and JSX's
 `Modal` import together without clashing.
 
 To personalize a form, render a fresh one when opening it, with the same modal

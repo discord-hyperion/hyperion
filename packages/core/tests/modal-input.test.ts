@@ -58,7 +58,6 @@ class InputModal extends ModalHandler<{ input: ModalInputOptions }> {
         guards: readonly GuardProvider<ModalContext>[] = [],
     ) {
         super({
-            customId: "todo.create",
             builder: builder(),
             input,
             guards,
@@ -380,7 +379,7 @@ test("schemas own missing-field defaults, trimming, and successful output withou
     });
     class Typed extends ModalHandler<{ input: typeof input }> {
         constructor() {
-            super({ customId: "todo.create", builder: builder(), input });
+            super({ builder: builder(), input });
         }
         async run(ctx: ModalContext<{ input: typeof input }>) {
             assert.deepEqual(ctx.input, [
@@ -619,7 +618,7 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
         import { ModalHandler } from ${JSON.stringify(core)};
         import { ModalBuilder, TextDisplayBuilder } from ${JSON.stringify(builders)};
         export default class extends ModalHandler {
-            constructor() { super({ customId: 'registered', builder: new ModalBuilder().setCustomId('registered').setTitle('Form').addTextDisplayComponents(new TextDisplayBuilder().setContent('Info')),
+            constructor() { super({ builder: new ModalBuilder().setCustomId('registered').setTitle('Form').addTextDisplayComponents(new TextDisplayBuilder().setContent('Info')),
                 input: { schema: { '~standard': { version: 1, validate() { throw new Error('Must not execute'); } } }, resolve() { throw new Error('Must not execute'); } }
             }); }
             async run() {}
@@ -637,7 +636,7 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
         import { ModalHandler } from ${JSON.stringify(core)};
         import { ModalBuilder } from ${JSON.stringify(builders)};
         export default class extends ModalHandler {
-            constructor() { super({ customId: 'invalid', builder: new ModalBuilder(), input: { schema: {} } }); }
+            constructor() { super({ builder: new ModalBuilder().setCustomId('invalid'), input: { schema: {} } }); }
             async run() {}
         }
     `,

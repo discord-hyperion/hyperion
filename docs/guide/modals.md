@@ -7,7 +7,8 @@ Hyperion routes that submission to a modal handler by its custom ID.
 ## A modal handler
 
 Put handlers in `src/modals`. The registry keeps the handler’s `builder` as a reusable **template**, because
-it reads the form's fields when the submission comes back:
+it reads the form's fields when the submission comes back. The form's custom ID
+is the handler's, so there's no separate `customId`:
 
 ```ts
 // src/modals/submit-feedback.ts
@@ -22,8 +23,8 @@ import { MessageFlags, TextInputStyle } from "discord.js";
 export default class SubmitFeedback extends ModalHandler {
     constructor() {
         super({
-            customId: "feedback.submit",
             builder: new ModalBuilder()
+                .setCustomId("feedback.submit")
                 .setTitle("Feedback")
                 .addLabelComponents(
                     new LabelBuilder()
@@ -78,7 +79,8 @@ type CreateTodoSpec = { input: typeof input };
 
 export default class CreateTodo extends ModalHandler<CreateTodoSpec> {
     constructor() {
-        super({ customId: "todo.create", builder: todoForm, input });
+        // todoForm's custom ID, "todo.create", is the handler's.
+        super({ builder: todoForm, input });
     }
 
     async run(ctx: ModalContext<CreateTodoSpec>) {
@@ -132,7 +134,7 @@ export default class RenameTicket extends ModalHandler<RenameTicketSpec> {
     constructor() {
         super({
             params: renameTicketForm,
-            builder: renameForm,
+            builder: renameForm, // its custom ID is the route, "ticket.rename-form"
             input,
             guards: [paramOwner("owner")],
         });

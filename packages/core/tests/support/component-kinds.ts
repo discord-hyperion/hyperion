@@ -36,7 +36,7 @@ export const buttonKind: ComponentKind = {
     import { PrimaryButtonBuilder } from ${JSON.stringify(buildersModule)};
     export default class extends ButtonHandler {
         constructor() {
-            super({ customId: ${JSON.stringify(id)}, builder: new PrimaryButtonBuilder()
+            super({ builder: new PrimaryButtonBuilder()
                 .setCustomId(${JSON.stringify(id)}).setLabel("Click"), ${extra} });
         }
         async run() {}
@@ -65,7 +65,7 @@ export const modalKind: ComponentKind = {
     import { ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(buildersModule)};
     export default class extends ModalHandler {
         constructor() {
-            super({ customId: ${JSON.stringify(id)}, builder: new ModalBuilder()
+            super({ builder: new ModalBuilder()
                 .setCustomId(${JSON.stringify(id)})${textModalBody}, ${extra} });
         }
         async run() {}
@@ -97,7 +97,7 @@ export const selectMenuKind: ComponentKind = {
     import { StringSelectMenuBuilder } from ${JSON.stringify(buildersModule)};
     export default class extends SelectMenuHandler {
         constructor() {
-            super({ customId: ${JSON.stringify(id)}, componentType: ${ComponentType.StringSelect}, builder: new StringSelectMenuBuilder()
+            super({ componentType: ${ComponentType.StringSelect}, builder: new StringSelectMenuBuilder()
                 .setCustomId(${JSON.stringify(id)}).addOptions({ label: "Blue", value: "blue" }), ${extra} });
         }
         async run() {}

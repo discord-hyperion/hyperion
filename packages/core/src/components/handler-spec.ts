@@ -40,10 +40,16 @@ export type InputContext<Input> = Input extends AnyInputDefinition
     ? { readonly input: CommandInputResult<Input> }
     : unknown;
 
-/** A params handler routes by its params ID; any other by an exact custom ID. */
-export type ParamsOptions<Params> = Params extends ParamsDefinition
-    ? { params: Params; customId?: never }
-    : { customId: string; params?: never };
+/**
+ * How a handler gets its ID. A params handler routes by its params ID, and its
+ * optional template must carry that route. Any other handler takes either an
+ * exact custom ID or a template whose custom ID becomes the handler's.
+ */
+export type RouteOptions<Params, Template> = Params extends ParamsDefinition
+    ? { params: Params; customId?: never; builder?: Template }
+    :
+          | { customId: string; params?: never; builder?: never }
+          | { builder: Template; params?: never; customId?: never };
 
 /** A typed handler must configure input whose resolver accepts its context. */
 export type InputOptions<Input, Definition> = Input extends Definition

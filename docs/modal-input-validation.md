@@ -132,7 +132,6 @@ type TodoSpec = { input: typeof input };
 export default class extends ModalHandler<TodoSpec> {
     constructor() {
         super({
-            customId: "todo.create",
             builder: renderModal(<TodoForm />),
             input,
         });

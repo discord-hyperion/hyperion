@@ -27,7 +27,6 @@ import { Button, renderButton } from "@hyperion/jsx";
 export default class RefreshProfile extends ButtonHandler {
     constructor() {
         super({
-            customId: "profile.refresh",
             builder: renderButton(
                 <Button customId="profile.refresh" style="primary">
                     Refresh
@@ -141,7 +140,7 @@ const TodoForm = () => (
 
 export default class CreateTodo extends ModalHandler {
     constructor() {
-        super({ customId: "todo.create", builder: renderModal(<TodoForm />) });
+        super({ builder: renderModal(<TodoForm />) });
     }
 
     async run(ctx: ModalContext) {

@@ -15,10 +15,6 @@ implemented item links a reference doc.
     `@discordjs/builders` has no builders for them yet). Core modal input already
     extracts them.
   - The layout-message `File` component, after attachment handling is designed.
-- [ ] Optional custom IDs in handler templates.
-  - Core sets the handler's custom ID on every copy of a template, yet JSX buttons
-    and selects still require `customId`, so templates repeat it. Let standalone
-    renderers omit it without loosening rows and modals.
 - [ ] Managed interactive collectors.
   - Needs a reason to exist first: a thin wrapper over discord.js collectors adds
     little.
@@ -29,6 +25,22 @@ implemented item links a reference doc.
   - Designed and ready to build: see
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
+- [ ] Maintenance: checks and contributor docs, one area per branch.
+  - Type-check `ts`/`tsx` code blocks in `docs/` and `docs/guide/` against the
+    workspace packages, with a fence marker to skip deliberately partial blocks.
+    Today `check-docs.mjs` checks only imports and exported names.
+  - Fail `check-docs.mjs` on a blank line inside a `.changeset/*.md` code block:
+    Changesets collapses it in the generated changelog.
+  - Grilling skill: cite the `file:line` that shows current behaviour before
+    stating it.
+  - `docs/ci.md`: read a failed job's log with
+    `gh run view --job <job-id> --log > <file>`; `--log-failed` and the raw logs
+    API are slow or blocked.
+  - `docs/package-development.md`: run `npm view` outside the workspace, since
+    `devEngines` rejects npm inside it.
+  - `docs/releases.md`: if an approved version-PR run stays queued, dispatch CI on
+    the branch instead of closing and reopening the PR.
+  - AGENTS.md: shorten the database line to point at the backlog, not ADR 0005.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete
@@ -56,7 +68,8 @@ implemented item links a reference doc.
 - Context-menu commands with typed lookup. See
   [context-menu commands](context-menu-commands.md).
 - Autocomplete routing. See [autocomplete](autocomplete.md).
-- Button, select-menu, and modal handlers with templates and `build()`. See
+- Button, select-menu, and modal handlers with templates and `build()`; a
+  template's custom ID is its handler's. See
   [buttons](buttons.md), [select menus](select-menus.md), and [modals](modals.md).
 - Typed custom-ID params. See [custom-ID params](custom-id-params.md).
 - Guards through `defineGuard()`. See [guards](guards.md).

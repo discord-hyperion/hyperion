@@ -76,9 +76,8 @@ export const selectMenuContracts = (
     const userOptions: SelectMenuHandlerOptions<{
         componentType: ComponentType.UserSelect;
     }> = {
-        customId: "user",
         componentType: ComponentType.UserSelect,
-        builder: new UserSelectMenuBuilder(),
+        builder: new UserSelectMenuBuilder().setCustomId("user"),
         guards: [
             ctx => {
                 ctx.interaction.users.size satisfies number;
@@ -87,17 +86,15 @@ export const selectMenuContracts = (
         ],
     };
     const stringOptions: SelectMenuHandlerOptions = {
-        customId: "string",
         componentType: ComponentType.StringSelect,
-        builder: new StringSelectMenuBuilder(),
+        builder: new StringSelectMenuBuilder().setCustomId("string"),
     };
 
     const roleOptions: SelectMenuHandlerOptions<{
         componentType: ComponentType.RoleSelect;
     }> = {
-        customId: "role",
         componentType: ComponentType.RoleSelect,
-        builder: new RoleSelectMenuBuilder(),
+        builder: new RoleSelectMenuBuilder().setCustomId("role"),
         guards: [
             ctx => {
                 ctx.interaction.roles.size satisfies number;
@@ -109,9 +106,8 @@ export const selectMenuContracts = (
     const mentionableOptions: SelectMenuHandlerOptions<{
         componentType: ComponentType.MentionableSelect;
     }> = {
-        customId: "mentionable",
         componentType: ComponentType.MentionableSelect,
-        builder: new MentionableSelectMenuBuilder(),
+        builder: new MentionableSelectMenuBuilder().setCustomId("mentionable"),
         guards: [
             ctx => {
                 ctx.interaction.users.size satisfies number;
@@ -124,18 +120,16 @@ export const selectMenuContracts = (
     const mismatchedTemplate: SelectMenuHandlerOptions<{
         componentType: ComponentType.UserSelect;
     }> = {
-        customId: "user",
         componentType: ComponentType.UserSelect,
         // @ts-expect-error The template must match the declared select type.
-        builder: new RoleSelectMenuBuilder(),
+        builder: new RoleSelectMenuBuilder().setCustomId("user"),
     };
 
     const channelOptions: SelectMenuHandlerOptions<{
         componentType: ComponentType.ChannelSelect;
     }> = {
-        customId: "channel",
         componentType: ComponentType.ChannelSelect,
-        builder: new ChannelSelectMenuBuilder(),
+        builder: new ChannelSelectMenuBuilder().setCustomId("channel"),
         guards: [
             ctx => {
                 ctx.interaction.channels.size satisfies number;

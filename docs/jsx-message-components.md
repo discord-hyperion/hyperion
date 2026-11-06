@@ -65,7 +65,6 @@ import { Button, renderButton } from "@hyperion/jsx";
 export default class extends ButtonHandler {
     constructor() {
         super({
-            customId: "profile.refresh",
             builder: renderButton(
                 <Button customId="profile.refresh" style="primary">
                     Refresh profile

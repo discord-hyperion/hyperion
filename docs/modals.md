@@ -5,14 +5,18 @@ For form, handler, and custom-ID terminology, see the [component glossary](GLOSS
 Hyperion discovers default-exported `ModalHandler` subclasses recursively under
 `<root>/src/modals` and stores them in `client.modals`, keyed by exact custom ID.
 The directory is optional. Each handler needs a public zero-argument constructor,
-a `customId`, and `run(ctx)`. It should also offer its form as a
+an ID, and `run(ctx)`. It should also offer its form as a
 [template](GLOSSARY.md#components): a `ModalBuilder` from `@discordjs/builders`.
 The template is optional, but recommended, because `input` reads the form's
 text-input custom IDs and keeping both in one handler keeps them in agreement.
 
 Discovery validates templates locally through `toJSON()`, with the custom ID set,
-before application-command deployment. A template may omit its custom ID; if it
-sets one, it must equal `customId`. Invalid exports, templates, guards, or duplicate IDs reject client
+before application-command deployment. A handler gets its ID from exactly one source: `customId`, a template whose
+custom ID becomes the handler's, or `params`, whose route the optional template
+must carry as its custom ID. Passing `customId` beside a template is a type error
+and throws. So does a template without a custom ID, or a params template whose
+custom ID isn't the route. Loading also rejects a template whose custom ID changed
+after construction. Invalid exports, templates, guards, or duplicate IDs reject client
 initialization with source-file context and the original cause. Reloads are
 atomic: a failure preserves the previously loaded registry. Modals have no REST
 registration and loading them does not log the bot in.
@@ -39,8 +43,8 @@ import { MessageFlags, TextInputStyle } from "discord.js";
 export default class SubmitFeedback extends ModalHandler {
     constructor() {
         super({
-            customId: "feedback.submit",
             builder: new ModalBuilder()
+                .setCustomId("feedback.submit")
                 .setTitle("Feedback")
                 .addLabelComponents(
                     new LabelBuilder()
@@ -132,9 +136,9 @@ export default class RenameTicket extends ModalHandler<RenameTicketSpec> {
     constructor() {
         super({
             params: renameTicketForm,
-            builder: new ModalBuilder().setTitle(
-                "Rename ticket",
-            ) /* … "title" text input */,
+            builder: new ModalBuilder()
+                .setCustomId(renameTicketForm.id)
+                .setTitle("Rename ticket") /* … "title" text input */,
             input,
             guards: [paramOwner("owner")],
         });

@@ -98,7 +98,6 @@ import { ComponentType } from "discord.js";
 export default class extends SelectMenuHandler {
     constructor() {
         super({
-            customId: "todo.priority",
             componentType: ComponentType.StringSelect,
             builder: renderStringSelect(
                 <StringSelect
@@ -137,7 +136,6 @@ type ChooseUserSpec = { componentType: ComponentType.UserSelect };
 export default class extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
-            customId: "user.choose",
             componentType: ComponentType.UserSelect,
             builder: renderUserSelect(
                 <UserSelect customId="user.choose" maxValues={1} />,

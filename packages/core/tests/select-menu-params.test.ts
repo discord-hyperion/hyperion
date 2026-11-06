@@ -168,7 +168,7 @@ describe("select menu params definitions", () => {
         }
         assert.throws(
             () => construct({ componentType: ComponentType.StringSelect }),
-            /require a customId or params/,
+            /require a customId, params, or a template with a custom ID/,
         );
     });
 

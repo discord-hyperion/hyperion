@@ -17,9 +17,9 @@ import { ComponentType } from "discord.js";
 export default class ChooseColour extends SelectMenuHandler {
     constructor() {
         super({
-            customId: "colour.choose",
             componentType: ComponentType.StringSelect,
             builder: new StringSelectMenuBuilder()
+                .setCustomId("colour.choose")
                 .setPlaceholder("Choose a colour")
                 .addOptions(
                     { label: "Blue", value: "blue" },
@@ -50,11 +50,10 @@ type ChooseUserSpec = { componentType: ComponentType.UserSelect };
 export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
-            customId: "user.choose",
             componentType: ComponentType.UserSelect,
-            builder: new UserSelectMenuBuilder().setPlaceholder(
-                "Choose a user",
-            ),
+            builder: new UserSelectMenuBuilder()
+                .setCustomId("user.choose")
+                .setPlaceholder("Choose a user"),
         });
     }
 
@@ -74,7 +73,9 @@ A few things worth knowing:
 - Picking a role or channel just gives you data; it doesn't assign or change anything.
 - With `setMinValues(0)`, users can clear their selection and you'll get an empty list.
 
-All five kinds share one registry, so custom IDs must be unique across them.
+All five kinds share one registry, so custom IDs must be unique across them. A
+handler with a template takes the template's custom ID, so don't pass `customId`
+as well.
 
 ## Sending a menu
 

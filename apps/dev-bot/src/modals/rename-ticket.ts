@@ -45,6 +45,7 @@ export default class RenameTicketModal extends ModalHandler<RenameTicketSpec> {
             params: renameTicketForm,
             // The form stays with the handler because `input` reads its text-input IDs.
             builder: new ModalBuilder()
+                .setCustomId(renameTicketForm.id)
                 .setTitle("Rename ticket")
                 .addLabelComponents(
                     new LabelBuilder()
