@@ -144,10 +144,15 @@ match → decode → schema validate → guards → handler
 
 This intentionally differs from command and modal input
 (`guards → extract → validate → resolve → handler`):
-- Guards can read `ctx.params`, so one reusable ownership guard (for example
-  `paramOwner("owner")`) can compare the clicker with a forged-able ID value.
-- Validation is pure and cheap. Because `resolve` is excluded, no application
-  lookup runs before authorization.
+- Guards can read `ctx.params`, so one reusable guard (for example
+  `paramOwner("owner")`) can compare the clicker with a user ID from the custom
+  ID. That shows the clicker is the user the control names, not that they own
+  the resource: a tampered ID can name anyone, and ownership can change after the
+  control was sent. Check current ownership against application state.
+- There is no `resolve` step, but validation runs the application's schema,
+  awaited, before guards and before any input deferral. Keeping it pure and fast
+  is the caller's job: an async schema step adds latency before the interaction
+  is acknowledged.
 - Guard contexts for params handlers carry `params`. Guards for other handlers
   are unchanged.
 
@@ -157,8 +162,8 @@ Steps:
    means return without replying.
 2. **Decode.** Split, unescape, and zip with `keys` into a record of strings.
    A wrong segment count or invalid escape is unmatched.
-3. **Validate.** `schema["~standard"].validate(record)` through the shared
-   extract/validate helper that `resolveInput` also uses. Issues produce
+3. **Validate.** `await schema["~standard"].validate(record)`, called directly
+   by `resolveParams()`. Issues produce
    `[issues, undefined]` and the pipeline continues.
 4. **Guards, then handler.** Existing guard and error behavior applies.
    Exceptions use the generic error pipeline with `stage: "params"` for decode

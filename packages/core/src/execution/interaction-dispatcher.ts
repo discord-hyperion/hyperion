@@ -346,7 +346,8 @@ export class InteractionDispatcher {
 
         try {
             // Params are decoded and schema-validated before guards so guards
-            // can read them; no application code runs at this stage.
+            // can read them. The schema is application code and is awaited here,
+            // before any input deferral.
             let current = ctx;
 
             if (rawParams !== undefined && handler.params) {

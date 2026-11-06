@@ -26,11 +26,6 @@ implemented item links a reference doc.
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
 - [ ] Maintenance: checks and contributor docs, one area per branch.
-  - Params docs: validation runs the application's schema (async steps included)
-    before guards, and doesn't use `resolveInput`'s helper. State purity as the
-    caller's job, and that `paramOwner()` compares a forgeable ID, not ownership.
-    Same fix for the comment at `interaction-dispatcher.ts` "no application code".
-  - `docs/command-registration.md`: list `.tsx` and `.jsx` as supported extensions.
   - Dispatcher: keep the `interactionCreate` listener and remove it in
     `cleanup()`. Test: no listener remains after `destroy()`.
   - `defineParams()`: reject `__proto__` and other reserved keys, which

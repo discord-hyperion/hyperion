@@ -115,9 +115,9 @@ or `{ params, input }` for a modal.
 
 ## Don't trust the custom ID
 
-Custom IDs come back from the user's client, so someone determined can change
-them. Never use params alone to decide who's allowed to do something. Instead,
-check them against the user who clicked:
+Custom IDs come back from the user's client, so treat params as claims, not
+facts. To stop other people using a control you built for one user, check the
+user it names against the user who clicked:
 
 ```ts
 guards: [paramOwner("owner", "Only the ticket's author can close it.")];
@@ -126,6 +126,10 @@ guards: [paramOwner("owner", "Only the ticket's author can close it.")];
 `paramOwner()` passes only when the params are valid _and_ the `owner` value is
 the clicking user's ID. Params are checked before guards, so this works on
 buttons, menus, and modals alike. See [guards](guards.md).
+
+That only proves the clicker is the user the ID names. It can't tell you the ID
+wasn't edited, or that they still own the ticket. For anything that matters,
+look the ticket up and check its owner in your handler.
 
 ## Changing params later
 

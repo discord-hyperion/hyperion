@@ -153,7 +153,7 @@ await ctx.interaction.showModal(
 ```
 
 The params are checked before your guards run, so `paramOwner("owner")` can make
-sure only the ticket's author submits it. See [data in custom IDs](custom-ids.md)
+sure only the user the form was opened for submits it. See [data in custom IDs](custom-ids.md)
 for how params work.
 
 ## Guards and responses

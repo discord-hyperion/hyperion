@@ -70,7 +70,8 @@ modules instead extend `Subcommand`; the direct `index.ts` extends `ParentComman
 and supplies shared metadata and guards without `run()`. See
 [Command path conventions](command-paths.md) for complete examples.
 
-Supported extensions are `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, and `.cjs`.
+Supported extensions are `.ts`, `.mts`, `.cts`, `.tsx`, `.js`, `.mjs`, `.cjs`,
+and `.jsx`.
 Barrels named `index.*` (except direct parent/group definitions), TypeScript declarations, test files, hidden entries,
 and `node_modules` are skipped. Keep only command modules in the command tree;
 place other helpers elsewhere. Load source files or compiled files, not both.

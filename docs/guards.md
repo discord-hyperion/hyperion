@@ -158,8 +158,10 @@ collection for cooldown expiry timestamps, not arbitrary application data.
 
 `paramOwner()` checks a handler's [custom-ID params](custom-id-params.md): it
 passes only when the params are valid and `params[key]` equals the user's ID.
-Custom IDs are client-controlled, so this is a real authorization check. It is
-opt-in and works on any handler kind that declares params:
+That stops other users from using a control built for someone else. It isn't
+proof of ownership: it trusts the ID the custom ID carries, and doesn't check who
+owns the resource now. Check current ownership against application state when
+that matters. It is opt-in and works on any handler kind that declares params:
 
 ```ts
 guards: [paramOwner("owner", "Only the ticket's author can close it.")];
