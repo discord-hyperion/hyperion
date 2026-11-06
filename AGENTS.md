@@ -90,12 +90,13 @@ If the package-manager wrapper is unavailable, use:
 node --import tsx --test packages/core/tests/*.test.ts packages/jsx/tests/*.test.tsx apps/dev-bot/tests/*.test.ts
 ./node_modules/.bin/biome check .
 node scripts/check-docs.mjs
+node scripts/check-examples.mjs
 ```
 
 Tests use Node's test runner, temporary handler modules, and mocked REST methods.
 Cover discovery, failures, and deployment behavior without Discord login, real
 tokens, external requests, or command deployment. For documentation-only changes,
-run `pnpm check` (formatting, links, and example imports) and confirm the text
+run `pnpm check` (formatting, links, and type-checked examples) and confirm the text
 matches the implementation.
 
 ## Git

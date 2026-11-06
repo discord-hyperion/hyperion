@@ -8,7 +8,7 @@ Hyperion _does_ do around responses, so you're never surprised.
 
 Use the discord.js methods on `ctx.interaction`:
 
-```ts
+```ts fragment
 await ctx.interaction.reply({
     content: "Done!",
     flags: MessageFlags.Ephemeral,
@@ -17,7 +17,7 @@ await ctx.interaction.reply({
 
 Slow work? Defer first, then edit:
 
-```ts
+```ts fragment
 await ctx.interaction.deferReply();
 const report = await buildReport();
 await ctx.interaction.editReply(report);

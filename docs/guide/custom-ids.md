@@ -36,7 +36,7 @@ Give your handler a **template** in `builder`. The registry keeps it as the
 reusable design for your controls. Call `build()` with the params definition and
 values to create a fresh control with an encoded custom ID:
 
-```ts
+```ts fragment
 const button = ctx.client.buttons.build(closeTicket, {
     ticketId: "a1b2c3d4",
     owner: user.id,
@@ -55,14 +55,14 @@ For a fixed ID with no params, use `build("literal.id")` instead.
 
 The definition is also a function. Call it to get a custom ID:
 
-```ts
+```ts fragment
 closeTicket({ ticketId: "a1b2c3d4", owner: user.id });
 // "ticket.close:a1b2c3d4:123456789012345678"
 ```
 
 Use it anywhere a custom ID goes:
 
-```ts
+```ts fragment
 new DangerButtonBuilder().setLabel("Close").setCustomId(closeTicket(ticket));
 ```
 
@@ -74,7 +74,7 @@ characters, and Hyperion throws if you go over, so keep values short.
 
 Give the handler `params` instead of a `customId`:
 
-```ts
+```ts fragment
 type CloseTicketButtonSpec = { params: typeof closeTicket };
 
 export default class CloseTicketButton extends ButtonHandler<CloseTicketButtonSpec> {
@@ -119,7 +119,7 @@ Custom IDs come back from the user's client, so treat params as claims, not
 facts. To stop other people using a control you built for one user, check the
 user it names against the user who clicked:
 
-```ts
+```ts fragment
 guards: [paramOwner("owner", "Only the ticket's author can close it.")];
 ```
 

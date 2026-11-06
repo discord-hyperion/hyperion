@@ -8,7 +8,7 @@ details.
 
 Every handler gets `ctx.logger`:
 
-```ts
+```ts fragment
 async run(ctx: CommandContext) {
     ctx.logger.debug({ step: "lookup" }, "Looking up results");
     await ctx.interaction.reply("Pong!");
@@ -27,7 +27,7 @@ and `debug` methods work, with an optional object of extra fields first.
 
 All of this is optional:
 
-```ts
+```ts fragment
 const client = await HyperionClient.create({
     // …
     logging: {

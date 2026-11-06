@@ -21,7 +21,7 @@ custom-ID data exposed through `ctx.params`. It implements the backlog entry in
 `defineParams` mirrors `defineInput`: an identity-style helper that exists for
 type inference, validates its config once, and returns a frozen definition.
 
-```ts
+```ts fragment
 export const todoDoneId = defineParams({
     id: "todo.done",
     keys: ["owner", "page", "todoId"],
@@ -48,7 +48,7 @@ The returned value is a function with the definition attached
 (`Object.assign(encode, { id, keys, schema })`, frozen). Calling it encodes a
 custom ID:
 
-```ts
+```ts fragment
 todoDoneId({ owner: user.id, page: 2, todoId: todo.id });
 // "todo.done:123456:2:abc"
 ```
@@ -64,7 +64,7 @@ as if they ran the handler.
 Component registries keep shared handlers and their optional **templates** in
 `builder`. Use the template to create each button, select menu, or modal:
 
-```ts
+```ts fragment
 const button = ctx.client.buttons.build(todoDoneId, {
     owner: user.id,
     page: 2,
@@ -101,7 +101,7 @@ encoder, but cannot be used with `build()`.
 
 ## Handler
 
-```ts
+```ts fragment
 type TodoDoneSpec = { params: typeof todoDoneId };
 
 export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
@@ -295,7 +295,7 @@ handler cannot be attached to a handler with different params.
 `paramOwner()` is an opt-in built-in guard, not part of execution: it runs only
 when a handler lists it.
 
-```ts
+```ts fragment
 guards: [paramOwner("owner", "Only the ticket's author can close it.")];
 ```
 

@@ -57,7 +57,7 @@ In discord.js v15, text inputs sit inside labels, and you read values through
 
 From a command, button, or select-menu handler:
 
-```ts
+```ts fragment
 await ctx.interaction.showModal(ctx.client.modals.build("feedback.submit"));
 ```
 
@@ -70,7 +70,7 @@ response, so don't reply or defer first.
 Rather than reading each field by hand, give the handler an input schema and get
 typed values in `ctx.input`:
 
-```ts
+```ts fragment
 const input = defineInput({
     schema: v.object({ title: v.pipe(v.string(), v.trim(), v.minLength(1)) }),
 });
@@ -87,7 +87,7 @@ export default class CreateTodo extends ModalHandler<CreateTodoSpec> {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.reply({
-                content: issues[0].message,
+                content: issues.map(issue => issue.message).join("\n"),
                 flags: MessageFlags.Ephemeral,
             });
             return;
@@ -118,7 +118,7 @@ By the time the submission arrives, the code that showed the modal has finished.
 So how does a "Rename ticket" form know _which_ ticket? Put it in the modal's
 custom ID with params:
 
-```ts
+```ts fragment
 export const renameTicketForm = defineParams({
     id: "ticket.rename-form",
     keys: ["ticketId", "owner"],

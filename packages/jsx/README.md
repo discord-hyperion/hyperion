@@ -4,7 +4,7 @@ Write Discord embeds, buttons, menus, layout messages, and modal forms as JSX,
 and get back the ordinary discord.js builders. It works on its own or with
 `@hyperion/core`, and React isn't involved.
 
-```tsx
+```tsx fragment
 import { Bold, Embed, renderEmbed } from "@hyperion/jsx";
 
 const embed = renderEmbed(
@@ -49,7 +49,7 @@ dependency.)
 For a whole message built from text, images, and controls (Discord's Components
 V2), use `renderMessage()`:
 
-```tsx
+```tsx fragment
 import {
     Container,
     H2,

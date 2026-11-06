@@ -5,13 +5,13 @@
 in `package.json`, caches the pnpm store, and installs with
 `pnpm install --frozen-lockfile`. It has five jobs:
 
-| Job             | Runs                                    | What it does                                                                                                                                                |
-| --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Changes`       | Always                                  | Compares the commits and decides whether the code checks are needed                                                                                         |
-| `Lint and docs` | Always                                  | `pnpm check`: Biome, the documentation check (`scripts/check-docs.mjs`: links, anchors, example imports), and the layout check (`scripts/check-layout.mjs`) |
-| `Code`          | Unless the change is documentation-only | Type checking and isolated tests, the CI helper tests, and the release, cache, and packed-consumer verification                                             |
-| `Docs site`     | When the guide or site build changes    | Builds the Fumadocs site (`apps/docs-site-fumadocs`) and runs its 14 output checks                                                                          |
-| `Checks`        | Always, last                            | The single result for the workflow                                                                                                                          |
+| Job             | Runs                                    | What it does                                                                                                                                                                                                       |
+| --------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Changes`       | Always                                  | Compares the commits and decides whether the code checks are needed                                                                                                                                                |
+| `Lint and docs` | Always                                  | `pnpm check`: Biome, the documentation check (`scripts/check-docs.mjs`: links, anchors, example imports), the example type check (`scripts/check-examples.mjs`), and the layout check (`scripts/check-layout.mjs`) |
+| `Code`          | Unless the change is documentation-only | Type checking and isolated tests, the CI helper tests, and the release, cache, and packed-consumer verification                                                                                                    |
+| `Docs site`     | When the guide or site build changes    | Builds the Fumadocs site (`apps/docs-site-fumadocs`) and runs its 14 output checks                                                                                                                                 |
+| `Checks`        | Always, last                            | The single result for the workflow                                                                                                                                                                                 |
 
 The `Code` job runs the same commands as local verification:
 
@@ -87,7 +87,7 @@ raw logs API are slow here or refuse output with terminal escape codes.
 `pnpm install` configures Git to use the tracked `.githooks/` directory through
 the root `prepare` script. For an existing installation, run `pnpm run prepare`
 once to enable the hook. The pre-commit hook checks staged files with Biome,
-checks documentation and layout, and typechecks the workspace. Tests remain a CI gate.
+checks documentation, examples, and layout, and typechecks the workspace. Tests remain a CI gate.
 Documentation and type checks inspect the working tree, so they do not validate
 an isolated snapshot of a partially staged commit.
 

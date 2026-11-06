@@ -80,7 +80,7 @@ indexes and numeric event priorities. See [architecture](architecture.md).
 
 ## Embeds
 
-```tsx
+```tsx fragment
 import { Bold, Br, Embed, Link, renderEmbed, UserMention } from "@hyperion/jsx";
 
 const embed = renderEmbed(

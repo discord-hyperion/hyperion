@@ -96,7 +96,7 @@ params instead of `customId`. The registry builds each button from its template
 and encodes the supplied values into its custom ID; see [custom-ID params](custom-id-params.md) for the wire
 format, guard ordering, and stale-button rules.
 
-```ts
+```ts fragment
 export const todoDone = defineParams({
     id: "todo.done",
     keys: ["owner", "todoId"],
@@ -148,7 +148,7 @@ when the handler has no template, or when a params route is passed as a string.
 For params, use `build(definition, values)` so the generated ID includes the
 values needed for decoding.
 
-```ts
+```ts fragment
 import { ActionRowBuilder } from "@discordjs/builders";
 import { MessageFlags } from "discord.js";
 
@@ -177,7 +177,7 @@ Handler instances and their templates are shared. Keep invocation data in
 local variables, and change labels, styles, or disabled state on a copy from
 `build()`, which never alters the template:
 
-```ts
+```ts fragment
 const builder = ctx.client.buttons.build(this.customId).setLabel("Updated");
 ```
 

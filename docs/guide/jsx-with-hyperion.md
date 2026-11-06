@@ -46,7 +46,7 @@ on the button. Hyperion checks that they match when it loads the handler.
 
 When a command needs the button, it asks the registry for a copy:
 
-```ts
+```ts fragment
 import { ActionRowBuilder } from "@discordjs/builders";
 
 await ctx.interaction.reply({

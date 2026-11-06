@@ -7,7 +7,7 @@ controls, with no `content` or `embeds`.
 
 ## API
 
-```tsx
+```tsx fragment
 import {
     ActionRow,
     Button,

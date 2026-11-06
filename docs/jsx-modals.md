@@ -122,7 +122,7 @@ Pass this builder as a core `ModalHandler` template:
 To personalize a form, render a fresh one when opening it, with the same modal
 custom ID; the submission still routes to the `todo.create` handler:
 
-```tsx
+```tsx fragment
 await ctx.interaction.showModal(
     renderModal(<TodoForm initialName={suggestedName} />),
 );

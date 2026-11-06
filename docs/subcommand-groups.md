@@ -63,7 +63,7 @@ parents may reuse group names. Categories contribute nothing to routing keys.
 Existing direct-leaf lookup and keys remain unchanged. Grouped lookup adds an
 optional final group argument, with executable keys in invocation order:
 
-```ts
+```ts fragment
 client.commands.resolveSubcommand("ticket", "close");
 client.commands.resolveSubcommand("ticket", "view", "settings");
 client.commands.resolveGroup("ticket", "settings");

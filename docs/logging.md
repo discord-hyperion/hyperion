@@ -3,7 +3,7 @@
 Hyperion uses Pino for structured logs, pino-pretty for readable terminal output,
 and Ora for startup spinners. Configuration is optional:
 
-```ts
+```ts fragment
 const client = await HyperionClient.create({
     // Other client options...
     logging: {
@@ -86,7 +86,7 @@ login. Runtime handlers do not display spinners automatically.
 
 Use the scoped logger provided with each command invocation:
 
-```ts
+```ts fragment
 async run(ctx: CommandContext) {
     ctx.logger.debug({ checkpoint: "lookup" }, "Looking up results");
     await ctx.interaction.reply("Pong!");

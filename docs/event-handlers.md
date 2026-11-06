@@ -63,14 +63,14 @@ types or claim automatic compiler verification of filesystem placement.
 
 Applications access a managed registry:
 
-```ts
+```ts fragment
 client.events.size; // Loaded handler definitions, not distinct event names.
 await client.events.load(); // Load/reload from the client's configured root.
 ```
 
 Configure queues and shutdown through client options:
 
-```ts
+```ts fragment
 const client = await HyperionClient.create({
     name: "Example",
     discord: { intents: [] },

@@ -93,7 +93,7 @@ same-named command of another type is never a fallback.
 
 Use typed lookup when retrieving a definition:
 
-```ts
+```ts fragment
 const slash = client.commands.resolve("ping");
 const userMenu = client.commands.resolve(
     "Inspect",
@@ -112,7 +112,7 @@ plain-name keys, so `get("ping")` and `has("ping")` still work. Context-menu key
 include the numeric command type; `CommandRegistry.key(name, type)` produces
 these keys for manual insertion or deletion without replacing Collection APIs.
 
-```ts
+```ts fragment
 client.commands.set(
     CommandRegistry.key("Inspect", ApplicationCommandType.User),
     userCommand,

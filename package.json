@@ -7,7 +7,7 @@
         "start": "pnpm --filter @hyperion/dev-bot start",
         "dev": "pnpm --filter @hyperion/dev-bot dev",
         "start:debug": "pnpm --filter @hyperion/dev-bot start:debug",
-        "check": "biome check . && node scripts/check-docs.mjs && node scripts/check-layout.mjs",
+        "check": "biome check . && node scripts/check-docs.mjs && node scripts/check-examples.mjs && node scripts/check-layout.mjs",
         "check:docs": "node scripts/check-docs.mjs",
         "check:fix": "node scripts/fix-changed.mjs",
         "check:fix:all": "node scripts/check-layout.mjs --fix && biome check --write .",

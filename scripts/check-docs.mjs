@@ -145,7 +145,7 @@ for (const file of files) {
     }
 
     for (const [, code] of text.matchAll(
-        /```(?:ts|tsx|js|jsx|mjs)\n([\s\S]*?)```/g,
+        /```(?:tsx|ts|jsx|js|mjs)\b[^\n]*\n([\s\S]*?)```/g,
     )) {
         for (const [, list, specifier] of code.matchAll(
             /import\s+(?:type\s+)?(?:\{([^}]*)\}|[\w*\s]+)\s+from\s+"([^"]+)"/g,

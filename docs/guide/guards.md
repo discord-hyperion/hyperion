@@ -8,7 +8,7 @@ interaction through, `false` to stop it. They're how you say "owner only",
 
 Every handler (commands, buttons, menus, modals) takes a `guards` array:
 
-```ts
+```ts fragment
 import { ownerOnly } from "@hyperion/core";
 
 super({
@@ -50,7 +50,7 @@ wrong kind of handler.
 
 Need a value, like an allowed server ID? Wrap the guard in a function:
 
-```ts
+```ts fragment
 const allowedGuild = (guildId: string) =>
     defineGuard({
         name: "allowed-guild",
@@ -66,7 +66,7 @@ guards: [allowedGuild("123456789012345678")];
 Guards don't have fields, but closures do the same job. Anything declared in the
 outer function lives as long as the guard:
 
-```ts
+```ts fragment
 const rateLimit = (max: number) => {
     const counts = new Collection<string, number>();
 
@@ -91,7 +91,7 @@ Instead of a guard, you can put a function in `guards` that _returns_ one. It's
 called each time an interaction reaches it, with the same context the handler
 gets:
 
-```ts
+```ts fragment
 guards: [ctx => accessCheck(ctx.interaction.user.id)];
 ```
 
@@ -101,7 +101,7 @@ Factories can be async, and they're skipped if an earlier guard already said no.
 
 Add `onFail()` to send your own reply instead of the description:
 
-```ts
+```ts fragment
 export const guildOnly = defineGuard<InteractionContext>({
     name: "guild-only",
     description: "Use this in a server.",
@@ -129,7 +129,7 @@ respond. If an earlier guard already replied, check `replied` or `deferred` firs
   down. You own the `entries` collection, so one cooldown can span several
   commands. Use a factory to key it per user:
 
-  ```ts
+  ```ts fragment
   const cooldowns = new Collection<string, number>();
 
   guards: [

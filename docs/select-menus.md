@@ -274,7 +274,7 @@ handler has no template, or when a params route is passed as a string.
 For params, use `build(definition, values)` so the generated ID includes the
 values needed for decoding.
 
-```ts
+```ts fragment
 await ctx.interaction.reply({
     content: "Choose a colour.",
     components: [
@@ -297,7 +297,7 @@ collectors and listeners; avoid acknowledging the same interaction twice.
 A select menu can declare typed [custom-ID params](custom-id-params.md) instead
 of `customId`. The command sets each menu's custom ID with the encoder:
 
-```ts
+```ts fragment
 export const assignTicket = defineParams({
     id: "ticket.assign",
     keys: ["ticketId", "owner"],
