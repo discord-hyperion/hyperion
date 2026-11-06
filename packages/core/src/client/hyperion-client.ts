@@ -195,6 +195,8 @@ export class HyperionClient extends Client {
 
     private async cleanup() {
         this.ownerLookup = undefined;
+        // Stop admitting interactions; ones already dispatching are not awaited.
+        this.dispatcher.detach();
         try {
             await this.events.shutdown();
         } finally {

@@ -26,8 +26,6 @@ implemented item links a reference doc.
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
 - [ ] Maintenance: checks and contributor docs, one area per branch.
-  - Dispatcher: keep the `interactionCreate` listener and remove it in
-    `cleanup()`. Test: no listener remains after `destroy()`.
   - `defineParams()`: reject `__proto__` and other reserved keys, which
     `decodeParams()` silently drops.
   - Startup logs: count params handlers in `.routes` alongside `size`.

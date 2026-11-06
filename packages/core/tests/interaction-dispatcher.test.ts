@@ -257,3 +257,24 @@ test("does not acknowledge before a handler opens a modal", async t => {
     assert.equal(fixture.reply.mock.callCount(), 0);
     assert.equal(fixture.deferReply.mock.callCount(), 0);
 });
+
+test("attaches one interaction listener and removes it on destroy", async () => {
+    const client = await HyperionClient.create({
+        name: "Test",
+        root: new URL("./fixtures/empty-bot/", import.meta.url),
+        discord: { intents: [] },
+        logging: false,
+    });
+
+    const before = client.listenerCount(Events.InteractionCreate);
+    const dispatcher = new InteractionDispatcher(client);
+
+    dispatcher.attach();
+    dispatcher.attach();
+    assert.equal(client.listenerCount(Events.InteractionCreate), before + 1);
+    dispatcher.detach();
+    assert.equal(client.listenerCount(Events.InteractionCreate), before);
+
+    await client.destroy();
+    assert.equal(client.listenerCount(Events.InteractionCreate), 0);
+});
