@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { Client, REST } from "discord.js";
@@ -249,4 +251,39 @@ test("login logs outcome without recording the token or returned credentials", a
     );
     assert.ok(!capture.lines.join("").includes("fake-input-token"));
     assert.ok(!capture.lines.join("").includes("fake-returned-token"));
+});
+
+test("loaded and initialized counts include params handlers", async t => {
+    const root = await createTempRoot(t, "hyperion-logging-");
+    const directory = path.join(root, "src", "buttons");
+    await mkdir(directory, { recursive: true });
+    const components = new URL("../src/components/index.ts", import.meta.url);
+
+    await writeFile(
+        path.join(directory, "routed.mjs"),
+        `
+        import { ButtonHandler, defineParams } from ${JSON.stringify(components.href)};
+        const params = defineParams({ id: "a.route", keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: v => ({ value: v }) } } });
+        export default class extends ButtonHandler {
+            constructor() { super({ params }); }
+            async run() {}
+        }
+    `,
+    );
+
+    const capture = captureLogs();
+
+    const client = await HyperionClient.create({
+        name: "Test",
+        root,
+        discord: { intents: [] },
+        logging: capture.logging,
+    });
+
+    t.after(() => client.destroy());
+    const find = (event: string) =>
+        capture.records().find(record => record.event === event);
+    assert.equal(client.buttons.size, 0);
+    assert.equal(find("buttons.loaded")?.count, 1);
+    assert.equal(find("client.initialized")?.buttonCount, 1);
 });

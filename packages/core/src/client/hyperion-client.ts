@@ -134,9 +134,11 @@ export class HyperionClient extends Client {
             {
                 event: "client.initialized",
                 commandCount: this.commands.size,
-                buttonCount: this.buttons.size,
-                selectMenuCount: this.selectMenus.size,
-                modalCount: this.modals.size,
+                // Params handlers live in `routes`, outside each collection's size.
+                buttonCount: this.buttons.size + this.buttons.routes.size,
+                selectMenuCount:
+                    this.selectMenus.size + this.selectMenus.routes.size,
+                modalCount: this.modals.size + this.modals.routes.size,
                 eventHandlerCount: this.events.size,
                 durationMs: Math.round(performance.now() - started),
             },

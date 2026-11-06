@@ -26,7 +26,6 @@ implemented item links a reference doc.
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
 - [ ] Maintenance: checks and contributor docs, one area per branch.
-  - Startup logs: count params handlers in `.routes` alongside `size`.
   - Type-check `ts`/`tsx` code blocks in `docs/` and `docs/guide/` against the
     workspace packages, with a fence marker to skip deliberately partial blocks.
     Today `check-docs.mjs` checks only imports and exported names.
