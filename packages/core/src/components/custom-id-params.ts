@@ -68,6 +68,11 @@ export const validateParams = (params: ParamsDefinition | undefined) => {
         throw new TypeError("Params keys must be unique non-empty strings.");
     }
 
+    // Assigning `__proto__` sets a prototype instead of a key, so it can't round-trip.
+    if (params.keys.includes("__proto__")) {
+        throw new TypeError('Params keys must not include "__proto__".');
+    }
+
     const standard = params.schema?.["~standard"];
 
     if (standard?.version !== 1 || typeof standard.validate !== "function") {

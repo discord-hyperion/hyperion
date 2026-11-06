@@ -37,7 +37,8 @@ export const todoDoneId = defineParams({
   no `:` or `%`, and be unique across handlers.
 - `keys` lists the value names in wire order. Standard Schema cannot expose a
   schema's shape and Hyperion does not inspect validator internals, so the order
-  is declared. Keys must be unique strings. Reordering or removing keys changes
+  is declared. Keys must be unique non-empty strings, and not
+  `__proto__`, which can't round-trip. Reordering or removing keys changes
   the wire format and invalidates messages that are already sent.
 - `schema` is any Standard Schema v1 value. It receives a record of strings.
 - There is no `resolve` or `defer` in v1. `defer` does not apply to components,

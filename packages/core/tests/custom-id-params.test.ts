@@ -6,6 +6,7 @@ import { PrimaryButtonBuilder } from "@discordjs/builders";
 import { MessageFlags } from "discord.js";
 import * as v from "valibot";
 import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts";
+import { decodeParams } from "../src/components/custom-id-params.ts";
 import {
     type ButtonContext,
     ButtonHandler,
@@ -92,6 +93,7 @@ describe("defineParams", () => {
             ["id", { id: "a%b", keys: [], schema }],
             ["keys", { id: "a", keys: ["k", "k"], schema }],
             ["keys", { id: "a", keys: [""], schema }],
+            ["keys", { id: "a", keys: ["__proto__"], schema }],
             ["schema", { id: "a", keys: [], schema: {} }],
         ];
         for (const [field, definition] of invalid) {
@@ -104,6 +106,20 @@ describe("defineParams", () => {
             );
         }
         assert.ok(Object.isFrozen(todoDone));
+    });
+
+    test("keys that look like Object members still round-trip", () => {
+        const members = defineParams({
+            id: "members",
+            keys: ["constructor", "toString"],
+            schema: v.object({ constructor: v.string(), toString: v.string() }),
+        });
+        const encoded = members({ constructor: "a", toString: "b" });
+
+        assert.deepEqual(decodeParams(members, encoded), {
+            constructor: "a",
+            toString: "b",
+        });
     });
 });
 
