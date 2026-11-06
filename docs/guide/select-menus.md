@@ -44,7 +44,7 @@ For user, role, mentionable, and channel menus, also put the kind in the type
 argument. That types `ctx.interaction` correctly, so `.users`, `.roles`, or
 `.channels` are right there:
 
-```ts
+```ts fragment
 type ChooseUserSpec = { componentType: ComponentType.UserSelect };
 
 export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
@@ -82,7 +82,7 @@ as well.
 The registry keeps the handler's `builder` as a **template**. Call `build()` to
 copy that template, set its custom ID, and put the menu in a row.
 
-```ts
+```ts fragment
 await ctx.interaction.reply({
     content: "Pick a colour.",
     components: [
@@ -101,7 +101,7 @@ Values come from the user's client, so an old message or a tampered request can
 send something your menu never offered. Add `input` to check them first, the same
 way as [command input](input.md):
 
-```ts
+```ts fragment
 const input = defineInput({
     schema: v.pipe(v.array(v.picklist(["blue", "green"])), v.length(1)),
 });

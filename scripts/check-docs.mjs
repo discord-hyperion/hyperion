@@ -145,7 +145,7 @@ for (const file of files) {
     }
 
     for (const [, code] of text.matchAll(
-        /```(?:ts|tsx|js|jsx|mjs)\n([\s\S]*?)```/g,
+        /```(?:tsx|ts|jsx|js|mjs)\b[^\n]*\n([\s\S]*?)```/g,
     )) {
         for (const [, list, specifier] of code.matchAll(
             /import\s+(?:type\s+)?(?:\{([^}]*)\}|[\w*\s]+)\s+from\s+"([^"]+)"/g,
@@ -212,6 +212,29 @@ if (existsSync(backlog)) {
                 backlog,
                 `implemented item links no reference doc: ${item.split("\n")[0]}`,
             );
+        }
+    }
+}
+
+// Changesets moves each summary into a changelog list item and drops blank lines
+// inside its code blocks, which runs their lines together.
+const changesets = path.join(root, ".changeset");
+
+if (existsSync(changesets)) {
+    for (const name of readdirSync(changesets)) {
+        if (!name.endsWith(".md") || name === "README.md") continue;
+
+        const file = path.join(changesets, name);
+
+        for (const [, code] of readFileSync(file, "utf8").matchAll(
+            /```[^\n]*\n([\s\S]*?)```/g,
+        )) {
+            if (/\n[ \t]*\n/.test(code)) {
+                report(
+                    file,
+                    "code block has a blank line, which Changesets drops; use a comment line instead",
+                );
+            }
         }
     }
 }

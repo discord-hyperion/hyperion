@@ -3,7 +3,7 @@
 Hyperion uses Pino for structured logs, pino-pretty for readable terminal output,
 and Ora for startup spinners. Configuration is optional:
 
-```ts
+```ts fragment
 const client = await HyperionClient.create({
     // Other client options...
     logging: {
@@ -32,6 +32,8 @@ No global console interception or background formatting worker is installed.
 - Command registration: start, completion, or failure, plus each deployment's
   route, count, and duration. Empty registries emit a skipped event.
 - Initialization: final command, button, select menu, modal, and event-handler counts and duration.
+  Component counts include params handlers, which `client.buttons.size` and the
+  other collection sizes leave out.
 - Event handlers: `events.load` startup steps and `events.loaded` definition counts;
   `event.failed` failures scoped to `eventName`, source path, and optional priority.
   `event.queue.full` discards the newest occurrence with an event name and queue
@@ -84,7 +86,7 @@ login. Runtime handlers do not display spinners automatically.
 
 Use the scoped logger provided with each command invocation:
 
-```ts
+```ts fragment
 async run(ctx: CommandContext) {
     ctx.logger.debug({ checkpoint: "lookup" }, "Looking up results");
     await ctx.interaction.reply("Pong!");

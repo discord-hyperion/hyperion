@@ -19,3 +19,5 @@ apps/docs-site-fumadocs/.source/
 apps/docs-site-fumadocs/out/
 apps/docs-site-fumadocs/out-*/
 apps/docs-site-fumadocs/next-env.d.ts
+# Temporary modules from scripts/check-examples.mjs
+apps/dev-bot/.examples-*/

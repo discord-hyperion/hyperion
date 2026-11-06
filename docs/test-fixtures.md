@@ -4,7 +4,7 @@ Use the [shared factories](../tests/fixtures/interactions.ts) for ordinary
 interaction doubles. They are test-only structural objects, with an explicit set
 of native Discord predicates and no clients, webhooks, or REST requests.
 
-```ts
+```ts fragment
 import { createButtonInteraction } from "./fixtures/interactions.ts";
 
 const fixture = createButtonInteraction({ customId: "profile.refresh" });
@@ -28,7 +28,7 @@ the appropriate discriminant explicitly instead of rewriting predicate logic.
 Inspect and customize the exposed Node mock handles. The interaction's response
 methods wrap those effects and update state only after successful completion:
 
-```ts
+```ts fragment
 const fixture = createButtonInteraction({ customId: "profile.refresh" });
 fixture.reply.mock.mockImplementation(async () => {
     throw new Error("Interaction expired");

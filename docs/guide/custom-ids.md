@@ -36,7 +36,7 @@ Give your handler a **template** in `builder`. The registry keeps it as the
 reusable design for your controls. Call `build()` with the params definition and
 values to create a fresh control with an encoded custom ID:
 
-```ts
+```ts fragment
 const button = ctx.client.buttons.build(closeTicket, {
     ticketId: "a1b2c3d4",
     owner: user.id,
@@ -55,14 +55,14 @@ For a fixed ID with no params, use `build("literal.id")` instead.
 
 The definition is also a function. Call it to get a custom ID:
 
-```ts
+```ts fragment
 closeTicket({ ticketId: "a1b2c3d4", owner: user.id });
 // "ticket.close:a1b2c3d4:123456789012345678"
 ```
 
 Use it anywhere a custom ID goes:
 
-```ts
+```ts fragment
 new DangerButtonBuilder().setLabel("Close").setCustomId(closeTicket(ticket));
 ```
 
@@ -74,7 +74,7 @@ characters, and Hyperion throws if you go over, so keep values short.
 
 Give the handler `params` instead of a `customId`:
 
-```ts
+```ts fragment
 type CloseTicketButtonSpec = { params: typeof closeTicket };
 
 export default class CloseTicketButton extends ButtonHandler<CloseTicketButtonSpec> {
@@ -115,17 +115,21 @@ or `{ params, input }` for a modal.
 
 ## Don't trust the custom ID
 
-Custom IDs come back from the user's client, so someone determined can change
-them. Never use params alone to decide who's allowed to do something. Instead,
-check them against the user who clicked:
+Custom IDs come back from the user's client, so treat params as claims, not
+facts. To stop other people using a control you built for one user, check the
+user it names against the user who clicked:
 
-```ts
+```ts fragment
 guards: [paramOwner("owner", "Only the ticket's author can close it.")];
 ```
 
 `paramOwner()` passes only when the params are valid _and_ the `owner` value is
 the clicking user's ID. Params are checked before guards, so this works on
 buttons, menus, and modals alike. See [guards](guards.md).
+
+That only proves the clicker is the user the ID names. It can't tell you the ID
+wasn't edited, or that they still own the ticket. For anything that matters,
+look the ticket up and check its owner in your handler.
 
 ## Changing params later
 

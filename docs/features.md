@@ -25,22 +25,6 @@ implemented item links a reference doc.
   - Designed and ready to build: see
     [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md). Core stays
     database-free.
-- [ ] Maintenance: checks and contributor docs, one area per branch.
-  - Type-check `ts`/`tsx` code blocks in `docs/` and `docs/guide/` against the
-    workspace packages, with a fence marker to skip deliberately partial blocks.
-    Today `check-docs.mjs` checks only imports and exported names.
-  - Fail `check-docs.mjs` on a blank line inside a `.changeset/*.md` code block:
-    Changesets collapses it in the generated changelog.
-  - Grilling skill: cite the `file:line` that shows current behaviour before
-    stating it.
-  - `docs/ci.md`: read a failed job's log with
-    `gh run view --job <job-id> --log > <file>`; `--log-failed` and the raw logs
-    API are slow or blocked.
-  - `docs/package-development.md`: run `npm view` outside the workspace, since
-    `devEngines` rejects npm inside it.
-  - `docs/releases.md`: if an approved version-PR run stays queued, dispatch CI on
-    the branch instead of closing and reopening the PR.
-  - AGENTS.md: shorten the database line to point at the backlog, not ADR 0005.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete

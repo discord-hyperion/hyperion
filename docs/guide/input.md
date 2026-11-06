@@ -10,6 +10,7 @@ the list of problems.
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { Command, type CommandContext, defineInput } from "@hyperion/core";
+import { MessageFlags } from "discord.js";
 import * as v from "valibot";
 
 const input = defineInput({
@@ -42,7 +43,7 @@ export default class EchoCommand extends Command<typeof input> {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.reply({
-                content: issues[0].message,
+                content: issues.map(issue => issue.message).join("\n"),
                 flags: MessageFlags.Ephemeral,
             });
             return;
@@ -73,7 +74,7 @@ handling issues and TypeScript knows `value` is safe.
 Often you want the _thing_ an option points to, not the raw value. Add `resolve`
 to turn validated values into whatever your handler needs:
 
-```ts
+```ts fragment
 const input = defineInput({
     schema: v.object({ id: v.string() }),
     defer: true,

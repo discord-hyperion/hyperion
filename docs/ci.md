@@ -5,13 +5,13 @@
 in `package.json`, caches the pnpm store, and installs with
 `pnpm install --frozen-lockfile`. It has five jobs:
 
-| Job             | Runs                                    | What it does                                                                                                                                                |
-| --------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Changes`       | Always                                  | Compares the commits and decides whether the code checks are needed                                                                                         |
-| `Lint and docs` | Always                                  | `pnpm check`: Biome, the documentation check (`scripts/check-docs.mjs`: links, anchors, example imports), and the layout check (`scripts/check-layout.mjs`) |
-| `Code`          | Unless the change is documentation-only | Type checking and isolated tests, the CI helper tests, and the release, cache, and packed-consumer verification                                             |
-| `Docs site`     | When the guide or site build changes    | Builds the Fumadocs site (`apps/docs-site-fumadocs`) and runs its 14 output checks                                                                          |
-| `Checks`        | Always, last                            | The single result for the workflow                                                                                                                          |
+| Job             | Runs                                    | What it does                                                                                                                                                                                                       |
+| --------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Changes`       | Always                                  | Compares the commits and decides whether the code checks are needed                                                                                                                                                |
+| `Lint and docs` | Always                                  | `pnpm check`: Biome, the documentation check (`scripts/check-docs.mjs`: links, anchors, example imports), the example type check (`scripts/check-examples.mjs`), and the layout check (`scripts/check-layout.mjs`) |
+| `Code`          | Unless the change is documentation-only | Type checking and isolated tests, the CI helper tests, and the release, cache, and packed-consumer verification                                                                                                    |
+| `Docs site`     | When the guide or site build changes    | Builds the Fumadocs site (`apps/docs-site-fumadocs`) and runs its 14 output checks                                                                                                                                 |
+| `Checks`        | Always, last                            | The single result for the workflow                                                                                                                                                                                 |
 
 The `Code` job runs the same commands as local verification:
 
@@ -56,10 +56,11 @@ rule, so a guide-only change runs `Lint and docs` and `Docs site` but not `Code`
 It builds only; it never publishes.
 
 Publishing is a separate workflow, [`pages.yml`](../.github/workflows/pages.yml). On
-pushes to `main` that touch the guide or the site, it builds, runs the same checks,
-and uploads `out/` to the Cloudflare Pages project `hyperion-docs`
+pushes to `main` that touch the same inputs, apart from other workflows, it
+builds, runs the same checks, and uploads `out/` to the Cloudflare Pages project `hyperion-docs`
 (`hyperion-docs-6h7.pages.dev`) with Wrangler. It needs the `CLOUDFLARE_API_TOKEN`
 repository secret, a token with only the account permission Cloudflare Pages: Edit.
+Only the publish step receives it, since install and build run third-party code.
 The account ID is not secret and is written in the workflow. Pull requests are
 never published.
 
@@ -77,12 +78,16 @@ not automatically block merging. If the repository becomes eligible, require the
 `Checks` status check on `main` after the workflow has run successfully; it is the
 only job that needs requiring.
 
+To read a failed job's log, save it and search the file:
+`gh run view --job <job-id> --log > job.log`. `gh run view --log-failed` and the
+raw logs API are slow here or refuse output with terminal escape codes.
+
 ## Local checks
 
 `pnpm install` configures Git to use the tracked `.githooks/` directory through
 the root `prepare` script. For an existing installation, run `pnpm run prepare`
 once to enable the hook. The pre-commit hook checks staged files with Biome,
-checks documentation and layout, and typechecks the workspace. Tests remain a CI gate.
+checks documentation, examples, and layout, and typechecks the workspace. Tests remain a CI gate.
 Documentation and type checks inspect the working tree, so they do not validate
 an isolated snapshot of a partially staged commit.
 

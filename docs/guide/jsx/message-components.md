@@ -57,7 +57,7 @@ To let people pick users, roles, or channels, use `UserSelect`, `RoleSelect`,
 `MentionableSelect`, or `ChannelSelect`. Discord fills in the choices, so they
 take no options. Pre-select some with ID arrays:
 
-```tsx
+```tsx fragment
 import { ActionRow, ChannelSelect, renderComponents } from "@hyperion/jsx";
 import { ChannelType } from "discord.js";
 

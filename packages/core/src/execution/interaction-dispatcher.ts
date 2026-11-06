@@ -31,12 +31,24 @@ export type { AnyInteraction } from "../contexts/index.ts";
 export class InteractionDispatcher {
     private readonly guards = new GuardPipeline();
 
+    private listener: ((interaction: Interaction) => Promise<void>) | undefined;
+
     constructor(private readonly client: HyperionClient) {}
 
+    /** Listen for interactions; calling it again keeps the one listener. */
     attach() {
-        this.client.on(Events.InteractionCreate, interaction =>
-            this.dispatch(interaction),
-        );
+        if (this.listener) return;
+
+        this.listener = interaction => this.dispatch(interaction);
+        this.client.on(Events.InteractionCreate, this.listener);
+    }
+
+    /** Remove the listener `attach()` added, leaving every other listener. */
+    detach() {
+        if (!this.listener) return;
+
+        this.client.off(Events.InteractionCreate, this.listener);
+        this.listener = undefined;
     }
 
     async dispatch(interaction: Interaction) {
@@ -346,7 +358,8 @@ export class InteractionDispatcher {
 
         try {
             // Params are decoded and schema-validated before guards so guards
-            // can read them; no application code runs at this stage.
+            // can read them. The schema is application code and is awaited here,
+            // before any input deferral.
             let current = ctx;
 
             if (rawParams !== undefined && handler.params) {

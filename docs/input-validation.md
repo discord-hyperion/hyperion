@@ -75,7 +75,7 @@ from the resolver return type. The helper does not run validation or resolution.
 Pass the complete definition as the single generic on `Subcommand`, `Command`,
 and `CommandContext`:
 
-```ts
+```ts fragment
 const input = defineInput({
     schema: getTodoSchema,
     defer: true,

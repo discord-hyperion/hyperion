@@ -74,6 +74,9 @@ These belong in reference docs, ADRs, or git history, not the guide:
 
 - Import from `@hyperion/core` and `@hyperion/jsx`, never old package names.
 - Use self-contained examples that readers can adapt to their own bots.
+  `pnpm check` compiles every `ts`/`tsx` block as its own module, so include its
+  imports. Tag a deliberately partial block, such as one that uses `ctx` or a
+  name from an earlier block, ` ```ts fragment ` to skip it.
 - Keep comments short and useful: `// Runs once per click`.
 
 ## Avoid duplication

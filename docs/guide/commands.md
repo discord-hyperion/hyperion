@@ -10,7 +10,7 @@ You've already seen one in [getting started](getting-started.md): a `Command`
 with a builder and a `run()` method. The builder is the source of truth for the
 name, description, and options:
 
-```ts
+```ts fragment
 export default class EchoCommand extends Command {
     constructor() {
         super({
@@ -187,7 +187,7 @@ multi-server deploy, the servers that already succeeded keep the new commands.
 
 `client.commands` holds every loaded command:
 
-```ts
+```ts fragment
 client.commands.resolve("ping");
 client.commands.resolveSubcommand("ticket", "close");
 client.commands.resolveSubcommand("ticket", "view", "settings");

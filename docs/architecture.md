@@ -37,7 +37,10 @@ await `HyperionClient.create(options)` before accessing initialized registries.
 Initialize registry properties in the constructor instead of concealing lifecycle
 gaps with `declare`, definite-assignment assertions, or `Reflect.set()`.
 
-Initialization failures reject the factory and destroy the local client. Login
+Initialization failures reject the factory and destroy the local client.
+`destroy()` first removes the interaction dispatcher's listener, so no new
+interactions dispatch; interactions already dispatching are not awaited. Event
+handlers drain as described in [event handlers](event-handlers.md#shutdown). Login
 is separate from initialization and command deployment; additional network
 activity must be an explicit part of the relevant operation.
 

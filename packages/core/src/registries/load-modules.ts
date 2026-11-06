@@ -167,7 +167,11 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
     }
 
     logger?.info(
-        { event: `${folder}.loaded`, count: registry.size },
+        {
+            event: `${folder}.loaded`,
+            // Params handlers live in `routes`, outside the collection's size.
+            count: registry.size + (routes?.size ?? 0),
+        },
         `${title} discovery complete`,
     );
 };

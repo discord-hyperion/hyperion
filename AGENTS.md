@@ -17,6 +17,9 @@ context, not the current API.
 
 ## Before changing a subsystem
 
+When you state how the code behaves today, in a design discussion or anywhere
+else, cite the `file:line` that shows it.
+
 Read the relevant reference before implementation or review:
 - Client lifecycle, registry discovery, or package boundaries:
   [Architecture](docs/architecture.md).
@@ -40,9 +43,7 @@ Read the relevant reference before implementation or review:
 - Logging, sensitive data handling, or startup indicators:
   [Logging](docs/logging.md).
 - Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
-  work: [Feature backlog](docs/features.md). Core stays database-free; an optional
-  SQLite package is planned in
-  [ADR 0005](docs/adr/0005-optional-sqlite-package-on-better-sqlite3.md).
+  work: [Feature backlog](docs/features.md). Core stays database-free.
 
 ## Documentation
 
@@ -92,12 +93,13 @@ If the package-manager wrapper is unavailable, use:
 node --import tsx --test packages/core/tests/*.test.ts packages/jsx/tests/*.test.tsx apps/dev-bot/tests/*.test.ts
 ./node_modules/.bin/biome check .
 node scripts/check-docs.mjs
+node scripts/check-examples.mjs
 ```
 
 Tests use Node's test runner, temporary handler modules, and mocked REST methods.
 Cover discovery, failures, and deployment behavior without Discord login, real
 tokens, external requests, or command deployment. For documentation-only changes,
-run `pnpm check` (formatting, links, and example imports) and confirm the text
+run `pnpm check` (formatting, links, and type-checked examples) and confirm the text
 matches the implementation.
 
 ## Git

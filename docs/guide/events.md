@@ -62,7 +62,7 @@ line. After that, the newest ones are dropped (and logged).
 
 ## Settings
 
-```ts
+```ts fragment
 const client = await HyperionClient.create({
     // …
     events: {

@@ -62,6 +62,41 @@ test("command discovery and deployment leave guard factories unevaluated", async
     assert.equal(put.mock.callCount(), 1);
 });
 
+test("an invalid event handler stops initialization before any deployment", async t => {
+    const root = await createTempRoot(t, "hyperion-deploy-order-");
+    await mkdir(path.join(root, "src", "commands"), { recursive: true });
+    await mkdir(path.join(root, "src", "events", "debug"), { recursive: true });
+
+    await writeFile(
+        path.join(root, "src", "commands", "ping.mjs"),
+        commandSource("ping"),
+    );
+
+    await writeFile(
+        path.join(root, "src", "events", "debug", "broken.mjs"),
+        "bad JavaScript",
+    );
+
+    const put = t.mock.method(REST.prototype, "put", async () => []);
+
+    await assert.rejects(
+        HyperionClient.create({
+            name: "Test",
+            logging: false,
+            discord: { intents: [] },
+            root,
+            commands: {
+                applicationId: "123",
+                token: "test-token",
+                guildIds: ["456"],
+            },
+        }),
+        /Failed to load event handler/,
+    );
+
+    assert.equal(put.mock.callCount(), 0);
+});
+
 test("discovers nested commands and skips non-command files", async t => {
     const root = await createTempRoot(t, "hyperion-commands-");
     const directory = path.join(root, "src", "commands");

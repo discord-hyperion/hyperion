@@ -42,7 +42,7 @@ handlers.
 
 In a command, call `build()` to copy the registered template and set its custom ID:
 
-```ts
+```ts fragment
 await ctx.interaction.reply({
     content: "Press refresh to load your profile.",
     components: [
@@ -65,7 +65,7 @@ custom ID; the handler doesn't care what the button looks like.
 Handlers are shared by everyone, so build a fresh copy rather than editing the
 template:
 
-```ts
+```ts fragment
 const button = ctx.client.buttons.build(this.customId).setLabel("Refreshed");
 await ctx.interaction.update({
     components: [new ActionRowBuilder().addComponents(button)],
@@ -83,7 +83,7 @@ button's custom ID. See [data in custom IDs](custom-ids.md).
 Add `guards` to restrict who can click. A command's guards don't carry over to
 the buttons it sends, so protect the button itself:
 
-```ts
+```ts fragment
 super({ builder: refreshButton, guards: [ownerOnly] });
 ```
 

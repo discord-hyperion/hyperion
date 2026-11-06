@@ -92,7 +92,7 @@ text-input IDs identify fields within it. Neither build changes the template.
 
 Inside a command, button, or message select-menu handler:
 
-```ts
+```ts fragment
 await ctx.interaction.showModal(ctx.client.modals.build("feedback.submit"));
 ```
 
@@ -116,7 +116,7 @@ A submission is a separate interaction, so the code that showed the modal has
 already returned. To tell the modal handler which record the form is about,
 declare typed [custom-ID params](custom-id-params.md) instead of `customId`:
 
-```ts
+```ts fragment
 export const renameTicketForm = defineParams({
     id: "ticket.rename-form",
     keys: ["ticketId", "owner"],

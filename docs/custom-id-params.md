@@ -21,7 +21,7 @@ custom-ID data exposed through `ctx.params`. It implements the backlog entry in
 `defineParams` mirrors `defineInput`: an identity-style helper that exists for
 type inference, validates its config once, and returns a frozen definition.
 
-```ts
+```ts fragment
 export const todoDoneId = defineParams({
     id: "todo.done",
     keys: ["owner", "page", "todoId"],
@@ -37,7 +37,8 @@ export const todoDoneId = defineParams({
   no `:` or `%`, and be unique across handlers.
 - `keys` lists the value names in wire order. Standard Schema cannot expose a
   schema's shape and Hyperion does not inspect validator internals, so the order
-  is declared. Keys must be unique strings. Reordering or removing keys changes
+  is declared. Keys must be unique non-empty strings, and not
+  `__proto__`, which can't round-trip. Reordering or removing keys changes
   the wire format and invalidates messages that are already sent.
 - `schema` is any Standard Schema v1 value. It receives a record of strings.
 - There is no `resolve` or `defer` in v1. `defer` does not apply to components,
@@ -47,7 +48,7 @@ The returned value is a function with the definition attached
 (`Object.assign(encode, { id, keys, schema })`, frozen). Calling it encodes a
 custom ID:
 
-```ts
+```ts fragment
 todoDoneId({ owner: user.id, page: 2, todoId: todo.id });
 // "todo.done:123456:2:abc"
 ```
@@ -63,7 +64,7 @@ as if they ran the handler.
 Component registries keep shared handlers and their optional **templates** in
 `builder`. Use the template to create each button, select menu, or modal:
 
-```ts
+```ts fragment
 const button = ctx.client.buttons.build(todoDoneId, {
     owner: user.id,
     page: 2,
@@ -100,7 +101,7 @@ encoder, but cannot be used with `build()`.
 
 ## Handler
 
-```ts
+```ts fragment
 type TodoDoneSpec = { params: typeof todoDoneId };
 
 export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
@@ -144,10 +145,15 @@ match → decode → schema validate → guards → handler
 
 This intentionally differs from command and modal input
 (`guards → extract → validate → resolve → handler`):
-- Guards can read `ctx.params`, so one reusable ownership guard (for example
-  `paramOwner("owner")`) can compare the clicker with a forged-able ID value.
-- Validation is pure and cheap. Because `resolve` is excluded, no application
-  lookup runs before authorization.
+- Guards can read `ctx.params`, so one reusable guard (for example
+  `paramOwner("owner")`) can compare the clicker with a user ID from the custom
+  ID. That shows the clicker is the user the control names, not that they own
+  the resource: a tampered ID can name anyone, and ownership can change after the
+  control was sent. Check current ownership against application state.
+- There is no `resolve` step, but validation runs the application's schema,
+  awaited, before guards and before any input deferral. Keeping it pure and fast
+  is the caller's job: an async schema step adds latency before the interaction
+  is acknowledged.
 - Guard contexts for params handlers carry `params`. Guards for other handlers
   are unchanged.
 
@@ -157,8 +163,8 @@ Steps:
    means return without replying.
 2. **Decode.** Split, unescape, and zip with `keys` into a record of strings.
    A wrong segment count or invalid escape is unmatched.
-3. **Validate.** `schema["~standard"].validate(record)` through the shared
-   extract/validate helper that `resolveInput` also uses. Issues produce
+3. **Validate.** `await schema["~standard"].validate(record)`, called directly
+   by `resolveParams()`. Issues produce
    `[issues, undefined]` and the pipeline continues.
 4. **Guards, then handler.** Existing guard and error behavior applies.
    Exceptions use the generic error pipeline with `stage: "params"` for decode
@@ -289,7 +295,7 @@ handler cannot be attached to a handler with different params.
 `paramOwner()` is an opt-in built-in guard, not part of execution: it runs only
 when a handler lists it.
 
-```ts
+```ts fragment
 guards: [paramOwner("owner", "Only the ticket's author can close it.")];
 ```
 

@@ -106,6 +106,13 @@ export class HyperionClient extends Client {
             this.modals.load(options.root),
         );
 
+        // Every local definition is validated before the first remote request.
+        // The dispatcher attaches first so it stays ahead of event listeners.
+        this.dispatcher.attach();
+        await this.logging.step("Loading events", "events.load", () =>
+            this.events.load(),
+        );
+
         if (options.commands) {
             if (this.commands.size > 0) {
                 const registration = options.commands;
@@ -123,18 +130,15 @@ export class HyperionClient extends Client {
             }
         }
 
-        this.dispatcher.attach();
-        await this.logging.step("Loading events", "events.load", () =>
-            this.events.load(),
-        );
-
         this.logger.info(
             {
                 event: "client.initialized",
                 commandCount: this.commands.size,
-                buttonCount: this.buttons.size,
-                selectMenuCount: this.selectMenus.size,
-                modalCount: this.modals.size,
+                // Params handlers live in `routes`, outside each collection's size.
+                buttonCount: this.buttons.size + this.buttons.routes.size,
+                selectMenuCount:
+                    this.selectMenus.size + this.selectMenus.routes.size,
+                modalCount: this.modals.size + this.modals.routes.size,
                 eventHandlerCount: this.events.size,
                 durationMs: Math.round(performance.now() - started),
             },
@@ -193,6 +197,8 @@ export class HyperionClient extends Client {
 
     private async cleanup() {
         this.ownerLookup = undefined;
+        // Stop admitting interactions; ones already dispatching are not awaited.
+        this.dispatcher.detach();
         try {
             await this.events.shutdown();
         } finally {

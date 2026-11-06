@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+    mkdirSync,
+    mkdtempSync,
+    readFileSync,
+    rmSync,
+    writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { after, describe, test } from "node:test";
@@ -73,6 +79,38 @@ describe("site classification", () => {
             ".github/workflows/pages.yml",
         ]) {
             assert.ok(touchesSite([file]), file);
+        }
+    });
+
+    test("every site input outside other workflows also triggers publication", () => {
+        const workflow = readFileSync(
+            new URL("../.github/workflows/pages.yml", import.meta.url),
+            "utf8",
+        );
+        const paths = workflow
+            .slice(
+                workflow.indexOf("paths:"),
+                workflow.indexOf("workflow_dispatch:"),
+            )
+            .split("\n")
+            .flatMap(line => line.match(/^\s*- (\S+)$/)?.[1] ?? []);
+        const publishes = file =>
+            paths.some(glob =>
+                glob.endsWith("/**")
+                    ? file.startsWith(glob.slice(0, -2))
+                    : file === glob,
+            );
+
+        for (const file of [
+            "docs/guide/buttons.md",
+            "apps/docs-site-fumadocs/lib/source.js",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            "package.json",
+            ".github/workflows/pages.yml",
+        ]) {
+            assert.ok(touchesSite([file]), file);
+            assert.ok(publishes(file), `pages.yml does not publish on ${file}`);
         }
     });
 

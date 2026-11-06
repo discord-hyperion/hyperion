@@ -81,7 +81,7 @@ Modal resolvers that use invocation context annotate their second parameter as
 input from resolver output. Existing command helper calls remain compatible;
 definitions without resolvers need no context annotation.
 
-```ts
+```ts fragment
 const input = defineInput({
     schema,
     defer: true,
@@ -113,7 +113,7 @@ those forms until it accepts the new keys.
 
 ## Complete handler example
 
-```tsx
+```tsx fragment
 import { defineInput, ModalHandler, type ModalContext } from "@hyperion/core";
 import { renderModal } from "@hyperion/jsx";
 import * as v from "valibot";
