@@ -127,9 +127,10 @@ guards: [paramOwner("owner", "Only the ticket's author can close it.")];
 the clicking user's ID. Params are checked before guards, so this works on
 buttons, menus, and modals alike. See [guards](guards.md).
 
-That only proves the clicker is the user the ID names. It can't tell you the ID
-wasn't edited, or that they still own the ticket. For anything that matters,
-look the ticket up and check its owner in your handler.
+> [!WARNING]
+> That only proves the clicker is the user the ID names. It can't tell you the
+> ID wasn't edited, or that they still own the ticket. For anything that
+> matters, look the ticket up and check its owner in your handler.
 
 ## Changing params later
 
