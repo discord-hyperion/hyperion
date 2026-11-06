@@ -13,5 +13,7 @@ pnpm --filter @hyperion/docs-site-fumadocs site:serve   # serve out/ like a plai
 The build uses the base path `/discord-hyperion`. Set `SITE_BASE=` (empty) for a
 root deployment, and `DIST=out-root` to keep two builds side by side.
 `docs/guide` stays the source of truth: `scripts/stage.mjs` copies it into a
-gitignored `content/` folder at build time. The package is JavaScript only so the
+gitignored `content/` folder at build time. Two remark plugins in
+`source.config.mjs` turn GitHub alerts into callouts (`lib/remark-github-alerts.js`)
+and ` ```files ` blocks into file trees. The package is JavaScript only so the
 root `tsc` has nothing to type.

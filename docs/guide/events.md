@@ -37,11 +37,12 @@ folder names). Leave out the constructor if you don't need options.
 Several handlers can listen to the same event. They run one after another, in
 filename order:
 
-```text
+```files
 src/events/messageCreate/
 ├── 10-audit.ts
 ├── 20-moderation.ts
-└── links/30-preview.ts
+└── links/
+    └── 30-preview.ts
 ```
 
 Numbered files run first, lowest number first (gaps are fine, so you can slot in

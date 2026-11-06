@@ -31,7 +31,7 @@ The voice is modelled on the [discord.js guide](https://discordjs.guide/).
    buttons with discord.js before…").
 2. **Show code early.** A complete, copyable example comes before the details.
 3. **Explain after the code.** Short paragraphs that point at what the example did.
-4. **Caveats last**, as short bullets or a single "Watch out" sentence.
+4. **Caveats last**, as short bullets or a single "Watch out" alert.
 
 Each section follows the same rhythm: a one-line definition, the API to use, an
 example, then notes.
@@ -127,6 +127,24 @@ These belong in reference docs, ADRs, or git history, not the guide:
   imports. Tag a deliberately partial block, such as one that uses `ctx` or a
   name from an earlier block, ` ```ts fragment ` to skip it.
 - Keep comments short and useful: `// Runs once per click`.
+
+## Callouts and file trees
+
+The guide is plain Markdown, but two GitHub-friendly forms render as components
+on the site:
+- **Callouts:** a GitHub alert blockquote. Use `[!WARNING]` for something that
+  can lose data or surprise the reader (it shows as "Watch out"), `[!TIP]` for a
+  shortcut, and `[!NOTE]` sparingly for an aside. One per section at most.
+
+  ```md
+  > [!WARNING]
+  > Deploying replaces _all_ commands in that scope.
+  ```
+
+- **File trees:** a ` ```files ` block drawn with `├──`, `│`, and `└──`, with a
+  trailing `/` on folders. Put only names in it; anything else on a line becomes
+  part of the name, so a tree that maps files to something (like command names)
+  stays a ` ```text ` block.
 
 ## Avoid duplication
 
