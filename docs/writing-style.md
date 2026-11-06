@@ -36,6 +36,55 @@ The voice is modelled on the [discord.js guide](https://discordjs.guide/).
 Each section follows the same rhythm: a one-line definition, the API to use, an
 example, then notes.
 
+## Page types
+
+Pick the type from the question the reader arrives with. Most pages are feature
+pages; the others are for questions a feature page answers badly.
+
+| Type            | Reader's question                      | Example                        |
+| --------------- | -------------------------------------- | ------------------------------ |
+| Overview        | "What's here, and where do I start?"   | [README.md](guide/README.md)   |
+| Feature page    | "How does this part of Hyperion work?" | [buttons.md](guide/buttons.md) |
+| How-to          | "How do I get this one thing done?"    | none yet                       |
+| Troubleshooting | "Why am I seeing this error?"          | none yet                       |
+
+**Overview.** One short paragraph on what Hyperion is, then the page list in
+groups, each link with a few words on what it covers. No code.
+
+**Feature page.** The page shape above. One feature per page: if the title needs
+"and", it's two pages. Headings follow the reader's path through the feature
+("Sending the button", "Changing the button after a click"), not the API's
+structure.
+
+**How-to.** One task with a clear end, such as "Store cooldowns across restarts".
+- Title it with the task, imperative or "-ing" ("Moving a command into a
+  group").
+- Intro: at most two sentences saying what you'll have at the end.
+- Numbered steps, about ten at most; split a longer task into phases with
+  headings. Each step is one action, with its code.
+- Finish with how to check it worked. Before a step that's hard to undo, like
+  deploying commands or migrating a database, say what to check first and what
+  to do if it's wrong.
+- Link the feature page for the why; don't explain it here.
+
+**Troubleshooting.** One error per section.
+- Title the section with the exact message the reader sees, so searching for it
+  lands here.
+- Then the cause in one or two sentences, and the fix as code or steps.
+- Only errors Hyperion or Discord actually produce. Copy the message from the
+  code, and link the reference doc that owns it.
+
+### Before you finish a page
+
+- Every behaviour the page states matches the code and the reference doc. Never
+  describe behaviour you haven't checked; find the real value or leave it out.
+- Code blocks compile (`pnpm check`), or are tagged `fragment` on purpose.
+- The page has one home in the [duplication table](#avoid-duplication); other
+  pages link to it instead of repeating it.
+- A new page is listed in [README.md](guide/README.md) and in the site sidebar
+  (`apps/docs-site-fumadocs/scripts/stage.mjs`). Adding it there is part of
+  shipping it.
+
 ## Sentences and paragraphs
 
 - Two to four sentences per paragraph.
@@ -98,6 +147,7 @@ the guide; it doesn't repeat the guide.
 | JSX with Hyperion handlers             | [jsx-with-hyperion.md](guide/jsx-with-hyperion.md)       |
 | JSX form authoring                     | [modals.md](guide/jsx/modals.md)                         |
 | Logging                                | [logging.md](guide/logging.md)                           |
+| Storing data, tables, and key-value    | [storing-data.md](guide/storing-data.md)                 |
 
 ## Example rewrite
 
