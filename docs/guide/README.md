@@ -31,6 +31,7 @@ your bot needs next.
 
 - [Events](events.md): react to Discord events like `messageCreate`.
 - [Logging](logging.md)
+- [Storing data](storing-data.md): keep data in SQLite with validated tables.
 - [JSX guide](jsx.md): embeds, buttons, layout messages, and forms as JSX. It
   works with any discord.js bot.
 - [JSX with Hyperion](jsx-with-hyperion.md): keep JSX controls and forms as
