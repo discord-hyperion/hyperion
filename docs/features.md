@@ -31,7 +31,6 @@ implemented item links a reference doc.
     Today `check-docs.mjs` checks only imports and exported names.
   - Grilling skill: cite the `file:line` that shows current behaviour before
     stating it.
-  - AGENTS.md: shorten the database line to point at the backlog, not ADR 0005.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete
