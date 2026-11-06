@@ -78,6 +78,10 @@ not automatically block merging. If the repository becomes eligible, require the
 `Checks` status check on `main` after the workflow has run successfully; it is the
 only job that needs requiring.
 
+To read a failed job's log, save it and search the file:
+`gh run view --job <job-id> --log > job.log`. `gh run view --log-failed` and the
+raw logs API are slow here or refuse output with terminal escape codes.
+
 ## Local checks
 
 `pnpm install` configures Git to use the tracked `.githooks/` directory through

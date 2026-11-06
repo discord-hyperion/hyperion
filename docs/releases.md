@@ -44,7 +44,8 @@ run for approval (`action_required`) instead of starting it, and the PR shows no
 checks. Approve it with **Approve and run workflows** on the PR (or
 `gh api -X POST repos/<owner>/<repo>/actions/runs/<run-id>/approve`); its checks
 then appear on the PR as usual. Alternatively, dispatch CI on
-the branch (`gh workflow run ci.yml --ref changeset-release/main`); a dispatched
+the branch (`gh workflow run ci.yml --ref changeset-release/main`). Use that too
+when an approved run stays queued and GitHub refuses to cancel or rerun it. A dispatched
 run checks the exact head commit but is not listed on the PR, so verify it in the
 Actions tab. Merging the version PR does not publish anything.
 

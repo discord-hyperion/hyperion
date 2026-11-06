@@ -31,13 +31,6 @@ implemented item links a reference doc.
     Today `check-docs.mjs` checks only imports and exported names.
   - Grilling skill: cite the `file:line` that shows current behaviour before
     stating it.
-  - `docs/ci.md`: read a failed job's log with
-    `gh run view --job <job-id> --log > <file>`; `--log-failed` and the raw logs
-    API are slow or blocked.
-  - `docs/package-development.md`: run `npm view` outside the workspace, since
-    `devEngines` rejects npm inside it.
-  - `docs/releases.md`: if an approved version-PR run stays queued, dispatch CI on
-    the branch instead of closing and reopening the PR.
   - AGENTS.md: shorten the database line to point at the backlog, not ADR 0005.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.

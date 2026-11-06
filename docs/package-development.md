@@ -3,8 +3,9 @@
 The workspace resolves `@hyperion/core` to `packages/core/src/index.ts`. Workspace
 consumers use this public export through a workspace dependency. `@hyperion/jsx`
 resolves to `packages/jsx/lib/index.ts` and has production/development automatic
-runtime subpaths; it has no dependency on core. Run source checks
-and tests without compiling first:
+runtime subpaths; it has no dependency on core. Run `npm view` from outside the
+workspace: the root `devEngines` names pnpm, so npm refuses to run inside it.
+Run source checks and tests without compiling first:
 
 ```sh
 pnpm typecheck
