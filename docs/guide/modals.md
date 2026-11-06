@@ -1,14 +1,13 @@
 # Modals
 
-A modal is a pop-up form. You show it in response to a command or a click, the
-user fills it in, and the submission arrives later as a separate interaction.
-Hyperion routes that submission to a modal handler by its custom ID.
+A modal handler runs when someone submits a form your bot showed. Hyperion
+routes the submission to the handler by the form's custom ID. If you need a
+refresher on building forms, see the discord.js guide on
+[modals](https://discordjs.guide/legacy/interactions/modals).
 
 ## A modal handler
 
-Put handlers in `src/modals`. The registry keeps the handler’s `builder` as a reusable **template**, because
-it reads the form's fields when the submission comes back. The form's custom ID
-is the handler's, so there's no separate `customId`:
+Put handlers in `src/modals`. The form itself is the handler's template:
 
 ```ts
 // src/modals/submit-feedback.ts
@@ -50,8 +49,17 @@ export default class SubmitFeedback extends ModalHandler {
 }
 ```
 
-In discord.js v15, text inputs sit inside labels, and you read values through
-`ctx.interaction.components` (not the older `.fields`).
+The options match a select menu's, without the kind:
+
+| Option     | What it's for                                                                                         |
+| ---------- | ----------------------------------------------------------------------------------------------------- |
+| `builder`  | The form template. Its custom ID becomes the handler's.                                               |
+| `customId` | The custom ID to answer, when there's no template.                                                    |
+| `params`   | Data in the custom ID. See [remembering what the form is about](#remembering-what-the-form-is-about). |
+| `input`    | A schema for the fields. See [validating the fields](#validating-the-fields).                         |
+| `guards`   | Checks before `run()`. See [guards](guards.md).                                                       |
+
+Keep a template whenever you can: typed input reads the form's fields from it.
 
 ## Showing the modal
 
@@ -61,9 +69,8 @@ From a command, button, or select-menu handler:
 await ctx.interaction.showModal(ctx.client.modals.build("feedback.submit"));
 ```
 
-`build()` gives you a fresh copy of the form, so you can pre-fill values for this
-user without touching anyone else's. Remember that showing a modal _is_ the
-response, so don't reply or defer first.
+`build()` gives you a fresh copy of the form, so you can pre-fill values for
+this user without touching anyone else's.
 
 ## Validating the fields
 
@@ -98,19 +105,18 @@ export default class CreateTodo extends ModalHandler<CreateTodoSpec> {
 }
 ```
 
-Each control in the form shows up under its custom ID. Text inputs give you a
-string, and empty ones arrive as `""`, so let the schema decide what's allowed.
-Other controls work the same way:
-- Select menus and checkbox groups give an array of the picked values. For user,
-  role, and channel selects, that's their IDs.
-- File uploads give an array of discord.js `Attachment`s, so your schema can check
-  size and type.
-- A radio group gives the picked value, or `null`. A checkbox gives `true` or
-  `false`.
+The schema gets one key per control, named by the control's custom ID:
 
-Need the picked users or roles themselves? Read them in a resolver with
-`ctx.interaction.components.getSelectedUsers()` and friends. See
-[typed input](input.md) for resolvers and deferring.
+| Control                       | The schema gets                      |
+| ----------------------------- | ------------------------------------ |
+| Text input                    | A string; `""` when left empty       |
+| Select menu or checkbox group | An array of picked values, or IDs    |
+| File upload                   | An array of discord.js `Attachment`s |
+| Radio group                   | The picked value, or `null`          |
+| Checkbox                      | `true` or `false`                    |
+
+To turn picked IDs into users or roles, use a resolver. See
+[typed input](input.md#resolving-the-values).
 
 ## Remembering what the form is about
 
@@ -152,15 +158,13 @@ await ctx.interaction.showModal(
 );
 ```
 
-The params are checked before your guards run, so `paramOwner("owner")` can make
-sure only the user the form was opened for submits it. See [data in custom IDs](custom-ids.md)
-for how params work.
+Params are checked before your guards run, so `paramOwner("owner")` makes sure
+only the user the form was opened for can submit it. See
+[data in custom IDs](custom-ids.md) for how params work.
 
-## Guards and responses
+## Guards
 
-Guards on the command or button that opened the form don't apply to the
-submission, so add them to the modal handler too. The opener's guards decide who
-sees the form; the modal's guards decide what gets accepted. A form can stay open
-for a while, and things like roles can change before it's submitted. Responding works as usual,
-see [responding](responding.md). To change the message the form was opened
-from, check `ctx.interaction.isFromMessage()` and then call `update()`.
+Guards on whatever opened the form don't apply to the submission, so add them to
+the modal handler too. The opener's guards decide who sees the form, and the
+modal's guards decide what gets accepted. Roles can change while a form is open,
+so check again here.

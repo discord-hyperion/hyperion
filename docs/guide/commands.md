@@ -145,19 +145,21 @@ then the subcommand's.
 
 ## Context menus
 
-User and message commands (the ones under "Apps" when you right-click) are
-also `Command`s. Pass the command type as a generic and use the matching builder:
+User and message commands are also `Command`s, with the command type as their
+type argument:
 
 ```ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
 import { Command, type CommandContext } from "@hyperion/core";
 import { type ApplicationCommandType, MessageFlags } from "discord.js";
 
+// ApplicationCommandType.Message for a message command.
 export default class InspectUser extends Command<ApplicationCommandType.User> {
     constructor() {
         super({ builder: new UserContextCommandBuilder().setName("Inspect") });
     }
 
+    // The same type argument types ctx.interaction as a user command.
     async run(ctx: CommandContext<ApplicationCommandType.User>) {
         await ctx.interaction.reply({
             content: `That's ${ctx.interaction.targetUser.username}.`,
@@ -167,10 +169,8 @@ export default class InspectUser extends Command<ApplicationCommandType.User> {
 }
 ```
 
-For message commands, use `ApplicationCommandType.Message`,
-`MessageContextCommandBuilder`, and `ctx.interaction.targetMessage`. A slash
-command and a context menu can share a name, since Discord treats them as
-different types. Context menus can't have options or autocomplete.
+Put context menus in `src/commands` or a category, but not inside a parent
+folder. One can share its name with a slash command.
 
 ## Deploying
 

@@ -25,8 +25,7 @@ buttons it sends, so add guards to those buttons as well.
 
 ## Writing your own
 
-Use `defineGuard()` with a name, a description (the rejection message), and a
-`run` function:
+Give `defineGuard()` a name, a description, and a check:
 
 ```ts
 import { defineGuard } from "@hyperion/core";
@@ -38,13 +37,31 @@ export const guildOnly = defineGuard({
 });
 ```
 
-The name shows up in logs when the guard rejects someone.
+| Option        | What it's for                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| `name`        | Shows in the logs when the guard rejects someone.                                                        |
+| `description` | The private reply a rejected user gets.                                                                  |
+| `run`         | Returns `true` to let the interaction through. Can be async.                                             |
+| `onFail`      | Optional. Replies instead of the description; see [custom rejection replies](#custom-rejection-replies). |
 
-By default a guard expects a command context. For other handlers, pass the
-context as a generic (`defineGuard<ButtonContext>({ … })`) or type the `run`
-parameter (`run: (ctx: ModalContext) => …`). Use `InteractionContext` for a
-guard that works everywhere. TypeScript stops you from putting a guard on the
-wrong kind of handler.
+A guard is for commands unless you say otherwise. To use one elsewhere, name the
+context it expects:
+
+```ts fragment
+// Commands only (the default)
+defineGuard({ name, description, run: ctx => … });
+
+// Buttons only: pass the context as a type argument…
+defineGuard<ButtonContext>({ name, description, run: ctx => … });
+
+// …or type run's parameter
+defineGuard({ name, description, run: (ctx: ModalContext) => … });
+
+// Every kind of handler
+defineGuard<InteractionContext>({ name, description, run: ctx => … });
+```
+
+TypeScript stops you from putting a guard on the wrong kind of handler.
 
 ## Guards with settings
 
@@ -127,29 +144,33 @@ export const guildOnly = defineGuard<InteractionContext>({
 - **`ownerOnly`**: only the bot application's owner (the team owner, for team
   apps). Hyperion looks the owner up from Discord and caches it, so there's
   nothing to configure.
-- **`cooldown({ key, durationMs, entries })`**: rejects while `key` is cooling
-  down. You own the `entries` collection, so one cooldown can span several
-  commands. Use a factory to key it per user:
+- **`cooldown()`**: rejects while a key is cooling down. You own the collection
+  of timers, so one cooldown can span several commands. Use a factory to key it
+  per user:
 
   ```ts fragment
   const cooldowns = new Collection<string, number>();
 
   guards: [
-      ctx => cooldown({ key: `refresh:${ctx.interaction.user.id}`, durationMs: 5_000, entries: cooldowns }),
+          ctx =>
+          cooldown({
+              key: `refresh:${ctx.interaction.user.id}`, // what's cooling down
+              durationMs: 5_000,
+              entries: cooldowns, // where the timers live
+          }),
   ];
   ```
 
   The cooldown starts as soon as the guard passes, even if the handler fails
   later. It lives in memory, so it resets on restart. For one that survives
   restarts, keep it in [SQLite](storing-data.md#quick-values) with a `ttl`.
-- **`paramOwner(key, description?)`**: for handlers with
-  [custom-ID params](custom-ids.md). Passes only when the params are valid and
-  `params[key]` is the clicking user's ID.
+- **`paramOwner()`**: for handlers with [params](custom-ids.md). Passes only
+  when the params are valid and the key you name holds the clicking user's ID.
+  An optional second argument replaces the description.
 
 ## Things to know
 
-- Hyperion doesn't defer before guards. Slow guards need to respond within
-  Discord's three seconds, and deferring rules out opening a modal later.
+- Hyperion doesn't defer before guards, so keep them fast.
 - Guards never see `ctx.input`; [typed input](input.md) is processed after they pass.
 - Autocomplete skips guards entirely; see [autocomplete](autocomplete.md).
 - If a guard throws, the user gets the generic error message described in

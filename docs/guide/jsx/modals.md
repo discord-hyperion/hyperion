@@ -22,13 +22,11 @@ const form = renderModal(
 );
 ```
 
-Call `await interaction.showModal(form)` from the command or component handler
-that opens it. In discord.js v15, every text input sits inside a label, and
-inputs are short and required unless you say otherwise.
+Show it with `showModal(form)`. Text inputs are short and required unless you
+say otherwise.
 
-There are two kinds of custom ID here. The modal's `customId` tells your bot
-which form was submitted. Each input's `customId` is the key you use to read that
-field afterwards.
+There are two kinds of custom ID here. The modal's tells your bot which form was
+submitted, and each input's is the key you read that field by afterwards.
 
 ## Pre-filled forms
 
@@ -91,28 +89,20 @@ const form = renderModal(
 The selects are the same ones you use in messages (see
 [buttons and menus](message-components.md#select-menus)). In a form they're
 required unless you pass `required={false}`, and they can't be `disabled`.
-`Modal.FileUpload` only works in modals; `fileTypes` takes `"image"`, `"video"`,
-`"audio"`, or an extension like `".pdf"`.
-
-## Handling the submission
-
-The submission comes back as a separate interaction. Listen for it in your
-`interactionCreate` handler, or call `awaitModalSubmit()` on the interaction that
-opened the form. Either way, read each control with its custom ID:
-`interaction.components.getTextInputValue("name")` for text, and
-`getStringSelectValues()`, `getSelectedUsers()`, or `getUploadedFiles()` for the
-others.
+File uploads only work in modals. Limit what people can upload with
+`fileTypes`: `"image"`, `"video"`, `"audio"`, or an extension like `".pdf"`.
 
 ## Good to know
 
-- Showing a modal is itself the response, so don't reply or defer first.
+- The submission arrives like any other modal submission, and you read each
+  control by its custom ID. See the discord.js guide on
+  [modals](https://discordjs.guide/legacy/interactions/modals).
 - Each label wraps exactly one control, and custom IDs must be unique within
   the form.
 - A form holds at most five labels and text displays.
 - Radio buttons and checkboxes don't have JSX components yet, because the builders
   don't support them yet.
-- The submission is a separate interaction from the one that opened the form, so
-  check permissions again when it comes back.
+- Check permissions again when the submission comes back.
 
 Using Hyperion? A modal handler can keep your form as its
 [template](../jsx-with-hyperion.md#forms-as-templates). The

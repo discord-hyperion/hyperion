@@ -20,8 +20,8 @@ interaction ID, the server, and the user, so you can follow one interaction
 through the logs even when lots run at once. For messages that aren't about an
 interaction, use `client.logger`.
 
-The logger is [Pino](https://getpino.io), so the usual `info`, `warn`, `error`,
-and `debug` methods work, with an optional object of extra fields first.
+The logger is [Pino](https://getpino.io), so it works the way Pino's does: a
+method per level, with an optional object of extra fields first.
 
 ## Configuring it
 

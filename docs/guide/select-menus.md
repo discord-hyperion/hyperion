@@ -1,8 +1,9 @@
 # Select menus
 
-Select menus work just like [buttons](buttons.md), with one extra thing to
-declare: which kind of menu it is. Discord has five kinds: string (your own
-options), user, role, mentionable (users and roles), and channel.
+Select menus work just like [buttons](buttons.md), with one extra option: which
+kind of menu the handler answers. If you need a refresher on the kinds
+themselves, see the discord.js guide on
+[select menus](https://discordjs.guide/legacy/interactive-components/select-menus).
 
 ## A string menu
 
@@ -36,21 +37,32 @@ export default class ChooseColour extends SelectMenuHandler {
 }
 ```
 
-`ctx.interaction.values` holds whatever the user picked, as strings.
+A select-menu handler takes the same options as a button handler, plus two:
+
+| Option          | What it's for                                                                |
+| --------------- | ---------------------------------------------------------------------------- |
+| `componentType` | The kind of menu. Required.                                                  |
+| `builder`       | The template. Its custom ID becomes the handler's.                           |
+| `customId`      | The custom ID to answer, when there's no template.                           |
+| `params`        | Data in the custom ID. See [data in custom IDs](custom-ids.md).              |
+| `input`         | A schema for the picked values. See [checking the pick](#checking-the-pick). |
+| `guards`        | Checks before `run()`. See [guards](guards.md).                              |
+
+All five kinds share one registry, so custom IDs must be unique across them.
 
 ## The other kinds
 
-For user, role, mentionable, and channel menus, also put the kind in the type
-argument. That types `ctx.interaction` correctly, so `.users`, `.roles`, or
-`.channels` are right there:
+For a user, role, mentionable, or channel menu, put the kind in the handler's
+type argument as well:
 
 ```ts fragment
+// The kind in the type argument types ctx.interaction for that menu.
 type ChooseUserSpec = { componentType: ComponentType.UserSelect };
 
 export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
     constructor() {
         super({
-            componentType: ComponentType.UserSelect,
+            componentType: ComponentType.UserSelect, // must match the type
             builder: new UserSelectMenuBuilder()
                 .setCustomId("user.choose")
                 .setPlaceholder("Choose a user"),
@@ -66,21 +78,9 @@ export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
 }
 ```
 
-Discord fills in the options for these kinds, so don't call `addOptions()`.
-A few things worth knowing:
-- Member and role data depends on the server and cache, so check
-  `inCachedGuild()` before relying on cached-only methods.
-- Picking a role or channel just gives you data; it doesn't assign or change anything.
-- With `setMinValues(0)`, users can clear their selection and you'll get an empty list.
-
-All five kinds share one registry, so custom IDs must be unique across them. A
-handler with a template takes the template's custom ID, so don't pass `customId`
-as well.
-
 ## Sending a menu
 
-The registry keeps the handler's `builder` as a **template**. Call `build()` to
-copy that template, set its custom ID, and put the menu in a row.
+`build()` copies the template, the same as for buttons:
 
 ```ts fragment
 await ctx.interaction.reply({
@@ -93,16 +93,15 @@ await ctx.interaction.reply({
 });
 ```
 
-A menu takes up a whole row on its own.
-
 ## Checking the pick
 
 Values come from the user's client, so an old message or a tampered request can
-send something your menu never offered. Add `input` to check them first, the same
-way as [command input](input.md):
+send something your menu never offered. Give the handler `input` to check them
+first, the same way as [command input](input.md):
 
 ```ts fragment
 const input = defineInput({
+    // The schema gets the picked values, as strings.
     schema: v.pipe(v.array(v.picklist(["blue", "green"])), v.length(1)),
 });
 
@@ -134,17 +133,14 @@ export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
 }
 ```
 
-The schema gets the picked values as a list of strings. For user, role,
-mentionable, and channel menus that's the selected IDs. Add
-`defer: "update"` to acknowledge before slow work and finish with
-`editReply()`.
+For user, role, mentionable, and channel menus, the schema gets the picked IDs.
 
 ## Menus with data
 
 A menu can carry data in its custom ID too, for example which ticket an
-"Assign to…" menu belongs to. The data and the user's pick arrive separately:
-`ctx.params` and `ctx.interaction.values`. See [data in custom IDs](custom-ids.md).
+"Assign to…" menu belongs to. The data arrives in `ctx.params`, separately from
+what the user picked. See [data in custom IDs](custom-ids.md).
 
-## Guards and responses
+## Guards
 
-Guards and responses work exactly as for [buttons](buttons.md#guards-and-responses).
+Guards work exactly as for [buttons](buttons.md#guards).

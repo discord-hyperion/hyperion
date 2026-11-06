@@ -1,4 +1,4 @@
-# Storing data
+# SQLite
 
 Sooner or later your bot needs to remember something: a todo list, a member's
 XP, a guild's settings. `@hyperion/sqlite` keeps it in a SQLite file next to your
@@ -10,8 +10,8 @@ It's a separate package, and it works with any bot, Hyperion or not.
 
 Install it with the driver it runs on:
 
-```sh
-pnpm add @hyperion/sqlite better-sqlite3
+```npm
+npm install @hyperion/sqlite better-sqlite3
 ```
 
 Then open a database and describe your tables:
