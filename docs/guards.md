@@ -150,7 +150,9 @@ callers. `cooldown()` throws when `durationMs` is not a positive, finite number.
 Passing the guard consumes the cooldown immediately, even if a later guard or
 handler fails. Rejected attempts do not extend the expiry. Expired entries are
 removed on subsequent checks. This implementation is synchronous and local to one
-process; restarts reset the supplied in-memory collection. Multi-process bots
+process; restarts reset the supplied in-memory collection. A
+[SQLite key-value namespace](sqlite.md#key-value-namespaces) with `ttl` keeps
+cooldowns across restarts. Multi-process bots
 need a shared service with an atomic check-and-set operation. Use a dedicated
 collection for cooldown expiry timestamps, not arbitrary application data.
 

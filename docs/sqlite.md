@@ -78,9 +78,51 @@ Rows:
   validates the merged row, and writes the patched columns, matching the row's
   original key with `IS`. Any failure rolls the whole update back.
 - A failed validation throws `RowValidationError`, whose `issues` are the
-  schema's, and writes nothing.
+  schema's, and writes nothing. Its message names the row (`A "todos" row`).
 - Schemas must validate synchronously; a schema that returns a promise throws a
   `TypeError`. Transforms that change a value's type aren't supported.
+
+## Key-value namespaces
+
+```ts fragment
+const cooldowns = db.kv("cooldowns", v.number());
+```
+
+`db.kv(namespace, schema?)` returns a store for one namespace of the internal
+table `_hyperion_kv (namespace TEXT, key TEXT, value TEXT, expires INTEGER)`,
+keyed on `(namespace, key)`. The first `kv()` call on a database creates the
+table with `CREATE TABLE IF NOT EXISTS`, outside the app's migrations; it doesn't
+change `user_version`. The layout is fixed. See
+[ADR 0007](adr/0007-key-value-namespaces-on-the-sqlite-package.md).
+
+| Method                      | Returns                                           |
+| --------------------------- | ------------------------------------------------- |
+| `get(key)`                  | the value, or `undefined` when missing or expired |
+| `set(key, value, { ttl }?)` | the stored value                                  |
+| `has(key)`                  | whether the key exists and hasn't expired         |
+| `delete(key)`               | whether an unexpired key was deleted              |
+| `entries()`                 | every unexpired `[key, value]`, ordered by key    |
+| `clear()`                   | how many unexpired keys were deleted              |
+- Namespaces and keys are strings, including `""`; anything else throws a
+  `TypeError`. Two stores on the same namespace share its keys.
+- With a schema, `set` validates the value and stores the schema's output, and
+  `get` and `entries` validate each stored value. A failure throws
+  `RowValidationError` naming the namespace and key
+  (`The "counts" value for "u1"`). Without a schema, values are typed `unknown`.
+  `has` and `delete` don't validate.
+- Values are stored with `JSON.stringify` and must come back unchanged. `set`
+  throws a `TypeError` naming the path for `undefined` (including in an object
+  property), non-finite numbers, `bigint`, functions, symbols, empty array slots,
+  and objects whose prototype isn't `Object.prototype` or `null`, such as `Date`,
+  `Map`, and `Set`. Nothing is written.
+- `ttl` is milliseconds. It must be a positive number whose expiry,
+  `ceil(Date.now() + ttl)`, is a safe integer; otherwise `set` throws a
+  `RangeError` and writes nothing. A `set` without `ttl` stores `expires = NULL`,
+  so the newest `set` decides.
+- A key is expired once `Date.now()` reaches its expiry. `get`, `has`, and
+  `delete` delete an expired key they read; `entries` and `clear` first delete
+  every expired key in the namespace. Nothing runs in the background, so unread
+  expired rows stay on disk.
 
 ## Queries
 
@@ -111,4 +153,4 @@ Prepared statements are cached per database by SQL text.
 ## Not in v1
 
 Client integration (close on shutdown, logging), slow-query logging, typed
-constraint errors, date and JSON column helpers, and a key-value store.
+constraint errors, and date and JSON column helpers.

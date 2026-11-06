@@ -149,7 +149,8 @@ export const createTable = <Schema extends StandardSchemaV1<Row, Row>>(
 
         return found;
     };
-    const parse = (row: unknown): Output => validate(schema, row, name);
+    const subject = `A "${name}" row`;
+    const parse = (row: unknown): Output => validate(schema, row, subject);
     const select = (filter: Row, limit = "") => {
         const found = where(filter);
 
@@ -174,7 +175,7 @@ export const createTable = <Schema extends StandardSchemaV1<Row, Row>>(
         all: (filter = {}) => select(filter).map(parse),
 
         set: row => {
-            const entries = defined(validate(schema, row, name));
+            const entries = defined(validate(schema, row, subject));
             const names = entries.map(([column]) => known(column));
             const text =
                 `INSERT INTO ${table} (${names.join(", ")}) VALUES (${names.map(() => "?").join(", ")})` +
@@ -210,7 +211,7 @@ export const createTable = <Schema extends StandardSchemaV1<Row, Row>>(
                     const merged: Row = validate(
                         schema,
                         { ...stored, ...Object.fromEntries(defined(patch)) },
-                        name,
+                        subject,
                     );
 
                     total += statements

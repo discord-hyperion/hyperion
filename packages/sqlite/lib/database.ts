@@ -1,5 +1,6 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import BetterSqlite3 from "better-sqlite3";
+import { createKeyValueStore, type KeyValueStore, kvTable } from "./kv.ts";
 import type { Sql } from "./sql.ts";
 import { createTable, type Table, type TableKey } from "./table.ts";
 import { validate } from "./validate.ts";
@@ -31,6 +32,20 @@ export type Database = {
         StandardSchemaV1.InferInput<Schema>,
         StandardSchemaV1.InferOutput<Schema>
     >;
+    /**
+     * One namespace of JSON values in the package's `_hyperion_kv` table, created
+     * on first use. Values are validated by `schema` when given.
+     */
+    kv: {
+        <Schema extends StandardSchemaV1>(
+            namespace: string,
+            schema: Schema,
+        ): KeyValueStore<
+            StandardSchemaV1.InferInput<Schema>,
+            StandardSchemaV1.InferOutput<Schema>
+        >;
+        (namespace: string): KeyValueStore<unknown, unknown>;
+    };
     /** The first row, parsed by `schema` when given. */
     get: {
         <Schema extends StandardSchemaV1>(
@@ -98,8 +113,9 @@ export const createDatabase = ({
         return statement;
     };
     const statements = { raw, prepare };
+    let kvReady = false;
     const parse = (schema: StandardSchemaV1 | undefined, row: unknown) =>
-        schema ? validate(schema, row, "query") : row;
+        schema ? validate(schema, row, "A query row") : row;
 
     raw.pragma("journal_mode = WAL");
     raw.pragma("foreign_keys = ON");
@@ -107,6 +123,15 @@ export const createDatabase = ({
     const db: Database = {
         table: (name, schema, { key }) =>
             createTable(statements, name, schema, key),
+
+        kv: ((namespace: string, schema?: StandardSchemaV1) => {
+            if (!kvReady) {
+                raw.exec(kvTable);
+                kvReady = true;
+            }
+
+            return createKeyValueStore(statements, namespace, schema);
+        }) as Database["kv"],
 
         get: ((query: Sql, schema?: StandardSchemaV1) => {
             const row = prepare(query.text).get(...query.values);
