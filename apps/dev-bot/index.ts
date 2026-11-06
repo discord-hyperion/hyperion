@@ -1,4 +1,5 @@
 import { HyperionClient } from "@hyperion/core";
+import { db } from "./src/database.ts";
 
 const token = process.env.DISCORD_TOKEN;
 const applicationId = process.env.DISCORD_APPLICATION_ID;
@@ -23,5 +24,12 @@ const bot = await HyperionClient.create({
         guildIds: [guildId],
     },
 });
+
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+    process.once(signal, async () => {
+        await bot.destroy();
+        db.close();
+    });
+}
 
 await bot.login(token);

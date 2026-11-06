@@ -1,11 +1,12 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
 import { type CommandContext, defineInput, Subcommand } from "@hyperion/core";
-import { fakeApi, getTodoSchema } from "./index.ts";
+import { todos } from "../../../database.ts";
+import { getTodoSchema } from "./index.ts";
 
 const input = defineInput({
     schema: getTodoSchema,
     defer: true,
-    resolve: async ({ id }) => ({ todo: await fakeApi.getTodo(id) }),
+    resolve: ({ id }) => ({ todo: todos.get({ id }) }),
 });
 
 export default class extends Subcommand<typeof input> {
@@ -33,10 +34,12 @@ export default class extends Subcommand<typeof input> {
         }
 
         const { todo } = input;
-        if (!todo) return;
 
         await ctx.interaction.editReply({
-            content: `Added todo: ${todo.title}`,
+            content: todo
+                ? `${todo.title}, due ${todo.deadline}`
+                : "No todo has that ID.",
+            allowedMentions: { parse: [] },
         });
     }
 }
