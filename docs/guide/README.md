@@ -37,5 +37,16 @@ your bot needs next.
 - [JSX with Hyperion](jsx-with-hyperion.md): keep JSX controls and forms as
   handler templates.
 
+## How-to
+
+- [Asking before deleting something](confirm-before-acting.md): a confirm button
+  only the right person can press.
+- [Keeping cooldowns across restarts](persistent-cooldowns.md): a cooldown guard
+  backed by SQLite.
+
+## When something breaks
+
+- [Troubleshooting](troubleshooting.md): startup errors and what they mean.
+
 Looking for exact contracts, edge cases, or how something is implemented? The
 reference docs one folder up (`docs/*.md`) cover every detail.

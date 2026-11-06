@@ -129,6 +129,11 @@ meta("", {
         "---JSX---",
         "jsx",
         "jsx-with-hyperion",
+        "---How-to---",
+        "confirm-before-acting",
+        "persistent-cooldowns",
+        "---When something breaks---",
+        "troubleshooting",
     ],
 });
 meta("jsx", {
