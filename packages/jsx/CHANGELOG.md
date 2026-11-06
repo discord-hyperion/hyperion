@@ -1,5 +1,14 @@
 # @hyperion/jsx
 
+## 0.3.0
+
+### Minor Changes
+
+- 7c7e1aa: Add `renderUserSelect()`, `renderRoleSelect()`, `renderMentionableSelect()`, and
+  `renderChannelSelect()`, so entity-select handlers can keep a JSX template the way
+  `renderStringSelect()` does. Each returns its own native builder and rejects any
+  other root, including a different select kind.
+
 ## 0.2.0
 
 ### Minor Changes
