@@ -138,7 +138,8 @@ respond. If an earlier guard already replied, check `replied` or `deferred` firs
   ```
 
   The cooldown starts as soon as the guard passes, even if the handler fails
-  later. It lives in memory, so it resets on restart.
+  later. It lives in memory, so it resets on restart. For one that survives
+  restarts, keep it in [SQLite](storing-data.md#quick-values) with a `ttl`.
 - **`paramOwner(key, description?)`**: for handlers with
   [custom-ID params](custom-ids.md). Passes only when the params are valid and
   `params[key]` is the clicking user's ID.
