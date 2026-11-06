@@ -1,5 +1,27 @@
 # @hyperion/core
 
+## 0.4.0
+
+### Minor Changes
+
+- 4b9024c: Button, select-menu, and modal handlers with a template now take its custom ID as
+  theirs, so the ID is written once.
+
+  **Breaking:** passing `customId` beside `builder` is a type error and throws.
+  Delete `customId` and keep the template's ID. A template must carry a custom ID,
+  and a params handler's template must carry the params route
+  (`.setCustomId(definition.id)`).
+
+### Patch Changes
+
+- 940f06d: `destroy()` now removes the interaction dispatcher's listener, and
+  `InteractionDispatcher` gains `detach()`; `attach()` no longer adds a second
+  listener when called twice.
+- d3ccda9: `HyperionClient.create()` now loads event handlers before deploying commands, so
+  an invalid event handler fails initialization without any deployment request.
+- 5dc8e81: `defineParams()` rejects a `__proto__` key, which decoding silently dropped.
+- 03b8f39: Component load and initialization logs now count params handlers.
+
 ## 0.3.0
 
 ### Minor Changes
