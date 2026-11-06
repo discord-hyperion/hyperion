@@ -24,3 +24,6 @@ export const todos = db.table(
     }),
     { key: "id" },
 );
+
+// Each value is when the user's cooldown ends; the key expires at the same time.
+export const cooldowns = db.kv("cooldowns", v.number());
