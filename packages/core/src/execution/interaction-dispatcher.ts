@@ -9,13 +9,14 @@ import {
 } from "discord.js";
 import type { Logger } from "pino";
 import type { HyperionClient } from "../client/index.ts";
-import { Command, type CommandType, Subcommand } from "../commands/index.ts";
+import { Command, type CommandType } from "../commands/command.ts";
+import { Subcommand } from "../commands/subcommand.ts";
+import type { ParamsDefinition } from "../components/custom-id-params.ts";
+import { ModalHandler } from "../components/modal.ts";
 import {
-    ModalHandler,
-    type ParamsDefinition,
     SelectMenuHandler,
     type SelectMenuType,
-} from "../components/index.ts";
+} from "../components/select-menu.ts";
 import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { GuardPipeline } from "./guard-pipeline.ts";

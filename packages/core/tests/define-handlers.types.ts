@@ -19,6 +19,7 @@ import {
 import * as v from "valibot";
 import {
     type ButtonContext,
+    type ButtonHandler,
     defineButton,
     defineCommand,
     defineEvent,
@@ -254,3 +255,12 @@ export const events = [
     // @ts-expect-error Event names follow discord.js's event map.
     defineEvent({ event: "client-ready", run: () => {} }),
 ];
+
+// @ts-expect-error Handlers are defined with a function, not subclassed.
+export class Subclassed extends ButtonHandler {}
+
+// The class name stays as the type of what a define function returns.
+export const typed: ButtonHandler = defineButton({
+    customId: "typed",
+    run: () => {},
+});

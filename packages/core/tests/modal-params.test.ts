@@ -283,7 +283,7 @@ describe("undecodable routes log for every kind", () => {
 
 describe("modal params loading", () => {
     const source = (body: string) => `
-        import { defineModal, ModalHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
+        import { defineModal, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
         import { ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(import.meta.resolve("@discordjs/builders"))};
         const params = defineParams({ id: "a.route", keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: value => ({ value }) } } });
         export default defineModal({

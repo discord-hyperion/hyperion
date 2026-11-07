@@ -1,11 +1,11 @@
 import { ModalBuilder } from "@discordjs/builders";
 import { Collection } from "discord.js";
 import type { Logger } from "pino";
-import {
-    type CustomIdParams,
-    ModalHandler,
-    type ParamValues,
-} from "../components/index.ts";
+import type {
+    CustomIdParams,
+    ParamValues,
+} from "../components/custom-id-params.ts";
+import { ModalHandler } from "../components/modal.ts";
 import { buildTemplate } from "./build-template.ts";
 import { loadComponentHandlers } from "./load-modules.ts";
 import { resolveRoute } from "./resolve-route.ts";

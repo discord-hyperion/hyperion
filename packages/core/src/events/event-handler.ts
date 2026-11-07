@@ -17,17 +17,17 @@ export type EventHandlerOptions = {
 
 export class EventHandler<Event extends EventName = EventName> {
     /** The event this handler expects; its folder must match. */
-    readonly event: Event | undefined;
+    readonly event: Event;
     readonly once: boolean;
-    // Stored loosely so handlers for different events stay assignable, as an
-    // abstract method's would; run() restores the type.
-    readonly #run: ((ctx: never) => HandlerResult) | undefined;
+    // Stored loosely so handlers for different events stay assignable to each
+    // other; run() restores the type.
+    readonly #run: (ctx: never) => HandlerResult;
 
     constructor(
         options: EventHandlerOptions & {
-            event?: Event;
-            run?: (ctx: EventContext<Event>) => HandlerResult;
-        } = {},
+            event: Event;
+            run: (ctx: EventContext<Event>) => HandlerResult;
+        },
     ) {
         if (options.once !== undefined && typeof options.once !== "boolean") {
             throw new TypeError("Event handler once must be a boolean.");
@@ -39,10 +39,6 @@ export class EventHandler<Event extends EventName = EventName> {
     }
 
     run(ctx: EventContext<Event>): HandlerResult {
-        if (!this.#run) {
-            throw new TypeError("Event handlers must provide a run() method.");
-        }
-
         return this.#run(ctx as never);
     }
 }

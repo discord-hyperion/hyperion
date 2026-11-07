@@ -39,13 +39,13 @@ export class Subcommand<
     readonly builder: ChatInputCommandSubcommandBuilder;
     readonly guards: readonly GuardProvider<CommandContext>[];
     readonly input: CommandInputDefinition | undefined;
-    // Stored loosely so subcommands with different input stay assignable, as an
-    // abstract method's would; run() restores the type.
-    readonly #run: ((ctx: never) => HandlerResult) | undefined;
+    // Stored loosely so subcommands with different input stay assignable to each
+    // other; run() restores the type.
+    readonly #run: (ctx: never) => HandlerResult;
 
     constructor(
         options: SubcommandOptions<Input> & {
-            run?: (ctx: SubcommandContext<Input>) => HandlerResult;
+            run: (ctx: SubcommandContext<Input>) => HandlerResult;
             autocomplete?: (ctx: AutocompleteContext) => HandlerResult;
         },
     ) {
@@ -67,10 +67,6 @@ export class Subcommand<
     }
 
     run(ctx: SubcommandContext<Input>): HandlerResult {
-        if (!this.#run) {
-            throw new TypeError("Subcommands must provide a run() method.");
-        }
-
         return this.#run(ctx as never);
     }
 

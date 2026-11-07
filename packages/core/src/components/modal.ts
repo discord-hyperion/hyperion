@@ -97,11 +97,11 @@ export class ModalHandler<Spec extends ModalSpec = EmptySpec> {
     >[];
 
     readonly input: ModalInputDefinition | undefined;
-    // Stored loosely so handlers of different specs stay assignable, as an
-    // abstract method's would; run() restores the type.
-    readonly #run: ((ctx: never) => HandlerResult) | undefined;
+    // Stored loosely so handlers of different specs stay assignable to each
+    // other; run() restores the type.
+    readonly #run: (ctx: never) => HandlerResult;
 
-    constructor(options: ModalHandlerOptions<Spec> & { run?: ModalRun<Spec> }) {
+    constructor(options: ModalHandlerOptions<Spec> & { run: ModalRun<Spec> }) {
         this.params = validateParams(options.params);
         this.customId = handlerCustomId(
             "Modal",
@@ -130,10 +130,6 @@ export class ModalHandler<Spec extends ModalSpec = EmptySpec> {
     }
 
     run(ctx: ModalContextOf<Spec>): HandlerResult {
-        if (!this.#run) {
-            throw new TypeError("Modal handlers must provide a run() method.");
-        }
-
         return this.#run(ctx as never);
     }
 }

@@ -39,12 +39,12 @@ export class ButtonHandler<Spec extends ButtonSpec = EmptySpec> {
     /** The exact custom ID, or the route for a params handler. */
     readonly customId: string;
     readonly guards: readonly GuardProvider<ButtonContextOf<Spec>>[];
-    // Stored loosely so handlers of different specs stay assignable, as an
-    // abstract method's would; run() restores the type.
-    readonly #run: ((ctx: never) => HandlerResult) | undefined;
+    // Stored loosely so handlers of different specs stay assignable to each
+    // other; run() restores the type.
+    readonly #run: (ctx: never) => HandlerResult;
 
     constructor(
-        options: ButtonHandlerOptions<Spec> & { run?: ButtonRun<Spec> },
+        options: ButtonHandlerOptions<Spec> & { run: ButtonRun<Spec> },
     ) {
         this.params = validateParams(options.params);
         this.customId = handlerCustomId(
@@ -70,10 +70,6 @@ export class ButtonHandler<Spec extends ButtonSpec = EmptySpec> {
     }
 
     run(ctx: ButtonContextOf<Spec>): HandlerResult {
-        if (!this.#run) {
-            throw new TypeError("Button handlers must provide a run() method.");
-        }
-
         return this.#run(ctx as never);
     }
 }

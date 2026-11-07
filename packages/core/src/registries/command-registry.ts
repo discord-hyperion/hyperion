@@ -11,10 +11,10 @@ import {
     type AnyCommand,
     Command,
     type CommandType,
-    ParentCommand,
-    Subcommand,
-    SubcommandGroup,
-} from "../commands/index.ts";
+} from "../commands/command.ts";
+import { ParentCommand } from "../commands/parent-command.ts";
+import { Subcommand } from "../commands/subcommand.ts";
+import { SubcommandGroup } from "../commands/subcommand-group.ts";
 import { discoverHandlerFiles, loadHandler } from "./load-modules.ts";
 import { classifyCommandPath } from "./parse-command-path.ts";
 
@@ -43,6 +43,7 @@ type CommandState = {
     metadata: WeakMap<CommandDefinition, CommandMetadata>;
 };
 
+/** The class behind each define function, and its name for errors. */
 const definitionClasses = {
     command: [Command, "defineCommand"],
     parent: [ParentCommand, "defineParentCommand"],
@@ -333,11 +334,11 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                 if (!classification) continue;
                 const { kind, path: parsed } = classification;
 
-                const [baseClass, definer] = definitionClasses[kind];
+                const [handlerClass, definer] = definitionClasses[kind];
 
                 const command = await loadHandler<CommandDefinition>(
                     file,
-                    baseClass,
+                    handlerClass,
                     definer,
                 );
 
@@ -395,12 +396,9 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
 
                 const data = command.builder.toJSON(false);
 
-                if (
-                    typeof data.name !== "string" ||
-                    typeof command.run !== "function"
-                ) {
+                if (typeof data.name !== "string") {
                     throw new TypeError(
-                        "Commands must provide a named builder and a run() method.",
+                        "Commands must provide a named builder.",
                     );
                 }
 

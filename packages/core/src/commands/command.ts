@@ -105,13 +105,13 @@ export class Command<Definition = ApplicationCommandType.ChatInput> {
         CommandContextOf<DefinitionCommandType<Definition>>
     >[];
     readonly input: CommandInputDefinition | undefined;
-    // Stored loosely so handlers of different specs stay assignable, as an
-    // abstract method's would; run() restores the type.
-    readonly #run: ((ctx: never) => HandlerResult) | undefined;
+    // Stored loosely so handlers of different specs stay assignable to each
+    // other; run() restores the type.
+    readonly #run: (ctx: never) => HandlerResult;
 
     constructor(
         options: CommandOptions<Definition> & {
-            run?: CommandRun<Definition>;
+            run: CommandRun<Definition>;
             autocomplete?: AutocompleteRun;
         },
     ) {
@@ -156,10 +156,6 @@ export class Command<Definition = ApplicationCommandType.ChatInput> {
     }
 
     run(ctx: CommandContextOf<Definition>): HandlerResult {
-        if (!this.#run) {
-            throw new TypeError("Commands must provide a run() method.");
-        }
-
         return this.#run(ctx as never);
     }
 

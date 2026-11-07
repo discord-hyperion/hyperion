@@ -162,7 +162,7 @@ describe("select menu params definitions", () => {
         );
 
         const source = (route: string, componentType: ComponentType) => `
-            import { defineSelectMenu, SelectMenuHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
+            import { defineSelectMenu, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
             const params = defineParams({ id: ${JSON.stringify(route)}, keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: value => ({ value }) } } });
             export default defineSelectMenu({
                 componentType: ${componentType}, params,

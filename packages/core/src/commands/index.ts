@@ -1,7 +1,7 @@
 export {
     type AnyCommand,
     type AutocompleteContext,
-    Command,
+    type Command,
     type CommandContext,
     type CommandOptions,
     type CommandType,
@@ -17,16 +17,16 @@ export {
 } from "./command-input.ts";
 export {
     defineParentCommand,
-    ParentCommand,
+    type ParentCommand,
     type ParentCommandOptions,
 } from "./parent-command.ts";
 export {
     defineSubcommand,
-    Subcommand,
+    type Subcommand,
     type SubcommandOptions,
 } from "./subcommand.ts";
 export {
     defineSubcommandGroup,
-    SubcommandGroup,
+    type SubcommandGroup,
     type SubcommandGroupOptions,
 } from "./subcommand-group.ts";

@@ -124,13 +124,13 @@ export class SelectMenuHandler<Spec extends SelectMenuSpec = EmptySpec> {
     >[];
 
     readonly input: AnyInputDefinition | undefined;
-    // Stored loosely so handlers of different specs stay assignable, as an
-    // abstract method's would; run() restores the type.
-    readonly #run: ((ctx: never) => HandlerResult) | undefined;
+    // Stored loosely so handlers of different specs stay assignable to each
+    // other; run() restores the type.
+    readonly #run: (ctx: never) => HandlerResult;
 
     constructor(
         options: SelectMenuHandlerOptions<Spec> & {
-            run?: SelectMenuRun<Spec>;
+            run: SelectMenuRun<Spec>;
         },
     ) {
         if (!selectMenuTypes.includes(options.componentType)) {
@@ -169,12 +169,6 @@ export class SelectMenuHandler<Spec extends SelectMenuSpec = EmptySpec> {
     }
 
     run(ctx: SelectMenuContextOf<Spec>): HandlerResult {
-        if (!this.#run) {
-            throw new TypeError(
-                "Select menu handlers must provide a run() method.",
-            );
-        }
-
         return this.#run(ctx as never);
     }
 }

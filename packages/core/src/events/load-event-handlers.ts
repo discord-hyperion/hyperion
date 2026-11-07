@@ -72,20 +72,10 @@ export const loadEventHandlers = async (root: string | URL, logger: Logger) => {
             url.searchParams.set("hyperion-load", randomUUID());
             handler = await loadHandler(file, EventHandler, "defineEvent", url);
 
-            if (handler.event !== undefined && handler.event !== event) {
+            if (handler.event !== event) {
                 throw new TypeError(
                     `Event handler is for "${handler.event}" but is in the "${event}" folder.`,
                 );
-            }
-
-            if (typeof handler.run !== "function") {
-                throw new TypeError(
-                    "Event handlers must provide a run() method.",
-                );
-            }
-
-            if (typeof handler.once !== "boolean") {
-                throw new TypeError("Event handler once must be a boolean.");
             }
         } catch (cause) {
             throw new Error(`Failed to load event handler from "${file}".`, {

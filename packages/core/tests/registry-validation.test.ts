@@ -18,10 +18,10 @@ const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
 const discord = import.meta.resolve("discord.js");
 
-for (const { folder, Handler, Registry, builder, componentType = "" } of [
+for (const { folder, define, Registry, builder, componentType = "" } of [
     {
         folder: "buttons",
-        Handler: "ButtonHandler",
+        define: "defineButton",
         Registry: ButtonRegistry,
         // An 81-character label fails native validation.
         builder:
@@ -29,7 +29,7 @@ for (const { folder, Handler, Registry, builder, componentType = "" } of [
     },
     {
         folder: "select-menus",
-        Handler: "SelectMenuHandler",
+        define: "defineSelectMenu",
         componentType: "componentType: 3, ",
         Registry: SelectMenuRegistry,
         builder:
@@ -37,7 +37,7 @@ for (const { folder, Handler, Registry, builder, componentType = "" } of [
     },
     {
         folder: "modals",
-        Handler: "ModalHandler",
+        define: "defineModal",
         Registry: ModalRegistry,
         builder:
             'new ModalBuilder().setCustomId("handler").setTitle("x".repeat(46)).addLabelComponents(new LabelBuilder().setLabel("Input").setTextInputComponent(new TextInputBuilder().setCustomId("field").setStyle(TextInputStyle.Short)))',
@@ -51,13 +51,10 @@ for (const { folder, Handler, Registry, builder, componentType = "" } of [
         await writeFile(
             path.join(directory, "handler.mjs"),
             `
-import { ${Handler} } from ${JSON.stringify(library)};
+import { ${define} } from ${JSON.stringify(library)};
 import { PrimaryButtonBuilder, StringSelectMenuBuilder, ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(builders)};
 import { TextInputStyle } from ${JSON.stringify(discord)};
-export default class extends ${Handler} {
-    constructor() { super({ ${componentType}builder: ${builder} }); }
-    async run() {}
-}`,
+export default ${define}({ ${componentType}builder: ${builder}, async run() {} });`,
         );
 
         const enabled = isValidationEnabled();

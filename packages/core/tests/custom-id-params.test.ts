@@ -148,7 +148,7 @@ describe("button params routing", () => {
 
 describe("button params loading", () => {
     const paramsSource = (route: string) => `
-        import { defineButton, ButtonHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
+        import { defineButton, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
         const params = defineParams({ id: ${JSON.stringify(route)}, keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: v => ({ value: v }) } } });
         export default defineButton({
             params,

@@ -1,11 +1,11 @@
 import { CustomIdButtonBuilder } from "@discordjs/builders";
 import { Collection } from "discord.js";
 import type { Logger } from "pino";
-import {
-    ButtonHandler,
-    type CustomIdParams,
-    type ParamValues,
-} from "../components/index.ts";
+import { ButtonHandler } from "../components/button.ts";
+import type {
+    CustomIdParams,
+    ParamValues,
+} from "../components/custom-id-params.ts";
 import { buildTemplate } from "./build-template.ts";
 import { loadComponentHandlers } from "./load-modules.ts";
 import { resolveRoute } from "./resolve-route.ts";
