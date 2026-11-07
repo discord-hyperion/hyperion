@@ -17,11 +17,17 @@ test("discovers the TSX demo and sends a native JSX embed through interaction di
     );
 
     t.after(() => rm(root, { recursive: true, force: true }));
-    await mkdir(path.join(root, "src/commands"), { recursive: true });
+    const jsx = path.join(root, "src", "commands", "[jsx]");
+    await mkdir(jsx, { recursive: true });
 
     await writeFile(
-        path.join(root, "src/commands/jsx-demo.tsx"),
-        `export { default } from ${JSON.stringify(new URL("../src/commands/jsx-demo.tsx", import.meta.url).href)};`,
+        path.join(jsx, "index.ts"),
+        `export { default } from ${JSON.stringify(new URL("../src/commands/[jsx]/index.ts", import.meta.url).href)};`,
+    );
+
+    await writeFile(
+        path.join(jsx, "embed.tsx"),
+        `export { default } from ${JSON.stringify(new URL("../src/commands/[jsx]/embed.tsx", import.meta.url).href)};`,
     );
 
     const client = await HyperionClient.create({
@@ -36,7 +42,11 @@ test("discovers the TSX demo and sends a native JSX embed through interaction di
 
     const fixture = createChatInputInteraction({
         id: "jsx-test",
-        commandName: "jsx-demo",
+        commandName: "jsx",
+        options: {
+            getSubcommand: () => "embed",
+            getSubcommandGroup: () => null,
+        },
         user: { id: "test-user" },
     });
     client.emit(Events.InteractionCreate, fixture.interaction);

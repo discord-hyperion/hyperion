@@ -36,7 +36,11 @@ test("development user command and filesystem menu complete the selection flow",
     const { interaction: commandInteraction, reply } =
         createChatInputInteraction({
             id: "user-command",
-            commandName: "user",
+            commandName: "select",
+            options: {
+                getSubcommand: () => "user",
+                getSubcommandGroup: () => null,
+            },
             user: { id: "caller" },
         });
     await dispatcher.dispatch(commandInteraction);

@@ -1,10 +1,10 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
+import { defineSubcommand } from "@hyperion/core";
 import { Bold, Br, Code, CodeBlock, Embed, renderEmbed } from "@hyperion/jsx";
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
-        .setName("jsx-demo")
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("embed")
         .setDescription("Show an embed authored with Hyperion JSX."),
     async run(ctx) {
         const embed = renderEmbed(

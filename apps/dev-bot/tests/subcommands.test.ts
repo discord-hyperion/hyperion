@@ -44,15 +44,15 @@ test("development subcommands load and execute through the client listener", asy
     });
 
     t.after(() => client.destroy());
-    const ping = interaction("ping");
+    const version = interaction("version", "runtime");
 
-    client.emit("interactionCreate", ping.interaction);
+    client.emit("interactionCreate", version.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(put.mock.callCount(), 1);
-    assert.equal(
-        ping.reply.mock.calls[0]?.arguments[0],
-        "Pong from /tools ping!",
+    assert.match(
+        JSON.stringify(version.reply.mock.calls[0]?.arguments[0]),
+        new RegExp(process.version.replaceAll(".", "\\.")),
     );
     assert.ok(client.commands.resolve("ping"));
     assert.ok(client.commands.resolveSubcommand("tools", "echo"));

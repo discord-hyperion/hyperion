@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
 import { defineInput, defineSubcommand } from "@hyperion/core";
-import { todos } from "../../../database.ts";
+import { todos } from "../../database.ts";
 import { createTodoSchema } from "./index.ts";
 
 const input = defineInput({

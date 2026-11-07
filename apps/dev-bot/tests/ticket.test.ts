@@ -17,7 +17,7 @@ const setup = async (t: TestContext) => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-ticket-"));
     t.after(() => rm(root, { recursive: true, force: true }));
     for (const [folder, modulePath] of [
-        ["commands", "commands/(general)/ticket"],
+        ["commands", "commands/(components)/ticket"],
         ["buttons", "buttons/close-ticket"],
         ["buttons", "buttons/rename-ticket"],
         ["select-menus", "select-menus/assign-ticket"],

@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { HyperionClient } from "@hyperion/core";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
-import CreateTodo from "../src/commands/(general)/[todo]/create.ts";
-import GetTodo from "../src/commands/(general)/[todo]/get.ts";
+import CreateTodo from "../src/commands/[todo]/create.ts";
+import GetTodo from "../src/commands/[todo]/get.ts";
 
 for (const [name, handler] of [
     ["create", CreateTodo],

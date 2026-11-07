@@ -1,11 +1,11 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
+import { defineSubcommand } from "@hyperion/core";
 import { ActionRow, renderComponents } from "@hyperion/jsx";
 import { JsxPriority } from "../../views/jsx-priority.tsx";
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
-        .setName("jsx-select")
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("select")
         .setDescription("Show a JSX-authored priority select menu.")
         .addStringOptions(option =>
             option

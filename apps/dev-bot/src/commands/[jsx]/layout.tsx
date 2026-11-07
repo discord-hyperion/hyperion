@@ -1,5 +1,5 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
+import { defineSubcommand } from "@hyperion/core";
 import {
     ActionRow,
     Bold,
@@ -15,9 +15,9 @@ import {
     Thumbnail,
 } from "@hyperion/jsx";
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
-        .setName("jsx-layout")
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("layout")
         .setDescription(
             "Show a layout message (Components V2) authored with JSX.",
         ),

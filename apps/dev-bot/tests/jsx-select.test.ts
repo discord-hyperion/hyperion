@@ -21,7 +21,8 @@ test("JSX string selects preserve builder identity, personalized defaults, and e
 
     t.after(() => rm(root, { recursive: true, force: true }));
     for (const [folder, file, relative] of [
-        ["commands", "show.tsx", "../src/commands/(components)/jsx-select.tsx"],
+        ["commands/[jsx]", "index.ts", "../src/commands/[jsx]/index.ts"],
+        ["commands/[jsx]", "select.tsx", "../src/commands/[jsx]/select.tsx"],
         [
             "select-menus",
             "priority.tsx",
@@ -52,8 +53,13 @@ test("JSX string selects preserve builder identity, personalized defaults, and e
 
     for (const priority of ["low", "high"]) {
         const fixture = createChatInputInteraction({
-            commandName: "jsx-select",
-            options: { getString: () => priority, getBoolean: () => false },
+            commandName: "jsx",
+            options: {
+                getSubcommand: () => "select",
+                getSubcommandGroup: () => null,
+                getString: () => priority,
+                getBoolean: () => false,
+            },
         });
         await dispatcher.dispatch(fixture.interaction);
         const payload = fixture.reply.mock.calls[0]?.arguments[0];

@@ -1,11 +1,11 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
+import { defineSubcommand } from "@hyperion/core";
 import { renderComponents } from "@hyperion/jsx";
 import { JsxControls } from "../../views/jsx-controls.tsx";
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
-        .setName("jsx-buttons")
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("buttons")
         .setDescription(
             "Show JSX-authored buttons with native handler routing.",
         )

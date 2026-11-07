@@ -1,9 +1,12 @@
-import { ActionRowBuilder, ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import {
+    ActionRowBuilder,
+    ChatInputCommandSubcommandBuilder,
+} from "@discordjs/builders";
+import { defineSubcommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
         .setName("user")
         .setDescription("Try a user select menu."),
     async run(ctx) {

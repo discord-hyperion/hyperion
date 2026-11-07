@@ -48,7 +48,11 @@ for (const [label, ids, expected] of [
         const { interaction: commandInteraction, reply } =
             createChatInputInteraction({
                 id: "channel-command",
-                commandName: "channel",
+                commandName: "select",
+                options: {
+                    getSubcommand: () => "channel",
+                    getSubcommandGroup: () => null,
+                },
                 user: { id: "caller" },
             });
         await dispatcher.dispatch(commandInteraction);

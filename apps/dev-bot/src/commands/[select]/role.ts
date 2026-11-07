@@ -1,11 +1,13 @@
-import { ActionRowBuilder, ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
-import { InteractionContextType, MessageFlags } from "discord.js";
+import {
+    ActionRowBuilder,
+    ChatInputCommandSubcommandBuilder,
+} from "@discordjs/builders";
+import { defineSubcommand } from "@hyperion/core";
+import { MessageFlags } from "discord.js";
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
         .setName("role")
-        .setContexts(InteractionContextType.Guild)
         .setDescription("Try a role select menu."),
     async run(ctx) {
         await ctx.interaction.reply({

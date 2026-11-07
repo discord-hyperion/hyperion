@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { HyperionClient } from "@hyperion/core";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
-import GetTodo from "../src/commands/(general)/[todo]/get.ts";
+import GetTodo from "../src/commands/[todo]/get.ts";
 import { todos } from "../src/database.ts";
 
 test("todo get replies with the stored todo, or says none matches", async t => {

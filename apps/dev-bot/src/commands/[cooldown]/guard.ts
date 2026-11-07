@@ -1,13 +1,13 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { cooldown, defineCommand } from "@hyperion/core";
+import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
+import { cooldown, defineSubcommand } from "@hyperion/core";
 import { Collection } from "discord.js";
 
-// In memory: a restart forgets every cooldown. Compare /cooldown-sqlite.
+// In memory: a restart forgets every cooldown. Compare /cooldown sqlite.
 const cooldowns = new Collection<string, number>();
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
-        .setName("cooldown-guard")
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("guard")
         .setDescription("Try a 10-second cooldown from the built-in guard."),
     guards: [
         ctx =>

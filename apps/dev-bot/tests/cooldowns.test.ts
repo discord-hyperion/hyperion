@@ -9,14 +9,14 @@ import { createChatInputInteraction } from "../../../tests/fixtures/interactions
 
 const setup = async (t: TestContext) => {
     const root = await mkdtemp(path.join(os.tmpdir(), "hyperion-cooldown-"));
-    const directory = path.join(root, "src", "commands");
+    const directory = path.join(root, "src", "commands", "[cooldown]");
 
     t.after(() => rm(root, { recursive: true, force: true }));
     await mkdir(directory, { recursive: true });
 
-    for (const name of ["cooldown-guard", "cooldown-sqlite"]) {
+    for (const name of ["index", "guard", "sqlite"]) {
         const url = new URL(
-            `../src/commands/(cooldowns)/${name}.ts`,
+            `../src/commands/[cooldown]/${name}.ts`,
             import.meta.url,
         );
 
@@ -38,9 +38,13 @@ const setup = async (t: TestContext) => {
     t.mock.timers.enable({ apis: ["Date"], now: 1_000_000 });
 
     const dispatcher = new InteractionDispatcher(client);
-    const run = async (commandName: string, userId: string) => {
+    const run = async (subcommand: string, userId: string) => {
         const fixture = createChatInputInteraction({
-            commandName,
+            commandName: "cooldown",
+            options: {
+                getSubcommand: () => subcommand,
+                getSubcommandGroup: () => null,
+            },
             user: { id: userId },
         });
 
@@ -52,34 +56,34 @@ const setup = async (t: TestContext) => {
     return { run, tick: (ms: number) => t.mock.timers.tick(ms) };
 };
 
-test("cooldown-guard rejects a second run within 10 seconds", async t => {
+test("/cooldown guard rejects a second run within 10 seconds", async t => {
     const { run, tick } = await setup(t);
     const done =
         "Done. Run it again within 10 seconds and the guard stops you.";
 
-    assert.equal(await run("cooldown-guard", "guard-user"), done);
-    assert.deepEqual(await run("cooldown-guard", "guard-user"), {
+    assert.equal(await run("guard", "guard-user"), done);
+    assert.deepEqual(await run("guard", "guard-user"), {
         content: "Please wait before using this interaction again.",
         flags: MessageFlags.Ephemeral,
     });
-    assert.equal(await run("cooldown-guard", "someone-else"), done);
+    assert.equal(await run("guard", "someone-else"), done);
     tick(10_000);
 
-    assert.equal(await run("cooldown-guard", "guard-user"), done);
+    assert.equal(await run("guard", "guard-user"), done);
 });
 
-test("cooldown-sqlite stores the cooldown and says when it ends", async t => {
+test("/cooldown sqlite stores the cooldown and says when it ends", async t => {
     const { run, tick } = await setup(t);
     const done = "Done. Run it again within 10 seconds and SQLite remembers.";
 
-    assert.equal(await run("cooldown-sqlite", "sqlite-user"), done);
+    assert.equal(await run("sqlite", "sqlite-user"), done);
     tick(4_000);
 
-    assert.deepEqual(await run("cooldown-sqlite", "sqlite-user"), {
+    assert.deepEqual(await run("sqlite", "sqlite-user"), {
         content: "Slow down! Try again <t:1010:R>.",
         flags: MessageFlags.Ephemeral,
     });
     tick(6_000);
 
-    assert.equal(await run("cooldown-sqlite", "sqlite-user"), done);
+    assert.equal(await run("sqlite", "sqlite-user"), done);
 });

@@ -1,13 +1,13 @@
-import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
+import { defineSubcommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 import { cooldowns } from "../../database.ts";
 
 const durationMs = 10_000;
 
-export default defineCommand({
-    builder: new ChatInputCommandBuilder()
-        .setName("cooldown-sqlite")
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("sqlite")
         .setDescription(
             "Try a 10-second cooldown stored in SQLite, which survives restarts.",
         ),

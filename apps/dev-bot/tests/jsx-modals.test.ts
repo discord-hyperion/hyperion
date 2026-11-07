@@ -33,7 +33,11 @@ test("JSX modal discovery, fresh opening and exact-ID submission preserve the sh
 
     for (let attempt = 0; attempt < 2; attempt++) {
         const fixture = createChatInputInteraction({
-            commandName: "jsx-modal",
+            commandName: "jsx",
+            options: {
+                getSubcommand: () => "modal",
+                getSubcommandGroup: () => null,
+            },
             user: { id: "test-user" },
         });
         await dispatcher.dispatch(fixture.interaction);

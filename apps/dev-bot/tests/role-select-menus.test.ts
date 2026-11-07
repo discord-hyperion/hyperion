@@ -33,7 +33,11 @@ test("development role command and filesystem menu complete the selection flow",
     const { interaction: commandInteraction, reply } =
         createChatInputInteraction({
             id: "role-command",
-            commandName: "role",
+            commandName: "select",
+            options: {
+                getSubcommand: () => "role",
+                getSubcommandGroup: () => null,
+            },
             user: { id: "caller" },
         });
     await dispatcher.dispatch(commandInteraction);
