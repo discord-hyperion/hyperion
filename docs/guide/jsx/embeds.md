@@ -32,13 +32,16 @@ a normal `EmbedBuilder`, so you can still call its methods before sending.
 
 Plain text is escaped for you, so a username with a `*` in it won't turn the
 rest of the line bold. When you do want formatting, reach for a component:
-`Bold`, `Italic`, `Underline`, `Strikethrough`, `Spoiler`, `Code`, `CodeBlock`,
-or `Link`.
 
-Headings and small grey text come from `H1`, `H2`, `H3`, and `Subtext`. Each one
-takes its own line. They work in descriptions and field values, and also in
-[layout messages](layout-messages.md) and [modals](modals.md). Keep each on a
-single line, and don't put one inside `Bold` or another inline component.
+| Kind     | Components                                                                |
+| -------- | ------------------------------------------------------------------------- |
+| Inline   | `Bold`, `Italic`, `Underline`, `Strikethrough`, `Spoiler`, `Code`, `Link` |
+| Blocks   | `CodeBlock`                                                               |
+| Headings | `H1`, `H2`, `H3`, and `Subtext` for small grey text                       |
+
+Headings each take their own line. They work in descriptions and field values,
+and also in [layout messages](layout-messages.md) and [modals](modals.md). Keep
+each on a single line, and don't put one inside an inline component.
 
 Got Markdown you wrote yourself, like a list? `Raw` passes it through untouched:
 
@@ -84,7 +87,7 @@ afterwards never touches another.
 ## Mentions and limits
 
 `UserMention`, `RoleMention`, and `ChannelMention` write the mention text for an
-ID. Whether that actually pings someone is up to `allowedMentions` on your reply.
+ID. They don't decide who gets pinged; your reply does.
 
 One thing `renderEmbed()` can't see: Discord counts the 6,000-character limit
 across every embed in a message. Each call only checks its own embed, so keep an

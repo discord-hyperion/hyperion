@@ -54,20 +54,31 @@ export default class EchoCommand extends Command<typeof input> {
 }
 ```
 
-The builder still decides what Discord shows (names, required flags, choices).
-The schema decides what's valid and fills in defaults. Any
-[Standard Schema](https://standardschema.dev) library works.
+The builder still decides what Discord shows, and the schema decides what's
+valid and fills in defaults. Any [Standard Schema](https://standardschema.dev)
+library works. `defineInput()` takes:
+
+| Option    | What it's for                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------- |
+| `schema`  | Checks the options and gives them their types.                                                                      |
+| `resolve` | Optional. Turns the checked values into what your handler needs. See [resolving the values](#resolving-the-values). |
+| `defer`   | Optional. Defers before validating. See [deferring](#deferring).                                                    |
 
 `ctx.input` is either `[null, value]` or `[issues, undefined]`. Hyperion never
-replies to validation problems for you; you choose the wording. Return after
+replies to validation problems for you, so you choose the wording. Return after
 handling issues and TypeScript knows `value` is safe.
 
 ## What the schema receives
 
-- One key per option of the command (or the subcommand that ran).
-- Options the user left out arrive as `undefined`, so use `v.optional()` for defaults.
-- User, role, channel, and mentionable options arrive as IDs. Attachments arrive
-  as attachment objects.
+The schema gets one key per option of the command, or of the subcommand that
+ran:
+
+| Option                           | The schema gets                               |
+| -------------------------------- | --------------------------------------------- |
+| Left out by the user             | `undefined`; use `v.optional()` for a default |
+| String, integer, number, boolean | The value                                     |
+| User, role, channel, mentionable | The ID                                        |
+| Attachment                       | The attachment                                |
 
 ## Resolving the values
 
@@ -84,17 +95,18 @@ const input = defineInput({
 
 Now `ctx.input` holds `{ todo }` instead of `{ id }`. The resolver only runs when
 validation passes, and whatever it returns becomes the handler's input, so a
-missing todo can simply be `null`. Its second argument is the interaction
-context, if you need it.
+missing todo can simply be `null`. Its second argument is the handler's context.
 
 ## Deferring
 
-Lookups can be slow. `defer: true` makes Hyperion defer privately before
-validating, so reply with `editReply()` afterwards. See [responding](responding.md).
+Lookups can be slow, so Hyperion can defer before validating:
 
-Select menus and modals opened from a message usually update that message
-instead. For those, `defer: "update"` defers the update, and `editReply()` then
-edits the message. Commands have no message to update, so they don't accept it.
+```ts fragment
+defineInput({ schema, defer: true }); // a private reply, for any handler
+defineInput({ schema, defer: "update" }); // the message, for select menus and modals
+```
+
+Either way, finish with `editReply()`. See [responding](responding.md).
 
 ## The order things happen
 

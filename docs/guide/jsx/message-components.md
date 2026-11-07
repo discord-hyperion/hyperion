@@ -16,12 +16,11 @@ const components = renderComponents(
 );
 ```
 
-Send them with `await interaction.reply({ content: "Your profile", components })`.
-A button either has a `customId` and a style (`primary`, `secondary`, `success`,
-or `danger`), or it's a link with a `url`.
+Send them with `interaction.reply({ components })`. A button has either a custom
+ID and a style, or a `url` for a link button. The styles are `primary`,
+`secondary`, `success`, and `danger`.
 
-The custom ID is how your bot recognises the click later. Match on it in your
-`interactionCreate` listener, or use a discord.js collector.
+The custom ID is how your bot recognises the click later.
 
 ## Select menus
 
@@ -50,12 +49,16 @@ const components = renderComponents(
 );
 ```
 
-The picks arrive in `interaction.values`. With `minValues={0}`, people can also
-clear their choice. A menu fills a whole row, so give it one to itself.
+For users, roles, or channels, there's a component per kind:
 
-To let people pick users, roles, or channels, use `UserSelect`, `RoleSelect`,
-`MentionableSelect`, or `ChannelSelect`. Discord fills in the choices, so they
-take no options. Pre-select some with ID arrays:
+| Component           | People pick     | Pre-select with                |
+| ------------------- | --------------- | ------------------------------ |
+| `UserSelect`        | Users           | `defaultUsers`                 |
+| `RoleSelect`        | Roles           | `defaultRoles`                 |
+| `MentionableSelect` | Users and roles | `defaultUsers`, `defaultRoles` |
+| `ChannelSelect`     | Channels        | `defaultChannels`              |
+
+They take no options, and pre-selecting takes an array of IDs:
 
 ```tsx fragment
 import { ActionRow, ChannelSelect, renderComponents } from "@hyperion/jsx";

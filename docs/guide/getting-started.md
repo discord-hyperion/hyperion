@@ -3,6 +3,15 @@
 Let's get a bot answering `/ping`. You'll need Node.js 24.17 or newer, a Discord
 application with a bot token, and a server to test in.
 
+## Installing
+
+Hyperion runs on prerelease versions of discord.js v15 and `@discordjs/builders`,
+so install the exact versions it was built against:
+
+```npm
+npm install @hyperion/core discord.js@15.0.0-dev.1792497873-5050a3b54 @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
+```
+
 ## Project layout
 
 Hyperion finds your code by folder. Everything lives under `src`, next to your
@@ -25,8 +34,8 @@ too; they're just for organising.
 
 ## Your first command
 
-Each file default-exports one class. A command gets a builder (the same
-`@discordjs/builders` you'd use with plain discord.js) and a `run()` method:
+Each file default-exports one class. A command gets a builder from
+`@discordjs/builders` and a `run()` method:
 
 ```ts
 // src/commands/ping.ts
@@ -48,8 +57,8 @@ export default class PingCommand extends Command {
 }
 ```
 
-`ctx.interaction` is the regular discord.js interaction, so everything you know
-about replying still applies.
+`ctx.interaction` is the regular discord.js interaction, so you reply the way
+you always have.
 
 ## Creating the client
 

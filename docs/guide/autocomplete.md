@@ -56,17 +56,10 @@ export default class TopicCommand extends Command {
 }
 ```
 
-`getFocused()` tells you which option the user is typing in (`focused.name`) and
-what they've typed so far (`focused.value`). If several options autocomplete,
-switch on the name.
-
-## Rules from Discord
-
-- Respond with `respond(choices)`, not `reply()`. You can't defer.
-- At most 25 choices, and you have three seconds.
-- An option can have fixed choices or autocomplete, not both.
-
-So keep lookups fast: cache what you can and trim the list yourself.
+One method handles every autocomplete option on the command, so if several
+options autocomplete, check which one is focused. Responding works as in plain
+discord.js; see the discord.js guide on
+[autocomplete](https://discordjs.guide/legacy/slash-commands/autocomplete).
 
 ## Suggestions aren't validation
 
@@ -84,5 +77,5 @@ private, check who's asking inside `autocomplete()` itself.
 
 If your method throws, finishes without responding, or the command has no
 `autocomplete()` method, Hyperion sends an empty list so the user's client
-doesn't hang. A method that hangs past Discord's deadline can't be rescued,
-though, so always `await` your work.
+doesn't hang. It can only do that once your method returns, so always `await`
+your work.

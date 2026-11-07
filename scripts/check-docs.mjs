@@ -186,6 +186,38 @@ for (const file of files) {
     }
 }
 
+// Install commands that pin a peer dependency must pin the version the
+// packages declare, so the guide keeps up when the prerelease pin moves.
+const peers = new Map(
+    ["core", "jsx", "sqlite"].flatMap(name =>
+        Object.entries(
+            JSON.parse(
+                readFileSync(
+                    path.join(root, "packages", name, "package.json"),
+                    "utf8",
+                ),
+            ).peerDependencies ?? {},
+        ),
+    ),
+);
+
+for (const file of files) {
+    for (const [, block] of readFileSync(file, "utf8").matchAll(
+        /```npm\b[^\n]*\n([\s\S]*?)```/g,
+    )) {
+        for (const [, name, version] of block.matchAll(
+            /(?<=\s)(@?[^\s@]+)@(\S+)/g,
+        )) {
+            if (peers.has(name) && peers.get(name) !== version) {
+                report(
+                    file,
+                    `installs ${name}@${version}, but the packages' peer dependency is ${peers.get(name)}`,
+                );
+            }
+        }
+    }
+}
+
 // The backlog lists only open work: planned items stay unticked, and shipped
 // items move to Implemented as one line that links their reference doc.
 const backlog = path.join(root, "docs/features.md");

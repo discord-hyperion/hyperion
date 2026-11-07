@@ -1,7 +1,8 @@
 // Stage the human guide (docs/guide) for Fumadocs. The Markdown under docs/guide
 // stays authoritative: this copies it to content/docs (gitignored) and
 //   - adds the `title` frontmatter Fumadocs requires, taken from the first H1,
-//   - maps README.md to index.md and jsx.md to jsx/index.md (a folder index),
+//   - maps README.md to index.md, jsx.md to jsx/index.md (a folder index), and
+//     jsx-with-hyperion.md into that folder,
 //   - rewrites links to files outside the guide into GitHub URLs (or plain text
 //     while the repository is private), and re-points in-guide .md links at the
 //     staged files so Fumadocs can resolve them,
@@ -16,7 +17,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { repo, repoIsPublic } from "../lib/shared.js";
+import { repo, repoIsPublic, staged } from "../lib/shared.js";
 
 const site = fileURLToPath(new URL("..", import.meta.url));
 const source = path.resolve(site, "../../docs/guide");
@@ -30,13 +31,6 @@ const files = directory =>
 
         return entry.name.endsWith(".md") ? [full] : [];
     });
-
-const staged = relative => {
-    if (relative === "README.md") return "index.md";
-    if (relative === "jsx.md") return "jsx/index.md";
-
-    return relative;
-};
 
 /** The staged link target, or null to drop the link and keep its text. */
 const rewrite = (url, relative) => {
@@ -119,16 +113,15 @@ meta("", {
         "modals",
         "custom-ids",
         "autocomplete",
-        "---Making it safe---",
+        "---Validation---",
         "guards",
         "input",
         "---Everything else---",
         "events",
         "logging",
-        "storing-data",
-        "---JSX---",
+        "---Packages---",
         "jsx",
-        "jsx-with-hyperion",
+        "storing-data",
         "---How-to---",
         "confirm-before-acting",
         "persistent-cooldowns",
@@ -144,6 +137,7 @@ meta("jsx", {
         "message-components",
         "layout-messages",
         "modals",
+        "with-hyperion",
     ],
 });
 

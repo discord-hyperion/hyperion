@@ -23,8 +23,8 @@ Check your commands are under `src/commands` next to that file.
 
 ## Expected a default-exported class extending …
 
-A handler file has to `export default` a class that extends the right base:
-`Command` in `src/commands`, `ButtonHandler` in `src/buttons`, and so on. A
+A handler file has to `export default` a class that extends the right base for
+its folder, such as `Command` in `src/commands`. A
 named export (`export class Ping`), a forgotten `export default`, or a helper
 file sitting in a handler folder all cause this. Move helpers somewhere else,
 such as `src/lib`.
@@ -37,10 +37,9 @@ culprit.
 
 ## Invalid command folder "…"; use (category), [parent], or {group}.
 
-Every folder under `src/commands` needs one of the three wrappers:
-`(general)` just organises, `[todo]` makes a `/todo` parent, and `{settings}`
-makes a subcommand group inside a parent. See
-[organising with folders](commands.md#organising-with-folders).
+Every folder under `src/commands` needs one of three wrappers: round brackets
+for a category, square for a parent command, or curly for a subcommand group.
+See [organising with folders](commands.md#organising-with-folders).
 
 ## Button handlers with a template take its custom ID; remove customId.
 

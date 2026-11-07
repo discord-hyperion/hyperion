@@ -5,6 +5,8 @@ Hyperion keeps two kinds of documentation:
   agents. Dense is fine; completeness matters more than flow.
 - **The guide** (`docs/guide/`): written for people building bots. It should read
   like a knowledgeable friend explaining things, not like a specification.
+  Readers use [the docs site](https://hyperion-docs-6h7.pages.dev), so write for
+  how a page renders there. It only needs to stay readable on GitHub.
 
 This page covers the guide. When a feature changes, update the reference doc
 first, then the matching guide page. The guide may leave details out; it must
@@ -23,6 +25,19 @@ The voice is modelled on the [discord.js guide](https://discordjs.guide/).
 - Say what things _do_, not what they _don't_. Lists of negatives ("does not
   retain state, callbacks, sessions, or timers") become one positive sentence
   ("Handlers don't remember anything between clicks").
+
+## Hyperion, not discord.js
+
+The guide assumes readers already know discord.js: replying, deferring, builders,
+reading interaction values, and Discord's own rules and limits. Teach only what
+Hyperion adds or changes.
+- Don't restate discord.js or Discord behaviour, such as the three-second
+  deadline, how to read a picked user, or which builder makes a message command.
+  When the reader needs it, link the
+  [discord.js guide](https://discordjs.guide/) or
+  [docs](https://discord.js.org/docs) in one sentence.
+- Keep a Discord fact only when Hyperion acts on it, such as the 100-character
+  custom ID limit it checks for you.
 
 ## Page shape
 
@@ -89,6 +104,14 @@ structure.
 
 - Two to four sentences per paragraph.
 - One idea per sentence. If a sentence has three commas and a semicolon, split it.
+- Go easy on inline code. A sentence with more than two code spans reads like a
+  spec: move the code into a block, and say what it does in words. Write
+  "the handler's template" rather than `` `builder` ``, unless the reader has to
+  type the name.
+- Show type arguments and variations as a short code block with a comment per
+  line, not as code in a sentence.
+- List options, properties, or "this becomes that" mappings in a table, not a
+  paragraph.
 - Explain jargon the first time, or avoid it. Prefer "checks run before your
   handler" to "pre-handler execution checks".
 - Bullets are for parallel items (options, caveats). Don't turn reasoning into
@@ -127,11 +150,12 @@ These belong in reference docs, ADRs, or git history, not the guide:
   imports. Tag a deliberately partial block, such as one that uses `ctx` or a
   name from an earlier block, ` ```ts fragment ` to skip it.
 - Keep comments short and useful: `// Runs once per click`.
+- Write install commands as a ` ```npm ` block with an `npm install` line. The
+  site shows it as npm, pnpm, and bun tabs.
 
 ## Callouts and file trees
 
-The guide is plain Markdown, but two GitHub-friendly forms render as components
-on the site:
+The guide is plain Markdown, and these forms render as components on the site:
 - **Callouts:** a GitHub alert blockquote. Use `[!WARNING]` for something that
   can lose data or surprise the reader (it shows as "Watch out"), `[!TIP]` for a
   shortcut, and `[!NOTE]` sparingly for an aside. One per section at most.

@@ -8,8 +8,8 @@ SQLite, so a restart doesn't hand everyone a free use.
 
 1. Install the storage package and its driver:
 
-   ```sh
-   pnpm add @hyperion/sqlite better-sqlite3
+   ```npm
+   npm install @hyperion/sqlite better-sqlite3
    ```
 
 2. Open a database and give cooldowns their own namespace:

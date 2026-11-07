@@ -61,11 +61,11 @@ await ctx.interaction.reply({
 
 `build()` gives you a fresh copy with the custom ID filled in, so you can change
 its label or disable it without touching the shared template.
-`renderStringSelect()` does the same job for select menus, and so do
-`renderUserSelect()`, `renderRoleSelect()`, `renderMentionableSelect()`, and
-`renderChannelSelect()` for the other kinds. The core guide's
-[buttons](buttons.md) and [select menus](select-menus.md) pages cover routing,
-guards, and responding.
+
+Select menus work the same way, with a render function per kind:
+`renderStringSelect()`, `renderUserSelect()`, and so on. The
+[buttons](buttons.md) and [select menus](select-menus.md) pages cover routing
+and guards.
 
 ## Controls that carry data
 
@@ -115,9 +115,14 @@ export default class CloseTicket extends ButtonHandler<CloseTicketSpec> {
 }
 ```
 
-A command then calls `ctx.client.buttons.build(closeTicket, { ticketId })` for
-each ticket's button. When someone clicks, Hyperion reads the values back out of
-the custom ID, validates them, and hands them to your handler as `ctx.params`.
+A command builds one copy per ticket:
+
+```ts fragment
+const button = ctx.client.buttons.build(closeTicket, { ticketId });
+```
+
+When someone clicks, Hyperion reads the values back out of the custom ID,
+validates them, and hands them to your handler as `ctx.params`.
 [Data in custom IDs](custom-ids.md) explains the details, including how to check
 that the person clicking owns the ticket.
 
@@ -151,11 +156,15 @@ export default class CreateTodo extends ModalHandler {
 }
 ```
 
-To open the form, a command calls
-`ctx.interaction.showModal(ctx.client.modals.build("todo.create"))`. To
-pre-fill it for one person, render the view yourself with the same modal custom
-ID, as in the [modals](jsx/modals.md#pre-filled-forms) page, and show that
-instead. Either way, the shared template stays unchanged.
+To open the form, show a copy of the template:
+
+```ts fragment
+await ctx.interaction.showModal(ctx.client.modals.build("todo.create"));
+```
+
+To pre-fill it for one person, render the view yourself with the same custom ID,
+as in [pre-filled forms](jsx/modals.md#pre-filled-forms), and show that instead.
+Either way, the shared template stays unchanged.
 
 Rather than reading each field by hand, you can let [typed input](input.md)
 validate the submission, and use params (as with buttons above) when the form
