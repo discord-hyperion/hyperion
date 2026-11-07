@@ -1,7 +1,7 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import BetterSqlite3 from "better-sqlite3";
 import { createKeyValueStore, type KeyValueStore, kvTable } from "./kv.ts";
-import type { Sql } from "./sql.ts";
+import { type Sql, tagged } from "./sql.ts";
 import { createTable, type Table, type TableKey } from "./table.ts";
 import { validate } from "./validate.ts";
 
@@ -134,20 +134,23 @@ export const createDatabase = ({
         }) as Database["kv"],
 
         get: ((query: Sql, schema?: StandardSchemaV1) => {
-            const row = prepare(query.text).get(...query.values);
+            const { text, values } = tagged(query);
+            const row = prepare(text).get(...values);
 
             return row === undefined ? undefined : parse(schema, row);
         }) as Database["get"],
 
-        all: ((query: Sql, schema?: StandardSchemaV1) =>
-            prepare(query.text)
-                .all(...query.values)
-                .map(row => parse(schema, row))) as Database["all"],
+        all: ((query: Sql, schema?: StandardSchemaV1) => {
+            const { text, values } = tagged(query);
+
+            return prepare(text)
+                .all(...values)
+                .map(row => parse(schema, row));
+        }) as Database["all"],
 
         run: query => {
-            const { changes, lastInsertRowid } = prepare(query.text).run(
-                ...query.values,
-            );
+            const { text, values } = tagged(query);
+            const { changes, lastInsertRowid } = prepare(text).run(...values);
 
             return { changes, lastInsertRowid };
         },

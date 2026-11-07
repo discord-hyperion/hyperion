@@ -3,6 +3,9 @@ export type SqlValue = string | number | bigint | Uint8Array | null;
 
 /** A query built by the `sql` tag: its text, with every value as a parameter. */
 export class Sql {
+    // Makes the type nominal, so a plain { text, values } object isn't a query.
+    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: read only by the type checker.
+    readonly #tagged = true;
     readonly text: string;
     readonly values: readonly SqlValue[];
 
@@ -31,6 +34,15 @@ export const sql = (
     }
 
     return new Sql(strings.join("?"), values);
+};
+
+/** Reject anything the `sql` tag didn't build, such as a plain object. */
+export const tagged = (query: unknown): Sql => {
+    if (!(query instanceof Sql)) {
+        throw new TypeError("Build queries with the sql tag.");
+    }
+
+    return query;
 };
 
 /** Reject numbers that SQLite would store, or JavaScript would read, imprecisely. */

@@ -1,8 +1,8 @@
 import { ChatInputCommandSubcommandGroupBuilder } from "@discordjs/builders";
 import type { Locale } from "discord.js";
+import { freezeGuards } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import type { CommandContext } from "./command.ts";
-import { freezeCommandGuards } from "./freeze-command-guards.ts";
 import type { Subcommand } from "./subcommand.ts";
 
 export type SubcommandGroupOptions = {
@@ -30,7 +30,7 @@ export class SubcommandGroup {
         }
 
         this.builder = options.builder;
-        this.guards = freezeCommandGuards(options.guards);
+        this.guards = freezeGuards("Command", options.guards);
     }
 
     compose(name: string, subcommands: readonly Subcommand[]) {

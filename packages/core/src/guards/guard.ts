@@ -46,6 +46,24 @@ class DefinedGuard {
 export const isGuard = (value: unknown): value is Guard<never> =>
     value instanceof DefinedGuard;
 
+/** Copy and freeze a handler's guards, rejecting anything that isn't one. */
+export const freezeGuards = <Context>(
+    kind: string,
+    providers: readonly GuardProvider<Context>[] | undefined,
+) => {
+    const guards = Object.freeze([...(providers ?? [])]);
+
+    for (const provider of guards) {
+        if (typeof provider !== "function" && !isGuard(provider)) {
+            throw new TypeError(
+                `${kind} guards must be guards from defineGuard() or guard factories.`,
+            );
+        }
+    }
+
+    return guards;
+};
+
 /**
  * Define an execution check. Supply the context type as a generic or by
  * annotating `run`'s parameter; it defaults to the command context. Guards

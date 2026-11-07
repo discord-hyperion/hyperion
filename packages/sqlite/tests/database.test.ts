@@ -116,6 +116,19 @@ test("sql rejects unsafe integers and nested queries", () => {
     assert.doesNotThrow(() => sql`SELECT ${1.5}, ${2n ** 60n}`);
 });
 
+test("queries must come from the sql tag", () => {
+    const db = open();
+    const forged = { text: "DELETE FROM todos", values: [] };
+
+    // @ts-expect-error a plain object isn't a query
+    assert.throws(() => db.run(forged), /Build queries with the sql tag/);
+    // @ts-expect-error a plain object isn't a query
+    assert.throws(() => db.get(forged), /Build queries with the sql tag/);
+    // @ts-expect-error a plain object isn't a query
+    assert.throws(() => db.all(forged), /Build queries with the sql tag/);
+    db.close();
+});
+
 test("run returns changes and the last row ID; get and all parse with a schema", () => {
     const db = open(["CREATE TABLE notes (id INTEGER PRIMARY KEY, body TEXT)"]);
     const result = db.run(sql`INSERT INTO notes (body) VALUES (${"hi"})`);

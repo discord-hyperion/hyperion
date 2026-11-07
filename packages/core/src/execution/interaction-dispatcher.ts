@@ -19,19 +19,17 @@ import {
 } from "../components/select-menu.ts";
 import type { AnyInteraction, InteractionContext } from "../contexts/index.ts";
 import type { GuardProvider } from "../guards/index.ts";
-import { GuardPipeline } from "./guard-pipeline.ts";
 import { resolveCommandInput } from "./resolve-command-input.ts";
 import { resolveModalInput } from "./resolve-modal-input.ts";
 import { resolveParams } from "./resolve-params.ts";
 import { resolveSelectMenuInput } from "./resolve-select-menu-input.ts";
+import { runGuards } from "./run-guards.ts";
 
 type HandlerKind = "command" | "button" | "select-menu" | "modal";
 
 export type { AnyInteraction } from "../contexts/index.ts";
 
 export class InteractionDispatcher {
-    private readonly guards = new GuardPipeline();
-
     private listener: ((interaction: Interaction) => Promise<void>) | undefined;
 
     constructor(private readonly client: HyperionClient) {}
@@ -372,7 +370,7 @@ export class InteractionDispatcher {
                 stage = "guards";
             }
 
-            const result = await this.guards.run(
+            const result = await runGuards(
                 [...parentGuards, ...handler.guards],
                 current,
             );

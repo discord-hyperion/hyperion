@@ -2,9 +2,9 @@ import {
     ChatInputCommandBuilder,
     type ChatInputCommandSubcommandGroupBuilder,
 } from "@discordjs/builders";
+import { freezeGuards } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import type { CommandContext } from "./command.ts";
-import { freezeCommandGuards } from "./freeze-command-guards.ts";
 import type { Subcommand } from "./subcommand.ts";
 
 export type ParentCommandOptions = {
@@ -30,7 +30,7 @@ export class ParentCommand {
         }
 
         this.builder = options.builder;
-        this.guards = freezeCommandGuards(options.guards);
+        this.guards = freezeGuards("Command", options.guards);
     }
 
     serialize(

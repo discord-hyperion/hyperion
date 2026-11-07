@@ -83,7 +83,7 @@ there is no persistent second hierarchy or cached registration payload. Current
 membership, ordering, and builder changes are read again for each registration.
 
 Use native builders and `toJSON()` for payload validation rather than duplicating
-Discord's schema. Keep framework checks for exported classes, executable
+Discord's schema. Keep framework checks for default exports from the define functions, executable
 handlers, routing names, and duplicates. See [command registration](command-registration.md)
 for deployment scope, empty-registry protection, and failure handling, and
 [command paths](command-paths.md) for composed parent validation and cleanup.

@@ -130,6 +130,9 @@ change `user_version`. The layout is fixed. See
 placeholders, and `values`). Every interpolated value is a bound parameter, and
 interpolated values are typed `SqlValue`: `string | number | bigint | Uint8Array
 | null`. Identifiers can't be interpolated. Interpolating another `Sql` throws.
+`Sql` is exported as a type only, and `get`, `all`, and `run` throw on anything
+the tag didn't build, so a plain `{ text, values }` object can't skip binding.
+For raw SQL, use `db.raw`.
 - `db.get(query, schema?)`: the first row, or `undefined`.
 - `db.all(query, schema?)`: every row.
 - `db.run(query)`: `{ changes, lastInsertRowid }`.
