@@ -5,13 +5,11 @@ import {
     ChatInputCommandSubcommandBuilder,
     UserContextCommandBuilder,
 } from "@discordjs/builders";
-import type { ApplicationCommandType } from "discord.js";
 import {
-    Command,
-    type CommandContext,
     type CommandInputOptions,
     type CommandInputSchema,
-    Subcommand,
+    defineCommand,
+    defineSubcommand,
 } from "../src/index.ts";
 
 const schema: CommandInputSchema = {
@@ -24,40 +22,41 @@ const schema: CommandInputSchema = {
     },
 };
 
-class TodoCommand extends Command<CommandInputOptions<typeof schema>> {
-    constructor(options: CommandInputOptions<typeof schema>) {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("todo")
-                .setDescription("Todo")
-                .addStringOptions(option =>
-                    option.setName("todo").setDescription("ID"),
-                ),
-            input: options,
-        });
-    }
+type Input = CommandInputOptions<typeof schema>;
 
-    async run(_ctx: CommandContext<CommandInputOptions<typeof schema>>) {}
-}
+const handlers = [
+    [
+        "defineCommand",
+        (input: Input) =>
+            defineCommand({
+                builder: new ChatInputCommandBuilder()
+                    .setName("todo")
+                    .setDescription("Todo")
+                    .addStringOptions(option =>
+                        option.setName("todo").setDescription("ID"),
+                    ),
+                input,
+                run() {},
+            }),
+    ],
+    [
+        "defineSubcommand",
+        (input: Input) =>
+            defineSubcommand({
+                builder: new ChatInputCommandSubcommandBuilder()
+                    .setName("todo")
+                    .setDescription("Todo")
+                    .addStringOptions(option =>
+                        option.setName("todo").setDescription("ID"),
+                    ),
+                input,
+                run() {},
+            }),
+    ],
+] as const;
 
-class TodoSubcommand extends Subcommand<CommandInputOptions<typeof schema>> {
-    constructor(options: CommandInputOptions<typeof schema>) {
-        super({
-            builder: new ChatInputCommandSubcommandBuilder()
-                .setName("todo")
-                .setDescription("Todo")
-                .addStringOptions(option =>
-                    option.setName("todo").setDescription("ID"),
-                ),
-            input: options,
-        });
-    }
-
-    async run(_ctx: CommandContext<CommandInputOptions<typeof schema>>) {}
-}
-
-for (const Handler of [TodoCommand, TodoSubcommand]) {
-    test(`${Handler.name} retains shared schema and snapshots a lazy resolver`, () => {
+for (const [name, define] of handlers) {
+    test(`${name} retains shared schema and snapshots a lazy resolver`, () => {
         const resolver = (_value: unknown) => {
             throw new Error("Must not resolve during construction");
         };
@@ -66,7 +65,7 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
             resolve: resolver,
             defer: true,
         };
-        const handler = new Handler(input);
+        const handler = define(input);
         assert.notEqual(handler.input, input);
         assert.equal(Object.isFrozen(handler.input), true);
         assert.equal(handler.input?.schema, schema);
@@ -78,14 +77,14 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
         };
         assert.equal(handler.input?.defer, true);
         assert.equal(handler.input?.resolve, resolver);
-        assert.equal(new Handler({ schema }).input?.defer, false);
-        assert.equal(new Handler({ schema, defer: false }).input?.defer, false);
+        assert.equal(define({ schema }).input?.defer, false);
+        assert.equal(define({ schema, defer: false }).input?.defer, false);
     });
 
-    test(`${Handler.name} rejects invalid and legacy resolver configuration`, () => {
+    test(`${name} rejects invalid and legacy resolver configuration`, () => {
         assert.throws(
             () =>
-                new Handler({
+                define({
                     schema,
                     // @ts-expect-error Exercise runtime rejection for JavaScript callers.
                     resolve: 42,
@@ -94,7 +93,7 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
         );
         assert.throws(
             () =>
-                new Handler({
+                define({
                     schema,
                     // @ts-expect-error The per-option resolver API has been removed.
                     resolvers: { todo: () => null },
@@ -103,20 +102,20 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
         );
     });
 
-    test(`${Handler.name} rejects incomplete input configuration`, () => {
+    test(`${name} rejects incomplete input configuration`, () => {
         assert.throws(
             // @ts-expect-error Exercise runtime rejection for JavaScript callers.
-            () => new Handler({ defer: false }),
+            () => define({ defer: false }),
             /Standard Schema v1/,
         );
         assert.throws(
             // @ts-expect-error Exercise runtime rejection for JavaScript callers.
-            () => new Handler({ resolve: () => null }),
+            () => define({ resolve: () => null }),
             /Standard Schema v1/,
         );
         assert.throws(
             () =>
-                new Handler({
+                define({
                     schema,
                     // @ts-expect-error Exercise runtime rejection for JavaScript callers.
                     defer: "private",
@@ -125,7 +124,7 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
         );
         assert.throws(
             () =>
-                new Handler({
+                define({
                     schema,
                     // @ts-expect-error Exercise runtime rejection for JavaScript callers.
                     defer: "update",
@@ -134,7 +133,7 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
         );
         assert.throws(
             () =>
-                new Handler({
+                define({
                     schema: {
                         "~standard": {
                             // @ts-expect-error Exercise runtime rejection for JavaScript callers.
@@ -149,17 +148,14 @@ for (const Handler of [TodoCommand, TodoSubcommand]) {
 }
 
 test("context-menu commands reject input configuration at runtime", () => {
-    class UserCommand extends Command<ApplicationCommandType.User> {
-        constructor() {
-            super({
+    assert.throws(
+        () =>
+            defineCommand({
                 builder: new UserContextCommandBuilder().setName("Inspect"),
                 // @ts-expect-error Exercise runtime rejection for JavaScript callers.
                 input: { schema },
-            });
-        }
-
-        async run(_ctx: CommandContext<ApplicationCommandType.User>) {}
-    }
-
-    assert.throws(() => new UserCommand(), /require a chat-input command/);
+                run() {},
+            }),
+        /require a chat-input command/,
+    );
 });

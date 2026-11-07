@@ -26,7 +26,7 @@ test("todo get replies with the stored todo, or says none matches", async t => {
     ] as const) {
         const fixture = createChatInputInteraction({ deferred: true });
 
-        await new GetTodo().run({
+        await GetTodo.run({
             client,
             logger: client.logger,
             interaction: fixture.interaction,

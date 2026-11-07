@@ -6,22 +6,24 @@ import { type TestContext, test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { Client, Events } from "discord.js";
 import {
-    EventHandler,
+    defineEvent,
     type EventRegistryOptions,
     HyperionClient,
 } from "../src/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
+/** A handler module; write() fills in the event from the file's folder. */
 const source = (label: string, body = "", options = "{}", async = true) => `
-import { EventHandler } from ${JSON.stringify(library)};
-export default class extends EventHandler {
-    constructor() { super(${options}); }
+import { defineEvent } from ${JSON.stringify(library)};
+export default defineEvent({
+    event: __EVENT__,
+    ...${options},
     ${async ? "async " : ""}run(ctx) {
         ctx.client.emit("test:record", ${JSON.stringify(label)}, ctx);
         ${body}
-    }
-}`;
+    },
+});`;
 
 const deferred = () => {
     let resolve = () => {};
@@ -36,8 +38,9 @@ const fixture = async (t: TestContext) => {
     const root = await createTempRoot(t, "hyperion-events-");
     const write = async (file: string, contents: string) => {
         const target = path.join(root, "src/events", file);
+        const event = JSON.stringify(file.split("/")[0]);
         await mkdir(path.dirname(target), { recursive: true });
-        await writeFile(target, contents);
+        await writeFile(target, contents.replaceAll("__EVENT__", event));
     };
     const create = async (events: EventRegistryOptions = {}) => {
         const records: string[] = [];
@@ -139,16 +142,13 @@ test("duplicate numeric priorities are scoped by event and preserve existing han
 
 for (const contents of [
     "export default {};",
-    `import { EventHandler } from ${JSON.stringify(library)}; export default EventHandler;`,
-    `import { EventHandler } from ${JSON.stringify(library)}; export default class extends EventHandler {}`,
+    `import { defineEvent } from ${JSON.stringify(library)}; export default defineEvent;`,
+    `import { defineEvent } from ${JSON.stringify(library)}; export default defineEvent({ event: "debug" });`,
     source("bad", "", '{once: "yes"}'),
-    source("bad", "", "{once: true}").replace(
-        "super({once: true});",
-        'super({once: true}); this.once = "yes";',
-    ),
-    source("bad", "", "{}").replace(
-        "super({});",
-        'throw new Error("constructor failed");',
+    source("bad").replace("event: __EVENT__", 'event: "warn"'),
+    source("bad").replace(
+        "export default",
+        'throw new Error("definition failed");\nexport default',
     ),
     "this is not valid JavaScript",
 ]) {
@@ -563,19 +563,22 @@ test("destruction requested inside a handler still waits for its accepted work",
 
 test("reload refreshes CommonJS entry modules without replacing shared framework constructors", async t => {
     const { root, write, create } = await fixture(t);
-    // Supply the same ESM constructor through a CJS bridge. This isolates Node's
-    // entry cache from tsx's distinct source require/import compilation graphs.
+    // Supply the same ESM define function through a CJS bridge. This isolates
+    // Node's entry cache from tsx's distinct source require/import compilation graphs.
     const bridge = path.join(root, "shared.cjs");
     await writeFile(bridge, "module.exports = {};");
     const require = createRequire(import.meta.url);
-    require(bridge).EventHandler = EventHandler;
+    require(bridge).defineEvent = defineEvent;
     const commonjs = (label: string) =>
         source(label)
             .replace(
-                `import { EventHandler } from ${JSON.stringify(library)};`,
-                `const { EventHandler } = require(${JSON.stringify(bridge)});`,
+                `import { defineEvent } from ${JSON.stringify(library)};`,
+                `const { defineEvent } = require(${JSON.stringify(bridge)});`,
             )
-            .replace("export default class", "module.exports = class");
+            .replace(
+                "export default defineEvent",
+                "module.exports = defineEvent",
+            );
     await write("debug/10-handler.cjs", commonjs("old"));
     const { client, calls } = await create();
     client.emit(Events.Debug, "first");

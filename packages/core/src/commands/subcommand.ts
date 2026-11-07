@@ -30,8 +30,11 @@ type SubcommandContext<Input> = CommandContext<
         : ApplicationCommandType.ChatInput
 >;
 
+/** A bare `Subcommand` is any subcommand, with or without input. */
 export class Subcommand<
-    Input extends CommandInputDefinition | undefined = undefined,
+    Input extends CommandInputDefinition | undefined =
+        | CommandInputDefinition
+        | undefined,
 > {
     readonly builder: ChatInputCommandSubcommandBuilder;
     readonly guards: readonly GuardProvider<CommandContext>[];
@@ -98,7 +101,7 @@ export const defineSubcommand = <
         options.autocomplete !== undefined &&
         typeof options.autocomplete !== "function"
     ) {
-        throw new TypeError("Subcommand autocomplete must be a function.");
+        throw new TypeError("Subcommand autocomplete() must be a function.");
     }
 
     // The options match the inferred input; TypeScript can't relate the two

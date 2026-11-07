@@ -20,11 +20,13 @@ import {
     createSelectInteraction,
 } from "../../../tests/fixtures/interactions.ts";
 import {
-    ButtonHandler,
+    type ButtonHandler,
+    defineButton,
+    defineModal,
     defineParams,
+    defineSelectMenu,
     type ModalContext,
-    ModalHandler,
-    SelectMenuHandler,
+    type ModalHandler,
 } from "../src/components/index.ts";
 import { defineGuard, type Guard, paramOwner } from "../src/guards/index.ts";
 import { defineInput } from "../src/index.ts";
@@ -75,23 +77,15 @@ const createRenameModal = (
         resolve?: (value: { title: string }, ctx: never) => unknown;
     } = {},
 ) =>
-    new (class extends ModalHandler<{
-        input: typeof input;
-        params: typeof rename;
-    }> {
-        constructor() {
-            super({
-                params: rename,
-                builder: form(),
-                input: { ...input, ...options } as typeof input,
-                guards,
-            });
-        }
-
-        run(ctx: RenameContext) {
+    defineModal({
+        params: rename,
+        builder: form(),
+        input: { ...input, ...options } as typeof input,
+        guards,
+        run(ctx) {
             return execute(ctx);
-        }
-    })() as unknown as ModalHandler;
+        },
+    }) as unknown as ModalHandler;
 
 type Submitted = ModalComponentResolver["data"][number];
 const submission = (customId: string, title = "New title", user = "author") =>
@@ -249,27 +243,18 @@ describe("undecodable routes log for every kind", () => {
         const { client, dispatcher, records } = await createTestClient(t);
         client.buttons.routes.set(
             pick.id,
-            new (class extends ButtonHandler<{ params: typeof pick }> {
-                constructor() {
-                    super({ params: pick });
-                }
-                async run() {}
-            })() as unknown as ButtonHandler,
+            defineButton({
+                params: pick,
+                async run() {},
+            }) as unknown as ButtonHandler,
         );
         client.selectMenus.routes.set(
             pick.id,
-            new (class extends SelectMenuHandler<{
-                componentType: ComponentType.UserSelect;
-                params: typeof pick;
-            }> {
-                constructor() {
-                    super({
-                        componentType: ComponentType.UserSelect,
-                        params: pick,
-                    });
-                }
-                async run() {}
-            })() as never,
+            defineSelectMenu({
+                componentType: ComponentType.UserSelect,
+                params: pick,
+                async run() {},
+            }) as never,
         );
 
         await dispatcher.dispatch(
@@ -298,13 +283,13 @@ describe("undecodable routes log for every kind", () => {
 
 describe("modal params loading", () => {
     const source = (body: string) => `
-        import { ModalHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
+        import { defineModal, ModalHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
         import { ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(import.meta.resolve("@discordjs/builders"))};
         const params = defineParams({ id: "a.route", keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: value => ({ value }) } } });
-        export default class extends ModalHandler {
-            constructor() { super(${body}); }
-            async run() {}
-        }
+        export default defineModal({
+            ...${body},
+            async run() {},
+        })
     `;
 
     test("routes load into routes, and collisions and mismatched templates fail", async t => {
@@ -366,12 +351,12 @@ describe("modal params loading", () => {
     test("a modal cannot declare both a customId and params", () => {
         assert.throws(
             () =>
-                new (class extends ModalHandler<{ params: typeof rename }> {
-                    constructor() {
-                        super({ params: rename, customId: "x" } as never);
-                    }
-                    async run() {}
-                })(),
+                defineModal({
+                    params: rename,
+                    // @ts-expect-error Exercise runtime rejection for JavaScript callers.
+                    customId: "x",
+                    async run() {},
+                }),
             /either a customId or params/,
         );
     });
@@ -388,15 +373,11 @@ describe("build(definition, values)", () => {
             name: "button",
             registry: () => new ButtonRegistry(),
             handler: (template?: PrimaryButtonBuilder) =>
-                new (class extends ButtonHandler<{ params: typeof pick }> {
-                    constructor() {
-                        super({
-                            params: pick,
-                            ...(template && { builder: template }),
-                        });
-                    }
-                    async run() {}
-                })(),
+                defineButton({
+                    params: pick,
+                    ...(template && { builder: template }),
+                    async run() {},
+                }),
             template: () =>
                 new PrimaryButtonBuilder().setCustomId("pick").setLabel("Pick"),
         },
@@ -404,19 +385,12 @@ describe("build(definition, values)", () => {
             name: "select menu",
             registry: () => new SelectMenuRegistry(),
             handler: (template?: UserSelectMenuBuilder) =>
-                new (class extends SelectMenuHandler<{
-                    componentType: ComponentType.UserSelect;
-                    params: typeof pick;
-                }> {
-                    constructor() {
-                        super({
-                            componentType: ComponentType.UserSelect,
-                            params: pick,
-                            ...(template && { builder: template }),
-                        });
-                    }
-                    async run() {}
-                })(),
+                defineSelectMenu({
+                    componentType: ComponentType.UserSelect,
+                    params: pick,
+                    ...(template && { builder: template }),
+                    async run() {},
+                }),
             template: () =>
                 new UserSelectMenuBuilder()
                     .setCustomId("pick")
@@ -426,15 +400,11 @@ describe("build(definition, values)", () => {
             name: "modal",
             registry: () => new ModalRegistry(),
             handler: (template?: ModalBuilder) =>
-                new (class extends ModalHandler<{ params: typeof pick }> {
-                    constructor() {
-                        super({
-                            params: pick,
-                            ...(template && { builder: template }),
-                        });
-                    }
-                    async run() {}
-                })(),
+                defineModal({
+                    params: pick,
+                    ...(template && { builder: template }),
+                    async run() {},
+                }),
             template: () => form("pick"),
         },
     ] as const;

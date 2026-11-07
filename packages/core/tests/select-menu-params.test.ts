@@ -7,11 +7,10 @@ import { ComponentType, MessageFlags } from "discord.js";
 import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
     type AnySelectMenuHandler,
-    type ButtonContext,
-    ButtonHandler,
+    defineButton,
     defineParams,
+    defineSelectMenu,
     type SelectMenuContext,
-    SelectMenuHandler,
 } from "../src/components/index.ts";
 import { type GuardProvider, paramOwner } from "../src/guards/index.ts";
 import { SelectMenuRegistry } from "../src/registries/index.ts";
@@ -43,22 +42,14 @@ const createParamsMenu = (
     execute: Run,
     guards: readonly GuardProvider<PickContext>[] = [],
 ) =>
-    new (class extends SelectMenuHandler<{
-        componentType: ComponentType.StringSelect;
-        params: typeof pick;
-    }> {
-        constructor() {
-            super({
-                componentType: kind.type as ComponentType.StringSelect,
-                params: pick,
-                guards,
-            });
-        }
-
-        run(ctx: PickContext) {
+    defineSelectMenu({
+        componentType: kind.type as ComponentType.StringSelect,
+        params: pick,
+        guards,
+        run(ctx) {
             return execute(ctx);
-        }
-    })() as unknown as AnySelectMenuHandler;
+        },
+    }) as unknown as AnySelectMenuHandler;
 
 for (const kind of selectKinds) {
     describe(`${kind.name} select menu params`, () => {
@@ -140,16 +131,7 @@ for (const kind of selectKinds) {
 describe("select menu params definitions", () => {
     test("handlers require exactly one of a customId or params, and a select type", () => {
         const construct = (options: object) =>
-            new (class extends SelectMenuHandler<{
-                componentType: ComponentType.StringSelect;
-                params: typeof pick;
-            }> {
-                constructor() {
-                    super(options as never);
-                }
-
-                async run() {}
-            })();
+            defineSelectMenu({ ...options, async run() {} } as never);
 
         assert.throws(
             () =>
@@ -180,12 +162,12 @@ describe("select menu params definitions", () => {
         );
 
         const source = (route: string, componentType: ComponentType) => `
-            import { SelectMenuHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
+            import { defineSelectMenu, SelectMenuHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
             const params = defineParams({ id: ${JSON.stringify(route)}, keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: value => ({ value }) } } });
-            export default class extends SelectMenuHandler {
-                constructor() { super({ componentType: ${componentType}, params }); }
-                async run() {}
-            }
+            export default defineSelectMenu({
+                componentType: ${componentType}, params,
+                async run() {},
+            })
         `;
         const registry = new SelectMenuRegistry();
 
@@ -230,15 +212,13 @@ test("paramOwner works on button params with the default description", async t =
     const execute = mock.fn(async () => {});
     client.buttons.routes.set(
         pick.id,
-        new (class extends ButtonHandler<{ params: typeof pick }> {
-            constructor() {
-                super({ params: pick, guards: [paramOwner("owner")] });
-            }
-
-            run(_ctx: ButtonContext<{ params: typeof pick }>) {
+        defineButton({
+            params: pick,
+            guards: [paramOwner("owner")],
+            run(_ctx) {
                 return execute();
-            }
-        })() as never,
+            },
+        }) as never,
     );
 
     const owner = createButtonInteraction({

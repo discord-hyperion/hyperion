@@ -17,11 +17,11 @@ import {
     createChatInputInteraction,
 } from "../../../tests/fixtures/interactions.ts";
 import {
-    Command,
     type CommandContext,
     type CommandInputOptions,
     type CommandInputResult,
     type CommandInputSchema,
+    defineCommand,
     defineGuard,
     defineInput,
     type GuardProvider,
@@ -40,27 +40,25 @@ const check = (
         },
     });
 
-class InputCommand extends Command<CommandInputOptions> {
-    constructor(
-        options: CommandInputOptions,
-        private readonly execute: (
-            ctx: CommandContext<CommandInputOptions>,
-        ) => Promise<void>,
-        builder = new ChatInputCommandBuilder()
-            .setName("test")
-            .setDescription("Test")
-            .addStringOptions(option =>
-                option.setName("todo").setDescription("Todo"),
-            ),
-        guards: readonly GuardProvider[] = [],
-    ) {
-        super({ builder, guards, input: options });
-    }
-
-    run(ctx: CommandContext<CommandInputOptions>) {
-        return this.execute(ctx);
-    }
-}
+const inputCommand = (
+    options: CommandInputOptions,
+    execute: (ctx: CommandContext<CommandInputOptions>) => Promise<void>,
+    builder = new ChatInputCommandBuilder()
+        .setName("test")
+        .setDescription("Test")
+        .addStringOptions(option =>
+            option.setName("todo").setDescription("Todo"),
+        ),
+    guards: readonly GuardProvider[] = [],
+) =>
+    defineCommand({
+        builder,
+        guards,
+        // An erased definition stands in for whatever input a case tests.
+        input: options as never,
+        run: ctx =>
+            execute(ctx as unknown as CommandContext<CommandInputOptions>),
+    });
 
 const schema = (
     validate: StandardSchemaV1["~standard"]["validate"],
@@ -109,7 +107,7 @@ test("guards precede private deferral, async schema, whole-input resolution, and
         .addStringOptions(option =>
             option.setName("omitted").setDescription("Omitted"),
         );
-    const definition = new InputCommand(
+    const definition = inputCommand(
         {
             defer: true,
             schema: schema(async input => {
@@ -186,7 +184,7 @@ for (const issues of [[{ message: "Todo not found", path: ["todo"] }], []]) {
         );
         client.commands.set(
             "test",
-            new InputCommand(
+            inputCommand(
                 {
                     schema: schema(() => ({ issues })),
                     resolve: () =>
@@ -217,7 +215,7 @@ test("a guard rejection skips deferral, resolvers, schema, and handler", async t
     const never = () => assert.fail("Must be skipped");
     client.commands.set(
         "test",
-        new InputCommand(
+        inputCommand(
             {
                 schema: schema(never),
                 resolve: never,
@@ -248,7 +246,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
             const run = mock.fn(async () => {});
             client.commands.set(
                 "test",
-                new InputCommand(
+                inputCommand(
                     {
                         schema: schema(validate),
                         resolve: () => {
@@ -297,7 +295,7 @@ for (const phase of ["deferred", "replied"] as const) {
         const run = mock.fn(async () => {});
         client.commands.set(
             "test",
-            new InputCommand(
+            inputCommand(
                 {
                     schema: schema(() => ({ value: undefined })),
                     defer: true,
@@ -333,7 +331,7 @@ test("failed automatic deferral stops input processing", async t => {
     const run = mock.fn(async () => {});
     client.commands.set(
         "test",
-        new InputCommand({ schema: schema(validate), defer: true }, run),
+        inputCommand({ schema: schema(validate), defer: true }, run),
     );
     const fixture = interaction();
     fixture.deferReply.mock.mockImplementation(async () => {
@@ -395,7 +393,7 @@ test("option extraction preserves falsy values, entity IDs, and resolved attachm
     });
     client.commands.set(
         "test",
-        new InputCommand(
+        inputCommand(
             {
                 schema: schema(input => {
                     assert.deepEqual(input, {
@@ -432,7 +430,7 @@ test("concurrent invocations keep resolved values and handler contexts separate"
     const contexts: CommandInputResult<CommandInputOptions>[] = [];
     client.commands.set(
         "test",
-        new InputCommand(
+        inputCommand(
             {
                 schema: schema(value => ({ value })),
                 resolve: async value => {
@@ -480,17 +478,24 @@ test("grouped subcommands run inherited guards before their own input pipeline",
 
     await writeFile(
         path.join(directory, "../index.mjs"),
-        `${common} import {ParentCommand} from ${entry}; import {ChatInputCommandBuilder} from ${builders}; export default class extends ParentCommand { constructor() { super({builder:new ChatInputCommandBuilder().setDescription('Tools'), guards:[check('parent')]}); } }`,
+        `${common} import {defineParentCommand} from ${entry}; import {ChatInputCommandBuilder} from ${builders}; export default defineParentCommand({
+            builder:new ChatInputCommandBuilder().setDescription('Tools'), guards:[check('parent')],
+        })`,
     );
 
     await writeFile(
         path.join(directory, "index.mjs"),
-        `${common} import {SubcommandGroup} from ${entry}; import {ChatInputCommandSubcommandGroupBuilder} from ${builders}; export default class extends SubcommandGroup { constructor() { super({builder:new ChatInputCommandSubcommandGroupBuilder().setDescription('Items'), guards:[check('group')]}); } }`,
+        `${common} import {defineSubcommandGroup} from ${entry}; import {ChatInputCommandSubcommandGroupBuilder} from ${builders}; export default defineSubcommandGroup({
+            builder:new ChatInputCommandSubcommandGroupBuilder().setDescription('Items'), guards:[check('group')],
+        })`,
     );
 
     await writeFile(
         path.join(directory, "todo.mjs"),
-        `${common} import {Subcommand} from ${entry}; import {ChatInputCommandSubcommandBuilder} from ${builders}; export default class extends Subcommand { constructor() { super({builder:new ChatInputCommandSubcommandBuilder().setName('todo').setDescription('Todo').addStringOptions(o=>o.setName('todo').setDescription('ID')), guards:[check('leaf')], input:{resolve:value=>{order.push('resolver');return {todo:{id:value.todo}};}, schema:{'~standard':{version:1,vendor:'test',validate:value=>{order.push('schema');return {value};}}}}}); } async run(ctx) { order.push('handler'); await ctx.interaction.reply(JSON.stringify(ctx.input)); } }`,
+        `${common} import {defineSubcommand} from ${entry}; import {ChatInputCommandSubcommandBuilder} from ${builders}; export default defineSubcommand({
+            builder:new ChatInputCommandSubcommandBuilder().setName('todo').setDescription('Todo').addStringOptions(o=>o.setName('todo').setDescription('ID')), guards:[check('leaf')], input:{resolve:value=>{order.push('resolver');return {todo:{id:value.todo}};}, schema:{'~standard':{version:1,vendor:'test',validate:value=>{order.push('schema');return {value};}}}},
+            async run(ctx) { order.push('handler'); await ctx.interaction.reply(JSON.stringify(ctx.input)); },
+        })`,
     );
 
     await client.commands.load(root);
@@ -521,30 +526,25 @@ test("grouped subcommands run inherited guards before their own input pipeline",
 test("schema-free commands keep the original context and do not extract options", async t => {
     const { client, dispatcher } = await createTestClient(t);
     let guarded: CommandContext | undefined;
-    class PlainCommand extends Command {
-        constructor() {
-            super({
-                builder: new ChatInputCommandBuilder()
-                    .setName("test")
-                    .setDescription("Plain"),
-                guards: [
-                    check(ctx => {
-                        guarded = ctx;
+    const PlainCommand = defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName("test")
+            .setDescription("Plain"),
+        guards: [
+            check(ctx => {
+                guarded = ctx;
 
-                        return true;
-                    }),
-                ],
-            });
-        }
-
-        async run(ctx: CommandContext) {
+                return true;
+            }),
+        ],
+        async run(ctx) {
             assert.equal(ctx, guarded);
             assert.equal("input" in ctx, false);
             await ctx.interaction.reply("Plain");
-        }
-    }
+        },
+    });
 
-    client.commands.set("test", new PlainCommand());
+    client.commands.set("test", PlainCommand);
     const fixture = createChatInputInteraction({ commandName: "test" });
     await dispatcher.dispatch(fixture.interaction);
     assert.equal(fixture.reply.mock.calls[0]?.arguments[0], "Plain");
@@ -556,7 +556,7 @@ test("autocomplete skips configured input processing and deferral", async t => {
     const never = () => assert.fail("Autocomplete must not process input");
     client.commands.set(
         "test",
-        new InputCommand(
+        inputCommand(
             {
                 schema: schema(never),
                 resolve: never,
@@ -585,7 +585,7 @@ test("an async resolver rejection stops the handler after validation", async t =
         );
     client.commands.set(
         "test",
-        new InputCommand(
+        inputCommand(
             {
                 schema: schema(validate),
                 defer: true,
@@ -621,7 +621,7 @@ test("async schema rejection uses the unexpected-error pipeline", async t => {
     const run = mock.fn(async () => {});
     client.commands.set(
         "test",
-        new InputCommand(
+        inputCommand(
             {
                 schema: schema(async () => {
                     await Promise.resolve();
@@ -663,11 +663,7 @@ test("option names matching object properties remain ordinary input fields", asy
     });
     client.commands.set(
         "test",
-        new InputCommand(
-            { schema: schema(value => ({ value })) },
-            run,
-            builder,
-        ),
+        inputCommand({ schema: schema(value => ({ value })) }, run, builder),
     );
     const fixture = interaction([
         {
@@ -713,7 +709,7 @@ for (const resolved of [
         );
         client.commands.set(
             "test",
-            new InputCommand({ schema: schema(validate), resolve }, run),
+            inputCommand({ schema: schema(validate), resolve }, run),
         );
         const fixture = interaction();
         await dispatcher.dispatch(fixture.interaction);
@@ -744,29 +740,24 @@ test("defineInput infers a concrete handler's output without running callbacks d
     );
     const input = defineInput({ schema: typedSchema, defer: true, resolve });
 
-    class DefinedCommand extends Command<typeof input> {
-        constructor() {
-            super({
-                builder: new ChatInputCommandBuilder()
-                    .setName("test")
-                    .setDescription("Test")
-                    .addStringOptions(option =>
-                        option.setName("todo").setDescription("Todo"),
-                    ),
-                input,
-            });
-        }
-
-        async run(ctx: CommandContext<typeof input>) {
+    const DefinedCommand = defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName("test")
+            .setDescription("Test")
+            .addStringOptions(option =>
+                option.setName("todo").setDescription("Todo"),
+            ),
+        input,
+        async run(ctx) {
             const [issues, value] = ctx.input;
             assert.equal(issues, null);
             if (issues) return;
             assert.equal(value.todo.id, "a");
             await ctx.interaction.editReply(value.message);
-        }
-    }
+        },
+    });
 
-    client.commands.set("test", new DefinedCommand());
+    client.commands.set("test", DefinedCommand);
     assert.equal(validate.mock.callCount(), 0);
     assert.equal(resolve.mock.callCount(), 0);
     const fixture = interaction([todoOption(" a ")]);

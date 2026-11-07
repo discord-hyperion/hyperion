@@ -1,17 +1,12 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { Bold, Br, Code, CodeBlock, Embed, renderEmbed } from "@hyperion/jsx";
 
-export default class extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("jsx-demo")
-                .setDescription("Show an embed authored with Hyperion JSX."),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("jsx-demo")
+        .setDescription("Show an embed authored with Hyperion JSX."),
+    async run(ctx) {
         const embed = renderEmbed(
             <Embed color={0x57f287}>
                 <Embed.Title>Todo preview</Embed.Title>
@@ -36,5 +31,5 @@ export default class extends Command {
             embeds: [embed],
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

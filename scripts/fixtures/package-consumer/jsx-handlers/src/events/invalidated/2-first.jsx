@@ -1,6 +1,7 @@
-import { EventHandler } from "@hyperion/core";
+import { defineEvent } from "@hyperion/core";
 import { Embed, renderEmbed } from "@hyperion/jsx";
-export default class extends EventHandler {
+export default defineEvent({
+    event: "invalidated",
     async run(ctx) {
         const embed = renderEmbed(
             <Embed>
@@ -8,5 +9,5 @@ export default class extends EventHandler {
             </Embed>,
         );
         ctx.client.emit("consumer:jsx", embed.toJSON().title);
-    }
-}
+    },
+});

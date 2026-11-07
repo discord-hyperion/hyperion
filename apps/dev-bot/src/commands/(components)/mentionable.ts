@@ -1,18 +1,13 @@
 import { ActionRowBuilder, ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { InteractionContextType, MessageFlags } from "discord.js";
 
-export default class MentionableCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("mentionable")
-                .setContexts(InteractionContextType.Guild)
-                .setDescription("Try selecting users and roles together."),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("mentionable")
+        .setContexts(InteractionContextType.Guild)
+        .setDescription("Try selecting users and roles together."),
+    async run(ctx) {
         await ctx.interaction.reply({
             content: "Choose up to five users or roles.",
             flags: MessageFlags.Ephemeral,
@@ -22,5 +17,5 @@ export default class MentionableCommand extends Command {
                 ),
             ],
         });
-    }
-}
+    },
+});

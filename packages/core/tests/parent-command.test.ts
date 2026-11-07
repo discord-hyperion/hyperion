@@ -16,35 +16,33 @@ import {
     PermissionFlagsBits,
 } from "discord.js";
 import {
-    Command,
     type CommandContext,
     defineGuard,
+    defineParentCommand,
+    defineSubcommand,
     type GuardProvider,
-    ParentCommand,
-    Subcommand,
 } from "../src/index.ts";
 
-class Parent extends ParentCommand {
-    constructor(
-        builder = new ChatInputCommandBuilder().setDescription("Tools"),
-        guards?: readonly GuardProvider<CommandContext>[],
-    ) {
-        super({ builder, ...(guards === undefined ? {} : { guards }) });
-    }
-}
+const createParent = (
+    builder = new ChatInputCommandBuilder().setDescription("Tools"),
+    guards?: readonly GuardProvider<CommandContext>[],
+) =>
+    defineParentCommand({
+        builder,
+        ...(guards === undefined ? {} : { guards }),
+    });
 
-class Leaf extends Subcommand {
-    constructor(
-        builder = new ChatInputCommandSubcommandBuilder()
-            .setName("ping")
-            .setDescription("Ping"),
-        guards?: readonly GuardProvider<CommandContext>[],
-    ) {
-        super({ builder, ...(guards === undefined ? {} : { guards }) });
-    }
-
-    async run(_ctx: CommandContext) {}
-}
+const createLeaf = (
+    builder = new ChatInputCommandSubcommandBuilder()
+        .setName("ping")
+        .setDescription("Ping"),
+    guards?: readonly GuardProvider<CommandContext>[],
+) =>
+    defineSubcommand({
+        builder,
+        ...(guards === undefined ? {} : { guards }),
+        async run() {},
+    });
 
 const check = () =>
     defineGuard({
@@ -57,8 +55,8 @@ const check = () =>
 
 test("parent serialization respects SDK validation settings and explicit overrides", () => {
     const enabled = isValidationEnabled();
-    const parent = new Parent();
-    const leaf = new Leaf(
+    const parent = createParent();
+    const leaf = createLeaf(
         new ChatInputCommandSubcommandBuilder()
             .setName("invalid")
             .setDescription(""),
@@ -85,14 +83,14 @@ test("parents and leaves retain native builders and separate executable roles", 
     const leafBuilder = new ChatInputCommandSubcommandBuilder()
         .setName("ping")
         .setDescription("Ping");
-    const parent = new Parent(parentBuilder);
-    const leaf = new Leaf(leafBuilder);
+    const parent = createParent(parentBuilder);
+    const leaf = createLeaf(leafBuilder);
 
     assert.equal(parent.builder, parentBuilder);
     assert.equal(leaf.builder, leafBuilder);
     assert.equal("run" in parent, false);
-    assert.equal(leaf instanceof Command, false);
-    assert.equal(leaf instanceof ParentCommand, false);
+    assert.equal("commandType" in leaf, false);
+    assert.equal("serialize" in leaf, false);
     assert.deepEqual(parent.guards, []);
     assert.deepEqual(leaf.guards, []);
 });
@@ -105,7 +103,7 @@ for (const builder of [
 ]) {
     test(`parent rejects a non-native parent builder: ${builder.constructor.name}`, () => {
         assert.throws(
-            () => new Parent(builder as unknown as ChatInputCommandBuilder),
+            () => createParent(builder as unknown as ChatInputCommandBuilder),
             TypeError,
         );
     });
@@ -120,7 +118,7 @@ for (const builder of [
     test(`leaf rejects a non-native leaf builder: ${builder.constructor.name}`, () => {
         assert.throws(
             () =>
-                new Leaf(
+                createLeaf(
                     builder as unknown as ChatInputCommandSubcommandBuilder,
                 ),
             TypeError,
@@ -154,21 +152,16 @@ for (const [name, attach] of Object.entries(manualOptions)) {
             new ChatInputCommandBuilder().setDescription("Tools"),
         );
 
-        assert.throws(() => new Parent(builder));
+        assert.throws(() => createParent(builder));
         assert.equal(builder.options.length, 1);
     });
 
-    test(`parent rejects manual ${name} options attached after super`, () => {
-        class MutatedParent extends Parent {
-            constructor() {
-                super();
-                attach(this.builder);
-            }
-        }
-        const parent = new MutatedParent();
+    test(`parent rejects manual ${name} options attached after it's defined`, () => {
+        const parent = createParent();
+        attach(parent.builder);
         const manualOption = parent.builder.options[0];
 
-        assert.throws(() => parent.serialize("tools", [new Leaf()]));
+        assert.throws(() => parent.serialize("tools", [createLeaf()]));
         assert.deepEqual(parent.builder.options, [manualOption]);
     });
 }
@@ -182,8 +175,8 @@ test("parent serialization preserves native metadata and discovered leaf options
         .setIntegrationTypes(ApplicationIntegrationType.GuildInstall)
         .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
         .setNSFW(true);
-    const parent = new Parent(builder);
-    const leaf = new Leaf(
+    const parent = createParent(builder);
+    const leaf = createLeaf(
         new ChatInputCommandSubcommandBuilder()
             .setName("search")
             .setDescription("Search")
@@ -221,21 +214,21 @@ test("parent serialization preserves native metadata and discovered leaf options
 });
 
 test("parent accepts a matching explicit name and rejects a mismatched name", () => {
-    const matching = new Parent(
+    const matching = createParent(
         new ChatInputCommandBuilder().setName("tools").setDescription("Tools"),
     );
-    assert.equal(matching.serialize("tools", [new Leaf()]).name, "tools");
+    assert.equal(matching.serialize("tools", [createLeaf()]).name, "tools");
 
-    const mismatched = new Parent(
+    const mismatched = createParent(
         new ChatInputCommandBuilder().setName("other").setDescription("Tools"),
     );
-    assert.throws(() => mismatched.serialize("tools", [new Leaf()]));
+    assert.throws(() => mismatched.serialize("tools", [createLeaf()]));
     assert.equal(mismatched.builder.toJSON(false).name, "other");
     assert.deepEqual(mismatched.builder.options, []);
 });
 
 test("parent rejects an empty discovered child list even with validation disabled", () => {
-    const parent = new Parent();
+    const parent = createParent();
 
     assert.throws(() => parent.serialize("tools", []));
     assert.throws(() => parent.serialize("tools", [], false));
@@ -243,9 +236,9 @@ test("parent rejects an empty discovered child list even with validation disable
 });
 
 test("repeated parent serialization uses only the current discovered children", () => {
-    const parent = new Parent();
-    const first = new Leaf();
-    const second = new Leaf(
+    const parent = createParent();
+    const first = createLeaf();
+    const second = createLeaf(
         new ChatInputCommandSubcommandBuilder()
             .setName("echo")
             .setDescription("Echo"),
@@ -267,12 +260,12 @@ test("repeated parent serialization uses only the current discovered children", 
 });
 
 test("SDK validation failure clears temporary children and allows a corrected retry", () => {
-    const parent = new Parent();
-    const broken = new Leaf(
+    const parent = createParent();
+    const broken = createLeaf(
         new ChatInputCommandSubcommandBuilder().setName("broken"),
     );
 
-    assert.throws(() => parent.serialize("tools", [new Leaf(), broken]));
+    assert.throws(() => parent.serialize("tools", [createLeaf(), broken]));
     assert.deepEqual(parent.builder.options, []);
     broken.builder.setDescription("Fixed");
     assert.deepEqual(parent.serialize("tools", [broken]).options, [
@@ -282,8 +275,8 @@ test("SDK validation failure clears temporary children and allows a corrected re
 });
 
 test("parent forwards the validation flag and cleans up when native serialization throws", t => {
-    const parent = new Parent();
-    const leaf = new Leaf();
+    const parent = createParent();
+    const leaf = createLeaf();
     const failure = new Error("Serialization failed");
     const original = parent.builder.toJSON.bind(parent.builder);
     const serialize = t.mock.method(
@@ -315,9 +308,12 @@ test("parent forwards the validation flag and cleans up when native serializatio
 for (const [name, create] of [
     [
         "parent",
-        (guards: readonly GuardProvider[]) => new Parent(undefined, guards),
+        (guards: readonly GuardProvider[]) => createParent(undefined, guards),
     ],
-    ["leaf", (guards: readonly GuardProvider[]) => new Leaf(undefined, guards)],
+    [
+        "leaf",
+        (guards: readonly GuardProvider[]) => createLeaf(undefined, guards),
+    ],
 ] as const) {
     test(`${name} validates and freezes copied guards without invoking factories`, () => {
         const guard = check();

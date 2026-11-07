@@ -6,7 +6,7 @@ import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { Client, REST } from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 import { HyperionClient } from "../src/client/index.ts";
-import { Command, type CommandContext } from "../src/commands/index.ts";
+import { defineCommand } from "../src/commands/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 import { LogManager } from "../src/logging/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
@@ -125,20 +125,16 @@ test("command context gets a correlated logger and completion timing", async t =
     });
 
     t.after(() => client.destroy());
-    class LoggedCommand extends Command {
-        constructor() {
-            super({
-                builder: new ChatInputCommandBuilder()
-                    .setName("ping")
-                    .setDescription("Ping"),
-            });
-        }
-        async run(ctx: CommandContext) {
+    const LoggedCommand = defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName("ping")
+            .setDescription("Ping"),
+        async run(ctx) {
             ctx.logger.debug({ checkpoint: "ready" }, "Handler checkpoint");
             await ctx.interaction.reply("Pong!");
-        }
-    }
-    client.commands.set("ping", new LoggedCommand());
+        },
+    });
+    client.commands.set("ping", LoggedCommand);
     const { interaction } = createChatInputInteraction({
         id: "execution-123",
         commandName: "ping",
@@ -173,19 +169,15 @@ test("errors stay visible at error level and users still receive error responses
     });
 
     t.after(() => client.destroy());
-    class BrokenCommand extends Command {
-        constructor() {
-            super({
-                builder: new ChatInputCommandBuilder()
-                    .setName("ping")
-                    .setDescription("Ping"),
-            });
-        }
+    const BrokenCommand = defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName("ping")
+            .setDescription("Ping"),
         async run() {
             throw new Error("Handler failed");
-        }
-    }
-    client.commands.set("ping", new BrokenCommand());
+        },
+    });
+    client.commands.set("ping", BrokenCommand);
     let replies = 0;
     const fixture = createChatInputInteraction({
         id: "failure-123",
@@ -262,12 +254,12 @@ test("loaded and initialized counts include params handlers", async t => {
     await writeFile(
         path.join(directory, "routed.mjs"),
         `
-        import { ButtonHandler, defineParams } from ${JSON.stringify(components.href)};
+        import { defineButton, defineParams } from ${JSON.stringify(components.href)};
         const params = defineParams({ id: "a.route", keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: v => ({ value: v }) } } });
-        export default class extends ButtonHandler {
-            constructor() { super({ params }); }
-            async run() {}
-        }
+        export default defineButton({
+            params,
+            async run() {},
+        })
     `,
     );
 

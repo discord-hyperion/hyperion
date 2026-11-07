@@ -11,9 +11,9 @@ import {
     createUserContextInteraction,
 } from "../../../tests/fixtures/interactions.ts";
 import {
-    Command,
     type CommandContext,
     CommandRegistry,
+    defineCommand,
     defineGuard,
     type GuardProvider,
     ownerOnly,
@@ -23,43 +23,33 @@ import { createTestClient } from "./support/test-client.ts";
 type ContextType = ApplicationCommandType.User | ApplicationCommandType.Message;
 type MenuContext = CommandContext<ContextType>;
 
-class UserCommand extends Command<ApplicationCommandType.User> {
-    constructor(
-        private readonly execute: (
-            ctx: CommandContext<ApplicationCommandType.User>,
-        ) => Promise<void>,
-        guards: readonly GuardProvider<
-            CommandContext<ApplicationCommandType.User>
-        >[] = [],
-    ) {
-        super({
-            builder: new UserContextCommandBuilder().setName("Inspect"),
-            guards,
-        });
-    }
-    run(ctx: CommandContext<ApplicationCommandType.User>) {
-        return this.execute(ctx);
-    }
-}
+const userCommand = (
+    execute: (
+        ctx: CommandContext<ApplicationCommandType.User>,
+    ) => Promise<void>,
+    guards: readonly GuardProvider<
+        CommandContext<ApplicationCommandType.User>
+    >[] = [],
+) =>
+    defineCommand({
+        builder: new UserContextCommandBuilder().setName("Inspect"),
+        guards,
+        run: execute,
+    });
 
-class MessageCommand extends Command<ApplicationCommandType.Message> {
-    constructor(
-        private readonly execute: (
-            ctx: CommandContext<ApplicationCommandType.Message>,
-        ) => Promise<void>,
-        guards: readonly GuardProvider<
-            CommandContext<ApplicationCommandType.Message>
-        >[] = [],
-    ) {
-        super({
-            builder: new MessageContextCommandBuilder().setName("Inspect"),
-            guards,
-        });
-    }
-    run(ctx: CommandContext<ApplicationCommandType.Message>) {
-        return this.execute(ctx);
-    }
-}
+const messageCommand = (
+    execute: (
+        ctx: CommandContext<ApplicationCommandType.Message>,
+    ) => Promise<void>,
+    guards: readonly GuardProvider<
+        CommandContext<ApplicationCommandType.Message>
+    >[] = [],
+) =>
+    defineCommand({
+        builder: new MessageContextCommandBuilder().setName("Inspect"),
+        guards,
+        run: execute,
+    });
 
 const interaction = (type: ContextType, phase = "new", caller = "caller") => {
     const data = {
@@ -114,8 +104,8 @@ for (const type of [
         });
         const command =
             type === ApplicationCommandType.User
-                ? new UserCommand(execute)
-                : new MessageCommand(execute);
+                ? userCommand(execute)
+                : messageCommand(execute);
         client.commands.set(CommandRegistry.key("Inspect", type), command);
         const fixture = interaction(type);
         client.emit(Events.InteractionCreate, fixture.interaction);
@@ -156,8 +146,8 @@ for (const type of [
         });
         const command =
             type === ApplicationCommandType.User
-                ? new UserCommand(execute, [factory, later])
-                : new MessageCommand(execute, [factory, later]);
+                ? userCommand(execute, [factory, later])
+                : messageCommand(execute, [factory, later]);
         client.commands.set(CommandRegistry.key("Inspect", type), command);
         assert.equal(factory.mock.callCount(), 0);
         const fixture = interaction(type);
@@ -179,8 +169,8 @@ for (const type of [
         client.commands.set(
             CommandRegistry.key("Inspect", type),
             type === ApplicationCommandType.User
-                ? new UserCommand(execute, [ownerOnly])
-                : new MessageCommand(execute, [ownerOnly]),
+                ? userCommand(execute, [ownerOnly])
+                : messageCommand(execute, [ownerOnly]),
         );
         const denied = interaction(type);
         await dispatcher.dispatch(denied.interaction);
@@ -204,8 +194,8 @@ for (const type of [
                 client.commands.set(
                     CommandRegistry.key("Inspect", type),
                     type === ApplicationCommandType.User
-                        ? new UserCommand(fail, guards)
-                        : new MessageCommand(fail, guards),
+                        ? userCommand(fail, guards)
+                        : messageCommand(fail, guards),
                 );
                 const fixture = interaction(type, phase);
                 await dispatcher.dispatch(fixture.interaction);
@@ -237,21 +227,17 @@ for (const type of [
         const execute = mock.fn(async (_ctx: MenuContext) => {});
         const other =
             type === ApplicationCommandType.User
-                ? new MessageCommand(execute)
-                : new UserCommand(execute);
-        class Slash extends Command {
-            constructor() {
-                super({
-                    builder: new ChatInputCommandBuilder()
-                        .setName("inspect")
-                        .setDescription("Inspect"),
-                });
-            }
+                ? messageCommand(execute)
+                : userCommand(execute);
+        const Slash = defineCommand({
+            builder: new ChatInputCommandBuilder()
+                .setName("inspect")
+                .setDescription("Inspect"),
             async run() {
                 throw new Error("Not a slash invocation");
-            }
-        }
-        client.commands.set("Inspect", new Slash());
+            },
+        });
+        client.commands.set("Inspect", Slash);
         client.commands.set(
             CommandRegistry.key("Inspect", other.commandType),
             other,
@@ -279,11 +265,11 @@ test("shared context command names resolve independently and concurrent contexts
     };
     client.commands.set(
         CommandRegistry.key("Inspect", ApplicationCommandType.User),
-        new UserCommand(execute),
+        userCommand(execute),
     );
     client.commands.set(
         CommandRegistry.key("Inspect", ApplicationCommandType.Message),
-        new MessageCommand(execute),
+        messageCommand(execute),
     );
     const user = interaction(ApplicationCommandType.User);
     const message = interaction(ApplicationCommandType.Message);
@@ -302,7 +288,7 @@ test("expired context command responses are contained and handlers can open a mo
     const { client, dispatcher, records } = await createTestClient(t);
     client.commands.set(
         CommandRegistry.key("Inspect", ApplicationCommandType.User),
-        new UserCommand(async ctx => {
+        userCommand(async ctx => {
             await ctx.interaction.showModal({
                 custom_id: "form",
                 title: "Form",
@@ -317,7 +303,7 @@ test("expired context command responses are contained and handlers can open a mo
 
     client.commands.set(
         CommandRegistry.key("Inspect", ApplicationCommandType.User),
-        new UserCommand(async () => {
+        userCommand(async () => {
             throw new Error("Failed");
         }),
     );
@@ -339,7 +325,7 @@ test("autocomplete never invokes a same-named context-menu handler", async t => 
     const execute = mock.fn(async (_ctx: MenuContext) => {});
     client.commands.set(
         CommandRegistry.key("Inspect", ApplicationCommandType.User),
-        new UserCommand(execute),
+        userCommand(execute),
     );
     const fixture = interaction(ApplicationCommandType.User);
     const respond = mock.fn(async (_choices: unknown) => {});

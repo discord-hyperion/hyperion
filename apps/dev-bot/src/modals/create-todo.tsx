@@ -1,4 +1,4 @@
-import { defineInput, type ModalContext, ModalHandler } from "@hyperion/core";
+import { defineInput, defineModal } from "@hyperion/core";
 import { renderModal } from "@hyperion/jsx";
 import * as v from "valibot";
 import { TodoForm } from "../views/todo-form.tsx";
@@ -15,17 +15,10 @@ const input = defineInput({
     defer: true,
 });
 
-type CreateTodoSpec = { input: typeof input };
-
-export default class extends ModalHandler<CreateTodoSpec> {
-    constructor() {
-        super({
-            builder: renderModal(<TodoForm />),
-            input,
-        });
-    }
-
-    async run(ctx: ModalContext<CreateTodoSpec>) {
+export default defineModal({
+    builder: renderModal(<TodoForm />),
+    input,
+    async run(ctx) {
         const [issues, value] = ctx.input;
 
         if (issues) {
@@ -43,5 +36,5 @@ export default class extends ModalHandler<CreateTodoSpec> {
             content: `Received a todo name of ${name.length} characters and description of ${description.length} characters. This demo does not store submissions.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

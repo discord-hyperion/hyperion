@@ -70,19 +70,17 @@ test("discovery and mocked registration preserve autocomplete flags without exec
     await writeFile(
         path.join(root, "src", "commands", "search.mjs"),
         `
-        import { Command } from ${JSON.stringify(commandModule)};
+        import { defineCommand } from ${JSON.stringify(commandModule)};
         import { ChatInputCommandBuilder } from ${JSON.stringify(buildersModule)};
-        export default class extends Command {
-            constructor() {
-                super({ builder: new ChatInputCommandBuilder().setName("search").setDescription("Search")
+        export default defineCommand({
+            builder: new ChatInputCommandBuilder().setName("search").setDescription("Search")
                     .addStringOptions(option => option.setName("query").setDescription("Query").setAutocomplete(true))
                     .addIntegerOptions(option => option.setName("count").setDescription("Count").setAutocomplete(true))
                     .addNumberOptions(option => option.setName("amount").setDescription("Amount").setAutocomplete(true)),
-                    guards: [() => { throw new Error("Not during startup"); }] });
-            }
-            async autocomplete() { throw new Error("Not during startup"); }
-            async run() {}
-        }
+                    guards: [() => { throw new Error("Not during startup"); }],
+            async autocomplete() { throw new Error("Not during startup"); },
+            async run() {},
+        })
     `,
     );
 

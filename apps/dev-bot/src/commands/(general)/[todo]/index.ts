@@ -1,5 +1,5 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { ParentCommand } from "@hyperion/core";
+import { defineParentCommand } from "@hyperion/core";
 import {
     isoTimestamp,
     maxLength,
@@ -40,12 +40,8 @@ export const todoSchema = object({
 export const getTodoSchema = pick(todoSchema, ["id"]);
 export const createTodoSchema = omit(todoSchema, ["id"]);
 
-export default class extends ParentCommand {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("todo")
-                .setDescription("Create and retrieve todos."),
-        });
-    }
-}
+export default defineParentCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("todo")
+        .setDescription("Create and retrieve todos."),
+});

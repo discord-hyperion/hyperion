@@ -45,15 +45,13 @@ const source = (type: CommandType, name = "inspect", extra = "") => {
               : "MessageContextCommandBuilder";
 
     return `
-        import { Command } from ${JSON.stringify(commandModule)};
+        import { defineCommand } from ${JSON.stringify(commandModule)};
         import { ${builder} } from ${JSON.stringify(buildersModule)};
-        export default class extends Command {
-            constructor() {
-                super({ builder: new ${builder}().setName(${JSON.stringify(name)})
-                    ${type === ApplicationCommandType.ChatInput ? '.setDescription("Inspect")' : ""}, ${extra} });
-            }
-            async run() {}
-        }
+        export default defineCommand({
+            builder: new ${builder}().setName(${JSON.stringify(name)})
+                    ${type === ApplicationCommandType.ChatInput ? '.setDescription("Inspect")' : ""}, ...{ ${extra} },
+            async run() {},
+        })
     `;
 };
 
@@ -240,8 +238,8 @@ test("context-menu autocomplete is rejected without replacing existing handlers"
     await writeFile(
         path.join(directory, "broken.mjs"),
         source(ApplicationCommandType.Message).replace(
-            "async run() {}",
-            "async run() {} async autocomplete() {}",
+            "async run() {},",
+            "async run() {}, async autocomplete() {},",
         ),
     );
 

@@ -19,9 +19,9 @@ import { createModalInteraction } from "../../../tests/fixtures/interactions.ts"
 import {
     defineGuard,
     defineInput,
+    defineModal,
     type GuardProvider,
     type ModalContext,
-    ModalHandler,
     type ModalInputOptions,
 } from "../src/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
@@ -49,25 +49,21 @@ const schema = (
 ): StandardSchemaV1 => ({
     "~standard": { version: 1, vendor: "test", validate },
 });
-class InputModal extends ModalHandler<{ input: ModalInputOptions }> {
-    constructor(
-        input: ModalInputOptions,
-        private readonly execute: (
-            ctx: ModalContext<{ input: ModalInputOptions }>,
-        ) => Promise<void>,
-        guards: readonly GuardProvider<ModalContext>[] = [],
-    ) {
-        super({
-            builder: builder(),
-            input,
-            guards,
-        });
-    }
-
-    run(ctx: ModalContext<{ input: ModalInputOptions }>) {
-        return this.execute(ctx);
-    }
-}
+const inputModal = (
+    input: ModalInputOptions,
+    execute: (ctx: ModalContext<{ input: ModalInputOptions }>) => Promise<void>,
+    guards: readonly GuardProvider<ModalContext>[] = [],
+) =>
+    defineModal({
+        builder: builder(),
+        // An erased definition stands in for whatever input a case tests.
+        input: input as never,
+        guards,
+        run: ctx =>
+            execute(
+                ctx as unknown as ModalContext<{ input: ModalInputOptions }>,
+            ),
+    });
 const check = (predicate: (ctx: ModalContext) => boolean | Promise<boolean>) =>
     defineGuard<ModalContext>({
         name: "Check",
@@ -105,7 +101,7 @@ test("modal guards precede private deferral, async schema, resolver, and handler
     };
     client.modals.set(
         "todo.create",
-        new InputModal(
+        inputModal(
             input,
             async ctx => {
                 order.push("handler");
@@ -206,7 +202,7 @@ test("extracts submitted labels/legacy rows, preserves literal keys and empties,
     const run = mock.fn(async () => {});
     client.modals.set(
         "todo.create",
-        new InputModal({ schema: schema(validate) }, run),
+        inputModal({ schema: schema(validate) }, run),
     );
 
     await dispatcher.dispatch(submission(data).interaction);
@@ -296,7 +292,7 @@ test("extracts every modal control with its value shape", async t => {
     const run = mock.fn(async () => {});
     client.modals.set(
         "todo.create",
-        new InputModal({ schema: schema(validate) }, run),
+        inputModal({ schema: schema(validate) }, run),
     );
 
     await dispatcher.dispatch(submission(data).interaction);
@@ -349,7 +345,7 @@ for (const [name, component] of [
         const run = mock.fn(async () => {});
         client.modals.set(
             "todo.create",
-            new InputModal({ schema: schema(validate) }, run),
+            inputModal({ schema: schema(validate) }, run),
         );
         const fixture = submission([
             text("Private ID", "ok"),
@@ -377,18 +373,17 @@ test("schemas own missing-field defaults, trimming, and successful output withou
             description: v.optional(v.string(), "Default"),
         }),
     });
-    class Typed extends ModalHandler<{ input: typeof input }> {
-        constructor() {
-            super({ builder: builder(), input });
-        }
-        async run(ctx: ModalContext<{ input: typeof input }>) {
+    const Typed = defineModal({
+        builder: builder(),
+        input,
+        async run(ctx) {
             assert.deepEqual(ctx.input, [
                 null,
                 { name: "Todo", description: "Default" },
             ]);
-        }
-    }
-    client.modals.set("todo.create", new Typed());
+        },
+    });
+    client.modals.set("todo.create", Typed);
     const fixture = submission([text("name", "  Todo  ")]);
 
     await dispatcher.dispatch(fixture.interaction);
@@ -409,7 +404,7 @@ test("schema issues reach the handler unchanged and skip resolution and automati
     );
     client.modals.set(
         "todo.create",
-        new InputModal({ schema: schema(() => ({ issues })), resolve }, run),
+        inputModal({ schema: schema(() => ({ issues })), resolve }, run),
     );
     const fixture = submission([]);
 
@@ -428,7 +423,7 @@ for (const phase of ["schema", "resolve"] as const) {
         const failure = new Error("Application failure");
         client.modals.set(
             "todo.create",
-            new InputModal(
+            inputModal(
                 {
                     defer: true,
                     schema: schema(async values => {
@@ -465,7 +460,7 @@ for (const kind of ["duplicate", "missing", "null", "number"] as const) {
         const run = mock.fn(async () => {});
         client.modals.set(
             "todo.create",
-            new InputModal({ schema: schema(validate) }, run),
+            inputModal({ schema: schema(validate) }, run),
         );
         const control = text("Private ID", "Private value");
         assert.equal(control.type, ComponentType.Label);
@@ -516,11 +511,9 @@ test("guard rejection skips extraction, deferral, schemas, and resolvers", async
     const run = mock.fn(async () => {});
     client.modals.set(
         "todo.create",
-        new InputModal(
-            { defer: true, schema: schema(validate), resolve },
-            run,
-            [check(() => false)],
-        ),
+        inputModal({ defer: true, schema: schema(validate), resolve }, run, [
+            check(() => false),
+        ]),
     );
     const fixture = submission([text("same"), text("same")]);
 
@@ -537,7 +530,7 @@ for (const acknowledgment of ["reply", "deferReply", "deferUpdate"] as const) {
         const { client, dispatcher } = await createTestClient(t);
         client.modals.set(
             "todo.create",
-            new InputModal({
+            inputModal({
                 defer: true,
                 schema: schema(() => {
                     throw new Error("Failure");
@@ -582,7 +575,7 @@ test("configuration is snapshotted while schemas remain shared and invocation in
     const contexts: ModalContext<{ input: ModalInputOptions }>[] = [];
     const originalSchema = schema(values => ({ value: values }));
     const options = { schema: originalSchema, defer: false };
-    const modal = new InputModal(options, async ctx => {
+    const modal = inputModal(options, async ctx => {
         contexts.push(ctx);
     });
     options.defer = true;
@@ -615,14 +608,13 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
     await writeFile(
         path.join(directory, "valid.mjs"),
         `
-        import { ModalHandler } from ${JSON.stringify(core)};
+        import { defineModal } from ${JSON.stringify(core)};
         import { ModalBuilder, TextDisplayBuilder } from ${JSON.stringify(builders)};
-        export default class extends ModalHandler {
-            constructor() { super({ builder: new ModalBuilder().setCustomId('registered').setTitle('Form').addTextDisplayComponents(new TextDisplayBuilder().setContent('Info')),
-                input: { schema: { '~standard': { version: 1, validate() { throw new Error('Must not execute'); } } }, resolve() { throw new Error('Must not execute'); } }
-            }); }
-            async run() {}
-        }
+        export default defineModal({
+            builder: new ModalBuilder().setCustomId('registered').setTitle('Form').addTextDisplayComponents(new TextDisplayBuilder().setContent('Info')),
+                input: { schema: { '~standard': { version: 1, validate() { throw new Error('Must not execute'); } } }, resolve() { throw new Error('Must not execute'); } },
+            async run() {},
+        })
     `,
     );
 
@@ -633,12 +625,13 @@ test("modal discovery does not execute schemas or resolvers and failed reload pr
     await writeFile(
         path.join(directory, "invalid.mjs"),
         `
-        import { ModalHandler } from ${JSON.stringify(core)};
+        import { defineModal } from ${JSON.stringify(core)};
         import { ModalBuilder } from ${JSON.stringify(builders)};
-        export default class extends ModalHandler {
-            constructor() { super({ builder: new ModalBuilder().setCustomId('invalid'), input: { schema: {} } }); }
-            async run() {}
-        }
+        export default defineModal({
+            builder: new ModalBuilder().setCustomId('invalid'),
+            input: { schema: {} },
+            async run() {},
+        });
     `,
     );
 
@@ -662,7 +655,7 @@ test("failed modal deferral skips extraction, schema, resolver, and handler", as
     const run = mock.fn(async () => {});
     client.modals.set(
         "todo.create",
-        new InputModal({ defer: true, schema: schema(validate), resolve }, run),
+        inputModal({ defer: true, schema: schema(validate), resolve }, run),
     );
     const fixture = submission([text("same"), text("same")]);
     fixture.deferReply.mock.mockImplementation(async () => {
@@ -693,7 +686,7 @@ test("modal constructors reject invalid input configuration without executing ap
     ];
     for (const [input, expected] of cases) {
         assert.throws(
-            () => Reflect.construct(InputModal, [input, async () => {}]),
+            () => inputModal(input as ModalInputOptions, async () => {}),
             expected,
         );
     }

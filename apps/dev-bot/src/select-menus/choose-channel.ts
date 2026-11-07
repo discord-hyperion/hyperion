@@ -1,23 +1,16 @@
 import { ChannelSelectMenuBuilder } from "@discordjs/builders";
-import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { ChannelType, ComponentType } from "discord.js";
 
-type ChooseChannelSpec = { componentType: ComponentType.ChannelSelect };
-
-export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.ChannelSelect,
-            builder: new ChannelSelectMenuBuilder()
-                .setCustomId("channel.choose")
-                .setPlaceholder("Choose text or voice channels")
-                .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
-                .setMinValues(0)
-                .setMaxValues(5),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseChannelSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.ChannelSelect,
+    builder: new ChannelSelectMenuBuilder()
+        .setCustomId("channel.choose")
+        .setPlaceholder("Choose text or voice channels")
+        .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
+        .setMinValues(0)
+        .setMaxValues(5),
+    async run(ctx) {
         const names = ctx.interaction.values.map(id => {
             const channel = ctx.interaction.channels.get(id);
 
@@ -28,5 +21,5 @@ export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> 
             content: `Selected channels: ${names.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

@@ -16,9 +16,15 @@ const withoutTemplateId = (source: string, id: string) =>
 /** Swap the template for the exact custom ID it carried. */
 const withoutTemplate = (source: string) =>
     source.replace(
-        /builder: [\s\S]*?\.setCustomId\(("[^"]*")\)[\s\S]*?, \s*\}\);/,
-        "customId: $1 });",
+        /builder: [\s\S]*?\.setCustomId\(("[^"]*")\)[\s\S]*?, \.\.\.\{/,
+        "customId: $1, ...{",
     );
+
+/** Change the template's custom ID after the handler is defined. */
+const withChangedTemplate = (source: string) =>
+    `${source.replace("export default define", "const handler = define")}
+    handler.builder.setCustomId("other");
+    export default handler;`;
 
 for (const kind of componentKinds) {
     describe(`${kind.noun} templates`, () => {
@@ -69,7 +75,7 @@ for (const kind of componentKinds) {
             );
         });
 
-        test("a template changed after construction must keep the handler's ID", async t => {
+        test("a template changed after it's defined must keep the handler's ID", async t => {
             const { root, directory } = await createHandlerRoot(
                 t,
                 "hyperion-templates-",
@@ -78,12 +84,7 @@ for (const kind of componentKinds) {
 
             await writeFile(
                 path.join(directory, "handler.mjs"),
-                kind
-                    .source("declared")
-                    .replace(
-                        "async run() {}",
-                        'changed = this.builder.setCustomId("other"); async run() {}',
-                    ),
+                withChangedTemplate(kind.source("declared")),
             );
 
             await assert.rejects(new kind.Registry().load(root), error => {
@@ -107,7 +108,7 @@ for (const kind of componentKinds) {
                 "a customId beside a template",
                 kind
                     .source("both")
-                    .replace("super({ ", 'super({ customId: "both", '),
+                    .replace(/(define\w+\(\{)/, '$1 customId: "both",'),
                 /with a template take its custom ID; remove customId/,
             ],
         ] as const) {

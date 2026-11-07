@@ -4,24 +4,16 @@ import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { Events, InteractionType, MessageFlags } from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 import { HyperionClient } from "../src/client/index.ts";
-import { Command, type CommandContext } from "../src/commands/index.ts";
+import { type CommandContext, defineCommand } from "../src/commands/index.ts";
 import { InteractionDispatcher } from "../src/execution/index.ts";
 
-class TestCommand extends Command {
-    constructor(
-        private readonly execute: (ctx: CommandContext) => Promise<void>,
-    ) {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("ping")
-                .setDescription("A test command"),
-        });
-    }
-
-    run(ctx: CommandContext) {
-        return this.execute(ctx);
-    }
-}
+const testCommand = (execute: (ctx: CommandContext) => void | Promise<void>) =>
+    defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName("ping")
+            .setDescription("A test command"),
+        run: execute,
+    });
 
 const createInteraction = (
     state: { deferred?: boolean; replied?: boolean } = {},
@@ -33,7 +25,7 @@ const createInteraction = (
         ...state,
     });
 
-test("passes a fresh context and preserves the command receiver", async t => {
+test("passes a fresh context to the command", async t => {
     const client = await HyperionClient.create({
         root: new URL("./fixtures/empty-bot/", import.meta.url),
         name: "Test",
@@ -44,7 +36,7 @@ test("passes a fresh context and preserves the command receiver", async t => {
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     const contexts: CommandContext[] = [];
-    const handler = new TestCommand(async ctx => {
+    const handler = testCommand(async ctx => {
         contexts.push(ctx);
     });
     client.commands.set("ping", handler);
@@ -73,7 +65,7 @@ test("ignores interactions other than slash commands and buttons", async t => {
     t.after(() => client.destroy());
     t.mock.method(client, "getOwnerId", async () => "test-owner");
     const execute = mock.fn(async () => undefined);
-    client.commands.set("ping", new TestCommand(execute));
+    client.commands.set("ping", testCommand(execute));
     const fixture = createInteraction();
     // Deliberately unsupported interaction: leave every dispatch predicate false.
     Object.assign(fixture.interaction, { type: InteractionType.Ping });
@@ -116,7 +108,7 @@ for (const phase of ["new", "deferred", "replied"] as const) {
         const log = t.mock.method(client.logger, "error", () => undefined);
         client.commands.set(
             "ping",
-            new TestCommand(async () => {
+            testCommand(async () => {
                 throw failure;
             }),
         );
@@ -172,7 +164,7 @@ test("falls back to a private follow-up when a deferred reply cannot take conten
     const debug = t.mock.method(client.logger, "debug", () => undefined);
     client.commands.set(
         "ping",
-        new TestCommand(async () => {
+        testCommand(async () => {
             throw new Error("Failed after editing into a layout message");
         }),
     );
@@ -215,7 +207,7 @@ test("contains synchronous throws and failed error responses in the event listen
     const log = t.mock.method(client.logger, "error", () => undefined);
     client.commands.set(
         "ping",
-        new TestCommand(() => {
+        testCommand(() => {
             throw new Error("Synchronous failure");
         }),
     );
@@ -244,7 +236,7 @@ test("does not acknowledge before a handler opens a modal", async t => {
     const fixture = createInteraction();
     client.commands.set(
         "ping",
-        new TestCommand(async ctx => {
+        testCommand(async ctx => {
             await ctx.interaction.showModal({
                 custom_id: "test",
                 title: "Test",

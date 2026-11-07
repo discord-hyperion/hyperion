@@ -1,29 +1,20 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import {
-    type AutocompleteContext,
-    type CommandContext,
-    Subcommand,
-} from "@hyperion/core";
+import { defineSubcommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
-export default class ToolsEcho extends Subcommand {
-    constructor() {
-        super({
-            builder: new ChatInputCommandSubcommandBuilder()
-                .setName("echo")
-                .setDescription("Repeat a message privately.")
-                .addStringOptions(option =>
-                    option
-                        .setName("text")
-                        .setDescription("Text to repeat")
-                        .setRequired(true)
-                        .setMaxLength(200)
-                        .setAutocomplete(true),
-                ),
-        });
-    }
-
-    async autocomplete(ctx: AutocompleteContext) {
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("echo")
+        .setDescription("Repeat a message privately.")
+        .addStringOptions(option =>
+            option
+                .setName("text")
+                .setDescription("Text to repeat")
+                .setRequired(true)
+                .setMaxLength(200)
+                .setAutocomplete(true),
+        ),
+    async autocomplete(ctx) {
         const focused = ctx.interaction.options.getFocused();
 
         if (focused.name !== "text") return;
@@ -37,13 +28,12 @@ export default class ToolsEcho extends Subcommand {
                 )
                 .map(text => ({ name: text, value: text })),
         );
-    }
-
-    async run(ctx: CommandContext) {
+    },
+    async run(ctx) {
         await ctx.interaction.reply({
             content: ctx.interaction.options.getString("text", true),
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

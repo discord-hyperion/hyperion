@@ -3,21 +3,14 @@ import {
     ChatInputCommandBuilder,
     SecondaryButtonBuilder,
 } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
-export default class ProfileCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("profile")
-                .setDescription(
-                    "Try a button that fetches fresh profile data.",
-                ),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("profile")
+        .setDescription("Try a button that fetches fresh profile data."),
+    async run(ctx) {
         await ctx.interaction.reply({
             content: "Press refresh to load your profile.",
             flags: MessageFlags.Ephemeral,
@@ -31,5 +24,5 @@ export default class ProfileCommand extends Command {
                 ),
             ],
         });
-    }
-}
+    },
+});

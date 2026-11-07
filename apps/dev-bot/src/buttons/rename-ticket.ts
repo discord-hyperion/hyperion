@@ -1,9 +1,4 @@
-import {
-    type ButtonContext,
-    ButtonHandler,
-    defineParams,
-    paramOwner,
-} from "@hyperion/core";
+import { defineButton, defineParams, paramOwner } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 import { renameTicketForm } from "../modals/rename-ticket.ts";
 import { ticketSchema } from "./close-ticket.ts";
@@ -15,19 +10,10 @@ export const renameTicket = defineParams({
     schema: ticketSchema,
 });
 
-type RenameTicketButtonSpec = { params: typeof renameTicket };
-
-export default class RenameTicketButton extends ButtonHandler<RenameTicketButtonSpec> {
-    constructor() {
-        super({
-            params: renameTicket,
-            guards: [
-                paramOwner("owner", "Only the ticket's author can rename it."),
-            ],
-        });
-    }
-
-    async run(ctx: ButtonContext<RenameTicketButtonSpec>) {
+export default defineButton({
+    params: renameTicket,
+    guards: [paramOwner("owner", "Only the ticket's author can rename it.")],
+    async run(ctx) {
         const [issues, params] = ctx.params;
 
         if (issues) {
@@ -43,5 +29,5 @@ export default class RenameTicketButton extends ButtonHandler<RenameTicketButton
         await ctx.interaction.showModal(
             ctx.client.modals.build(renameTicketForm, params),
         );
-    }
-}
+    },
+});

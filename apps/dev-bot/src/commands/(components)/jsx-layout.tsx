@@ -1,5 +1,5 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import {
     ActionRow,
     Bold,
@@ -15,18 +15,13 @@ import {
     Thumbnail,
 } from "@hyperion/jsx";
 
-export default class extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("jsx-layout")
-                .setDescription(
-                    "Show a layout message (Components V2) authored with JSX.",
-                ),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("jsx-layout")
+        .setDescription(
+            "Show a layout message (Components V2) authored with JSX.",
+        ),
+    async run(ctx) {
         const { user } = ctx.interaction;
         const avatar = user.displayAvatarURL();
 
@@ -57,5 +52,5 @@ export default class extends Command {
                 { ephemeral: true },
             ),
         );
-    }
-}
+    },
+});

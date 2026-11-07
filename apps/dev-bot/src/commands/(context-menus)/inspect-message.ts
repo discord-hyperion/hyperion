@@ -1,15 +1,10 @@
 import { MessageContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
-import { type ApplicationCommandType, MessageFlags } from "discord.js";
+import { defineCommand } from "@hyperion/core";
+import { MessageFlags } from "discord.js";
 
-export default class InspectMessage extends Command<ApplicationCommandType.Message> {
-    constructor() {
-        super({
-            builder: new MessageContextCommandBuilder().setName("Inspect"),
-        });
-    }
-
-    async run(ctx: CommandContext<ApplicationCommandType.Message>) {
+export default defineCommand({
+    builder: new MessageContextCommandBuilder().setName("Inspect"),
+    async run(ctx) {
         const message = ctx.interaction.targetMessage;
 
         await ctx.interaction.reply({
@@ -17,5 +12,5 @@ export default class InspectMessage extends Command<ApplicationCommandType.Messa
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

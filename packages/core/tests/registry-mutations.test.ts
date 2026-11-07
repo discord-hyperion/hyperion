@@ -12,22 +12,21 @@ import {
 import { ApplicationCommandType, Collection, REST } from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
-    Command,
-    type CommandContext,
     CommandRegistry,
+    defineCommand,
     defineGuard,
+    defineParentCommand,
+    defineSubcommand,
+    defineSubcommandGroup,
     HyperionClient,
     InteractionDispatcher,
-    ParentCommand,
-    Subcommand,
-    SubcommandGroup,
 } from "../src/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
 const credentials = { applicationId: "123", token: "fake-token" };
-const imports = `import { Command, ParentCommand, Subcommand, SubcommandGroup, defineGuard } from ${JSON.stringify(library)};
+const imports = `import { defineCommand, defineParentCommand, defineSubcommand, defineSubcommandGroup, defineGuard } from ${JSON.stringify(library)};
 import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder, ChatInputCommandSubcommandGroupBuilder } from ${JSON.stringify(builders)};
 export const calls = [];
 const guards = [ctx => {
@@ -36,18 +35,18 @@ const guards = [ctx => {
     return defineGuard({ name: "test-guard", description: "Allowed", run(ctx) { ctx.interaction.events.push("leaf guard"); return true; } });
 }];`;
 const parentSource = `${imports}
-export default class extends ParentCommand {
-    constructor() { super({ builder: new ChatInputCommandBuilder().setDescription("Tickets"), guards }); }
-}`;
+export default defineParentCommand({
+    builder: new ChatInputCommandBuilder().setDescription("Tickets"), guards,
+})`;
 const groupSource = `${imports}
-export default class extends SubcommandGroup {
-    constructor() { super({ builder: new ChatInputCommandSubcommandGroupBuilder().setDescription("Settings"), guards }); }
-}`;
+export default defineSubcommandGroup({
+    builder: new ChatInputCommandSubcommandGroupBuilder().setDescription("Settings"), guards,
+})`;
 const leafSource = (name: string) => `${imports}
-export default class extends Subcommand {
-    constructor() { super({ builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Action"), guards }); }
-    async run(ctx) { ctx.interaction.events.push("handler"); await ctx.interaction.reply("done"); }
-}`;
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Action"), guards,
+    async run(ctx) { ctx.interaction.events.push("handler"); await ctx.interaction.reply("done"); },
+})`;
 
 const fixture = async (t: TestContext) => {
     const root = await createTempRoot(t, "hyperion-mutations-");
@@ -111,16 +110,13 @@ const captureRest = (t: TestContext) => {
 const shape = (body: readonly Payload[]): unknown[] =>
     body.map(command => [command.name, shape(command.options ?? [])]);
 
-class Standalone extends Command {
-    constructor(name = "ping") {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName(name)
-                .setDescription("Standalone"),
-        });
-    }
-    async run() {}
-}
+const standaloneCommand = (name = "ping") =>
+    defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName(name)
+            .setDescription("Standalone"),
+        async run() {},
+    });
 
 test("deleting a leaf changes the next deployment without reloading", async t => {
     const { registry, assertLazy } = await fixture(t);
@@ -238,29 +234,18 @@ test("replacement parent and group definitions are used by registration and disp
             },
         });
     };
-    class ReplacementParent extends ParentCommand {
-        constructor() {
-            super({
-                builder: new ChatInputCommandBuilder().setDescription(
-                    "New parent",
-                ),
-                guards: [factory("parent")],
-            });
-        }
-    }
-    class ReplacementGroup extends SubcommandGroup {
-        constructor() {
-            super({
-                builder:
-                    new ChatInputCommandSubcommandGroupBuilder().setDescription(
-                        "New group",
-                    ),
-                guards: [factory("group")],
-            });
-        }
-    }
-    const parent = new ReplacementParent();
-    const group = new ReplacementGroup();
+    const ReplacementParent = defineParentCommand({
+        builder: new ChatInputCommandBuilder().setDescription("New parent"),
+        guards: [factory("parent")],
+    });
+    const ReplacementGroup = defineSubcommandGroup({
+        builder: new ChatInputCommandSubcommandGroupBuilder().setDescription(
+            "New group",
+        ),
+        guards: [factory("group")],
+    });
+    const parent = ReplacementParent;
+    const group = ReplacementGroup;
     client.commands.parents.set("ticket", parent);
     client.commands.groups.set(
         CommandRegistry.groupKey("ticket", "settings"),
@@ -354,16 +339,12 @@ test("clear retains definition collections but protects against an empty deploym
 
 test("standalone slash and context-menu commands can be inserted with Collection.set", async t => {
     const registry = new CommandRegistry();
-    const slash = new Standalone("inspect");
-    class InspectUser extends Command<ApplicationCommandType.User> {
-        constructor() {
-            super({
-                builder: new UserContextCommandBuilder().setName("Inspect"),
-            });
-        }
-        async run() {}
-    }
-    const menu = new InspectUser();
+    const slash = standaloneCommand("inspect");
+    const InspectUser = defineCommand({
+        builder: new UserContextCommandBuilder().setName("Inspect"),
+        async run() {},
+    });
+    const menu = InspectUser;
     assert.ok(registry instanceof Collection);
     registry.set(CommandRegistry.key("inspect"), slash);
     registry.set(
@@ -387,7 +368,7 @@ test("standalone slash and context-menu commands can be inserted with Collection
 test("reinserting discovered leaves retains ancestry and uses current Collection order", async t => {
     const { registry, close, view, update, assertLazy } = await fixture(t);
     registry.clear();
-    const standalone = new Standalone();
+    const standalone = standaloneCommand();
     registry.set("ping", standalone);
     registry.set(
         CommandRegistry.subcommandKey("ticket", "view", "settings"),
@@ -447,17 +428,13 @@ test("reinserting discovered leaves retains ancestry and uses current Collection
 for (const group of [undefined, "settings"]) {
     test(`a new ${group ? "grouped" : "direct"} leaf under a formatted key has no discovered ancestry`, async t => {
         const { registry, assertLazy } = await fixture(t);
-        class ManualLeaf extends Subcommand {
-            constructor() {
-                super({
-                    builder: new ChatInputCommandSubcommandBuilder()
-                        .setName("manual")
-                        .setDescription("Manual"),
-                });
-            }
-            async run(_ctx: CommandContext) {}
-        }
-        const manual = new ManualLeaf();
+        const ManualLeaf = defineSubcommand({
+            builder: new ChatInputCommandSubcommandBuilder()
+                .setName("manual")
+                .setDescription("Manual"),
+            async run(_ctx) {},
+        });
+        const manual = ManualLeaf;
         const key = CommandRegistry.subcommandKey("ticket", "manual", group);
         registry.set(key, manual);
         assert.equal(registry.get(key), manual);
@@ -479,7 +456,7 @@ for (const group of [undefined, "settings"]) {
 
 test("mutating builders changes the payload without rekeying discovered handlers", async t => {
     const { registry, view, assertLazy } = await fixture(t);
-    const standalone = new Standalone();
+    const standalone = standaloneCommand();
     registry.set("ping", standalone);
     view.builder.setName("renamed").setDescription("Updated leaf");
     standalone.builder.setName("pong");

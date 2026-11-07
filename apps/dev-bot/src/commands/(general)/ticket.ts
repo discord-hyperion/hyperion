@@ -6,32 +6,27 @@ import {
     SecondaryButtonBuilder,
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { closeTicket } from "../../buttons/close-ticket.ts";
 import { renameTicket } from "../../buttons/rename-ticket.ts";
 import { guildOnly } from "../../guards/guild-only.ts";
 import { assignTicket } from "../../select-menus/assign-ticket.ts";
 
-export default class TicketCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("ticket")
-                .setDescription(
-                    "Open a ticket with Assign, Close, and Rename controls.",
-                )
-                .addStringOptions(option =>
-                    option
-                        .setName("subject")
-                        .setDescription("What the ticket is about")
-                        .setRequired(true)
-                        .setMaxLength(100),
-                ),
-            guards: [guildOnly],
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("ticket")
+        .setDescription(
+            "Open a ticket with Assign, Close, and Rename controls.",
+        )
+        .addStringOptions(option =>
+            option
+                .setName("subject")
+                .setDescription("What the ticket is about")
+                .setRequired(true)
+                .setMaxLength(100),
+        ),
+    guards: [guildOnly],
+    async run(ctx) {
         const subject = ctx.interaction.options.getString("subject", true);
         // Handlers stay stateless: the ticket's identity travels in each control.
         const ticket = {
@@ -58,5 +53,5 @@ export default class TicketCommand extends Command {
                 ),
             ],
         });
-    }
-}
+    },
+});

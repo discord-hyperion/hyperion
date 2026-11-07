@@ -11,43 +11,33 @@ import {
 import { createAutocompleteInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
     type AutocompleteContext,
-    Command,
     type CommandContext,
     CommandRegistry,
+    defineCommand,
     type GuardProvider,
 } from "../src/index.ts";
 import { createTempRoot } from "./support/temp-root.ts";
 import { createTestClient } from "./support/test-client.ts";
 
-class TestCommand extends Command {
-    readonly executeCommand = mock.fn(async (_ctx: CommandContext) => {});
-
-    constructor(
-        private readonly complete: (ctx: AutocompleteContext) => Promise<void>,
-        guards: readonly GuardProvider[] = [],
-    ) {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("search")
-                .setDescription("Test autocomplete")
-                .addStringOptions(option =>
-                    option
-                        .setName("query")
-                        .setDescription("Search")
-                        .setAutocomplete(true),
-                ),
-            guards,
-        });
-    }
-
-    autocomplete(ctx: AutocompleteContext) {
-        return this.complete(ctx);
-    }
-
-    run(ctx: CommandContext) {
-        return this.executeCommand(ctx);
-    }
-}
+const testCommand = (
+    complete: (ctx: AutocompleteContext) => void | Promise<void>,
+    guards: readonly GuardProvider[] = [],
+    run: (ctx: CommandContext) => Promise<void> = async () => {},
+) =>
+    defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName("search")
+            .setDescription("Test autocomplete")
+            .addStringOptions(option =>
+                option
+                    .setName("query")
+                    .setDescription("Search")
+                    .setAutocomplete(true),
+            ),
+        guards,
+        autocomplete: complete,
+        run,
+    });
 
 const interaction = (
     input = "private-query",
@@ -75,14 +65,14 @@ const interaction = (
 
 const setup = (t: TestContext, level: "debug" | "info" = "debug") =>
     createTestClient(t, { level });
-test("autocomplete listener preserves the receiver, skips command execution and guards, and scopes logs", async t => {
+test("autocomplete listener skips command execution and guards, and scopes logs", async t => {
     const { client, records } = await setup(t);
     const guard = mock.fn(() => {
         throw new Error("Not during autocomplete");
     });
-    class Inspect extends TestCommand {
-        async autocomplete(ctx: AutocompleteContext) {
-            assert.equal(this.builder.toJSON().name, "search");
+    const executeCommand = mock.fn(async (_ctx: CommandContext) => {});
+    const command = testCommand(
+        async ctx => {
             assert.equal(ctx.client, client);
             assert.equal(
                 ctx.interaction.options.getFocused().value,
@@ -91,16 +81,17 @@ test("autocomplete listener preserves the receiver, skips command execution and 
             await ctx.interaction.respond([
                 { name: "Private suggestion", value: "private-value" },
             ]);
-        }
-    }
-    const command = new Inspect(async () => {}, [guard]);
+        },
+        [guard],
+        executeCommand,
+    );
     client.commands.set("search", command);
     const fixture = interaction();
     client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
 
     assert.equal(fixture.respond.mock.callCount(), 1);
-    assert.equal(command.executeCommand.mock.callCount(), 0);
+    assert.equal(executeCommand.mock.callCount(), 0);
     assert.equal(guard.mock.callCount(), 0);
     assert.equal(fixture.reply.mock.callCount(), 0);
     assert.equal(fixture.deferReply.mock.callCount(), 0);
@@ -128,23 +119,22 @@ for (const missing of ["command", "hook", "response"]) {
         const { client, dispatcher } = await setup(t);
 
         if (missing === "hook") {
-            class NoAutocomplete extends Command {
-                constructor() {
-                    super({
-                        builder: new ChatInputCommandBuilder()
-                            .setName("search")
-                            .setDescription("No hook"),
-                    });
-                }
+            const NoAutocomplete = defineCommand({
+                builder: new ChatInputCommandBuilder()
+                    .setName("search")
+                    .setDescription("No hook"),
                 async run() {
                     throw new Error("Not command execution");
-                }
-            }
-            const command = new NoAutocomplete();
+                },
+            });
+            const command = NoAutocomplete;
             assert.equal(command.autocomplete, undefined);
             client.commands.set("search", command);
         } else if (missing === "response") {
-            client.commands.set("search", new TestCommand(async () => {}));
+            client.commands.set(
+                "search",
+                testCommand(async () => {}),
+            );
         }
 
         const fixture = interaction();
@@ -165,7 +155,7 @@ for (const asynchronous of [false, true]) {
         };
         client.commands.set(
             "search",
-            new TestCommand(asynchronous ? async () => fail() : fail),
+            testCommand(asynchronous ? async () => fail() : fail),
         );
         const fixture = interaction();
         await dispatcher.dispatch(fixture.interaction);
@@ -185,7 +175,7 @@ for (const asynchronous of [false, true]) {
 test("already-responded autocomplete requests do not run handlers or respond twice", async t => {
     const { client, dispatcher } = await setup(t);
     const complete = mock.fn(async (_ctx: AutocompleteContext) => {});
-    client.commands.set("search", new TestCommand(complete));
+    client.commands.set("search", testCommand(complete));
     const fixture = interaction();
     Object.assign(fixture.interaction, { responded: true });
     await dispatcher.dispatch(fixture.interaction);
@@ -198,7 +188,7 @@ test("a failure after responding does not attempt another autocomplete response"
     const { client, dispatcher, records } = await setup(t);
     client.commands.set(
         "search",
-        new TestCommand(async ctx => {
+        testCommand(async ctx => {
             await ctx.interaction.respond([{ name: "Found", value: "found" }]);
             throw new Error("Post-response failure");
         }),
@@ -217,7 +207,7 @@ for (const hasHandler of [false, true]) {
         if (hasHandler) {
             client.commands.set(
                 "search",
-                new TestCommand(async () => {
+                testCommand(async () => {
                     throw new Error("Lookup failed");
                 }),
             );
@@ -244,7 +234,7 @@ test("a rejected suggestion response falls back to empty choices", async t => {
     const { client, dispatcher } = await setup(t);
     client.commands.set(
         "search",
-        new TestCommand(async ctx => {
+        testCommand(async ctx => {
             await ctx.interaction.respond([
                 { name: "Rejected", value: "rejected" },
             ]);
@@ -270,7 +260,7 @@ for (const type of [
         const { client, dispatcher } = await setup(t);
         client.commands.set(
             "search",
-            new TestCommand(async ctx => {
+            testCommand(async ctx => {
                 const focused = ctx.interaction.options.getFocused();
                 assert.equal(focused.name, "amount");
                 assert.equal(focused.type, type);
@@ -302,7 +292,7 @@ test("autocomplete retains subcommand options and creates separate concurrent co
     const contexts: AutocompleteContext[] = [];
     client.commands.set(
         "search",
-        new TestCommand(async ctx => {
+        testCommand(async ctx => {
             contexts.push(ctx);
             assert.equal(ctx.interaction.options.getSubcommand(), "items");
             assert.equal(
@@ -342,7 +332,7 @@ test("autocomplete success is quiet at info level while failures remain visible"
     const { client, dispatcher, records } = await setup(t, "info");
     client.commands.set(
         "search",
-        new TestCommand(async ctx => {
+        testCommand(async ctx => {
             await ctx.interaction.respond([]);
         }),
     );
@@ -355,7 +345,7 @@ test("autocomplete success is quiet at info level while failures remain visible"
 
     client.commands.set(
         "search",
-        new TestCommand(async () => {
+        testCommand(async () => {
             throw new Error("Unavailable");
         }),
     );
@@ -373,18 +363,18 @@ test("malformed optional autocomplete hooks retain source context and the previo
     await writeFile(
         path.join(root, "src", "commands", "broken.mjs"),
         `
-        import { Command } from ${JSON.stringify(commandModule)};
+        import { defineCommand } from ${JSON.stringify(commandModule)};
         import { ChatInputCommandBuilder } from ${JSON.stringify(buildersModule)};
-        export default class extends Command {
-            constructor() { super({ builder: new ChatInputCommandBuilder().setName("broken").setDescription("Broken") }); }
-            autocomplete = 42;
-            async run() {}
-        }
+        export default defineCommand({
+            builder: new ChatInputCommandBuilder().setName("broken").setDescription("Broken"),
+            autocomplete: 42,
+            async run() {},
+        });
     `,
     );
 
     const registry = new CommandRegistry();
-    const original = new TestCommand(async () => {});
+    const original = testCommand(async () => {});
     registry.set("search", original);
     await assert.rejects(registry.load(root), /broken.mjs.*autocomplete\(\)/);
     assert.equal(registry.get("search"), original);

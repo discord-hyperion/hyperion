@@ -1,17 +1,12 @@
 import { ActionRowBuilder, ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
-export default class ColourCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("colour")
-                .setDescription("Try a string select menu."),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("colour")
+        .setDescription("Try a string select menu."),
+    async run(ctx) {
         await ctx.interaction.reply({
             content: "Choose your favourite colour.",
             flags: MessageFlags.Ephemeral,
@@ -21,5 +16,5 @@ export default class ColourCommand extends Command {
                 ),
             ],
         });
-    }
-}
+    },
+});

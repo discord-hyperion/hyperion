@@ -9,10 +9,10 @@ import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts
 import { decodeParams } from "../src/components/custom-id-params.ts";
 import {
     type ButtonContext,
-    ButtonHandler,
+    defineButton,
     defineParams,
 } from "../src/components/index.ts";
-import { defineGuard } from "../src/guards/index.ts";
+import { defineGuard, type GuardProvider } from "../src/guards/index.ts";
 import { ButtonRegistry } from "../src/registries/index.ts";
 import { buttonKind } from "./support/component-kinds.ts";
 import { createHandlerRoot } from "./support/temp-root.ts";
@@ -30,18 +30,10 @@ const todoDone = defineParams({
 
 type TodoContext = ButtonContext<{ params: typeof todoDone }>;
 
-class TodoButton extends ButtonHandler<{ params: typeof todoDone }> {
-    constructor(
-        private readonly execute: (ctx: TodoContext) => Promise<void>,
-        guards: ButtonHandler<{ params: typeof todoDone }>["guards"] = [],
-    ) {
-        super({ params: todoDone, guards });
-    }
-
-    run(ctx: TodoContext) {
-        return this.execute(ctx);
-    }
-}
+const todoButton = (
+    execute: (ctx: TodoContext) => Promise<void>,
+    guards: readonly GuardProvider<TodoContext>[] = [],
+) => defineButton({ params: todoDone, guards, run: execute });
 
 const click = (customId: string, userId = "owner") =>
     createButtonInteraction({ id: "click", customId, user: { id: userId } });
@@ -54,10 +46,7 @@ describe("defineParams", () => {
         );
 
         const registry = new ButtonRegistry();
-        registry.routes.set(
-            todoDone.id,
-            new TodoButton(async () => {}) as never,
-        );
+        registry.routes.set(todoDone.id, todoButton(async () => {}) as never);
         const encoded = todoDone({ owner: "a:b", page: 1, todoId: "100%" });
 
         assert.equal(encoded, "todo.done:a%3Ab:1:100%25");
@@ -126,10 +115,7 @@ describe("defineParams", () => {
 describe("button params routing", () => {
     test("unmatched, malformed, and literal IDs never resolve to a params handler", () => {
         const registry = new ButtonRegistry();
-        registry.routes.set(
-            todoDone.id,
-            new TodoButton(async () => {}) as never,
-        );
+        registry.routes.set(todoDone.id, todoButton(async () => {}) as never);
 
         for (const customId of [
             "todo.done",
@@ -146,21 +132,14 @@ describe("button params routing", () => {
 
     test("exact literal IDs win and keep their own routing", () => {
         const registry = new ButtonRegistry();
-        const literal = new (class extends ButtonHandler {
-            constructor() {
-                super({
-                    builder: new PrimaryButtonBuilder()
-                        .setCustomId("todo.done:1:2:3")
-                        .setLabel("Literal"),
-                });
-            }
-            async run() {}
-        })();
+        const literal = defineButton({
+            builder: new PrimaryButtonBuilder()
+                .setCustomId("todo.done:1:2:3")
+                .setLabel("Literal"),
+            async run() {},
+        });
         registry.set(literal.customId, literal);
-        registry.routes.set(
-            todoDone.id,
-            new TodoButton(async () => {}) as never,
-        );
+        registry.routes.set(todoDone.id, todoButton(async () => {}) as never);
 
         assert.equal(registry.resolve("todo.done:1:2:3")?.button, literal);
         assert.equal(registry.resolve("todo.done:1:2:3")?.raw, undefined);
@@ -169,12 +148,12 @@ describe("button params routing", () => {
 
 describe("button params loading", () => {
     const paramsSource = (route: string) => `
-        import { ButtonHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
+        import { defineButton, ButtonHandler, defineParams } from ${JSON.stringify(new URL("../src/components/index.ts", import.meta.url).href)};
         const params = defineParams({ id: ${JSON.stringify(route)}, keys: [], schema: { "~standard": { version: 1, vendor: "test", validate: v => ({ value: v }) } } });
-        export default class extends ButtonHandler {
-            constructor() { super({ params }); }
-            async run() {}
-        }
+        export default defineButton({
+            params,
+            async run() {},
+        })
     `;
 
     test("discovers params handlers by route and keeps them out of the literal collection", async t => {
@@ -241,12 +220,12 @@ describe("button params loading", () => {
     test("a handler cannot declare both a customId and params", () => {
         assert.throws(
             () =>
-                new (class extends ButtonHandler<{ params: typeof todoDone }> {
-                    constructor() {
-                        super({ params: todoDone, customId: "x" } as never);
-                    }
-                    async run() {}
-                })(),
+                defineButton({
+                    params: todoDone,
+                    // @ts-expect-error Exercise runtime rejection for JavaScript callers.
+                    customId: "x",
+                    async run() {},
+                }),
             /either a customId or params/,
         );
     });
@@ -274,7 +253,7 @@ describe("button params dispatch", () => {
         });
         client.buttons.routes.set(
             todoDone.id,
-            new TodoButton(execute, [seesParams()]) as never,
+            todoButton(execute, [seesParams()]) as never,
         );
         const id = todoDone({ owner: "owner", page: 2, todoId: "a:b" });
 
@@ -319,7 +298,7 @@ describe("button params dispatch", () => {
             });
         client.buttons.routes.set(
             todoDone.id,
-            new TodoButton(execute, [issueGuard()]) as never,
+            todoButton(execute, [issueGuard()]) as never,
         );
 
         const bad = click("todo.done:owner:not-a-number:abc");
@@ -330,10 +309,7 @@ describe("button params dispatch", () => {
         assert.equal(bad.reply.mock.calls[0]?.arguments[0], "rejected");
 
         // Without the guard the handler decides the response.
-        client.buttons.routes.set(
-            todoDone.id,
-            new TodoButton(execute) as never,
-        );
+        client.buttons.routes.set(todoDone.id, todoButton(execute) as never);
         const handled = click("todo.done:owner:not-a-number:abc");
         await dispatcher.dispatch(handled.interaction);
 
@@ -344,10 +320,7 @@ describe("button params dispatch", () => {
     test("unmatched and undecodable IDs are ignored without a reply", async t => {
         const { client, dispatcher } = await createTestClient(t);
         const execute = mock.fn(async () => {});
-        client.buttons.routes.set(
-            todoDone.id,
-            new TodoButton(execute) as never,
-        );
+        client.buttons.routes.set(todoDone.id, todoButton(execute) as never);
 
         for (const customId of ["todo.done:1:2", "elsewhere:1:2:3"]) {
             const fixture = click(customId);
@@ -376,14 +349,7 @@ describe("button params dispatch", () => {
         const execute = mock.fn(async () => {});
         client.buttons.routes.set(
             "boom",
-            new (class extends ButtonHandler<{ params: typeof boom }> {
-                constructor() {
-                    super({ params: boom });
-                }
-                run() {
-                    return execute();
-                }
-            })() as never,
+            defineButton({ params: boom, run: () => execute() }) as never,
         );
         const fixture = click("boom");
         await dispatcher.dispatch(fixture.interaction);

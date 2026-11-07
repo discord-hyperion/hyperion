@@ -15,22 +15,19 @@ const buildersModule = import.meta.resolve("@discordjs/builders");
 
 const commandSource = (name: string) => {
     return `
-        import { Command } from ${JSON.stringify(commandModule)};
+        import { defineCommand } from ${JSON.stringify(commandModule)};
         import { ChatInputCommandBuilder } from ${JSON.stringify(buildersModule)};
-        export default class extends Command {
-            constructor() {
-                super({ builder: new ChatInputCommandBuilder()
+        export default defineCommand({
+            builder: new ChatInputCommandBuilder()
                     .setName(${JSON.stringify(name)})
                     .setDescription("A test command")
                     .setDefaultMemberPermissions(8n)
                     .addStringOptions(option => option
                         .setName("query")
                         .setDescription("Search")
-                        .setMinLength(1))
-                });
-            }
-            async run() {}
-        }
+                        .setMinLength(1)),
+            async run() {},
+        })
     `;
 };
 
@@ -39,8 +36,8 @@ test("command discovery and deployment leave guard factories unevaluated", async
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     const source = commandSource("guarded").replace(
-        "super({ builder:",
-        'super({ guards: [() => { throw new Error("Factory ran at startup"); }], builder:',
+        "defineCommand({",
+        'defineCommand({ guards: [() => { throw new Error("Factory ran at startup"); }],',
     );
     await writeFile(path.join(directory, "guarded.mjs"), source);
     const put = t.mock.method(REST.prototype, "put", async () => []);
@@ -329,10 +326,10 @@ test("still rejects commands without an executable run method", async t => {
 
     await writeFile(
         path.join(directory, "bad.mjs"),
-        commandSource("ping").replace("async run() {}", ""),
+        commandSource("ping").replace("async run() {},", ""),
     );
 
-    await assert.rejects(new CommandRegistry().load(root), /run\(\) method/);
+    await assert.rejects(new CommandRegistry().load(root), /run\(\) function/);
 });
 
 test("initialization skips absent or empty conventional folders and ignores other locations", async t => {

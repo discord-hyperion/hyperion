@@ -22,32 +22,30 @@ import {
 } from "../../../tests/fixtures/interactions.ts";
 import {
     CommandRegistry,
+    defineSubcommand,
+    defineSubcommandGroup,
     HyperionClient,
     InteractionDispatcher,
-    Subcommand,
-    SubcommandGroup,
 } from "../src/index.ts";
 import { parseCommandPath } from "../src/registries/parse-command-path.ts";
 import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
-const imports = `import { Command, ParentCommand, Subcommand, SubcommandGroup, defineGuard } from ${JSON.stringify(library)};
+const imports = `import { defineCommand, defineParentCommand, defineSubcommand, defineSubcommandGroup, defineGuard } from ${JSON.stringify(library)};
 import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder, ChatInputCommandSubcommandGroupBuilder, UserContextCommandBuilder } from ${JSON.stringify(builders)};`;
 const parentSource = (guards = "") => `${imports}
-export default class extends ParentCommand {
-    constructor() { super({ builder: new ChatInputCommandBuilder().setDescription("Tickets"), ${guards} }); }
-}`;
+export default defineParentCommand({ builder: new ChatInputCommandBuilder().setDescription("Tickets"), ${guards} });`;
 const groupSource = (extra = "", guards = "", tail = "") => `${imports}
-export default class extends SubcommandGroup {
-    constructor() { super({ builder: new ChatInputCommandSubcommandGroupBuilder().setDescription("Settings")${extra}, ${guards} }); ${tail} }
-}`;
+const group = defineSubcommandGroup({ builder: new ChatInputCommandSubcommandGroupBuilder().setDescription("Settings")${extra}, ${guards} });
+${tail}
+export default group;`;
 const leafSource = (name = "view", guards = "", methods = "") => `${imports}
-export default class extends Subcommand {
-    constructor() { super({ builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Action"), ${guards} }); }
-    async run(ctx) { ctx.interaction.events?.push("handler"); await ctx.interaction.reply("done"); }
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Action"), ${guards}
+    async run(ctx) { ctx.interaction.events?.push("handler"); await ctx.interaction.reply("done"); },
     ${methods}
-}`;
+});`;
 const manualChild =
     '.addSubcommands(child => child.setName("manual").setDescription("Manual"))';
 const credentials = { applicationId: "123", token: "fake-token" };
@@ -76,34 +74,29 @@ const fixture = async (t: TestContext) => {
     return { root, add, parentFile, groupFile, leafFile };
 };
 
-class Group extends SubcommandGroup {
-    constructor(
-        builder = new ChatInputCommandSubcommandGroupBuilder().setDescription(
-            "Settings",
-        ),
-    ) {
-        super({ builder });
-    }
-}
+const createGroup = (
+    builder = new ChatInputCommandSubcommandGroupBuilder().setDescription(
+        "Settings",
+    ),
+) => defineSubcommandGroup({ builder });
 
 test("group definitions retain a native builder without an executable handler", () => {
     const builder = new ChatInputCommandSubcommandGroupBuilder().setDescription(
         "Settings",
     );
-    const group = new Group(builder);
+    const group = createGroup(builder);
     assert.equal(group.builder, builder);
     assert.equal("run" in group, false);
     assert.deepEqual(group.guards, []);
     assert.ok(Object.isFrozen(group.guards));
-    assert.throws(
-        () =>
-            new Group(
-                new ChatInputCommandSubcommandGroupBuilder()
-                    .setDescription("Settings")
-                    .addSubcommands(child =>
-                        child.setName("manual").setDescription("Manual"),
-                    ),
-            ),
+    assert.throws(() =>
+        createGroup(
+            new ChatInputCommandSubcommandGroupBuilder()
+                .setDescription("Settings")
+                .addSubcommands(child =>
+                    child.setName("manual").setDescription("Manual"),
+                ),
+        ),
     );
     for (const wrong of [
         new ChatInputCommandBuilder(),
@@ -113,7 +106,7 @@ test("group definitions retain a native builder without an executable handler", 
     ]) {
         assert.throws(
             () =>
-                new Group(
+                createGroup(
                     wrong as unknown as ChatInputCommandSubcommandGroupBuilder,
                 ),
             TypeError,
@@ -129,19 +122,16 @@ test("compose preserves native metadata and localizations in a fresh builder eac
             "en-US": "Manage settings",
             fr: "Gerer les parametres",
         });
-    const group = new Group(builder);
-    class Leaf extends Subcommand {
-        constructor(name: string) {
-            super({
-                builder: new ChatInputCommandSubcommandBuilder()
-                    .setName(name)
-                    .setDescription("Action"),
-            });
-        }
-        async run() {}
-    }
-    const view = new Leaf("view");
-    const update = new Leaf("update");
+    const group = createGroup(builder);
+    const createLeaf = (name: string) =>
+        defineSubcommand({
+            builder: new ChatInputCommandSubcommandBuilder()
+                .setName(name)
+                .setDescription("Action"),
+            async run() {},
+        });
+    const view = createLeaf("view");
+    const update = createLeaf("update");
     const children = Object.freeze([view, update]);
     const first = group.compose("settings", children);
     const second = group.compose("settings", children);
@@ -249,7 +239,7 @@ test("categories merge logical groups while direct and grouped leaves retain sep
         "ticket settings view",
     );
     const group = registry.resolveGroup("ticket", "settings");
-    assert.ok(group instanceof SubcommandGroup);
+    assert.equal(typeof group?.compose, "function");
     assert.equal(
         registry.groups.get(CommandRegistry.groupKey("ticket", "settings")),
         group,
@@ -337,7 +327,7 @@ for (const scenario of [
             case "after-super":
                 await add(
                     "[ticket]/{manual}/index.mjs",
-                    groupSource("", "", `this.builder${manualChild};`),
+                    groupSource("", "", `group.builder${manualChild};`),
                 );
 
                 await add("[ticket]/{manual}/view.mjs", leafSource());
@@ -362,7 +352,7 @@ for (const scenario of [
             case "context-menu":
                 await add(
                     "[ticket]/{settings}/inspect.mjs",
-                    `${imports} export default class extends Command { constructor() { super({ builder: new UserContextCommandBuilder().setName("Inspect") }); } async run() {} }`,
+                    `${imports} export default defineCommand({ builder: new UserContextCommandBuilder().setName("Inspect"), async run() {} });`,
                 );
 
                 break;

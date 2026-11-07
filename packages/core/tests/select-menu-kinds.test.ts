@@ -22,10 +22,9 @@ const deny = (description = "Denied") =>
 
 for (const kind of selectKinds) {
     describe(`${kind.name} select menus`, () => {
-        test("listener keeps its receiver, receives resolved data, and logs without selections", async t => {
+        test("listener receives resolved data and logs without selections", async t => {
             const { client, records } = await createTestClient(t);
-            const menu = createMenu(kind, async function (ctx) {
-                assert.equal(this.customId, kind.customId);
+            const menu = createMenu(kind, async ctx => {
                 assert.equal(ctx.client, client);
                 assert.deepEqual(ctx.interaction.values, ["first", "second"]);
 

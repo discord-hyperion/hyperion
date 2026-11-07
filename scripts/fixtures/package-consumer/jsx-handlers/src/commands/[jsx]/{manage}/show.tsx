@@ -1,15 +1,11 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { type CommandContext, Subcommand } from "@hyperion/core";
+import { defineSubcommand } from "@hyperion/core";
 import { Embed, renderEmbed } from "@hyperion/jsx";
-export default class extends Subcommand {
-    constructor() {
-        super({
-            builder: new ChatInputCommandSubcommandBuilder()
-                .setName("show")
-                .setDescription("JSX embed"),
-        });
-    }
-    async run(ctx: CommandContext) {
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("show")
+        .setDescription("JSX embed"),
+    async run(ctx) {
         await ctx.interaction.reply({
             embeds: [
                 renderEmbed(
@@ -19,5 +15,5 @@ export default class extends Subcommand {
                 ),
             ],
         });
-    }
-}
+    },
+});

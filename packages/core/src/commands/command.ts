@@ -224,7 +224,7 @@ export const defineCommand = <
         options.autocomplete !== undefined &&
         typeof options.autocomplete !== "function"
     ) {
-        throw new TypeError("Command autocomplete must be a function.");
+        throw new TypeError("Command autocomplete() must be a function.");
     }
 
     // The options match the inferred definition; TypeScript can't relate the

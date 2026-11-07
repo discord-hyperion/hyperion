@@ -1,9 +1,5 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import {
-    type AutocompleteContext,
-    Command,
-    type CommandContext,
-} from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
 const topics = [
@@ -41,23 +37,18 @@ const topics = [
     },
 ] as const;
 
-export default class TopicCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("topic")
-                .setDescription("Explore a Hyperion topic with autocomplete.")
-                .addStringOptions(option =>
-                    option
-                        .setName("query")
-                        .setDescription("Search for a topic")
-                        .setRequired(true)
-                        .setAutocomplete(true),
-                ),
-        });
-    }
-
-    async autocomplete(ctx: AutocompleteContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("topic")
+        .setDescription("Explore a Hyperion topic with autocomplete.")
+        .addStringOptions(option =>
+            option
+                .setName("query")
+                .setDescription("Search for a topic")
+                .setRequired(true)
+                .setAutocomplete(true),
+        ),
+    async autocomplete(ctx) {
         const focused = ctx.interaction.options.getFocused();
 
         if (focused.name !== "query") {
@@ -76,9 +67,8 @@ export default class TopicCommand extends Command {
         await ctx.interaction.respond(
             matches.slice(0, 25).map(({ name, value }) => ({ name, value })),
         );
-    }
-
-    async run(ctx: CommandContext) {
+    },
+    async run(ctx) {
         const query = ctx.interaction.options.getString("query", true);
         const topic = topics.find(topic => topic.value === query);
 
@@ -89,5 +79,5 @@ export default class TopicCommand extends Command {
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

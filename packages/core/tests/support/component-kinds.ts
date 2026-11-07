@@ -32,15 +32,13 @@ export const buttonKind: ComponentKind = {
     property: "buttons",
     Registry: ButtonRegistry,
     source: (id, extra = "") => `
-    import { ButtonHandler } from ${JSON.stringify(componentModule("button"))};
+    import { defineButton } from ${JSON.stringify(componentModule("button"))};
     import { PrimaryButtonBuilder } from ${JSON.stringify(buildersModule)};
-    export default class extends ButtonHandler {
-        constructor() {
-            super({ builder: new PrimaryButtonBuilder()
-                .setCustomId(${JSON.stringify(id)}).setLabel("Click"), ${extra} });
-        }
-        async run() {}
-    }
+    export default defineButton({
+        builder: new PrimaryButtonBuilder()
+                .setCustomId(${JSON.stringify(id)}).setLabel("Click"), ...{ ${extra} },
+        async run() {},
+    })
 `,
     get brokenModules() {
         return {
@@ -61,15 +59,13 @@ export const modalKind: ComponentKind = {
     property: "modals",
     Registry: ModalRegistry,
     source: (id, extra = "") => `
-    import { ModalHandler } from ${JSON.stringify(componentModule("modal"))};
+    import { defineModal } from ${JSON.stringify(componentModule("modal"))};
     import { ModalBuilder, LabelBuilder, TextInputBuilder } from ${JSON.stringify(buildersModule)};
-    export default class extends ModalHandler {
-        constructor() {
-            super({ builder: new ModalBuilder()
-                .setCustomId(${JSON.stringify(id)})${textModalBody}, ${extra} });
-        }
-        async run() {}
-    }
+    export default defineModal({
+        builder: new ModalBuilder()
+                .setCustomId(${JSON.stringify(id)})${textModalBody}, ...{ ${extra} },
+        async run() {},
+    })
 `,
     get brokenModules() {
         return {
@@ -93,15 +89,13 @@ export const selectMenuKind: ComponentKind = {
     property: "selectMenus",
     Registry: SelectMenuRegistry,
     source: (id, extra = "") => `
-    import { SelectMenuHandler } from ${JSON.stringify(componentModule("select-menu"))};
+    import { defineSelectMenu } from ${JSON.stringify(componentModule("select-menu"))};
     import { StringSelectMenuBuilder } from ${JSON.stringify(buildersModule)};
-    export default class extends SelectMenuHandler {
-        constructor() {
-            super({ componentType: ${ComponentType.StringSelect}, builder: new StringSelectMenuBuilder()
-                .setCustomId(${JSON.stringify(id)}).addOptions({ label: "Blue", value: "blue" }), ${extra} });
-        }
-        async run() {}
-    }
+    export default defineSelectMenu({
+        componentType: ${ComponentType.StringSelect}, builder: new StringSelectMenuBuilder()
+                .setCustomId(${JSON.stringify(id)}).addOptions({ label: "Blue", value: "blue" }), ...{ ${extra} },
+        async run() {},
+    })
 `,
     get brokenModules() {
         return {

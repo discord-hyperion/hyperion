@@ -9,10 +9,12 @@ import {
     type Command,
     type CommandContext,
     type CommandRegistry,
+    defineParentCommand,
+    defineSubcommand,
     type GuardProvider,
     ownerOnly,
-    ParentCommand,
-    Subcommand,
+    type ParentCommand,
+    type Subcommand,
 } from "../src/index.ts";
 
 export const subcommandContracts = (
@@ -59,90 +61,68 @@ export const subcommandContracts = (
     // @ts-expect-error Autocomplete requires its own context.
     leaf.autocomplete?.(ctx);
 
-    class Tools extends ParentCommand {
-        constructor() {
-            super({
-                builder: new ChatInputCommandBuilder().setDescription("Tools"),
-                guards: [
-                    ctx => {
-                        ctx satisfies CommandContext;
-                        ctx.interaction.options.getString("query") satisfies
-                            | string
-                            | null;
-                        // @ts-expect-error Parent guards do not receive a context-menu target.
-                        ctx.interaction.targetUser;
+    const Tools = defineParentCommand({
+        builder: new ChatInputCommandBuilder().setDescription("Tools"),
+        guards: [
+            ctx => {
+                ctx satisfies CommandContext;
+                ctx.interaction.options.getString("query") satisfies
+                    | string
+                    | null;
+                // @ts-expect-error Parent guards do not receive a context-menu target.
+                ctx.interaction.targetUser;
 
-                        return ownerOnly;
-                    },
-                ],
-            });
-        }
-    }
+                return ownerOnly;
+            },
+        ],
+    });
 
-    class Search extends Subcommand {
-        constructor() {
-            super({
-                builder: new ChatInputCommandSubcommandBuilder()
-                    .setName("search")
-                    .setDescription("Search"),
-                guards: [
-                    async ctx => {
-                        ctx satisfies CommandContext;
-                        ctx.interaction.options.getString("query") satisfies
-                            | string
-                            | null;
-                        // @ts-expect-error Leaf guards do not receive autocomplete contexts.
-                        ctx.interaction.respond([]);
+    const Search = defineSubcommand({
+        builder: new ChatInputCommandSubcommandBuilder()
+            .setName("search")
+            .setDescription("Search"),
+        guards: [
+            async ctx => {
+                ctx satisfies CommandContext;
+                ctx.interaction.options.getString("query") satisfies
+                    | string
+                    | null;
+                // @ts-expect-error Leaf guards do not receive autocomplete contexts.
+                ctx.interaction.respond([]);
 
-                        return ownerOnly;
-                    },
-                ],
-            });
-        }
-
-        async run(ctx: CommandContext) {
+                return ownerOnly;
+            },
+        ],
+        async run(ctx) {
             await ctx.interaction.reply("Result");
-        }
-
-        async autocomplete(ctx: AutocompleteContext) {
+        },
+        async autocomplete(ctx) {
             ctx.interaction.options.getFocused();
             await ctx.interaction.respond([]);
-        }
-    }
+        },
+    });
 
-    class WrongParent extends ParentCommand {
-        constructor() {
-            super({
-                // @ts-expect-error Parents require a native top-level chat-input builder.
-                builder: new ChatInputCommandSubcommandBuilder(),
-            });
-        }
-    }
+    const WrongParent = defineParentCommand({
+        // @ts-expect-error Parents require a native top-level chat-input builder.
+        builder: new ChatInputCommandSubcommandBuilder(),
+    });
 
-    class ContextMenuParent extends ParentCommand {
-        constructor() {
-            super({
-                // @ts-expect-error Context-menu builders cannot define parents.
-                builder: new UserContextCommandBuilder(),
-            });
-        }
-    }
+    const ContextMenuParent = defineParentCommand({
+        // @ts-expect-error Context-menu builders cannot define parents.
+        builder: new UserContextCommandBuilder(),
+    });
 
-    class TopLevelLeaf extends Subcommand {
-        constructor() {
-            super({
-                // @ts-expect-error Leaves require a native subcommand builder.
-                builder: new ChatInputCommandBuilder(),
-            });
-        }
+    const TopLevelLeaf = defineSubcommand({
+        // @ts-expect-error Leaves require a native subcommand builder.
+        builder: new ChatInputCommandBuilder(),
+        async run(_ctx) {},
+    });
 
-        async run(_ctx: CommandContext) {}
-    }
-
-    class WrongContext extends Search {
+    const WrongContext = defineSubcommand({
+        builder: new ChatInputCommandSubcommandBuilder().setName("wrong"),
         // @ts-expect-error Leaves cannot handle user context-menu command contexts.
-        async run(_ctx: CommandContext<ApplicationCommandType.User>) {}
-    }
+        async run(_ctx: CommandContext<ApplicationCommandType.User>) {},
+    });
 
     return {
         Tools,

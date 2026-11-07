@@ -23,29 +23,32 @@ import { createTempRoot } from "./support/temp-root.ts";
 const entryPoint = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
 const commandSource = (name: string, extra = "", methods = "", guards = "") => `
-    import { Command, Subcommand, defineGuard } from ${JSON.stringify(entryPoint)};
+    import { defineCommand, defineSubcommand, defineGuard } from ${JSON.stringify(entryPoint)};
     import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder, UserContextCommandBuilder } from ${JSON.stringify(builders)};
-    export default class extends Subcommand {
-        constructor() { super({ builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Test subcommand")${extra}, ${guards} }); }
-        async run(ctx) { await ctx.interaction.reply(this.builder.toJSON(false).name); }
+    const command = defineSubcommand({
+        builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Test subcommand")${extra},
+        ...{ ${guards} },
+        async run(ctx) { await ctx.interaction.reply(command.builder.toJSON(false).name); },
         ${methods}
-    }
+    });
+    export default command;
 `;
 
 const standaloneSource = (name: string) =>
     commandSource(name)
-        .replace("extends Subcommand", "extends Command")
+        .replace("command = defineSubcommand(", "command = defineCommand(")
         .replace(
             "builder: new ChatInputCommandSubcommandBuilder()",
             "builder: new ChatInputCommandBuilder()",
         );
 
 const parentSource = (extra = "", guards = "") => `
-    import { ParentCommand, defineGuard } from ${JSON.stringify(entryPoint)};
+    import { defineParentCommand, defineGuard } from ${JSON.stringify(entryPoint)};
     import { ChatInputCommandBuilder } from ${JSON.stringify(builders)};
-    export default class extends ParentCommand {
-        constructor() { super({ builder: new ChatInputCommandBuilder().setDescription("Manage test commands.")${extra}, ${guards} }); }
-    }
+    export default defineParentCommand({
+        builder: new ChatInputCommandBuilder().setDescription("Manage test commands.")${extra},
+        ...{ ${guards} },
+    })
 `;
 
 const fixture = async (t: TestContext) => {

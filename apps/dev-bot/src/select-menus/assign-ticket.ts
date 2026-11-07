@@ -1,8 +1,8 @@
 import {
     defineParams,
+    defineSelectMenu,
     paramOwner,
     type SelectMenuContext,
-    SelectMenuHandler,
 } from "@hyperion/core";
 import { ComponentType, MessageFlags } from "discord.js";
 import { ticketSchema } from "../buttons/close-ticket.ts";
@@ -21,18 +21,11 @@ type AssignTicketSpec = {
 
 export type AssignTicketContext = SelectMenuContext<AssignTicketSpec>;
 
-export default class AssignTicketMenu extends SelectMenuHandler<AssignTicketSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.UserSelect,
-            params: assignTicket,
-            guards: [
-                paramOwner("owner", "Only the ticket's author can assign it."),
-            ],
-        });
-    }
-
-    async run(ctx: AssignTicketContext) {
+export default defineSelectMenu({
+    componentType: ComponentType.UserSelect,
+    params: assignTicket,
+    guards: [paramOwner("owner", "Only the ticket's author can assign it.")],
+    async run(ctx) {
         // Params come from the custom ID; the selection comes from the click.
         const [issues, params] = ctx.params;
         const assignee = ctx.interaction.users.first();
@@ -50,5 +43,5 @@ export default class AssignTicketMenu extends SelectMenuHandler<AssignTicketSpec
             content: `Ticket ${params.ticketId} assigned to ${assignee.username}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

@@ -5,9 +5,9 @@ import {
 } from "@discordjs/builders";
 import {
     defineInput,
+    defineModal,
     defineParams,
     type ModalContext,
-    ModalHandler,
     paramOwner,
 } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
@@ -39,33 +39,26 @@ type RenameTicketSpec = {
 
 export type RenameTicketContext = ModalContext<RenameTicketSpec>;
 
-export default class RenameTicketModal extends ModalHandler<RenameTicketSpec> {
-    constructor() {
-        super({
-            params: renameTicketForm,
-            // The form stays with the handler because `input` reads its text-input IDs.
-            builder: new ModalBuilder()
-                .setCustomId(renameTicketForm.id)
-                .setTitle("Rename ticket")
-                .addLabelComponents(
-                    new LabelBuilder()
-                        .setLabel("New title")
-                        .setTextInputComponent(
-                            new TextInputBuilder()
-                                .setCustomId("title")
-                                .setStyle(TextInputStyle.Short)
-                                .setMaxLength(100),
-                        ),
+export default defineModal({
+    params: renameTicketForm,
+    // The form stays with the handler because `input` reads its text-input IDs.
+    builder: new ModalBuilder()
+        .setCustomId(renameTicketForm.id)
+        .setTitle("Rename ticket")
+        .addLabelComponents(
+            new LabelBuilder()
+                .setLabel("New title")
+                .setTextInputComponent(
+                    new TextInputBuilder()
+                        .setCustomId("title")
+                        .setStyle(TextInputStyle.Short)
+                        .setMaxLength(100),
                 ),
-            input,
-            // The submission is a separate interaction, so ownership is checked again.
-            guards: [
-                paramOwner("owner", "Only the ticket's author can rename it."),
-            ],
-        });
-    }
-
-    async run(ctx: RenameTicketContext) {
+        ),
+    input,
+    // The submission is a separate interaction, so ownership is checked again.
+    guards: [paramOwner("owner", "Only the ticket's author can rename it.")],
+    async run(ctx) {
         const [paramIssues, params] = ctx.params;
         const [inputIssues, value] = ctx.input;
 
@@ -92,5 +85,5 @@ export default class RenameTicketModal extends ModalHandler<RenameTicketSpec> {
             content: `Ticket ${params.ticketId}: ${value.title}`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
