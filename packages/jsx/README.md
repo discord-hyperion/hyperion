@@ -75,15 +75,12 @@ await interaction.reply(
 ## Learn more
 
 The guide walks through each part with examples:
-- [Getting started with JSX](https://github.com/favylicious/discord-hyperion/blob/main/docs/guide/jsx.md)
-- [Embeds and text](https://github.com/favylicious/discord-hyperion/blob/main/docs/guide/jsx/embeds.md)
-- [Buttons and menus](https://github.com/favylicious/discord-hyperion/blob/main/docs/guide/jsx/message-components.md)
-- [Layout messages](https://github.com/favylicious/discord-hyperion/blob/main/docs/guide/jsx/layout-messages.md)
-- [Modals](https://github.com/favylicious/discord-hyperion/blob/main/docs/guide/jsx/modals.md)
+- [Getting started with JSX](https://hyperion-docs-6h7.pages.dev/jsx/)
+- [Embeds and text](https://hyperion-docs-6h7.pages.dev/jsx/embeds/)
+- [Buttons and menus](https://hyperion-docs-6h7.pages.dev/jsx/message-components/)
+- [Layout messages](https://hyperion-docs-6h7.pages.dev/jsx/layout-messages/)
+- [Modals](https://hyperion-docs-6h7.pages.dev/jsx/modals/)
 
 Using `@hyperion/core`? See
-[JSX with Hyperion](https://github.com/favylicious/discord-hyperion/blob/main/docs/guide/jsx-with-hyperion.md)
+[JSX with Hyperion](https://hyperion-docs-6h7.pages.dev/jsx/with-hyperion/)
 for templates, params, and `.tsx` handlers.
-
-For exact props and rules, see the
-[authoring reference](https://github.com/favylicious/discord-hyperion/blob/main/docs/jsx.md).

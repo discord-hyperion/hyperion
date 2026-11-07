@@ -34,12 +34,12 @@ todos.all({ owner: "1234567890" });
 You'll need Node.js 24.17 or newer, then install the driver beside this package:
 
 ```sh
-pnpm add @hyperion/sqlite better-sqlite3
+npm install @hyperion/sqlite better-sqlite3
 ```
 
 better-sqlite3 ships prebuilt binaries for the common platforms, so there's
 nothing to compile. Any [Standard Schema](https://standardschema.dev/) library
 works for rows, such as Valibot or Zod, as long as it validates synchronously.
 
-See the [guide](https://github.com/favylicious/discord-hyperion/blob/main/docs/guide/storing-data.md)
+See the [guide](https://hyperion-docs-6h7.pages.dev/storing-data/)
 for tables, queries, transactions, and migrations.
