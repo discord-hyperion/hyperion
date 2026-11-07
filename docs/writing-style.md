@@ -41,12 +41,12 @@ example, then notes.
 Pick the type from the question the reader arrives with. Most pages are feature
 pages; the others are for questions a feature page answers badly.
 
-| Type            | Reader's question                      | Example                        |
-| --------------- | -------------------------------------- | ------------------------------ |
-| Overview        | "What's here, and where do I start?"   | [README.md](guide/README.md)   |
-| Feature page    | "How does this part of Hyperion work?" | [buttons.md](guide/buttons.md) |
-| How-to          | "How do I get this one thing done?"    | none yet                       |
-| Troubleshooting | "Why am I seeing this error?"          | none yet                       |
+| Type            | Reader's question                      | Example                                                  |
+| --------------- | -------------------------------------- | -------------------------------------------------------- |
+| Overview        | "What's here, and where do I start?"   | [README.md](guide/README.md)                             |
+| Feature page    | "How does this part of Hyperion work?" | [buttons.md](guide/buttons.md)                           |
+| How-to          | "How do I get this one thing done?"    | [persistent-cooldowns.md](guide/persistent-cooldowns.md) |
+| Troubleshooting | "Why am I seeing this error?"          | [troubleshooting.md](guide/troubleshooting.md)           |
 
 **Overview.** One short paragraph on what Hyperion is, then the page list in
 groups, each link with a few words on what it covers. No code.
@@ -56,7 +56,7 @@ groups, each link with a few words on what it covers. No code.
 ("Sending the button", "Changing the button after a click"), not the API's
 structure.
 
-**How-to.** One task with a clear end, such as "Store cooldowns across restarts".
+**How-to.** One task with a clear end, such as "Keeping cooldowns across restarts".
 - Title it with the task, imperative or "-ing" ("Moving a command into a
   group").
 - Intro: at most two sentences saying what you'll have at the end.
@@ -166,6 +166,7 @@ the guide; it doesn't repeat the guide.
 | JSX form authoring                     | [modals.md](guide/jsx/modals.md)                         |
 | Logging                                | [logging.md](guide/logging.md)                           |
 | Storing data, tables, and key-value    | [storing-data.md](guide/storing-data.md)                 |
+| Startup errors and their fixes         | [troubleshooting.md](guide/troubleshooting.md)           |
 
 ## Example rewrite
 

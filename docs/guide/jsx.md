@@ -66,7 +66,10 @@ Arrays, fragments, and conditionals work the way you'd expect. Use `<Br />` for
 a line break, and `{" "}` when you need a space between two elements.
 
 When something's wrong, you get a `JSXRenderError` that points at the exact spot
-in your view. The underlying discord.js error is attached as `cause`. It can
-contain the values you passed in, so be careful about logging it.
+in your view. The underlying discord.js error is attached as `cause`.
+
+> [!WARNING]
+> The `cause` can contain the values you passed in, so be careful about logging
+> it.
 
 The [authoring reference](../jsx.md) has the full rules.

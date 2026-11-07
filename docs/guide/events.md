@@ -85,5 +85,7 @@ working.
 ## Interactions
 
 You _can_ handle `interactionCreate` here, but Hyperion already routes commands,
-buttons, menus, and modals for you. If you add your own, make sure only one
-place responds to each interaction.
+buttons, menus, and modals for you.
+
+> [!WARNING]
+> If you add your own, make sure only one place responds to each interaction.

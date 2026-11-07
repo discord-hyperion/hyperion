@@ -117,8 +117,10 @@ export const guildOnly = defineGuard<InteractionContext>({
 });
 ```
 
-When `onFail()` exists, Hyperion sends nothing itself, so make sure you
-respond. If an earlier guard already replied, check `replied` or `deferred` first.
+> [!WARNING]
+> When `onFail()` exists, Hyperion sends nothing itself, so make sure you
+> respond. If an earlier guard already replied, check `replied` or `deferred`
+> first.
 
 ## Built-in guards
 
