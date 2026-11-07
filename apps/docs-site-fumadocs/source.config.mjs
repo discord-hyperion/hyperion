@@ -22,7 +22,7 @@ export default defineConfig({
             ],
         },
         // Index code blocks too, so identifiers that only appear in examples
-        // (ButtonHandler, ctx.interaction) are searchable.
+        // (defineButton, ctx.interaction) are searchable.
         remarkStructureOptions: {
             types: [
                 "heading",

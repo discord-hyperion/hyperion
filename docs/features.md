@@ -48,7 +48,7 @@ implemented item links a reference doc.
     leak, refresh only entry files, and break constructor identity on deeper
     refreshes.
   - Explore statically inspectable handler metadata instead of executing
-    constructors.
+    handler modules.
 - [ ] Generated API reference (blocked).
   - Publish symbol-level reference pages for `@hyperion/core` and `@hyperion/jsx`
     beside the guide, generated with TypeDoc.

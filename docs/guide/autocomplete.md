@@ -10,31 +10,22 @@ Turn on autocomplete for the option, then add an `autocomplete()` method:
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import {
-    type AutocompleteContext,
-    Command,
-    type CommandContext,
-} from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 
 const topics = ["commands", "buttons", "select-menus", "modals"];
 
-export default class TopicCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("topic")
-                .setDescription("Explore a topic")
-                .addStringOptions(option =>
-                    option
-                        .setName("query")
-                        .setDescription("Search for a topic")
-                        .setRequired(true)
-                        .setAutocomplete(true),
-                ),
-        });
-    }
-
-    async autocomplete(ctx: AutocompleteContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("topic")
+        .setDescription("Explore a topic")
+        .addStringOptions(option =>
+            option
+                .setName("query")
+                .setDescription("Search for a topic")
+                .setRequired(true)
+                .setAutocomplete(true),
+        ),
+    async autocomplete(ctx) {
         const focused = ctx.interaction.options.getFocused();
 
         await ctx.interaction.respond(
@@ -43,17 +34,16 @@ export default class TopicCommand extends Command {
                 .slice(0, 25)
                 .map(topic => ({ name: topic, value: topic })),
         );
-    }
-
-    async run(ctx: CommandContext) {
+    },
+    async run(ctx) {
         const query = ctx.interaction.options.getString("query", true);
         await ctx.interaction.reply(
             topics.includes(query)
                 ? `Selected: ${query}.`
                 : "Choose an available topic.",
         );
-    }
-}
+    },
+});
 ```
 
 One method handles every autocomplete option on the command, so if several

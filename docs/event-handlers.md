@@ -6,7 +6,7 @@ contexts and ordered execution. Client initialization and discovery follow
 
 ## Scope and developer interface
 
-Support typed Discord client events through class-based filesystem handlers.
+Support typed Discord client events through filesystem handlers defined with `defineEvent()`.
 Application event buses, custom Hyperion lifecycle events, automatic file
 watching, generated types, and changes to custom-ID handling are outside this
 initial feature.
@@ -27,29 +27,29 @@ event folders or directly under `events` fail discovery. A missing event directo
 optional, consistent with existing discovery. Declarations, tests, hidden files,
 dependencies, and ordinary index barrels follow existing discovery exclusions.
 
-Each module default-exports a concrete class with a public zero-argument
-constructor. Several definitions may handle the same event.
+Each module default-exports the handler `defineEvent()` returns. Several
+handlers may handle the same event.
 
 ```ts
 // src/events/clientReady/10-startup-message.ts
-import { EventHandler, type EventContext } from "@hyperion/core";
+import { defineEvent } from "@hyperion/core";
 import { Events } from "discord.js";
 
-export default class extends EventHandler<Events.ClientReady> {
-    constructor() {
-        super({ once: true });
-    }
-
-    async run(ctx: EventContext<Events.ClientReady>) {
+export default defineEvent({
+    event: Events.ClientReady,
+    once: true,
+    async run(ctx) {
         const [client] = ctx.args;
         ctx.logger.info({ userId: client.user.id }, "Startup handler running");
-    }
-}
+    },
+});
 ```
 
-Repeated execution is the default; a handler needing no options may omit its
-constructor. The constructor does not repeat the event selected by its folder.
-Definitions are reused for a client; each invocation receives a fresh context.
+Repeated execution is the default. `event` is required and types `ctx.args`; it
+must equal the folder's event, or loading fails with
+`Event handler is for "<event>" but is in the "<folder>" folder.` The folder
+still decides discovery. Handlers are reused for a client; each invocation
+receives a fresh context.
 
 `EventContext<Event>` contains the Hyperion `client`, scoped `logger`, and the
 SDK argument tuple as `args`. Preserve argument order, zero/multiple arguments,

@@ -11,21 +11,16 @@ Put handlers in `src/buttons`:
 ```ts
 // src/buttons/refresh-profile.ts
 import { PrimaryButtonBuilder } from "@discordjs/builders";
-import { type ButtonContext, ButtonHandler } from "@hyperion/core";
+import { defineButton } from "@hyperion/core";
 
-export default class RefreshProfile extends ButtonHandler {
-    constructor() {
-        super({
-            builder: new PrimaryButtonBuilder()
-                .setCustomId("profile.refresh")
-                .setLabel("Refresh profile"),
-        });
-    }
-
-    async run(ctx: ButtonContext) {
+export default defineButton({
+    builder: new PrimaryButtonBuilder()
+        .setCustomId("profile.refresh")
+        .setLabel("Refresh profile"),
+    async run(ctx) {
         await ctx.interaction.update({ content: "Refreshed!" });
-    }
-}
+    },
+});
 ```
 
 The builder is the handler's **template**: the button your commands send copies
@@ -38,9 +33,10 @@ exactly. The handler takes these options:
 | `customId` | The custom ID to answer, when you'd rather not keep a template.                        |
 | `params`   | Data in the custom ID instead of a fixed one. See [data in custom IDs](custom-ids.md). |
 | `guards`   | Checks before `run()`. See [guards](guards.md).                                        |
+| `run`      | Runs on each click.                                                                    |
 
-Give the custom ID in one place only: a handler with both `builder` and
-`customId` won't load. Link and premium buttons never reach your bot, so they
+Give the custom ID in one place only: TypeScript rejects a handler with both
+`builder` and `customId`. Link and premium buttons never reach your bot, so they
 can't be templates.
 
 ## Sending the button
@@ -68,13 +64,23 @@ handler a `customId`; the handler doesn't care what the button looks like.
 ## Changing the button after a click
 
 Handlers are shared by everyone, so build a fresh copy rather than editing the
-template:
+template. A handler can refer to itself through its own constant:
 
 ```ts fragment
-const button = ctx.client.buttons.build(this.customId).setLabel("Refreshed");
-await ctx.interaction.update({
-    components: [new ActionRowBuilder().addComponents(button)],
+const refresh = defineButton({
+    builder: refreshButton,
+    async run(ctx) {
+        const button = ctx.client.buttons
+            .build(refresh.customId)
+            .setLabel("Refreshed");
+
+        await ctx.interaction.update({
+            components: [new ActionRowBuilder().addComponents(button)],
+        });
+    },
 });
+
+export default refresh;
 ```
 
 ## Many buttons, one handler
@@ -89,7 +95,7 @@ A command's guards don't carry over to the buttons it sends, so protect the
 button itself:
 
 ```ts fragment
-super({ builder: refreshButton, guards: [ownerOnly] });
+defineButton({ builder: refreshButton, guards: [ownerOnly], async run() {} });
 ```
 
 For what happens when a click fails, see [responding](responding.md).

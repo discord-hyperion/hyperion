@@ -46,19 +46,15 @@ leaves across multiple folders. Put this in `(support)/[ticket]/index.ts`:
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { ParentCommand, ownerOnly } from "@hyperion/core";
+import { defineParentCommand, ownerOnly } from "@hyperion/core";
 import { InteractionContextType } from "discord.js";
 
-export default class Ticket extends ParentCommand {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setDescription("Manage support tickets.")
-                .setContexts(InteractionContextType.Guild),
-            guards: [ownerOnly],
-        });
-    }
-}
+export default defineParentCommand({
+    builder: new ChatInputCommandBuilder()
+        .setDescription("Manage support tickets.")
+        .setContexts(InteractionContextType.Guild),
+    guards: [ownerOnly],
+});
 ```
 
 The folder supplies `ticket`; an explicit builder name must match it. Parent
@@ -75,30 +71,22 @@ For example, put this in `(support)/[ticket]/close.ts`:
 
 ```ts
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { type CommandContext, Subcommand } from "@hyperion/core";
+import { defineSubcommand } from "@hyperion/core";
 
-export default class CloseTicket extends Subcommand {
-    constructor() {
-        super({
-            builder: new ChatInputCommandSubcommandBuilder()
-                .setName("close")
-                .setDescription("Close a ticket.")
-                .addStringOptions(option =>
-                    option
-                        .setName("id")
-                        .setDescription("Ticket ID")
-                        .setRequired(true),
-                ),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("close")
+        .setDescription("Close a ticket.")
+        .addStringOptions(option =>
+            option.setName("id").setDescription("Ticket ID").setRequired(true),
+        ),
+    async run(ctx) {
         await ctx.interaction.reply({
             content: `Selected ticket: ${ctx.interaction.options.getString("id", true)}`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 This defines `/ticket close id:123`. Hyperion combines siblings into the parent's
@@ -120,8 +108,9 @@ Failures preserve the previously loaded registry. Context menus may still share 
 parent's name because their command type differs.
 
 Top-level-only settings belong to `ParentCommand`; the native subcommand builder
-does not expose those methods. Ordinary `Command` classes inside `[parent]` and
-standalone `Subcommand` classes are rejected rather than converted implicitly.
+does not expose those methods. A `defineCommand()` handler inside `[parent]` and a
+standalone `defineSubcommand()` handler are rejected rather than converted
+implicitly.
 Failed loads preserve both the executable-handler and parent-definition collections.
 SDK validation checks the complete composed parent before REST, including the
 subcommand count. Temporary builder children are removed even after failure, so

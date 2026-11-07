@@ -2,10 +2,9 @@
 
 For control and handler terminology, see the [component glossary](GLOSSARY.md#components).
 
-Hyperion loads default-exported `SelectMenuHandler` subclasses from
+Hyperion loads the handlers `defineSelectMenu()` returns, default-exported from
 `<root>/src/select-menus`, recursively. Missing directories are optional. Each
-handler needs a zero-argument constructor, a unique ID, its `componentType`, and
-`run(ctx)`. It may also offer an optional [template](GLOSSARY.md#components)
+handler needs a unique ID, its `componentType`, and `run(ctx)`. It may also offer an optional [template](GLOSSARY.md#components)
 builder of the same select type. A handler gets its ID from exactly one source: `customId`, a template whose
 custom ID becomes the handler's, or `params`, whose route the optional template
 must carry as its custom ID. Passing `customId` beside a template is a type error
@@ -33,30 +32,25 @@ Every build leaves the shared template unchanged.
 
 ```ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseColour extends SelectMenuHandler {
-    constructor() {
-        super({
-            componentType: ComponentType.StringSelect,
-            builder: new StringSelectMenuBuilder()
-                .setCustomId("colour.choose")
-                .setPlaceholder("Choose a colour")
-                .addOptions(
-                    { label: "Blue", value: "blue" },
-                    { label: "Green", value: "green" },
-                ),
-        });
-    }
-
-    async run(ctx: SelectMenuContext) {
+export default defineSelectMenu({
+    componentType: ComponentType.StringSelect,
+    builder: new StringSelectMenuBuilder()
+        .setCustomId("colour.choose")
+        .setPlaceholder("Choose a colour")
+        .addOptions(
+            { label: "Blue", value: "blue" },
+            { label: "Green", value: "green" },
+        ),
+    async run(ctx) {
         await ctx.interaction.update({
             content: `You chose ${ctx.interaction.values[0]}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 `ctx.interaction` is a Discord.js `StringSelectMenuInteraction`, so `values` and
@@ -65,64 +59,54 @@ selected values in that array. `componentType` is always declared, and a templat
 must match it. Templates are shared: callers get copies through `build()`, so
 never mutate the template itself.
 
-## Type arguments
+## Types
 
-`SelectMenuHandler` and `SelectMenuContext` take one object type argument with
-optional keys, named like the constructor options:
+`defineSelectMenu()` infers everything from its options, so a handler takes no
+type argument:
 
-| Key             | Type                         | Default                      |
-| --------------- | ---------------------------- | ---------------------------- |
-| `componentType` | a select `ComponentType`     | `ComponentType.StringSelect` |
-| `params`        | `typeof` a params definition | no `ctx.params`              |
-| `input`         | `typeof` an input definition | no `ctx.input`               |
+| Option          | What it types                                                         |
+| --------------- | --------------------------------------------------------------------- |
+| `componentType` | the interaction and template, for that select type                    |
+| `params`        | `ctx.params`; without it there is none                                |
+| `input`         | `ctx.input`, inline or from `defineInput()`; without it there is none |
 
-With no type argument, the handler is a string select without params or input.
-Name the object once with a type alias and pass it to both the handler and its
-context. Unknown keys are type errors, so a misspelled `inptu` fails to compile
-instead of meaning "no input". An input whose resolver expects another select
-type or other params is also a type error. See the
-[type-argument decision](adr/0004-component-handlers-take-one-object-type-argument.md).
+`SelectMenuContext` keeps one object type argument with the same optional keys,
+for helpers written outside a handler. Unknown keys there are type errors, so a
+misspelled `inptu` fails to compile instead of meaning "no input". An input
+whose resolver expects another select type or other params is also a type
+error. See [ADR 0008](adr/0008-handlers-are-defined-with-functions.md).
 
 ## Define a user handler
 
-Set `componentType` in the type argument and pass the same value to the
-constructor. This pairs a `UserSelectMenuBuilder` template with a Discord.js `UserSelectMenuInteraction`, including
+Set `componentType` to the select type. This pairs a `UserSelectMenuBuilder` template with a Discord.js `UserSelectMenuInteraction`, including
 resolved `.users` and `.members` collections alongside the selected IDs in
 `.values`. Member data depends on guild context; do not assume every selected
 user has a cached guild member.
 
 ```ts
 import { UserSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-type ChooseUserSpec = { componentType: ComponentType.UserSelect };
-
-export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.UserSelect,
-            builder: new UserSelectMenuBuilder()
-                .setCustomId("user.choose")
-                .setPlaceholder("Choose a user")
-                .setMinValues(1)
-                .setMaxValues(1),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseUserSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.UserSelect,
+    builder: new UserSelectMenuBuilder()
+        .setCustomId("user.choose")
+        .setPlaceholder("Choose a user")
+        .setMinValues(1)
+        .setMaxValues(1),
+    async run(ctx) {
         const names = ctx.interaction.users.map(user => user.username);
 
         await ctx.interaction.update({
             content: `Selected: ${names.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 Discord supplies the user options; do not call `addOptions()` on a user builder.
-String selects need no type argument.
 All supported types share `client.selectMenus` and must have unique IDs within it. The
 registry returns a union of typed handlers; narrow `menu.componentType` before
 accessing type-specific template methods. Dispatch checks the ID and component
@@ -138,32 +122,25 @@ depending on guild cache state; `.name` is available on either. Narrow with
 
 ```ts
 import { RoleSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-type ChooseRoleSpec = { componentType: ComponentType.RoleSelect };
-
-export default class ChooseRole extends SelectMenuHandler<ChooseRoleSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.RoleSelect,
-            builder: new RoleSelectMenuBuilder()
-                .setCustomId("role.choose")
-                .setPlaceholder("Choose a role")
-                .setMinValues(1)
-                .setMaxValues(1),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseRoleSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.RoleSelect,
+    builder: new RoleSelectMenuBuilder()
+        .setCustomId("role.choose")
+        .setPlaceholder("Choose a role")
+        .setMinValues(1)
+        .setMaxValues(1),
+    async run(ctx) {
         const names = ctx.interaction.roles.map(role => role.name);
 
         await ctx.interaction.update({
             content: `Selected roles: ${names.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 Discord supplies the server's role options, so role builders do not use
@@ -181,24 +158,17 @@ the selection and guild data; a role selection does not have a user entry.
 
 ```ts
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-type ChooseMentionableSpec = { componentType: ComponentType.MentionableSelect };
-
-export default class ChooseMentionable extends SelectMenuHandler<ChooseMentionableSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.MentionableSelect,
-            builder: new MentionableSelectMenuBuilder()
-                .setCustomId("mentionable.choose")
-                .setPlaceholder("Choose users or roles")
-                .setMinValues(0)
-                .setMaxValues(5),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseMentionableSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.MentionableSelect,
+    builder: new MentionableSelectMenuBuilder()
+        .setCustomId("mentionable.choose")
+        .setPlaceholder("Choose users or roles")
+        .setMinValues(0)
+        .setMaxValues(5),
+    async run(ctx) {
         const { values, users, roles } = ctx.interaction;
         const names = values.map(
             id => users.get(id)?.username ?? roles.get(id)?.name ?? id,
@@ -208,8 +178,8 @@ export default class ChooseMentionable extends SelectMenuHandler<ChooseMentionab
             content: `Selected: ${names.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 Iterating `.values` preserves the selected order when users and roles are mixed.
@@ -227,25 +197,18 @@ channel type before using cache-specific methods.
 
 ```ts
 import { ChannelSelectMenuBuilder } from "@discordjs/builders";
-import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { ChannelType, ComponentType } from "discord.js";
 
-type ChooseChannelSpec = { componentType: ComponentType.ChannelSelect };
-
-export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.ChannelSelect,
-            builder: new ChannelSelectMenuBuilder()
-                .setCustomId("channel.choose")
-                .setPlaceholder("Choose text or voice channels")
-                .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
-                .setMinValues(0)
-                .setMaxValues(5),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseChannelSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.ChannelSelect,
+    builder: new ChannelSelectMenuBuilder()
+        .setCustomId("channel.choose")
+        .setPlaceholder("Choose text or voice channels")
+        .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
+        .setMinValues(0)
+        .setMaxValues(5),
+    async run(ctx) {
         const names = ctx.interaction.values.map(id => {
             const channel = ctx.interaction.channels.get(id);
             return channel && "name" in channel ? (channel.name ?? id) : id;
@@ -255,8 +218,8 @@ export default class ChooseChannel extends SelectMenuHandler<ChooseChannelSpec> 
             content: `Selected channels: ${names.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 Discord supplies the channel options; do not call `addOptions()`. Use
@@ -304,28 +267,18 @@ export const assignTicket = defineParams({
     schema: v.object({ ticketId: v.string(), owner: v.string() }),
 });
 
-type AssignTicketSpec = {
-    componentType: ComponentType.UserSelect;
-    params: typeof assignTicket;
-};
-
-export default class AssignTicket extends SelectMenuHandler<AssignTicketSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.UserSelect,
-            params: assignTicket,
-            builder: new UserSelectMenuBuilder()
-                .setCustomId(assignTicket.id)
-                .setPlaceholder("Assign to…"),
-            guards: [paramOwner("owner")],
-        });
-    }
-
-    async run(ctx: SelectMenuContext<AssignTicketSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.UserSelect,
+    params: assignTicket,
+    builder: new UserSelectMenuBuilder()
+        .setCustomId(assignTicket.id)
+        .setPlaceholder("Assign to…"),
+    guards: [paramOwner("owner")],
+    async run(ctx) {
         const [issues, params] = ctx.params; // From the custom ID.
         const assignee = ctx.interaction.users.first(); // From the click.
-    }
-}
+    },
+});
 
 // In a command: ctx.client.selectMenus.build(assignTicket, { ticketId, owner })
 ```
@@ -346,11 +299,7 @@ modals:
 
 ```ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import {
-    defineInput,
-    type SelectMenuContext,
-    SelectMenuHandler,
-} from "@hyperion/core";
+import { defineSelectMenu, defineInput } from "@hyperion/core";
 import { ComponentType, MessageFlags } from "discord.js";
 import * as v from "valibot";
 
@@ -358,24 +307,17 @@ const input = defineInput({
     schema: v.pipe(v.array(v.picklist(["blue", "green", "red"])), v.length(1)),
 });
 
-type ChooseColourSpec = { input: typeof input };
-
-export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.StringSelect,
-            builder: new StringSelectMenuBuilder()
-                .setCustomId("colour.choose")
-                .addOptions(
-                    { label: "Blue", value: "blue" },
-                    { label: "Green", value: "green" },
-                    { label: "Red", value: "red" },
-                ),
-            input,
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseColourSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.StringSelect,
+    builder: new StringSelectMenuBuilder()
+        .setCustomId("colour.choose")
+        .addOptions(
+            { label: "Blue", value: "blue" },
+            { label: "Green", value: "green" },
+            { label: "Red", value: "red" },
+        ),
+    input,
+    async run(ctx) {
         const [issues, colours] = ctx.input;
 
         if (issues) {
@@ -388,8 +330,8 @@ export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
         }
 
         await ctx.interaction.update({ content: `You chose ${colours[0]}.` });
-    }
-}
+    },
+});
 ```
 
 - The schema receives a copy of `interaction.values`: a `string[]` of the picked

@@ -12,32 +12,23 @@ autocomplete on each string, integer, or number option that needs suggestions.
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import {
-    type AutocompleteContext,
-    Command,
-    type CommandContext,
-} from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
 const topics = ["commands", "buttons", "select-menus", "modals"];
 
-export default class TopicCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("topic")
-                .setDescription("Explore a topic")
-                .addStringOptions(option =>
-                    option
-                        .setName("query")
-                        .setDescription("Search for a topic")
-                        .setRequired(true)
-                        .setAutocomplete(true),
-                ),
-        });
-    }
-
-    async autocomplete(ctx: AutocompleteContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("topic")
+        .setDescription("Explore a topic")
+        .addStringOptions(option =>
+            option
+                .setName("query")
+                .setDescription("Search for a topic")
+                .setRequired(true)
+                .setAutocomplete(true),
+        ),
+    async autocomplete(ctx) {
         const focused = ctx.interaction.options.getFocused();
 
         if (focused.name !== "query") {
@@ -51,9 +42,8 @@ export default class TopicCommand extends Command {
                 .slice(0, 25)
                 .map(topic => ({ name: topic, value: topic })),
         );
-    }
-
-    async run(ctx: CommandContext) {
+    },
+    async run(ctx) {
         const query = ctx.interaction.options.getString("query", true);
 
         await ctx.interaction.reply({
@@ -63,8 +53,8 @@ export default class TopicCommand extends Command {
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 The installed discord.js v15 API returns the focused option object directly

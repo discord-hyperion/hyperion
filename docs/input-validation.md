@@ -46,8 +46,8 @@ public responses manage acknowledgment themselves.
 `defer: "update"` calls `deferUpdate()` instead, for handlers that finish by
 editing the message the interaction came from. Select menus and modals accept
 it. A modal not opened from a message component has no message to update, so
-the deferral throws and reports the `input` stage. Commands reject it in their
-constructor, and `Command`/`Subcommand` reject it as a type error.
+the deferral throws and reports the `input` stage. Commands reject it when
+defined, and `defineCommand()`/`defineSubcommand()` reject it as a type error.
 
 ## Handler results and failures
 
@@ -70,26 +70,22 @@ validation or resolution later fails.
 
 ## Definition types
 
-Use `defineInput` to infer resolver arguments from the schema and handler values
-from the resolver return type. The helper does not run validation or resolution.
-Pass the complete definition as the single generic on `Subcommand`, `Command`,
-and `CommandContext`:
+`defineCommand()` and `defineSubcommand()` infer resolver arguments from the
+schema and handler values from the resolver's return type, whether `input` is
+written inline or comes from `defineInput()`. Neither runs validation or
+resolution.
 
 ```ts fragment
-const input = defineInput({
-    schema: getTodoSchema,
-    defer: true,
-    resolve: async ({ id }) => ({
-        todo: await fakeApi.getTodo(id),
-    }),
-});
-
-class GetTodo extends Subcommand<typeof input> {
-    constructor() {
-        super({ builder: todoBuilder, input });
-    }
-
-    async run(ctx: CommandContext<typeof input>) {
+export default defineSubcommand({
+    builder: todoBuilder,
+    input: {
+        schema: getTodoSchema,
+        defer: true,
+        resolve: async ({ id }) => ({
+            todo: await fakeApi.getTodo(id),
+        }),
+    },
+    async run(ctx) {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.editReply({
@@ -104,33 +100,25 @@ class GetTodo extends Subcommand<typeof input> {
         }
 
         await ctx.interaction.editReply(value.todo.name);
-    }
-}
+    },
+});
 ```
 
-Import `defineInput`, `Subcommand`, and `CommandContext` from Hyperion. Here
-`getTodoSchema` validates an object containing `id`, `todoBuilder` declares the
+Here `getTodoSchema` validates an object containing `id`, `todoBuilder` declares the
 matching string option, and `fakeApi.getTodo` returns `Todo | null`. The inferred
 handler value is `{ todo: Todo | null }` without a separate result type. A
 resolver may return multiple fields or provide defaults in the same way.
 
-Standalone chat-input definitions use `Command<typeof input>` with the same
-`CommandContext<typeof input>`. Without a resolver, `defineInput({ schema })`
-preserves the schema's output type, including defaults and transformations.
+`defineCommand()` works the same way. Without a resolver, the input preserves
+the schema's output type, including defaults and transformations.
 Resolver promises are awaited; schemas deliberately producing promises retain
 those values when no resolver is configured.
 
-Schema-free commands and contexts retain their existing generic defaults. User
-and message context-menu commands still use `Command<ApplicationCommandType.User>`
-and `CommandContext<ApplicationCommandType.User>`, or the corresponding message
-type. Their builders and targets stay typed, and they cannot configure input.
-The input-definition shorthand always describes a chat-input command.
-
-The schema/result generic combination is replaced by the complete input
-definition. `defineInput` avoids repeating schema output and resolver return
-types, while classes still need an explicit `run(ctx: CommandContext<typeof input>)`
-annotation because TypeScript does not infer overriding method parameters from
-the base class. No class factory or `CommandContextFor` helper is introduced.
+`defineInput()` stays for input shared between handlers: it infers the same
+types once, and each handler passes it as `input`. Helpers outside a handler
+name the context as `CommandContext<typeof input>`; schema-free commands use
+`CommandContext`, and context menus `CommandContext<ApplicationCommandType.User>`
+or the message type. Context-menu commands cannot configure input.
 
 ## Extraction and shared definitions
 
@@ -142,17 +130,15 @@ the base class. No class factory or `CommandContextFor` helper is introduced.
 - Extract only the selected executable command or subcommand's options. The whole
   schema output reaches the resolver once, even when some options were omitted.
 - Definitions and schemas are shared; invocation input and contexts are fresh.
-  Constructors copy/freeze the input configuration without freezing application
-  schema objects or executing validation and resolution.
+  Define functions copy/freeze the input configuration without freezing
+  application schema objects or executing validation and resolution.
 - Discovery and deployment never execute schemas or resolvers.
 
 ## Modals and select menus
 
-Modal and select-menu handlers also accept `input`, with the same `defineInput`
-helper. Pass it in the handler's object type argument:
-`ModalHandler<{ input: typeof input }>` with `ModalContext<{ input: typeof input }>`,
-or `SelectMenuHandler<{ input: typeof input }>` with the matching
-`SelectMenuContext`. Their pipeline adds custom-ID params first:
+Modal and select-menu handlers also accept `input`, inline or from
+`defineInput()`; `defineModal()` and `defineSelectMenu()` infer the context.
+Their pipeline adds custom-ID params first:
 `params → guards → optional deferral → extract → schema → resolve → handler`.
 
 | Handler     | The schema receives                                                      |
@@ -160,9 +146,10 @@ or `SelectMenuHandler<{ input: typeof input }>` with the matching
 | Modal       | an object keyed by modal-control custom ID                               |
 | Select menu | a copy of `interaction.values`: picked values, or IDs for entity selects |
 
-When a resolver uses context, annotate its second parameter (`ctx: ModalContext`
-or `ctx: SelectMenuContext<…>`); schema values and resolver results remain
-inferred. Unannotated resolver context defaults to the chat-input command
-context for compatibility. See
+Inline input in a define function types the resolver's context from the
+handler, with no annotation. Input written with `defineInput()` outside a
+handler needs its second parameter annotated (`ctx: ModalContext` or
+`ctx: SelectMenuContext<…>`); unannotated, it defaults to the chat-input command
+context. See
 [modal input validation](modal-input-validation.md) and
 [select menus](select-menus.md#validate-the-selection).

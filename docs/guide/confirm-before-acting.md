@@ -25,20 +25,13 @@ and a [guard](guards.md) to check the clicker.
    people see, and `paramOwner("owner")` turns everyone else away:
 
    ```ts fragment
-   type DeleteTodoSpec = { params: typeof deleteTodo };
-
-   export default class DeleteTodo extends ButtonHandler<DeleteTodoSpec> {
-       constructor() {
-           super({
-               params: deleteTodo,
-               builder: new DangerButtonBuilder()
-                   .setCustomId(deleteTodo.id)
-                   .setLabel("Delete"),
-               guards: [paramOwner("owner", "Only you can delete your todo.")],
-           });
-       }
-
-       async run(ctx: ButtonContext<DeleteTodoSpec>) {
+   export default defineButton({
+       params: deleteTodo,
+       builder: new DangerButtonBuilder()
+           .setCustomId(deleteTodo.id)
+           .setLabel("Delete"),
+       guards: [paramOwner("owner", "Only you can delete your todo.")],
+       async run(ctx) {
            const [issues, params] = ctx.params;
 
            if (issues) {
@@ -56,8 +49,8 @@ and a [guard](guards.md) to check the clicker.
                content: deleted ? "Deleted." : "That todo was already gone.",
                components: [],
            });
-       }
-   }
+       },
+   });
    ```
 
    The handler deletes by ID only after the guard has checked the owner. If

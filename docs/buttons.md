@@ -13,8 +13,8 @@ during `HyperionClient.create()`, even when application-command registration is
 not configured. A missing folder is skipped. Buttons do not require deployment
 to Discord: send them as components of a message.
 
-Each module default-exports a `ButtonHandler` subclass with a public, zero-argument
-constructor. As with commands, barrels, declarations, test files, hidden entries,
+Each module default-exports the handler `defineButton()` returns. As with
+commands, barrels, declarations, test files, hidden entries,
 and `node_modules` are skipped. Duplicate custom IDs, invalid templates, and invalid
 handlers fail initialization with their source file. All command and button
 modules load before application commands are deployed.
@@ -50,18 +50,13 @@ templates.
 
 ```ts
 import { PrimaryButtonBuilder } from "@discordjs/builders";
-import { ButtonHandler, type ButtonContext } from "@hyperion/core";
+import { defineButton } from "@hyperion/core";
 
-export default class RefreshButton extends ButtonHandler {
-    constructor() {
-        super({
-            builder: new PrimaryButtonBuilder()
-                .setCustomId("profile.refresh")
-                .setLabel("Refresh profile"),
-        });
-    }
-
-    async run(ctx: ButtonContext) {
+export default defineButton({
+    builder: new PrimaryButtonBuilder()
+        .setCustomId("profile.refresh")
+        .setLabel("Refresh profile"),
+    async run(ctx) {
         await ctx.interaction.deferUpdate();
         const user = await ctx.client.users.fetch(ctx.interaction.user.id, {
             force: true,
@@ -70,8 +65,8 @@ export default class RefreshButton extends ButtonHandler {
             content: `Profile refreshed: ${user.username}`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 Handlers are stored in `client.buttons`, a Discord `Collection` keyed by exact
@@ -103,19 +98,12 @@ export const todoDone = defineParams({
     schema: v.object({ owner: v.string(), todoId: v.string() }),
 });
 
-type TodoDoneSpec = { params: typeof todoDone };
-
-export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
-    constructor() {
-        super({
-            params: todoDone,
-            builder: new PrimaryButtonBuilder()
-                .setCustomId(todoDone.id)
-                .setLabel("Done"),
-        });
-    }
-
-    async run(ctx: ButtonContext<TodoDoneSpec>) {
+export default defineButton({
+    params: todoDone,
+    builder: new PrimaryButtonBuilder()
+        .setCustomId(todoDone.id)
+        .setLabel("Done"),
+    async run(ctx) {
         const [issues, params] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({
@@ -126,8 +114,8 @@ export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
         }
 
         await markDone(params.todoId);
-    }
-}
+    },
+});
 
 // In a command: ctx.client.buttons.build(todoDone, { owner, todoId })
 ```
@@ -178,7 +166,17 @@ local variables, and change labels, styles, or disabled state on a copy from
 `build()`, which never alters the template:
 
 ```ts fragment
-const builder = ctx.client.buttons.build(this.customId).setLabel("Updated");
+const refresh = defineButton({
+    builder,
+    run: async ctx => {
+        const copy = ctx.client.buttons
+            .build(refresh.customId)
+            .setLabel("Updated");
+        await ctx.interaction.update({
+            components: [new ActionRowBuilder().addComponents(copy)],
+        });
+    },
+});
 ```
 
 Handlers do not receive command-local closure state. Store persistent

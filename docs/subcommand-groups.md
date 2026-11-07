@@ -6,24 +6,19 @@ Terms are defined in the [glossary](GLOSSARY.md#commands).
 ## Define a group
 
 Every group requires an explicit definition at `[parent]/{group}/index.ts`.
-The module default-exports a `SubcommandGroup` subclass with a native
+The module default-exports what `defineSubcommandGroup()` returns, with a native
 `ChatInputCommandSubcommandGroupBuilder`, a meaningful description, optional
-localizations, and optional shared guards. It has no `run()` method.
+localizations, and optional shared guards. It has no `run()`.
 
 ```ts
 import { ChatInputCommandSubcommandGroupBuilder } from "@discordjs/builders";
-import { SubcommandGroup } from "@hyperion/core";
+import { defineSubcommandGroup } from "@hyperion/core";
 
-export default class Settings extends SubcommandGroup {
-    constructor() {
-        super({
-            builder:
-                new ChatInputCommandSubcommandGroupBuilder().setDescription(
-                    "Configure ticket routing and notifications",
-                ),
-        });
-    }
-}
+export default defineSubcommandGroup({
+    builder: new ChatInputCommandSubcommandGroupBuilder().setDescription(
+        "Configure ticket routing and notifications",
+    ),
+});
 ```
 
 The folder supplies the default group name. Group metadata is explicit rather

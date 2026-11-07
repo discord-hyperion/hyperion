@@ -34,27 +34,22 @@ too; they're just for organising.
 
 ## Your first command
 
-Each file default-exports one class. A command gets a builder from
-`@discordjs/builders` and a `run()` method:
+Each file default-exports one handler, made with a `define…()` function. A
+command gets a builder from `@discordjs/builders` and a `run()` function:
 
 ```ts
 // src/commands/ping.ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 
-export default class PingCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("ping")
-                .setDescription("Check whether the bot is responding."),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("ping")
+        .setDescription("Check whether the bot is responding."),
+    async run(ctx) {
         await ctx.interaction.reply("Pong!");
-    }
-}
+    },
+});
 ```
 
 `ctx.interaction` is the regular discord.js interaction, so you reply the way

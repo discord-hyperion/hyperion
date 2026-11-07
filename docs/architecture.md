@@ -56,8 +56,11 @@ The root defaults to the working directory and accepts a path or file URL.
 
 Scan recursively with `node:fs/promises`. Skip declarations, test modules, hidden
 entries, and `node_modules`. Skip index barrels except direct parent/group definitions
-described in [command paths](command-paths.md). Modules default-export concrete
-handler subclasses with public, zero-argument constructors.
+described in [command paths](command-paths.md). Each module default-exports the
+handler its folder's define function returns (`defineCommand()`,
+`defineButton()`, and so on; see [ADR 0008](adr/0008-handlers-are-defined-with-functions.md)).
+The loader recognises it with `instanceof` against the class behind that
+function; anything else fails with `Expected a default export from define…().`
 
 Missing handler folders are optional; other filesystem errors propagate. Stage
 definitions before replacing registries so failures preserve loaded state.

@@ -15,9 +15,9 @@ resolution through the existing input pipeline.
 ## Input contract
 
 Use the existing [typed command input](input-validation.md) contract for modal
-submissions with `defineInput({ schema, defer, resolve })`, a grouped `input`
-configuration, `ModalHandler<{ input: typeof input }>`, and `ModalContext<{ input: typeof input }>`. Preserve
-the readonly `[issues, value]` handler contract and existing handlers without
+submissions: a grouped `input` configuration (`schema`, `defer`, `resolve`),
+inline in `defineModal()` or from `defineInput()`, with `ModalContext<{ input:
+typeof input }>` naming the context for helpers. Preserve the readonly `[issues, value]` handler contract and existing handlers without
 input configuration.
 
 Extract every [modal control](GLOSSARY.md) in the submission. Each control's
@@ -76,21 +76,28 @@ Validate builder/configuration structure without executing schemas or resolvers;
 actual submission values are validated at invocation time.
 
 Retain one `defineInput` helper without a `.modal()` method or curried call.
-Modal resolvers that use invocation context annotate their second parameter as
-`ctx: ModalContext`. Infer the first parameter from schema output and handler
-input from resolver output. Existing command helper calls remain compatible;
-definitions without resolvers need no context annotation.
+Inline in `defineModal()`, a resolver's context is the modal's, with no
+annotation; the first parameter comes from schema output and handler input from
+resolver output. Input written with `defineInput()` outside a handler annotates
+the resolver's context as `ctx: ModalContext`.
 
 ```ts fragment
-const input = defineInput({
-    schema,
-    defer: true,
-    resolve: async (values, ctx: ModalContext) => ({
-        todo: await fakeApi.createTodo({
-            ...values,
-            ownerId: ctx.interaction.user.id,
+export default defineModal({
+    builder: todoForm,
+    input: {
+        schema,
+        defer: true,
+        resolve: async (values, ctx) => ({
+            todo: await fakeApi.createTodo({
+                ...values,
+                ownerId: ctx.interaction.user.id,
+            }),
         }),
-    }),
+    },
+    async run(ctx) {
+        const [issues, value] = ctx.input;
+        // …
+    },
 });
 ```
 
@@ -114,7 +121,7 @@ those forms until it accepts the new keys.
 ## Complete handler example
 
 ```tsx fragment
-import { defineInput, ModalHandler, type ModalContext } from "@hyperion/core";
+import { defineModal, defineInput } from "@hyperion/core";
 import { renderModal } from "@hyperion/jsx";
 import * as v from "valibot";
 import { TodoForm } from "../views/todo-form.tsx";
@@ -127,17 +134,10 @@ const input = defineInput({
     defer: true,
 });
 
-type TodoSpec = { input: typeof input };
-
-export default class extends ModalHandler<TodoSpec> {
-    constructor() {
-        super({
-            builder: renderModal(<TodoForm />),
-            input,
-        });
-    }
-
-    async run(ctx: ModalContext<TodoSpec>) {
+export default defineModal({
+    builder: renderModal(<TodoForm />),
+    input,
+    async run(ctx) {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.editReply({
@@ -151,8 +151,8 @@ export default class extends ModalHandler<TodoSpec> {
         await ctx.interaction.editReply({
             content: `Received a name of ${value.name.length} characters.`,
         });
-    }
-}
+    },
+});
 ```
 
 Open this form with `showModal()` from a command or component, without first

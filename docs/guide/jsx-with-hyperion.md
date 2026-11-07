@@ -21,28 +21,22 @@ is the JSX way to write one:
 
 ```tsx
 // src/buttons/refresh-profile.tsx
-import { type ButtonContext, ButtonHandler } from "@hyperion/core";
+import { defineButton } from "@hyperion/core";
 import { Button, renderButton } from "@hyperion/jsx";
 
-export default class RefreshProfile extends ButtonHandler {
-    constructor() {
-        super({
-            builder: renderButton(
-                <Button customId="profile.refresh" style="primary">
-                    Refresh
-                </Button>,
-            ),
-        });
-    }
-
-    async run(ctx: ButtonContext) {
+export default defineButton({
+    builder: renderButton(
+        <Button customId="profile.refresh" style="primary">
+            Refresh
+        </Button>,
+    ),
+    async run(ctx) {
         await ctx.interaction.update({ content: "Refreshed!" });
-    }
-}
+    },
+});
 ```
 
-JSX buttons need a `customId`, so you write it twice: once on the handler, once
-on the button. Hyperion checks that they match when it loads the handler.
+The button's custom ID is the handler's, so you only write it once.
 
 When a command needs the button, it asks the registry for a copy:
 
@@ -75,11 +69,7 @@ writes the values after it:
 
 ```tsx
 // src/buttons/close-ticket.tsx
-import {
-    type ButtonContext,
-    ButtonHandler,
-    defineParams,
-} from "@hyperion/core";
+import { defineButton, defineParams } from "@hyperion/core";
 import { Button, renderButton } from "@hyperion/jsx";
 import * as v from "valibot";
 
@@ -89,21 +79,14 @@ export const closeTicket = defineParams({
     schema: v.object({ ticketId: v.string() }),
 });
 
-type CloseTicketSpec = { params: typeof closeTicket };
-
-export default class CloseTicket extends ButtonHandler<CloseTicketSpec> {
-    constructor() {
-        super({
-            params: closeTicket,
-            builder: renderButton(
-                <Button customId="ticket.close" style="danger">
-                    Close
-                </Button>,
-            ),
-        });
-    }
-
-    async run(ctx: ButtonContext<CloseTicketSpec>) {
+export default defineButton({
+    params: closeTicket,
+    builder: renderButton(
+        <Button customId="ticket.close" style="danger">
+            Close
+        </Button>,
+    ),
+    async run(ctx) {
         const [issues, params] = ctx.params;
         if (issues) return;
 
@@ -111,8 +94,8 @@ export default class CloseTicket extends ButtonHandler<CloseTicketSpec> {
             content: `Ticket ${params.ticketId} closed.`,
             components: [],
         });
-    }
-}
+    },
+});
 ```
 
 A command builds one copy per ticket:
@@ -132,7 +115,7 @@ A modal handler keeps its form the same way, with `renderModal()`:
 
 ```tsx
 // src/modals/create-todo.tsx
-import { type ModalContext, ModalHandler } from "@hyperion/core";
+import { defineModal } from "@hyperion/core";
 import { Modal, renderModal } from "@hyperion/jsx";
 
 const TodoForm = () => (
@@ -143,17 +126,14 @@ const TodoForm = () => (
     </Modal>
 );
 
-export default class CreateTodo extends ModalHandler {
-    constructor() {
-        super({ builder: renderModal(<TodoForm />) });
-    }
-
-    async run(ctx: ModalContext) {
+export default defineModal({
+    builder: renderModal(<TodoForm />),
+    async run(ctx) {
         const name = ctx.interaction.components.getTextInputValue("name");
 
         await ctx.interaction.reply(`Created "${name}".`);
-    }
-}
+    },
+});
 ```
 
 To open the form, show a copy of the template:

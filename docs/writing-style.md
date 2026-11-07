@@ -130,7 +130,7 @@ structure.
 - Use the [glossary](GLOSSARY.md) terms (handler, guard, custom ID, params,
   template), but explain them in passing instead of linking the glossary at the
   top of every page.
-- Name the thing the reader types: `ButtonHandler`, `defineGuard()`, not "the
+- Name the thing the reader types: `defineButton()`, `defineGuard()`, not "the
   component-handler abstraction".
 
 ## What to leave out

@@ -68,20 +68,13 @@ Give the handler `params` instead of a custom ID, and put them in its type
 argument:
 
 ```ts fragment
-type CloseTicketButtonSpec = { params: typeof closeTicket };
-
-export default class CloseTicketButton extends ButtonHandler<CloseTicketButtonSpec> {
-    constructor() {
-        super({
-            params: closeTicket,
-            builder: new DangerButtonBuilder()
-                .setCustomId(closeTicket.id) // the template carries the route
-                .setLabel("Close"),
-            guards: [paramOwner("owner")],
-        });
-    }
-
-    async run(ctx: ButtonContext<CloseTicketButtonSpec>) {
+export default defineButton({
+    params: closeTicket,
+    builder: new DangerButtonBuilder()
+        .setCustomId(closeTicket.id) // the template carries the route
+        .setLabel("Close"),
+    guards: [paramOwner("owner")],
+    async run(ctx) {
         const [issues, params] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({
@@ -95,25 +88,15 @@ export default class CloseTicketButton extends ButtonHandler<CloseTicketButtonSp
             content: `Ticket ${params.ticketId} closed.`,
             components: [],
         });
-    }
-}
+    },
+});
 ```
 
 `ctx.params` is `[issues, value]`, the same shape as [typed input](input.md). If
 the custom ID fails the schema, you get the issues and decide what to say.
 
-Select menus and modals take params the same way, next to their other keys:
-
-```ts fragment
-// A user select menu with params
-type AssignSpec = {
-    componentType: ComponentType.UserSelect;
-    params: typeof assignTicket;
-};
-
-// A modal with params and input
-type RenameSpec = { params: typeof renameTicket; input: typeof input };
-```
+Select menus and modals take `params` the same way, beside their other
+options.
 
 ## Don't trust the custom ID
 

@@ -21,13 +21,12 @@ const client = await HyperionClient.create({
 
 Check your commands are under `src/commands` next to that file.
 
-## Expected a default-exported class extending …
+## Expected a default export from define…().
 
-A handler file has to `export default` a class that extends the right base for
-its folder, such as `Command` in `src/commands`. A
-named export (`export class Ping`), a forgotten `export default`, or a helper
-file sitting in a handler folder all cause this. Move helpers somewhere else,
-such as `src/lib`.
+A handler file has to `export default` what the right define function returns
+for its folder, such as `defineCommand()` in `src/commands`. A named export, a
+forgotten `export default`, or a helper file sitting in a handler folder all
+cause this. Move helpers somewhere else, such as `src/lib`.
 
 ## Duplicate command name "…" in "…".
 
@@ -67,6 +66,11 @@ are fine. See [events](events.md#order).
 
 Event files go in a folder named exactly after the discord.js event, with its
 casing: `src/events/messageCreate/`, not `src/events/message-create/`.
+
+## Event handler is for "…" but is in the "…" folder.
+
+A handler's `event` has to match the folder it's in. Move the file, or change
+`event` to the folder's event.
 
 ## Failed to register application commands at "…": …
 

@@ -91,33 +91,25 @@ checked even when native validators are disabled.
 ## Handler template
 
 ```tsx
-import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { StringSelect, renderStringSelect } from "@hyperion/jsx";
 import { ComponentType } from "discord.js";
 
-export default class extends SelectMenuHandler {
-    constructor() {
-        super({
-            componentType: ComponentType.StringSelect,
-            builder: renderStringSelect(
-                <StringSelect
-                    customId="todo.priority"
-                    placeholder="Choose priority"
-                >
-                    <StringSelect.Option label="Low" value="low" />
-                    <StringSelect.Option label="High" value="high" />
-                </StringSelect>,
-            ),
-        });
-    }
-
-    async run(ctx: SelectMenuContext) {
+export default defineSelectMenu({
+    componentType: ComponentType.StringSelect,
+    builder: renderStringSelect(
+        <StringSelect customId="todo.priority" placeholder="Choose priority">
+            <StringSelect.Option label="Low" value="low" />
+            <StringSelect.Option label="High" value="high" />
+        </StringSelect>,
+    ),
+    async run(ctx) {
         await ctx.interaction.update({
             content: `Selected: ${ctx.interaction.values.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 The handler context is the native `StringSelectMenuInteraction`; option values
@@ -127,31 +119,24 @@ are strings, not inferred literal unions. To validate them, add core
 Entity selects work the same way with their own renderer and `componentType`:
 
 ```tsx
-import { SelectMenuHandler, type SelectMenuContext } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { UserSelect, renderUserSelect } from "@hyperion/jsx";
 import { ComponentType } from "discord.js";
 
-type ChooseUserSpec = { componentType: ComponentType.UserSelect };
-
-export default class extends SelectMenuHandler<ChooseUserSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.UserSelect,
-            builder: renderUserSelect(
-                <UserSelect customId="user.choose" maxValues={1} />,
-            ),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseUserSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.UserSelect,
+    builder: renderUserSelect(
+        <UserSelect customId="user.choose" maxValues={1} />,
+    ),
+    async run(ctx) {
         const names = ctx.interaction.users.map(user => user.username);
 
         await ctx.interaction.update({
             content: `Selected: ${names.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 ## Message example

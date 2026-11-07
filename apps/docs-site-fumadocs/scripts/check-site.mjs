@@ -274,7 +274,7 @@ try {
 
     for (const [term, page] of [
         ["defineGuard", "/guards"],
-        ["ButtonHandler", "/buttons"],
+        ["defineButton", "/buttons"],
         ["renderMessage", "/jsx/layout-messages"],
         ["fileTypes", "/jsx/modals"],
         ["paramOwner", "/custom-ids"],
