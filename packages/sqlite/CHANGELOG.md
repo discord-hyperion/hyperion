@@ -1,5 +1,11 @@
 # @hyperion/sqlite
 
+## 0.2.0
+
+### Minor Changes
+
+- 22757ee: Queries must come from the `sql` tag. `Sql` is now exported as a type only, and `db.get()`, `db.all()`, and `db.run()` throw on a plain `{ text, values }` object, so a query can't skip parameter binding by accident. Use `db.raw` for raw SQL.
+
 ## 0.1.0
 
 ### Minor Changes

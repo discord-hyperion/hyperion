@@ -1,5 +1,11 @@
 # @hyperion/core
 
+## 0.6.0
+
+### Minor Changes
+
+- 96781c2: Remove the `GuardPipeline` and `GuardResult` exports. They were internal plumbing for the dispatcher, which now runs guards with a plain function. Guards themselves are unchanged.
+
 ## 0.5.0
 
 ### Minor Changes
