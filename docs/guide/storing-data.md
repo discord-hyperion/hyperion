@@ -53,6 +53,10 @@ column, so make those fields nullable, like `note` above. Any
 [Standard Schema](https://standardschema.dev/) library works, such as Valibot or
 Zod.
 
+> [!WARNING]
+> Discord IDs are too big for JavaScript numbers. Store them as `TEXT` and keep
+> them as strings. Binding a number that's too big throws a `RangeError`.
+
 ## Reading and writing
 
 ```ts fragment
@@ -65,15 +69,20 @@ todos.update({ id: "1" }, { note: "Almost done" });
 todos.delete({ id: "1" });
 ```
 
-`set` inserts the row, or replaces the one with the same key, and gives you back
-what's stored. `get` returns one row or `undefined`. Filters match every column
-you give, and `null` matches empty columns.
+| Method                  | What it does                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------- |
+| `get(filter)`           | Returns the matching row, or `undefined`.                                          |
+| `all(filter?)`          | Returns every matching row, or every row without a filter.                         |
+| `set(row)`              | Inserts the row, or replaces the one with the same key, and returns what's stored. |
+| `update(filter, patch)` | Changes the given columns of every matching row.                                   |
+| `delete(filter)`        | Deletes every matching row.                                                        |
+| `deleteAll()`           | Empties the table.                                                                 |
+
+Filters match every column you give, and `null` matches empty columns. Updating
+and deleting need a filter, so a typo can't wipe a table.
 
 Every write is checked against the schema first. If it doesn't pass, you get a
 `RowValidationError` with the schema's issues, and nothing is written.
-
-`update` and `delete` need a filter, so a typo can't wipe a table. When you really
-mean everything, call `todos.deleteAll()`.
 
 ## Quick values
 
@@ -93,13 +102,21 @@ cooldowns.set(userId, Date.now(), { ttl: 30_000 });
 ```
 
 There's no migration to write: Hyperion keeps every namespace in one table of
-its own. Keys are strings, and values are plain JSON, so objects, arrays,
-strings, numbers, booleans, and `null`. Something JSON would change, like a
-`Date`, throws instead of quietly coming back as a string.
+its own. The schema is optional; without one, values come back as `unknown`.
 
-`ttl` is how long the key lives, in milliseconds. Once it's up, the key reads as
-missing. The schema is optional; without one, values come back as `unknown`.
-`entries()` lists a namespace and `clear()` empties it.
+| Method                      | What it does                                                   |
+| --------------------------- | -------------------------------------------------------------- |
+| `get(key)`                  | Returns the value, or `undefined` when missing or expired.     |
+| `set(key, value, { ttl }?)` | Stores the value. `ttl` is how long it lives, in milliseconds. |
+| `has(key)`                  | Whether the key exists and hasn't expired.                     |
+| `delete(key)`               | Deletes the key.                                               |
+| `entries()`                 | Lists every `[key, value]` in the namespace.                   |
+| `clear()`                   | Empties the namespace.                                         |
+
+Keys are strings, and values are plain JSON: objects, arrays, strings, numbers,
+booleans, and `null`. Something JSON would change, like a `Date`, throws instead
+of quietly coming back as a string. A `set` without `ttl` keeps the key until you
+delete it.
 
 ## Queries
 
@@ -145,8 +162,6 @@ process.once("SIGINT", async () => {
 });
 ```
 
-## Watch out
+## Testing
 
-- Discord IDs are too big for JavaScript numbers. Store them as `TEXT` and keep
-  them as strings; binding a number that's too big throws a `RangeError`.
-- For tests, use `path: ":memory:"`: every call gets a fresh, empty database.
+Use `path: ":memory:"` in tests. Every call gets a fresh, empty database.
