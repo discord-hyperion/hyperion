@@ -16,19 +16,20 @@ import { createTempRoot } from "./support/temp-root.ts";
 
 const library = new URL("../src/index.ts", import.meta.url).href;
 const builders = import.meta.resolve("@discordjs/builders");
-const imports = `import { Command, ParentCommand, Subcommand, defineGuard } from ${JSON.stringify(library)};
+const imports = `import { defineCommand, defineParentCommand, defineSubcommand, defineGuard } from ${JSON.stringify(library)};
 import { ChatInputCommandBuilder, ChatInputCommandSubcommandBuilder } from ${JSON.stringify(builders)};`;
 
 const parentSource = (extra = "", guards = "", tail = "") => `${imports}
-export default class extends ParentCommand {
-    constructor() { super({ builder: new ChatInputCommandBuilder().setDescription("Manage tickets")${extra}, ${guards} }); ${tail} }
-}`;
+const parent = defineParentCommand({ builder: new ChatInputCommandBuilder().setDescription("Manage tickets")${extra}, ...{ ${guards} } });
+${tail}
+export default parent;`;
 const leafSource = (name = "close", guards = "", methods = "") => `${imports}
-export default class extends Subcommand {
-    constructor() { super({ builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Ticket action"), ${guards} }); }
-    async run(ctx) { ctx.interaction.events?.push("handler"); await ctx.interaction.reply("done"); }
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder().setName(${JSON.stringify(name)}).setDescription("Ticket action"),
+    ...{ ${guards} },
+    async run(ctx) { ctx.interaction.events?.push("handler"); await ctx.interaction.reply("done"); },
     ${methods}
-}`;
+});`;
 
 const fixture = async (t: TestContext) => {
     const root = await createTempRoot(t, "hyperion-parents-");
@@ -125,7 +126,7 @@ for (const scenario of [
                     parentSource(
                         "",
                         "",
-                        'this.builder.addStringOptions(option => option.setName("manual").setDescription("Manual"));',
+                        'parent.builder.addStringOptions(option => option.setName("manual").setDescription("Manual"));',
                     ),
                 );
 
@@ -133,7 +134,10 @@ for (const scenario of [
             case "legacy-leaf":
                 await add(
                     "[ticket]/legacy.mjs",
-                    `${imports} export default class extends Command { constructor() { super({ builder: new ChatInputCommandBuilder().setName("legacy").setDescription("Legacy") }); } async run() {} }`,
+                    `${imports} export default defineCommand({
+                        builder: new ChatInputCommandBuilder().setName("legacy").setDescription("Legacy"),
+                        async run() {},
+                    })`,
                 );
 
                 break;

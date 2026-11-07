@@ -8,6 +8,7 @@ import type {
 import { ComponentType, type MappedInteractionTypes } from "discord.js";
 import type {
     CommandInputDefinition,
+    CommandInputSchema,
     InputDefer,
 } from "../commands/command-input.ts";
 import type { InteractionContext } from "../contexts/index.ts";
@@ -19,9 +20,14 @@ import { handlerCustomId } from "./handler-options.ts";
 import type {
     AnyInputDefinition,
     EmptySpec,
+    HandlerInput,
+    HandlerResult,
+    InferredInput,
+    InferredSpec,
     InputContext,
     InputOptions,
     KnownKeys,
+    NoResolve,
     ParamsContext,
     RouteOptions,
     SpecInput,
@@ -81,28 +87,33 @@ export type ValidSelectMenuSpec<Spec> = SelectMenuSpec &
         input?: SelectMenuInputDefinition<SpecType<Spec>, SpecParams<Spec>>;
     };
 
-export type SelectMenuContext<
-    Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
-> = SelectMenuParamsContext<SpecType<Spec>, SpecParams<Spec>> &
+/** The context for a spec the caller built, so its keys are already known. */
+type SelectMenuContextOf<Spec> = SelectMenuParamsContext<
+    SpecType<Spec>,
+    SpecParams<Spec>
+> &
     InputContext<SpecInput<Spec>>;
 
-export type SelectMenuHandlerOptions<
+export type SelectMenuContext<
     Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
-> = {
-    componentType: SpecType<Spec>;
-    /** Guards run before input, so they see params but never `ctx.input`. */
-    guards?: readonly GuardProvider<
-        SelectMenuParamsContext<SpecType<Spec>, SpecParams<Spec>>
-    >[];
-} & InputOptions<
-    SpecInput<Spec>,
-    SelectMenuInputDefinition<SpecType<Spec>, SpecParams<Spec>>
-> &
-    RouteOptions<SpecParams<Spec>, SelectMenuBuilders[SpecType<Spec>]>;
+> = SelectMenuContextOf<Spec>;
 
-export abstract class SelectMenuHandler<
-    Spec extends ValidSelectMenuSpec<Spec> = EmptySpec,
-> {
+type SelectMenuRun<Spec> = (ctx: SelectMenuContextOf<Spec>) => HandlerResult;
+
+export type SelectMenuHandlerOptions<Spec extends SelectMenuSpec = EmptySpec> =
+    {
+        componentType: SpecType<Spec>;
+        /** Guards run before input, so they see params but never `ctx.input`. */
+        guards?: readonly GuardProvider<
+            SelectMenuParamsContext<SpecType<Spec>, SpecParams<Spec>>
+        >[];
+    } & InputOptions<
+        SpecInput<Spec>,
+        SelectMenuInputDefinition<SpecType<Spec>, SpecParams<Spec>>
+    > &
+        RouteOptions<SpecParams<Spec>, SelectMenuBuilders[SpecType<Spec>]>;
+
+export class SelectMenuHandler<Spec extends SelectMenuSpec = EmptySpec> {
     readonly builder: SelectMenuBuilders[SpecType<Spec>] | undefined;
     readonly componentType: SpecType<Spec>;
     readonly params: ParamsDefinition | undefined;
@@ -113,8 +124,15 @@ export abstract class SelectMenuHandler<
     >[];
 
     readonly input: AnyInputDefinition | undefined;
+    // Stored loosely so handlers of different specs stay assignable to each
+    // other; run() restores the type.
+    readonly #run: (ctx: never) => HandlerResult;
 
-    protected constructor(options: SelectMenuHandlerOptions<Spec>) {
+    constructor(
+        options: SelectMenuHandlerOptions<Spec> & {
+            run: SelectMenuRun<Spec>;
+        },
+    ) {
         if (!selectMenuTypes.includes(options.componentType)) {
             throw new TypeError(
                 "Select menu handlers require a select componentType.",
@@ -146,10 +164,78 @@ export abstract class SelectMenuHandler<
                 );
             }
         }
+
+        this.#run = options.run;
     }
 
-    abstract run(ctx: SelectMenuContext<Spec>): Promise<void>;
+    run(ctx: SelectMenuContextOf<Spec>): HandlerResult {
+        return this.#run(ctx as never);
+    }
 }
+
+type DefinedSelectMenuSpec<
+    Type extends SelectMenuType,
+    Params,
+    Schema extends CommandInputSchema | undefined,
+    Result,
+    Defer extends InputDefer,
+> = InferredSpec<{
+    componentType: Type;
+    params: Params;
+    input: InferredInput<
+        Schema,
+        Result,
+        SelectMenuParamsContext<Type, Params & (ParamsDefinition | undefined)>,
+        Defer
+    >;
+}>;
+
+/**
+ * Defines a select-menu handler. The menu kind, params, and input are inferred,
+ * and so is every context type.
+ */
+export const defineSelectMenu = <
+    const Type extends SelectMenuType,
+    Params extends ParamsDefinition | undefined = undefined,
+    Schema extends CommandInputSchema | undefined = undefined,
+    Result = NoResolve,
+    Defer extends InputDefer = false,
+>(
+    options: {
+        componentType: Type;
+        params?: Params;
+        input?: HandlerInput<
+            Schema,
+            Result,
+            SelectMenuParamsContext<Type, Params>,
+            Defer
+        >;
+        guards?: readonly GuardProvider<
+            SelectMenuParamsContext<Type, Params>
+        >[];
+        run: SelectMenuRun<
+            DefinedSelectMenuSpec<Type, Params, Schema, Result, Defer>
+        >;
+    } & RouteOptions<NoInfer<Params>, SelectMenuBuilders[Type]>,
+): SelectMenuHandler<
+    DefinedSelectMenuSpec<Type, Params, Schema, Result, Defer>
+> => {
+    if (typeof options?.run !== "function") {
+        throw new TypeError(
+            "Select menu handlers must provide a run() function.",
+        );
+    }
+
+    // The options match the inferred spec; TypeScript can't relate the two
+    // forms while the type parameters are still generic.
+    const handler = new SelectMenuHandler<
+        DefinedSelectMenuSpec<Type, Params, Schema, Result, Defer>
+    >(options as never);
+
+    Object.freeze(handler);
+
+    return handler;
+};
 
 export type AnySelectMenuHandler =
     | SelectMenuHandler<{ componentType: ComponentType.StringSelect }>

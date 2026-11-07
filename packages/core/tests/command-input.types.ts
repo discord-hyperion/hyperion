@@ -9,15 +9,16 @@ import type {
     ChatInputCommandInteraction,
 } from "discord.js";
 import {
-    Command,
     type CommandContext,
     type CommandInputOptions,
     type CommandInputOutput,
     type CommandInputResult,
     type CommandOptions,
     type CommandRegistry,
+    defineCommand,
     defineInput,
-    Subcommand,
+    defineSubcommand,
+    type Subcommand,
     type SubcommandOptions,
 } from "../src/index.ts";
 
@@ -59,25 +60,20 @@ export const inferredInputContracts = (
     input satisfies CommandInputOptions<RawSchema>;
     passthrough satisfies CommandInputOptions<RawSchema>;
 
-    class TodoCommand extends Command<typeof input> {
-        constructor() {
-            super({
-                builder: new ChatInputCommandBuilder()
-                    .setName("todo")
-                    .setDescription("Todo"),
-                input,
-                guards: [
-                    ctx => {
-                        ctx.interaction satisfies ChatInputCommandInteraction;
-                        // @ts-expect-error Guards run before validation and resolution.
-                        ctx.input;
-                        throw new Error("Type-only fixture");
-                    },
-                ],
-            });
-        }
-
-        async run(ctx: CommandContext<typeof input>) {
+    const TodoCommand = defineCommand({
+        builder: new ChatInputCommandBuilder()
+            .setName("todo")
+            .setDescription("Todo"),
+        input,
+        guards: [
+            ctx => {
+                ctx.interaction satisfies ChatInputCommandInteraction;
+                // @ts-expect-error Guards run before validation and resolution.
+                ctx.input;
+                throw new Error("Type-only fixture");
+            },
+        ],
+        async run(ctx) {
             const [issues, value] = ctx.input;
 
             if (issues) {
@@ -101,29 +97,24 @@ export const inferredInputContracts = (
             value.deadline;
             // @ts-expect-error Input results are readonly.
             ctx.input = [null, value];
-        }
-    }
+        },
+    });
 
-    class TodoSubcommand extends Subcommand<typeof input> {
-        constructor() {
-            super({
-                builder: new ChatInputCommandSubcommandBuilder()
-                    .setName("todo")
-                    .setDescription("Todo"),
-                input,
-            });
-        }
-
-        async run(ctx: CommandContext<typeof input>) {
+    const TodoSubcommand = defineSubcommand({
+        builder: new ChatInputCommandSubcommandBuilder()
+            .setName("todo")
+            .setDescription("Todo"),
+        input,
+        async run(ctx) {
             const [issues, value] = ctx.input;
             if (issues) return;
             value.todo satisfies Todo | null;
             value.message satisfies string;
-        }
-    }
+        },
+    });
 
-    registry.set("todo", new TodoCommand());
-    registry.set("tools todo", new TodoSubcommand());
+    registry.set("todo", TodoCommand);
+    registry.set("tools todo", TodoSubcommand);
     ({
         builder: new ChatInputCommandBuilder(),
         input,

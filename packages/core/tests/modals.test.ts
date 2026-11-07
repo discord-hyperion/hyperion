@@ -15,41 +15,35 @@ import {
 import { createModalInteraction } from "../../../tests/fixtures/interactions.ts";
 import {
     defineGuard,
+    defineModal,
+    defineSelectMenu,
     type GuardProvider,
     type ModalContext,
-    ModalHandler,
     ownerOnly,
-    SelectMenuHandler,
 } from "../src/index.ts";
 import { assertPrivateFailure, phases } from "./support/acknowledgment.ts";
 import { createTestClient } from "./support/test-client.ts";
 
-class TestModal extends ModalHandler {
-    constructor(
-        private readonly execute: (ctx: ModalContext) => Promise<void>,
-        guards: readonly GuardProvider<ModalContext>[] = [],
-    ) {
-        super({
-            builder: new ModalBuilder()
-                .setCustomId("feedback.submit")
-                .setTitle("Feedback")
-                .addLabelComponents(
-                    new LabelBuilder()
-                        .setLabel("Message")
-                        .setTextInputComponent(
-                            new TextInputBuilder()
-                                .setCustomId("feedback.message")
-                                .setStyle(TextInputStyle.Paragraph),
-                        ),
-                ),
-            guards,
-        });
-    }
-
-    run(ctx: ModalContext) {
-        return this.execute(ctx);
-    }
-}
+const testModal = (
+    execute: (ctx: ModalContext) => Promise<void>,
+    guards: readonly GuardProvider<ModalContext>[] = [],
+) =>
+    defineModal({
+        builder: new ModalBuilder()
+            .setCustomId("feedback.submit")
+            .setTitle("Feedback")
+            .addLabelComponents(
+                new LabelBuilder()
+                    .setLabel("Message")
+                    .setTextInputComponent(
+                        new TextInputBuilder()
+                            .setCustomId("feedback.message")
+                            .setStyle(TextInputStyle.Paragraph),
+                    ),
+            ),
+        guards,
+        run: execute,
+    });
 
 const interaction = (phase = "new", message = "Private submitted text") => {
     const getTextInputValue = mock.fn((_customId: string) => message);
@@ -72,22 +66,17 @@ const interaction = (phase = "new", message = "Private submitted text") => {
     };
 };
 
-test("modal listener runs once with its receiver, v15 components, and scoped logs", async t => {
+test("modal listener runs once with v15 components and scoped logs", async t => {
     const { client, records } = await createTestClient(t);
-    class Inspect extends TestModal {
-        async run(ctx: ModalContext) {
-            assert.equal(this.customId, "feedback.submit");
-            assert.equal(ctx.client, client);
-            assert.equal(
-                ctx.interaction.components.getTextInputValue(
-                    "feedback.message",
-                ),
-                "Private submitted text",
-            );
-            await ctx.interaction.reply(await Promise.resolve("Received"));
-        }
-    }
-    client.modals.set("feedback.submit", new Inspect(async () => {}));
+    const inspect = testModal(async ctx => {
+        assert.equal(ctx.client, client);
+        assert.equal(
+            ctx.interaction.components.getTextInputValue("feedback.message"),
+            "Private submitted text",
+        );
+        await ctx.interaction.reply(await Promise.resolve("Received"));
+    });
+    client.modals.set("feedback.submit", inspect);
     const fixture = interaction();
     client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
@@ -111,7 +100,7 @@ test("unmatched modal IDs leave submissions to collectors without running guards
     const factory = mock.fn(() => {
         throw new Error("Must not run");
     });
-    client.modals.set("feedback.submit", new TestModal(execute, [factory]));
+    client.modals.set("feedback.submit", testModal(execute, [factory]));
     const fixture = interaction();
     Object.assign(fixture.interaction, { customId: "feedback.submit:other" });
     await dispatcher.dispatch(fixture.interaction);
@@ -129,40 +118,32 @@ test("embedded selects are resolved by the modal without invoking message select
         .setCustomId("colour.choose")
         .addOptions({ label: "Blue", value: "blue" });
     const execute = mock.fn(async () => {});
-    class MessageMenu extends SelectMenuHandler {
-        constructor() {
-            super({
-                componentType: ComponentType.StringSelect,
-                builder,
-            });
-        }
+    const MessageMenu = defineSelectMenu({
+        componentType: ComponentType.StringSelect,
+        builder,
         run() {
             return execute();
-        }
-    }
-    class EmbeddedModal extends ModalHandler {
-        constructor() {
-            super({
-                builder: new ModalBuilder()
-                    .setCustomId("feedback.submit")
-                    .setTitle("Choose a colour")
-                    .addLabelComponents(
-                        new LabelBuilder()
-                            .setLabel("Colour")
-                            .setStringSelectMenuComponent(builder),
-                    ),
-            });
-        }
-        async run(ctx: ModalContext) {
+        },
+    });
+    const EmbeddedModal = defineModal({
+        builder: new ModalBuilder()
+            .setCustomId("feedback.submit")
+            .setTitle("Choose a colour")
+            .addLabelComponents(
+                new LabelBuilder()
+                    .setLabel("Colour")
+                    .setStringSelectMenuComponent(builder),
+            ),
+        async run(ctx) {
             await ctx.interaction.reply(
                 ctx.interaction.components
                     .getStringSelectValues("colour.choose")
                     .join(", "),
             );
-        }
-    }
-    client.selectMenus.set("colour.choose", new MessageMenu());
-    const modal = new EmbeddedModal();
+        },
+    });
+    client.selectMenus.set("colour.choose", MessageMenu);
+    const modal = EmbeddedModal;
     assert.match(JSON.stringify(modal.builder?.toJSON()), /colour.choose/);
     client.modals.set(modal.customId, modal);
     const fixture = interaction();
@@ -191,10 +172,7 @@ test("modal guards run lazily in order and shared ownerOnly guards work", async 
         return ownerOnly;
     });
     const later = mock.fn(() => ownerOnly);
-    client.modals.set(
-        "feedback.submit",
-        new TestModal(execute, [factory, later]),
-    );
+    client.modals.set("feedback.submit", testModal(execute, [factory, later]));
     assert.equal(factory.mock.callCount(), 0);
 
     const denied = interaction();
@@ -235,7 +213,7 @@ test("modal custom rejection owns the response and guards are snapshotted", asyn
         });
     const execute = mock.fn(async (_ctx: ModalContext) => {});
     const guards: GuardProvider<ModalContext>[] = [deny()];
-    const modal = new TestModal(execute, guards);
+    const modal = testModal(execute, guards);
     guards.length = 0;
     assert.ok(Object.isFrozen(modal.guards));
     client.modals.set(modal.customId, modal);
@@ -254,7 +232,7 @@ for (const stage of ["handler", "guards"] as const) {
         };
         client.modals.set(
             "feedback.submit",
-            new TestModal(fail, stage === "guards" ? [fail] : []),
+            testModal(fail, stage === "guards" ? [fail] : []),
         );
 
         for (const phase of phases) {
@@ -279,7 +257,7 @@ test("failed modal error delivery is contained by the interaction listener", asy
     const { client, records } = await createTestClient(t);
     client.modals.set(
         "feedback.submit",
-        new TestModal(async () => {
+        testModal(async () => {
             throw new Error("Handler unavailable");
         }),
     );
@@ -300,7 +278,7 @@ test("concurrent modal submissions receive independent contexts without automati
     const contexts: ModalContext[] = [];
     client.modals.set(
         "feedback.submit",
-        new TestModal(async ctx => {
+        testModal(async ctx => {
             contexts.push(ctx);
 
             const message = await Promise.resolve(

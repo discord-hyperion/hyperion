@@ -1,18 +1,17 @@
 # Context-menu commands
 
 For user and message command terminology, see the [command glossary](GLOSSARY.md#commands).
-Define context-menu handlers with the same `Command` abstraction,
+Define context-menu handlers with the same `defineCommand()`,
 `<root>/src/commands` discovery, `client.commands` registry, deployment scope,
 guards, logging, and execution-error handling as slash commands.
 
-Existing `Command` and `CommandContext` declarations still default to chat-input
-commands. Context-menu handlers specify the application-command type as a generic
-for context typing; the builder is the runtime source of truth. Chat-input
-commands with [typed input](input-validation.md) can instead use a complete
-`defineInput` definition as their generic. There is no
-separate `type` option. The generic requires the matching builder at compile time:
-passing a user builder to `Command<ApplicationCommandType.Message>` is a type
-error, and vice versa. Hyperion refines the pinned SDK's broad context-menu
+`defineCommand()` infers the command type from the builder:
+`UserContextCommandBuilder` makes a user command and
+`MessageContextCommandBuilder` a message command, and the context, guards, and
+returned `Command<Type>` are typed to match. There is no separate `type` option
+and no type argument. Context menus reject `input` and `autocomplete` as type
+errors. `Command` and `CommandContext` still default to chat-input commands
+where code names them. Hyperion refines the pinned SDK's broad context-menu
 `toJSON()` declarations through declaration merging to reflect the distinct
 command types those builders always serialize. This adds no runtime wrappers or
 duplicate configuration.
@@ -21,18 +20,13 @@ duplicate configuration.
 
 ```ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext, ownerOnly } from "@hyperion/core";
-import { type ApplicationCommandType, MessageFlags } from "discord.js";
+import { defineCommand, ownerOnly } from "@hyperion/core";
+import { MessageFlags } from "discord.js";
 
-export default class InspectUser extends Command<ApplicationCommandType.User> {
-    constructor() {
-        super({
-            builder: new UserContextCommandBuilder().setName("Inspect"),
-            guards: [ownerOnly],
-        });
-    }
-
-    async run(ctx: CommandContext<ApplicationCommandType.User>) {
+export default defineCommand({
+    builder: new UserContextCommandBuilder().setName("Inspect"),
+    guards: [ownerOnly],
+    async run(ctx) {
         const user = ctx.interaction.targetUser;
 
         await ctx.interaction.reply({
@@ -40,8 +34,8 @@ export default class InspectUser extends Command<ApplicationCommandType.User> {
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 The context exposes `UserContextMenuCommandInteraction`, including `targetUser`
@@ -54,17 +48,12 @@ invoking `interaction.user`, not the selected `targetUser`.
 
 ```ts
 import { MessageContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
-import { type ApplicationCommandType, MessageFlags } from "discord.js";
+import { defineCommand } from "@hyperion/core";
+import { MessageFlags } from "discord.js";
 
-export default class InspectMessage extends Command<ApplicationCommandType.Message> {
-    constructor() {
-        super({
-            builder: new MessageContextCommandBuilder().setName("Inspect"),
-        });
-    }
-
-    async run(ctx: CommandContext<ApplicationCommandType.Message>) {
+export default defineCommand({
+    builder: new MessageContextCommandBuilder().setName("Inspect"),
+    async run(ctx) {
         const message = ctx.interaction.targetMessage;
 
         await ctx.interaction.reply({
@@ -72,8 +61,8 @@ export default class InspectMessage extends Command<ApplicationCommandType.Messa
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 The context exposes `MessageContextMenuCommandInteraction.targetMessage`.

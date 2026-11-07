@@ -8,10 +8,11 @@ import { ApplicationCommandType, Collection } from "discord.js";
 import {
     type CommandContext,
     type CommandRegistry,
+    defineSubcommandGroup,
     type GuardProvider,
     ownerOnly,
     type Subcommand,
-    SubcommandGroup,
+    type SubcommandGroup,
 } from "../src/index.ts";
 
 export const subcommandGroupContracts = (
@@ -55,52 +56,35 @@ export const subcommandGroupContracts = (
     // @ts-expect-error Context-menu commands cannot have grouped leaves.
     registry.resolve("ticket", ApplicationCommandType.User, "view", "settings");
 
-    class Settings extends SubcommandGroup {
-        constructor() {
-            super({
-                builder:
-                    new ChatInputCommandSubcommandGroupBuilder().setDescription(
-                        "Settings",
-                    ),
-                guards: [
-                    ctx => {
-                        ctx satisfies CommandContext;
-                        ctx.interaction.options.getString("query") satisfies
-                            | string
-                            | null;
-                        // @ts-expect-error Group guards receive command contexts, not autocomplete contexts.
-                        ctx.interaction.respond([]);
+    const Settings = defineSubcommandGroup({
+        builder: new ChatInputCommandSubcommandGroupBuilder().setDescription(
+            "Settings",
+        ),
+        guards: [
+            ctx => {
+                ctx satisfies CommandContext;
+                ctx.interaction.options.getString("query") satisfies
+                    | string
+                    | null;
+                // @ts-expect-error Group guards receive command contexts, not autocomplete contexts.
+                ctx.interaction.respond([]);
 
-                        return ownerOnly;
-                    },
-                ],
-            });
-        }
-    }
-    class WrongTopLevel extends SubcommandGroup {
-        constructor() {
-            super({
-                // @ts-expect-error Groups require a native group builder.
-                builder: new ChatInputCommandBuilder(),
-            });
-        }
-    }
-    class WrongLeaf extends SubcommandGroup {
-        constructor() {
-            super({
-                // @ts-expect-error A subcommand builder cannot define a group.
-                builder: new ChatInputCommandSubcommandBuilder(),
-            });
-        }
-    }
-    class WrongContextMenu extends SubcommandGroup {
-        constructor() {
-            super({
-                // @ts-expect-error A context-menu builder cannot define a group.
-                builder: new UserContextCommandBuilder(),
-            });
-        }
-    }
+                return ownerOnly;
+            },
+        ],
+    });
+    const WrongTopLevel = defineSubcommandGroup({
+        // @ts-expect-error Groups require a native group builder.
+        builder: new ChatInputCommandBuilder(),
+    });
+    const WrongLeaf = defineSubcommandGroup({
+        // @ts-expect-error A subcommand builder cannot define a group.
+        builder: new ChatInputCommandSubcommandBuilder(),
+    });
+    const WrongContextMenu = defineSubcommandGroup({
+        // @ts-expect-error A context-menu builder cannot define a group.
+        builder: new UserContextCommandBuilder(),
+    });
 
     return { Settings, WrongTopLevel, WrongLeaf, WrongContextMenu };
 };

@@ -3,9 +3,9 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import * as v from "valibot";
 import {
     defineInput,
+    defineModal,
     defineParams,
     type ModalContext,
-    ModalHandler,
     paramOwner,
 } from "../src/index.ts";
 import type { ModalRegistry } from "../src/registries/index.ts";
@@ -33,29 +33,21 @@ type RenameContext = ModalContext<{
     params: typeof rename;
 }>;
 
-export class RenameTicket extends ModalHandler<{
-    input: typeof input;
-    params: typeof rename;
-}> {
-    constructor() {
-        super({
-            params: rename,
-            builder: new ModalBuilder().setTitle("Rename"),
-            input,
-            guards: [
-                paramOwner("owner"),
-                ctx => {
-                    ctx.params satisfies RenameContext["params"];
-                    // @ts-expect-error Guards run before input processing.
-                    ctx.input;
+export const RenameTicket = defineModal({
+    params: rename,
+    builder: new ModalBuilder().setTitle("Rename"),
+    input,
+    guards: [
+        paramOwner("owner"),
+        ctx => {
+            ctx.params satisfies RenameContext["params"];
+            // @ts-expect-error Guards run before input processing.
+            ctx.input;
 
-                    return paramOwner("owner");
-                },
-            ],
-        });
-    }
-
-    async run(ctx: RenameContext) {
+            return paramOwner("owner");
+        },
+    ],
+    async run(ctx) {
         const [paramIssues, params] = ctx.params;
 
         if (paramIssues) {
@@ -70,8 +62,8 @@ export class RenameTicket extends ModalHandler<{
 
         value.title satisfies string;
         value.ticketId satisfies string | undefined;
-    }
-}
+    },
+});
 
 export const modalParamsContracts = (registry: ModalRegistry) => {
     registry.build(rename, {
@@ -83,32 +75,28 @@ export const modalParamsContracts = (registry: ModalRegistry) => {
     registry.build(rename, { ticketId: "a1b2c3d4" });
 
     // @ts-expect-error A resolver that reads params needs a params handler.
-    class Literal extends ModalHandler<{ input: typeof input }> {
-        constructor() {
-            // @ts-expect-error The same mismatch rejects the input option.
-            super({ customId: "literal", input });
-        }
+    type _Literal = ModalContext<{ input: typeof input }>;
 
-        async run() {}
-    }
+    const Literal = defineModal({
+        // @ts-expect-error Input that reads params makes this a params handler.
+        customId: "literal",
+        input,
+        async run() {},
+    });
 
-    class Both extends ModalHandler<{ params: typeof rename }> {
-        constructor() {
-            // @ts-expect-error Params handlers cannot also declare a literal custom ID.
-            super({ params: rename, customId: "ticket.rename" });
-        }
+    const Both = defineModal({
+        params: rename,
+        // @ts-expect-error Params handlers cannot also declare a literal custom ID.
+        customId: "ticket.rename",
+        async run() {},
+    });
 
-        async run() {}
-    }
-
-    class Typo extends ModalHandler<{ params: typeof rename }> {
-        constructor() {
-            // @ts-expect-error The key must exist in the params.
-            super({ params: rename, guards: [paramOwner("ownr")] });
-        }
-
-        async run() {}
-    }
+    const Typo = defineModal({
+        params: rename,
+        // @ts-expect-error The key must exist in the params.
+        guards: [paramOwner("ownr")],
+        async run() {},
+    });
 
     return [Literal, Both, Typo];
 };

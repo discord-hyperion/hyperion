@@ -16,28 +16,23 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { type ModalContext, ModalHandler } from "@hyperion/core";
+import { defineModal } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
-export default class SubmitFeedback extends ModalHandler {
-    constructor() {
-        super({
-            builder: new ModalBuilder()
-                .setCustomId("feedback.submit")
-                .setTitle("Feedback")
-                .addLabelComponents(
-                    new LabelBuilder()
-                        .setLabel("Your feedback")
-                        .setTextInputComponent(
-                            new TextInputBuilder()
-                                .setCustomId("feedback.message")
-                                .setStyle(TextInputStyle.Paragraph),
-                        ),
+export default defineModal({
+    builder: new ModalBuilder()
+        .setCustomId("feedback.submit")
+        .setTitle("Feedback")
+        .addLabelComponents(
+            new LabelBuilder()
+                .setLabel("Your feedback")
+                .setTextInputComponent(
+                    new TextInputBuilder()
+                        .setCustomId("feedback.message")
+                        .setStyle(TextInputStyle.Paragraph),
                 ),
-        });
-    }
-
-    async run(ctx: ModalContext) {
+        ),
+    async run(ctx) {
         const message =
             ctx.interaction.components.getTextInputValue("feedback.message");
 
@@ -45,8 +40,8 @@ export default class SubmitFeedback extends ModalHandler {
             content: `Thanks! That's ${message.length} characters of feedback.`,
             flags: MessageFlags.Ephemeral,
         });
-    }
-}
+    },
+});
 ```
 
 The options match a select menu's, without the kind:
@@ -58,6 +53,7 @@ The options match a select menu's, without the kind:
 | `params`   | Data in the custom ID. See [remembering what the form is about](#remembering-what-the-form-is-about). |
 | `input`    | A schema for the fields. See [validating the fields](#validating-the-fields).                         |
 | `guards`   | Checks before `run()`. See [guards](guards.md).                                                       |
+| `run`      | Runs on each submission.                                                                              |
 
 Keep a template whenever you can: typed input reads the form's fields from it.
 
@@ -78,19 +74,15 @@ Rather than reading each field by hand, give the handler an input schema and get
 typed values in `ctx.input`:
 
 ```ts fragment
-const input = defineInput({
-    schema: v.object({ title: v.pipe(v.string(), v.trim(), v.minLength(1)) }),
-});
-
-type CreateTodoSpec = { input: typeof input };
-
-export default class CreateTodo extends ModalHandler<CreateTodoSpec> {
-    constructor() {
-        // todoForm's custom ID, "todo.create", is the handler's.
-        super({ builder: todoForm, input });
-    }
-
-    async run(ctx: ModalContext<CreateTodoSpec>) {
+// todoForm's custom ID, "todo.create", is the handler's.
+export default defineModal({
+    builder: todoForm,
+    input: {
+        schema: v.object({
+            title: v.pipe(v.string(), v.trim(), v.minLength(1)),
+        }),
+    },
+    async run(ctx) {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.reply({
@@ -101,8 +93,8 @@ export default class CreateTodo extends ModalHandler<CreateTodoSpec> {
         }
 
         await ctx.interaction.reply(`Created "${value.title}".`);
-    }
-}
+    },
+});
 ```
 
 The schema gets one key per control, named by the control's custom ID:
@@ -131,26 +123,16 @@ export const renameTicketForm = defineParams({
     schema: v.object({ ticketId: v.string(), owner: v.string() }),
 });
 
-type RenameTicketSpec = {
-    input: typeof input;
-    params: typeof renameTicketForm;
-};
-
-export default class RenameTicket extends ModalHandler<RenameTicketSpec> {
-    constructor() {
-        super({
-            params: renameTicketForm,
-            builder: renameForm, // its custom ID is the route, "ticket.rename-form"
-            input,
-            guards: [paramOwner("owner")],
-        });
-    }
-
-    async run(ctx: ModalContext<RenameTicketSpec>) {
+export default defineModal({
+    params: renameTicketForm,
+    builder: renameForm, // its custom ID is the route, "ticket.rename-form"
+    input,
+    guards: [paramOwner("owner")],
+    async run(ctx) {
         const [paramIssues, params] = ctx.params; // which ticket
         const [inputIssues, value] = ctx.input; // what the user typed
-    }
-}
+    },
+});
 
 // In the Rename button's handler:
 await ctx.interaction.showModal(

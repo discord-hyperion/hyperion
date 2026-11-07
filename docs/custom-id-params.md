@@ -102,14 +102,9 @@ encoder, but cannot be used with `build()`.
 ## Handler
 
 ```ts fragment
-type TodoDoneSpec = { params: typeof todoDoneId };
-
-export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
-    constructor() {
-        super({ params: todoDoneId });
-    }
-
-    async run(ctx: ButtonContext<TodoDoneSpec>) {
+export default defineButton({
+    params: todoDoneId,
+    async run(ctx) {
         const [issues, value] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({
@@ -120,11 +115,13 @@ export default class TodoDone extends ButtonHandler<TodoDoneSpec> {
         }
 
         value.page satisfies number;
-    }
-}
+    },
+});
 ```
 
-- One generic carries the definition, as with `Subcommand<typeof input>`.
+- `defineButton()` infers the definition from `params`; there is no type
+  argument. `ButtonContext<{ params: typeof definition }>` names the context for
+  helpers outside the handler.
 - `ctx.params` is `readonly [issues: null, value: Output] | readonly [issues:
   readonly Issue[], value: undefined]`, the same tuple as `ctx.input`. The
   handler chooses the response to a schema failure.
@@ -246,12 +243,13 @@ Select menus reuse the codec, route lookup, pipeline, and `ctx.params` tuple.
   click time. They stay separate: `ctx.params` carries the former and
   `ctx.interaction.values` (or the resolved collections) carries the latter.
 - Every select handler declares its select type
-  (`super({ componentType: ComponentType.UserSelect, params })`).
+  (`defineSelectMenu({ componentType: ComponentType.UserSelect, params, run })`).
   A click whose `componentType` differs is unmatched, and the type is checked
   before decoding, so the schema never runs for the wrong kind.
-- Typing adds a `params` key to the type argument:
-  `SelectMenuHandler<{ componentType: Type; params: typeof definition }>` and the
-  matching `SelectMenuContext`. Without it there are no params.
+- `defineSelectMenu()` infers the params from `params`, so `ctx.params` is typed
+  with no type argument. Helpers outside the handler name the context as
+  `SelectMenuContext<{ componentType: Type; params: typeof definition }>`.
+  Without params there is no `ctx.params`.
 - Routes are unique per registry, as literal custom IDs are today. All five
   select types share `client.selectMenus`, so routes are unique across them and
   across literal select IDs. A button and a select menu may share a route.
@@ -266,15 +264,16 @@ user.
 match → decode → params validate → guards → input (defer, extract, validate, resolve) → handler
 ```
 
-- Typing adds a `params` key to the type argument:
-  `ModalHandler<{ params: typeof definition; input: typeof input }>` and the
-  matching `ModalContext`. Without it there are no params.
+- `defineModal()` infers the params and input, so neither needs a type argument.
+  Helpers outside the handler name the context as
+  `ModalContext<{ params: typeof definition; input: typeof input }>`. Without
+  params there is no `ctx.params`.
 - Guards see `ctx.params` but never `ctx.input`, so `paramOwner()` works unchanged
   and rejects before any input processing.
 - Input runs even when params have issues, so the handler receives both tuples.
   An input resolver receives the params-bearing context. A resolver that reads
-  `ctx.params` must handle issues itself, and annotating it as
-  `ctx: ModalContext<{ params: typeof params }>` only compiles on a handler with
+  `ctx.params` must handle issues itself, and its context is typed from the
+  handler's params, so input that reads params only compiles on a handler with
   those params.
 - Exceptions report `stage: "params"` or `stage: "input"`.
 - The form stays on the handler as its template, because `input` reads the

@@ -20,3 +20,7 @@ helper was rejected because a plain alias does the same and the name collides
 with the constructor-options types. Commands keep their single-parameter forms.
 The change broke every typed component handler, which was accepted as a pre-1.0
 breaking change.
+
+Superseded for handlers by [ADR 0008](0008-handlers-are-defined-with-functions.md):
+the define functions infer these types, so only context types still take the
+object type argument.

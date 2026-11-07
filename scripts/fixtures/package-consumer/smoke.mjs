@@ -5,39 +5,30 @@ import {
     PrimaryButtonBuilder,
 } from "@discordjs/builders";
 import {
-    ButtonHandler,
-    Command,
     CommandRegistry,
+    defineButton,
+    defineModal,
     HyperionClient,
-    ModalHandler,
 } from "@hyperion/core";
 import { Client, Events } from "discord.js";
 
-class ExampleButton extends ButtonHandler {
-    constructor() {
-        super({
-            builder: new PrimaryButtonBuilder()
-                .setCustomId("button")
-                .setLabel("Button"),
-        });
-    }
-    async run() {}
-}
-class ExampleModal extends ModalHandler {
-    constructor() {
-        super({
-            builder: new ModalBuilder().setCustomId("modal").setTitle("Modal"),
-        });
-    }
-    async run() {}
-}
-assert.ok(new ExampleButton().builder instanceof PrimaryButtonBuilder);
-assert.ok(new ExampleModal().builder instanceof ModalBuilder);
+const ExampleButton = defineButton({
+    builder: new PrimaryButtonBuilder()
+        .setCustomId("button")
+        .setLabel("Button"),
+    async run() {},
+});
+const ExampleModal = defineModal({
+    builder: new ModalBuilder().setCustomId("modal").setTitle("Modal"),
+    async run() {},
+});
+assert.ok(ExampleButton.builder instanceof PrimaryButtonBuilder);
+assert.ok(ExampleModal.builder instanceof ModalBuilder);
 assert.ok(HyperionClient.prototype instanceof Client);
 const registry = new CommandRegistry();
 await registry.load(new URL("./handlers/", import.meta.url));
 const command = registry.resolve("ping");
-assert.ok(command instanceof Command);
+assert.equal(typeof command?.run, "function");
 assert.ok(command.builder instanceof ChatInputCommandBuilder);
 console.log(
     "public imports, discovered Command, command/button/modal builders, Discord Client identity: PASS",

@@ -1,13 +1,14 @@
-import { type EventContext, EventHandler } from "@hyperion/core";
+import { defineEvent } from "@hyperion/core";
 import { Embed, renderEmbed } from "@hyperion/jsx";
-import type { Events } from "discord.js";
-export default class extends EventHandler<Events.Invalidated> {
-    async run(ctx: EventContext<Events.Invalidated>) {
+import { Events } from "discord.js";
+export default defineEvent({
+    event: Events.Invalidated,
+    async run(ctx) {
         const embed = renderEmbed(
             <Embed>
                 <Embed.Title>10</Embed.Title>
             </Embed>,
         );
         ctx.client.emit("consumer:jsx", embed.toJSON().title);
-    }
-}
+    },
+});

@@ -1,6 +1,6 @@
 import {
     type ButtonContext,
-    ButtonHandler,
+    defineButton,
     defineParams,
     paramOwner,
 } from "@hyperion/core";
@@ -24,18 +24,11 @@ type CloseTicketSpec = { params: typeof closeTicket };
 
 export type CloseTicketContext = ButtonContext<CloseTicketSpec>;
 
-export default class CloseTicketButton extends ButtonHandler<CloseTicketSpec> {
-    constructor() {
-        super({
-            params: closeTicket,
-            // The custom ID is client-controlled, so ownership is checked on every click.
-            guards: [
-                paramOwner("owner", "Only the ticket's author can close it."),
-            ],
-        });
-    }
-
-    async run(ctx: CloseTicketContext) {
+export default defineButton({
+    params: closeTicket,
+    // The custom ID is client-controlled, so ownership is checked on every click.
+    guards: [paramOwner("owner", "Only the ticket's author can close it.")],
+    async run(ctx) {
         const [issues, params] = ctx.params;
 
         if (issues) {
@@ -51,5 +44,5 @@ export default class CloseTicketButton extends ButtonHandler<CloseTicketSpec> {
             content: `Ticket ${params.ticketId} closed.`,
             components: [],
         });
-    }
-}
+    },
+});

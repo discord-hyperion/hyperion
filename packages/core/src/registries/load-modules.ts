@@ -3,10 +3,6 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Collection } from "discord.js";
 import type { Logger } from "pino";
 import { copyTemplate, type Template } from "../components/handler-options.ts";
-import {
-    assertRegistryClass,
-    type RegistryBaseClass,
-} from "../util/assert-registry-class.ts";
 import { discoverModules } from "../util/discover-modules.ts";
 
 type HandlerFolder =
@@ -46,17 +42,27 @@ export const discoverHandlerFiles = async (
     return { directory, files };
 };
 
+/** The class behind a define function, used only to recognise its handlers. */
+type HandlerClass<Instance> = {
+    readonly prototype: Instance;
+    [Symbol.hasInstance](value: unknown): boolean;
+};
+
+/** The handler a module default-exports from `definer`, such as `defineButton()`. */
 export const loadHandler = async <Instance>(
     file: string,
-    baseClass: RegistryBaseClass<Instance>,
+    handlerClass: HandlerClass<Instance>,
+    definer: string,
     url = pathToFileURL(file),
-) => {
+): Promise<Instance> => {
     const module = await import(url.href);
-    const HandlerClass = module.default;
+    const handler: unknown = module.default;
 
-    assertRegistryClass(HandlerClass, baseClass);
+    if (!(handler instanceof handlerClass)) {
+        throw new TypeError(`Expected a default export from ${definer}().`);
+    }
 
-    return new HandlerClass();
+    return handler as Instance;
 };
 
 type ComponentData = ReturnType<Template["toJSON"]>;
@@ -71,7 +77,8 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
     registry: Collection<string, Instance>,
     root: string | URL,
     folder: Exclude<HandlerFolder, "commands" | "events">,
-    baseClass: RegistryBaseClass<Instance>,
+    handlerClass: HandlerClass<Instance>,
+    definer: string,
     validate: (handler: Instance, data: ComponentData) => void,
     logger?: Logger,
     routes?: Collection<string, Instance>,
@@ -88,13 +95,7 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
         let handler: Instance;
 
         try {
-            handler = await loadHandler(file, baseClass);
-
-            if (typeof handler.run !== "function") {
-                throw new TypeError(
-                    `${title} handlers must provide a run() method.`,
-                );
-            }
+            handler = await loadHandler(file, handlerClass, definer);
 
             if (handler.params !== undefined && !routes) {
                 throw new TypeError(`${title} handlers do not support params.`);

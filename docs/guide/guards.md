@@ -9,11 +9,17 @@ interaction through, `false` to stop it. They're how you say "owner only",
 Every handler (commands, buttons, menus, modals) takes a `guards` array:
 
 ```ts fragment
-import { ownerOnly } from "@hyperion/core";
+import { defineCommand, ownerOnly } from "@hyperion/core";
 
-super({
-    builder: new ChatInputCommandBuilder().setName("shutdown").setDescription("Stop the bot."),
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("shutdown")
+        .setDescription("Stop the bot."),
     guards: [ownerOnly],
+    async run(ctx) {
+        await ctx.interaction.reply("Shutting down.");
+        await ctx.client.destroy();
+    },
 });
 ```
 

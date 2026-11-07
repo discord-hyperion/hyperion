@@ -12,29 +12,24 @@ Put handlers in `src/select-menus`:
 ```ts
 // src/select-menus/choose-colour.ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import { ComponentType } from "discord.js";
 
-export default class ChooseColour extends SelectMenuHandler {
-    constructor() {
-        super({
-            componentType: ComponentType.StringSelect,
-            builder: new StringSelectMenuBuilder()
-                .setCustomId("colour.choose")
-                .setPlaceholder("Choose a colour")
-                .addOptions(
-                    { label: "Blue", value: "blue" },
-                    { label: "Green", value: "green" },
-                ),
-        });
-    }
-
-    async run(ctx: SelectMenuContext) {
+export default defineSelectMenu({
+    componentType: ComponentType.StringSelect,
+    builder: new StringSelectMenuBuilder()
+        .setCustomId("colour.choose")
+        .setPlaceholder("Choose a colour")
+        .addOptions(
+            { label: "Blue", value: "blue" },
+            { label: "Green", value: "green" },
+        ),
+    async run(ctx) {
         await ctx.interaction.update({
             content: `You chose ${ctx.interaction.values[0]}.`,
         });
-    }
-}
+    },
+});
 ```
 
 A select-menu handler takes the same options as a button handler, plus two:
@@ -47,35 +42,29 @@ A select-menu handler takes the same options as a button handler, plus two:
 | `params`        | Data in the custom ID. See [data in custom IDs](custom-ids.md).              |
 | `input`         | A schema for the picked values. See [checking the pick](#checking-the-pick). |
 | `guards`        | Checks before `run()`. See [guards](guards.md).                              |
+| `run`           | Runs on each click.                                                          |
 
 All five kinds share one registry, so custom IDs must be unique across them.
 
 ## The other kinds
 
-For a user, role, mentionable, or channel menu, put the kind in the handler's
-type argument as well:
+For a user, role, mentionable, or channel menu, set `componentType` to that
+kind. It types `ctx.interaction` for the menu, so the picked users are right
+there:
 
 ```ts fragment
-// The kind in the type argument types ctx.interaction for that menu.
-type ChooseUserSpec = { componentType: ComponentType.UserSelect };
-
-export default class ChooseUser extends SelectMenuHandler<ChooseUserSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.UserSelect, // must match the type
-            builder: new UserSelectMenuBuilder()
-                .setCustomId("user.choose")
-                .setPlaceholder("Choose a user"),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseUserSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.UserSelect,
+    builder: new UserSelectMenuBuilder()
+        .setCustomId("user.choose")
+        .setPlaceholder("Choose a user"),
+    async run(ctx) {
         const names = ctx.interaction.users.map(user => user.username);
         await ctx.interaction.update({
             content: `Selected: ${names.join(", ")}`,
         });
-    }
-}
+    },
+});
 ```
 
 ## Sending a menu
@@ -105,18 +94,11 @@ const input = defineInput({
     schema: v.pipe(v.array(v.picklist(["blue", "green"])), v.length(1)),
 });
 
-type ChooseColourSpec = { input: typeof input };
-
-export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
-    constructor() {
-        super({
-            customId: "colour.choose",
-            componentType: ComponentType.StringSelect,
-            input,
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseColourSpec>) {
+export default defineSelectMenu({
+    customId: "colour.choose",
+    componentType: ComponentType.StringSelect,
+    input,
+    async run(ctx) {
         const [issues, colours] = ctx.input;
 
         if (issues) {
@@ -129,8 +111,8 @@ export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
         }
 
         await ctx.interaction.update({ content: `You chose ${colours[0]}.` });
-    }
-}
+    },
+});
 ```
 
 For user, role, mentionable, and channel menus, the schema gets the picked IDs.

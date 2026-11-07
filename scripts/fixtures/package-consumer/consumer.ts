@@ -1,30 +1,24 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import {
-    Command,
-    type CommandContext,
+    defineCommand,
+    defineEvent,
     defineInput,
-    type EventContext,
-    EventHandler,
+    defineSelectMenu,
     type SelectMenuContext,
-    SelectMenuHandler,
 } from "@hyperion/core";
-import { ComponentType, type Events } from "discord.js";
+import { type Collection, ComponentType, Events, type User } from "discord.js";
 import * as v from "valibot";
 
 const input = defineInput({
     schema: v.object({ id: v.string() }),
     resolve: async ({ id }) => ({ todo: { id }, found: true }),
 });
-export class TypedCommand extends Command<typeof input> {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("typed")
-                .setDescription("Typed"),
-            input,
-        });
-    }
-    async run(ctx: CommandContext<typeof input>) {
+export const TypedCommand = defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("typed")
+        .setDescription("Typed"),
+    input,
+    async run(ctx) {
         const [issues, value] = ctx.input;
         if (issues) return;
         value.todo.id satisfies string;
@@ -33,40 +27,50 @@ export class TypedCommand extends Command<typeof input> {
         value.missing;
         // @ts-expect-error Inferred id remains a string.
         const _wrong: number = value.todo.id;
-    }
-}
+    },
+});
 
-class ReadyHandler extends EventHandler<Events.ClientReady> {
-    async run(ctx: EventContext<Events.ClientReady>) {
+const ReadyHandler = defineEvent({
+    event: Events.ClientReady,
+    async run(ctx) {
         ctx.args[0].user.id satisfies string;
         // @ts-expect-error Readiness provides one argument, not an arbitrary tuple.
         ctx.args[1];
         // @ts-expect-error Managed event registries do not permit raw mutation.
         ctx.client.events.clear();
-    }
-}
+    },
+});
 void ReadyHandler;
 
 const priority = defineInput({
     schema: v.array(v.picklist(["low", "high"])),
     defer: "update",
 });
-type PrioritySpec = { input: typeof priority };
-
-export class PriorityMenu extends SelectMenuHandler<PrioritySpec> {
-    constructor() {
-        super({
-            customId: "priority",
-            componentType: ComponentType.StringSelect,
-            input: priority,
-        });
-    }
-    async run(ctx: SelectMenuContext<PrioritySpec>) {
+export const PriorityMenu = defineSelectMenu({
+    customId: "priority",
+    componentType: ComponentType.StringSelect,
+    input: priority,
+    async run(ctx) {
         const [issues, value] = ctx.input;
         if (issues) return;
         value satisfies ("low" | "high")[];
-    }
-}
+    },
+});
+
+export const InlineInput = defineSelectMenu({
+    customId: "inline",
+    componentType: ComponentType.UserSelect,
+    input: {
+        schema: v.array(v.string()),
+        resolve: ids => ({ first: ids[0] }),
+    },
+    run(ctx) {
+        ctx.interaction.users satisfies Collection<string, User>;
+        const [issues, value] = ctx.input;
+        if (issues) return;
+        value.first satisfies string | undefined;
+    },
+});
 
 // @ts-expect-error A misspelled type-argument key is rejected, not ignored.
 export type Misspelled = SelectMenuContext<{ inptu: typeof priority }>;

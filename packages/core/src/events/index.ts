@@ -1,6 +1,7 @@
 export {
+    defineEvent,
     type EventContext,
-    EventHandler,
+    type EventHandler,
     type EventHandlerOptions,
     type EventName,
 } from "./event-handler.ts";

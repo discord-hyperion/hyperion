@@ -9,8 +9,8 @@ import { ChannelType, Collection, ComponentType } from "discord.js";
 import { createSelectInteraction } from "../../../../tests/fixtures/interactions.ts";
 import {
     type AnySelectMenuHandler,
+    defineSelectMenu,
     type SelectMenuContext,
-    SelectMenuHandler,
     type SelectMenuType,
 } from "../../src/components/index.ts";
 import type { GuardProvider } from "../../src/guards/index.ts";
@@ -191,12 +191,9 @@ export const resolvedEntries = (
                   : []),
           ];
 
-type Run = (this: AnySelectMenuHandler, ctx: AnySelectContext) => Promise<void>;
+type Run = (ctx: AnySelectContext) => Promise<void>;
 
-/**
- * Builds a menu for a kind whose `run` calls `execute` with the menu as the
- * receiver, so tests can assert that dispatch preserves `this`.
- */
+/** Builds a menu for a kind whose `run` calls `execute`. */
 export const createMenu = (
     kind: SelectKind,
     execute: Run,
@@ -206,27 +203,16 @@ export const createMenu = (
 
     // The kind table pairs each builder with its matching select type, which a
     // union-typed table entry cannot express to the compiler.
-    return new (class extends SelectMenuHandler<{
-        componentType: ComponentType.StringSelect;
-    }> {
-        constructor() {
-            super({
-                componentType: kind.type as ComponentType.StringSelect,
-                builder: builder as StringSelectMenuBuilder,
-                guards: guards as readonly GuardProvider<
-                    SelectMenuContext<{
-                        componentType: ComponentType.StringSelect;
-                    }>
-                >[],
-            });
-        }
-
-        run(
-            ctx: SelectMenuContext<{
+    return defineSelectMenu({
+        componentType: kind.type as ComponentType.StringSelect,
+        builder: builder as StringSelectMenuBuilder,
+        guards: guards as readonly GuardProvider<
+            SelectMenuContext<{
                 componentType: ComponentType.StringSelect;
-            }>,
-        ) {
-            return execute.call(this, ctx as AnySelectContext);
-        }
-    })();
+            }>
+        >[],
+        run(ctx) {
+            return execute(ctx as AnySelectContext);
+        },
+    });
 };

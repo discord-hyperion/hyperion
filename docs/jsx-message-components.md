@@ -59,24 +59,19 @@ for `disabled` when validators are enabled.
 ## Handler template
 
 ```tsx
-import { ButtonHandler, type ButtonContext } from "@hyperion/core";
+import { defineButton } from "@hyperion/core";
 import { Button, renderButton } from "@hyperion/jsx";
 
-export default class extends ButtonHandler {
-    constructor() {
-        super({
-            builder: renderButton(
-                <Button customId="profile.refresh" style="primary">
-                    Refresh profile
-                </Button>,
-            ),
-        });
-    }
-
-    async run(ctx: ButtonContext) {
+export default defineButton({
+    builder: renderButton(
+        <Button customId="profile.refresh" style="primary">
+            Refresh profile
+        </Button>,
+    ),
+    async run(ctx) {
         await ctx.interaction.reply({ content: "Refresh requested." });
-    }
-}
+    },
+});
 ```
 
 The JSX `Button` describes the visible control; core's `ButtonHandler` handles

@@ -17,12 +17,7 @@ stops at the first rejection or error.
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import {
-    Command,
-    type CommandContext,
-    defineGuard,
-    ownerOnly,
-} from "@hyperion/core";
+import { defineCommand, defineGuard, ownerOnly } from "@hyperion/core";
 
 const allowedGuild = (guildId: string) =>
     defineGuard({
@@ -31,20 +26,15 @@ const allowedGuild = (guildId: string) =>
         run: ctx => ctx.interaction.guildId === guildId,
     });
 
-export default class AdminPing extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("admin-ping")
-                .setDescription("Check the bot's administrative access."),
-            guards: [ownerOnly, allowedGuild("YOUR_SERVER_ID")],
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("admin-ping")
+        .setDescription("Check the bot's administrative access."),
+    guards: [ownerOnly, allowedGuild("YOUR_SERVER_ID")],
+    async run(ctx) {
         await ctx.interaction.reply("Pong!");
-    }
-}
+    },
+});
 ```
 
 `defineGuard({ name, description, run, onFail? })` returns a frozen guard.
@@ -128,7 +118,9 @@ permission settings.
 `cooldown()` takes the key, duration, and a collection the application owns:
 
 ```ts fragment
-import { Collection } from "discord.js";
+import {
+    Collection,
+} from "discord.js";
 
 const cooldowns = new Collection<string, number>(); // Shared outside the factory.
 

@@ -20,11 +20,8 @@ test("JSX buttons preserve builder identity, personalized disabled state, and ex
 
     t.after(() => rm(root, { recursive: true, force: true }));
     for (const [folder, file, relative] of [
-        [
-            "commands",
-            "show.tsx",
-            "../src/commands/(components)/jsx-buttons.tsx",
-        ],
+        ["commands/[jsx]", "index.ts", "../src/commands/[jsx]/index.ts"],
+        ["commands/[jsx]", "buttons.tsx", "../src/commands/[jsx]/buttons.tsx"],
         ["buttons", "refresh.tsx", "../src/buttons/jsx-refresh.tsx"],
     ] as const) {
         await mkdir(path.join(root, "src", folder), { recursive: true });
@@ -51,8 +48,12 @@ test("JSX buttons preserve builder identity, personalized disabled state, and ex
 
     for (const disabled of [false, true]) {
         const fixture = createChatInputInteraction({
-            commandName: "jsx-buttons",
-            options: { getBoolean: () => disabled },
+            commandName: "jsx",
+            options: {
+                getSubcommand: () => "buttons",
+                getSubcommandGroup: () => null,
+                getBoolean: () => disabled,
+            },
         });
         await dispatcher.dispatch(fixture.interaction);
         const payload = fixture.reply.mock.calls[0]?.arguments[0];

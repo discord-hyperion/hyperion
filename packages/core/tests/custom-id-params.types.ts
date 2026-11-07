@@ -2,7 +2,8 @@ import { PrimaryButtonBuilder } from "@discordjs/builders";
 import * as v from "valibot";
 import {
     type ButtonContext,
-    ButtonHandler,
+    type ButtonHandler,
+    defineButton,
     defineParams,
     type ParamsDefinition,
 } from "../src/index.ts";
@@ -28,12 +29,9 @@ export const encoderContracts = () => {
     params satisfies ParamsDefinition;
 };
 
-class WithParams extends ButtonHandler<{ params: typeof params }> {
-    constructor() {
-        super({ params });
-    }
-
-    async run(ctx: ButtonContext<{ params: typeof params }>) {
+const WithParams = defineButton({
+    params,
+    async run(ctx) {
         const [issues, value] = ctx.params;
 
         if (issues) {
@@ -46,39 +44,29 @@ class WithParams extends ButtonHandler<{ params: typeof params }> {
         value.page satisfies number;
         // @ts-expect-error Params come from schema output.
         value.missing;
-    }
-}
+    },
+});
 
 export const handlerContracts = (plain: ButtonContext) => {
-    new WithParams() satisfies ButtonHandler<{ params: typeof params }>;
+    WithParams satisfies ButtonHandler<{ params: typeof params }>;
     // @ts-expect-error Literal handler contexts carry no params.
     plain.params;
     // @ts-expect-error A template is optional, so it may be undefined.
-    new WithParams().builder.toJSON();
+    WithParams.builder.toJSON();
 };
 
-export class Literal extends ButtonHandler {
-    constructor() {
-        super({
-            builder: new PrimaryButtonBuilder().setCustomId("x").setLabel("x"),
-        });
-    }
-
-    async run() {}
-}
+export const Literal = defineButton({
+    builder: new PrimaryButtonBuilder().setCustomId("x").setLabel("x"),
+    async run() {},
+});
 
 export const exclusiveOptions = () => {
-    class Both extends ButtonHandler<{ params: typeof params }> {
-        constructor() {
-            super({
-                params,
-                // @ts-expect-error Params handlers cannot also declare a literal custom ID.
-                customId: "x",
-            });
-        }
-
-        async run() {}
-    }
+    const Both = defineButton({
+        params,
+        // @ts-expect-error Params handlers cannot also declare a literal custom ID.
+        customId: "x",
+        async run() {},
+    });
 
     return Both;
 };

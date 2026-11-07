@@ -6,33 +6,28 @@ anything by hand.
 
 ## Slash commands
 
-You've already seen one in [getting started](getting-started.md): a `Command`
-with a builder and a `run()` method. The builder is the source of truth for the
+You've already seen one in [getting started](getting-started.md):
+`defineCommand()` with a builder and a `run()` function. The builder is the source of truth for the
 name, description, and options:
 
 ```ts fragment
-export default class EchoCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("echo")
-                .setDescription("Repeat a message.")
-                .addStringOptions(option =>
-                    option
-                        .setName("text")
-                        .setDescription("What to say")
-                        .setRequired(true),
-                ),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("echo")
+        .setDescription("Repeat a message.")
+        .addStringOptions(option =>
+            option
+                .setName("text")
+                .setDescription("What to say")
+                .setRequired(true),
+        ),
+    async run(ctx) {
         await ctx.interaction.reply({
             content: ctx.interaction.options.getString("text", true),
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 Want the options validated and typed for you? See [typed input](input.md).
@@ -70,49 +65,37 @@ shared guards, but it doesn't run anything itself:
 ```ts
 // src/commands/[ticket]/index.ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { ParentCommand } from "@hyperion/core";
+import { defineParentCommand } from "@hyperion/core";
 import { InteractionContextType } from "discord.js";
 
-export default class Ticket extends ParentCommand {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setDescription("Manage support tickets.")
-                .setContexts(InteractionContextType.Guild),
-        });
-    }
-}
+export default defineParentCommand({
+    builder: new ChatInputCommandBuilder()
+        .setDescription("Manage support tickets.")
+        .setContexts(InteractionContextType.Guild),
+});
 ```
 
 The folder already says `ticket`, so you don't need `setName()`. Each file next
-to it is a `Subcommand` with a subcommand builder:
+to it defines a subcommand with a subcommand builder:
 
 ```ts
 // src/commands/[ticket]/close.ts
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { type CommandContext, Subcommand } from "@hyperion/core";
+import { defineSubcommand } from "@hyperion/core";
 
-export default class CloseTicket extends Subcommand {
-    constructor() {
-        super({
-            builder: new ChatInputCommandSubcommandBuilder()
-                .setName("close")
-                .setDescription("Close a ticket.")
-                .addStringOptions(option =>
-                    option
-                        .setName("id")
-                        .setDescription("Ticket ID")
-                        .setRequired(true),
-                ),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineSubcommand({
+    builder: new ChatInputCommandSubcommandBuilder()
+        .setName("close")
+        .setDescription("Close a ticket.")
+        .addStringOptions(option =>
+            option.setName("id").setDescription("Ticket ID").setRequired(true),
+        ),
+    async run(ctx) {
         await ctx.interaction.reply(
             `Closing ${ctx.interaction.options.getString("id", true)}.`,
         );
-    }
-}
+    },
+});
 ```
 
 Hyperion stitches the subcommands into the parent when it deploys. Don't add
@@ -121,23 +104,18 @@ subcommands to the parent's builder yourself; it'll refuse to load.
 ## Subcommand groups
 
 Groups work the same way one level down. Add `{settings}/index.ts` with a
-`SubcommandGroup`, then put `Subcommand` files beside it:
+group definition, then put subcommand files beside it:
 
 ```ts
 // src/commands/[ticket]/{settings}/index.ts
 import { ChatInputCommandSubcommandGroupBuilder } from "@discordjs/builders";
-import { SubcommandGroup } from "@hyperion/core";
+import { defineSubcommandGroup } from "@hyperion/core";
 
-export default class Settings extends SubcommandGroup {
-    constructor() {
-        super({
-            builder:
-                new ChatInputCommandSubcommandGroupBuilder().setDescription(
-                    "Configure ticket routing",
-                ),
-        });
-    }
-}
+export default defineSubcommandGroup({
+    builder: new ChatInputCommandSubcommandGroupBuilder().setDescription(
+        "Configure ticket routing",
+    ),
+});
 ```
 
 Guards stack from the outside in: parent guards run first, then the group's,
@@ -145,28 +123,24 @@ then the subcommand's.
 
 ## Context menus
 
-User and message commands are also `Command`s, with the command type as their
-type argument:
+User and message commands use `defineCommand()` too. The builder decides the
+command type, so `ctx.interaction` is typed for it:
 
 ```ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
-import { type ApplicationCommandType, MessageFlags } from "discord.js";
+import { defineCommand } from "@hyperion/core";
+import { MessageFlags } from "discord.js";
 
-// ApplicationCommandType.Message for a message command.
-export default class InspectUser extends Command<ApplicationCommandType.User> {
-    constructor() {
-        super({ builder: new UserContextCommandBuilder().setName("Inspect") });
-    }
-
-    // The same type argument types ctx.interaction as a user command.
-    async run(ctx: CommandContext<ApplicationCommandType.User>) {
+// A MessageContextCommandBuilder makes a message command instead.
+export default defineCommand({
+    builder: new UserContextCommandBuilder().setName("Inspect"),
+    async run(ctx) {
         await ctx.interaction.reply({
             content: `That's ${ctx.interaction.targetUser.username}.`,
             flags: MessageFlags.Ephemeral,
         });
-    }
-}
+    },
+});
 ```
 
 Put context menus in `src/commands` or a category, but not inside a parent

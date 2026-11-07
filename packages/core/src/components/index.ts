@@ -1,8 +1,9 @@
 export {
     type ButtonContext,
-    ButtonHandler,
+    type ButtonHandler,
     type ButtonHandlerOptions,
     type ButtonSpec,
+    defineButton,
 } from "./button.ts";
 export {
     type CustomIdParams,
@@ -12,8 +13,9 @@ export {
     type ParamValues,
 } from "./custom-id-params.ts";
 export {
+    defineModal,
     type ModalContext,
-    ModalHandler,
+    type ModalHandler,
     type ModalHandlerOptions,
     type ModalInputDefinition,
     type ModalInputOptions,
@@ -22,8 +24,9 @@ export {
 } from "./modal.ts";
 export {
     type AnySelectMenuHandler,
+    defineSelectMenu,
     type SelectMenuContext,
-    SelectMenuHandler,
+    type SelectMenuHandler,
     type SelectMenuHandlerOptions,
     type SelectMenuInputDefinition,
     type SelectMenuSpec,

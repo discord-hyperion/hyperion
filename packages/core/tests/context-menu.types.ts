@@ -6,10 +6,11 @@ import {
 import { ApplicationCommandType } from "discord.js";
 import {
     type AnyInteraction,
-    Command,
+    type Command,
     type CommandContext,
     type CommandOptions,
     type CommandRegistry,
+    defineCommand,
     ownerOnly,
     type Subcommand,
 } from "../src/index.ts";
@@ -90,17 +91,13 @@ export const contextMenuContracts = (
         builder: new MessageContextCommandBuilder().setName("Inspect"),
     };
 
-    class IncorrectMessage extends Command<ApplicationCommandType.Message> {
-        constructor() {
-            super({
-                // @ts-expect-error The Command generic also rejects a mismatched builder in super().
-                builder: new UserContextCommandBuilder().setName("Inspect"),
-            });
-        }
-        async run(ctx: CommandContext<ApplicationCommandType.Message>) {
+    const IncorrectMessage = defineCommand({
+        builder: new UserContextCommandBuilder().setName("Inspect"),
+        async run(ctx) {
+            // @ts-expect-error A user builder makes a user command, which has no target message.
             await ctx.interaction.reply(ctx.interaction.targetMessage.id);
-        }
-    }
+        },
+    });
     const wrongGuards: CommandOptions<ApplicationCommandType.Message> = {
         builder: new MessageContextCommandBuilder(),
         // @ts-expect-error User-specific guards cannot be attached to message commands.

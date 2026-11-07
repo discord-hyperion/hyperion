@@ -12,11 +12,11 @@ export type ParentCommandOptions = {
     guards?: readonly GuardProvider<CommandContext>[];
 };
 
-export abstract class ParentCommand {
+export class ParentCommand {
     readonly builder: ChatInputCommandBuilder;
     readonly guards: readonly GuardProvider<CommandContext>[];
 
-    protected constructor(options: ParentCommandOptions) {
+    constructor(options: ParentCommandOptions) {
         if (!(options.builder instanceof ChatInputCommandBuilder)) {
             throw new TypeError(
                 "Parent commands require a ChatInputCommandBuilder.",
@@ -73,3 +73,12 @@ export abstract class ParentCommand {
         }
     }
 }
+
+/** Defines a parent command: its description and the guards its subcommands share. */
+export const defineParentCommand = (options: ParentCommandOptions) => {
+    const definition = new ParentCommand(options);
+
+    Object.freeze(definition);
+
+    return definition;
+};

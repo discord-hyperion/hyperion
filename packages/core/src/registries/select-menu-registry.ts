@@ -7,12 +7,14 @@ import {
 } from "@discordjs/builders";
 import { Collection, type ComponentType } from "discord.js";
 import type { Logger } from "pino";
+import type {
+    CustomIdParams,
+    ParamValues,
+} from "../components/custom-id-params.ts";
 import {
     type AnySelectMenuHandler,
-    type CustomIdParams,
-    type ParamValues,
     SelectMenuHandler,
-} from "../components/index.ts";
+} from "../components/select-menu.ts";
 
 type SelectTemplate = NonNullable<AnySelectMenuHandler["builder"]>;
 
@@ -64,6 +66,7 @@ export class SelectMenuRegistry extends Collection<
             root,
             "select-menus",
             SelectMenuHandler,
+            "defineSelectMenu",
             (selectMenu, data) => {
                 if (
                     ![

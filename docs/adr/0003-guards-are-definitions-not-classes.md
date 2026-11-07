@@ -16,3 +16,6 @@ without enabling anything a closure cannot express. A special parameterized form
 `guards` array is indistinguishable from a guard factory at runtime. The built-in
 guards changed with this decision (`ownerOnly`, `cooldown()`, `paramOwner()`),
 which was accepted as a pre-1.0 breaking change.
+
+Superseded for handlers by [ADR 0008](0008-handlers-are-defined-with-functions.md):
+handlers are now defined with functions too.

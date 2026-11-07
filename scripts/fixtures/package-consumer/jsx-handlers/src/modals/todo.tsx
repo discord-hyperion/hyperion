@@ -1,4 +1,4 @@
-import { defineInput, type ModalContext, ModalHandler } from "@hyperion/core";
+import { defineInput, defineModal, type ModalContext } from "@hyperion/core";
 import { Modal, renderModal } from "@hyperion/jsx";
 import * as v from "valibot";
 
@@ -10,23 +10,16 @@ const input = defineInput({
     }),
 });
 
-type TodoSpec = { input: typeof input };
-
-export default class extends ModalHandler<TodoSpec> {
-    constructor() {
-        super({
-            builder: renderModal(
-                <Modal customId="consumer.modal" title="Consumer modal">
-                    <Modal.Label text="Name">
-                        <Modal.TextInput customId="name" />
-                    </Modal.Label>
-                </Modal>,
-            ),
-            input,
-        });
-    }
-
-    async run(ctx: ModalContext<TodoSpec>) {
+export default defineModal({
+    builder: renderModal(
+        <Modal customId="consumer.modal" title="Consumer modal">
+            <Modal.Label text="Name">
+                <Modal.TextInput customId="name" />
+            </Modal.Label>
+        </Modal>,
+    ),
+    input,
+    async run(ctx) {
         const [issues, value] = ctx.input;
 
         if (issues) {
@@ -41,5 +34,5 @@ export default class extends ModalHandler<TodoSpec> {
         value.missing;
 
         await ctx.interaction.reply(`${value.owner}: ${value.name}`);
-    }
-}
+    },
+});

@@ -3,7 +3,7 @@ import { mock, type TestContext, test } from "node:test";
 import { PrimaryButtonBuilder } from "@discordjs/builders";
 import { Collection, Events, InteractionType, MessageFlags } from "discord.js";
 import { createButtonInteraction } from "../../../tests/fixtures/interactions.ts";
-import { type ButtonContext, ButtonHandler } from "../src/components/index.ts";
+import { type ButtonContext, defineButton } from "../src/components/index.ts";
 import {
     cooldown,
     defineGuard,
@@ -32,22 +32,17 @@ const interaction = (phase: Phase = "new", userId = "owner") =>
         ephemeral: phase === "defer-reply" ? true : null,
     });
 
-class TestButton extends ButtonHandler {
-    constructor(
-        private readonly execute: (ctx: ButtonContext) => Promise<void>,
-        guards: readonly GuardProvider<ButtonContext>[] = [],
-    ) {
-        super({
-            builder: new PrimaryButtonBuilder()
-                .setCustomId("refresh")
-                .setLabel("Refresh"),
-            guards,
-        });
-    }
-    run(ctx: ButtonContext) {
-        return this.execute(ctx);
-    }
-}
+const testButton = (
+    execute: (ctx: ButtonContext) => Promise<void>,
+    guards: readonly GuardProvider<ButtonContext>[] = [],
+) =>
+    defineButton({
+        builder: new PrimaryButtonBuilder()
+            .setCustomId("refresh")
+            .setLabel("Refresh"),
+        guards,
+        run: execute,
+    });
 
 const setup = async (t: TestContext) => {
     const result = await createTestClient(t);
@@ -55,19 +50,16 @@ const setup = async (t: TestContext) => {
 
     return result;
 };
-test("button listener preserves the receiver, awaits async data, and scopes logs", async t => {
+test("button listener awaits async data and scopes logs", async t => {
     const { client, records } = await setup(t);
-    class Refresh extends TestButton {
-        async run(ctx: ButtonContext) {
-            assert.equal(this.customId, "refresh");
-            assert.equal(ctx.client, client);
-            await ctx.interaction.deferUpdate();
-            const data = await Promise.resolve({ status: "Ready" });
-            ctx.logger.debug({ checkpoint: "data-loaded" }, "Loaded status");
-            await ctx.interaction.editReply({ content: data.status });
-        }
-    }
-    client.buttons.set("refresh", new Refresh(async () => {}));
+    const refresh = testButton(async ctx => {
+        assert.equal(ctx.client, client);
+        await ctx.interaction.deferUpdate();
+        const data = await Promise.resolve({ status: "Ready" });
+        ctx.logger.debug({ checkpoint: "data-loaded" }, "Loaded status");
+        await ctx.interaction.editReply({ content: data.status });
+    });
+    client.buttons.set("refresh", refresh);
     const fixture = interaction();
     client.emit(Events.InteractionCreate, fixture.interaction);
     await client.waitForAllListenersToComplete();
@@ -95,7 +87,7 @@ test("button listener preserves the receiver, awaits async data, and scopes logs
 test("unmatched IDs and unsupported components remain available to collectors", async t => {
     const { client, dispatcher } = await setup(t);
     const execute = mock.fn(async (_ctx: ButtonContext) => {});
-    client.buttons.set("refresh", new TestButton(execute));
+    client.buttons.set("refresh", testButton(execute));
     for (const customId of ["refresh:unmatched", "hyperion:button:expired:0"]) {
         const unknown = interaction();
         Object.assign(unknown.interaction, { customId });
@@ -117,7 +109,7 @@ test("button guards run in order and reject before later factories or handlers",
     const { client, dispatcher, records } = await setup(t);
     const later = mock.fn(() => ownerOnly);
     const execute = mock.fn(async (_ctx: ButtonContext) => {});
-    client.buttons.set("refresh", new TestButton(execute, [ownerOnly, later]));
+    client.buttons.set("refresh", testButton(execute, [ownerOnly, later]));
     const fixture = interaction("new", "other");
     await dispatcher.dispatch(fixture.interaction);
     assert.equal(later.mock.callCount(), 0);
@@ -143,10 +135,7 @@ test("custom button guard onFail receives the invocation context", async t => {
             },
         });
     const execute = mock.fn(async (_ctx: ButtonContext) => {});
-    client.buttons.set(
-        "refresh",
-        new TestButton(execute, [async () => deny()]),
-    );
+    client.buttons.set("refresh", testButton(execute, [async () => deny()]));
     const fixture = interaction();
     await dispatcher.dispatch(fixture.interaction);
     assert.equal(execute.mock.callCount(), 0);
@@ -168,7 +157,7 @@ test("Cooldown factories share state while selecting a separate key per user", a
         }),
     );
 
-    client.buttons.set("refresh", new TestButton(execute, [factory]));
+    client.buttons.set("refresh", testButton(execute, [factory]));
     assert.equal(factory.mock.callCount(), 0);
 
     await dispatcher.dispatch(interaction().interaction);
@@ -217,7 +206,7 @@ test("button failures use the correct response for every acknowledgment phase", 
     const { client, dispatcher, records } = await setup(t);
     client.buttons.set(
         "refresh",
-        new TestButton(async () => {
+        testButton(async () => {
             throw new Error("Private failure");
         }),
     );
@@ -244,7 +233,7 @@ test("factory errors fail closed and failed error deliveries are contained", asy
     const execute = mock.fn(async (_ctx: ButtonContext) => {});
     client.buttons.set(
         "refresh",
-        new TestButton(execute, [
+        testButton(execute, [
             async () => {
                 throw new Error("Guard unavailable");
             },
@@ -271,7 +260,7 @@ test("button invocations keep async state separate and never auto-acknowledge", 
     const contexts: ButtonContext[] = [];
     client.buttons.set(
         "refresh",
-        new TestButton(async ctx => {
+        testButton(async ctx => {
             contexts.push(ctx);
             const id = await Promise.resolve(ctx.interaction.user.id);
 

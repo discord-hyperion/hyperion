@@ -61,9 +61,9 @@ reinstallation, so it does not rely on a warmed workstation metadata cache.
 It cleans temporary consumers on completion. It does not start the bot, load
 private environment files, log in, deploy commands, or publish a package.
 
-Keep each process on one framework/SDK module graph. Mixing source classes with
-compiled classes produces distinct constructors and can invalidate discovery's
-subclass checks.
+Keep each process on one framework/SDK module graph. Mixing source and compiled
+copies of core produces distinct handler classes, so discovery's `instanceof`
+checks reject handlers defined with the other copy.
 
 The initial published contract is ESM on Node 24.17.0 or newer, with a TypeScript
 7.x verification baseline and exact compatible Discord prerelease peers. CommonJS

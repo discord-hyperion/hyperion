@@ -3,30 +3,25 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { type ModalContext, ModalHandler } from "@hyperion/core";
+import { defineModal } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
-export default class SubmitFeedback extends ModalHandler {
-    constructor() {
-        super({
-            builder: new ModalBuilder()
-                .setCustomId("feedback.submit")
-                .setTitle("Feedback")
-                .addLabelComponents(
-                    new LabelBuilder()
-                        .setLabel("Your feedback")
-                        .setTextInputComponent(
-                            new TextInputBuilder()
-                                .setCustomId("feedback.message")
-                                .setStyle(TextInputStyle.Paragraph)
-                                .setRequired(true)
-                                .setMaxLength(1_000),
-                        ),
+export default defineModal({
+    builder: new ModalBuilder()
+        .setCustomId("feedback.submit")
+        .setTitle("Feedback")
+        .addLabelComponents(
+            new LabelBuilder()
+                .setLabel("Your feedback")
+                .setTextInputComponent(
+                    new TextInputBuilder()
+                        .setCustomId("feedback.message")
+                        .setStyle(TextInputStyle.Paragraph)
+                        .setRequired(true)
+                        .setMaxLength(1_000),
                 ),
-        });
-    }
-
-    async run(ctx: ModalContext) {
+        ),
+    async run(ctx) {
         const message =
             ctx.interaction.components.getTextInputValue("feedback.message");
 
@@ -35,5 +30,5 @@ export default class SubmitFeedback extends ModalHandler {
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

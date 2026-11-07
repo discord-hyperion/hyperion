@@ -25,7 +25,7 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
 
     await writeFile(
         path.join(root, "src", "commands", "ping.mjs"),
-        `export { default } from ${JSON.stringify(new URL("../src/commands/(general)/ping.ts", import.meta.url).href)};`,
+        `export { default } from ${JSON.stringify(new URL("../src/commands/ping.ts", import.meta.url).href)};`,
     );
 
     const put = t.mock.method(REST.prototype, "put", async () => []);

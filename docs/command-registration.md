@@ -64,10 +64,10 @@ request. An existing empty folder also results in no deployment. Other filesyste
 errors, such as an unreadable folder or a file where a folder is expected, fail
 initialization rather than being silently ignored.
 
-Standalone command modules default-export a concrete `Command` subclass with a
-public, zero-argument constructor and a `run()` method. Inside `[parent]`, leaf
-modules instead extend `Subcommand`; the direct `index.ts` extends `ParentCommand`
-and supplies shared metadata and guards without `run()`. See
+Standalone command modules default-export the command `defineCommand()` returns,
+with a `run()` function. Inside `[parent]`, leaf modules use `defineSubcommand()`
+instead; the direct `index.ts` uses `defineParentCommand()` and supplies shared
+metadata and guards without `run()`. See
 [Command path conventions](command-paths.md) for complete examples.
 
 Supported extensions are `.ts`, `.mts`, `.cts`, `.tsx`, `.js`, `.mjs`, `.cjs`,
@@ -81,21 +81,16 @@ Commands accept a `ChatInputCommandBuilder` from the v15-compatible
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 
-export default class PingCommand extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("ping")
-                .setDescription("Check whether the bot is responding."),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("ping")
+        .setDescription("Check whether the bot is responding."),
+    async run(ctx) {
         await ctx.interaction.reply("Pong!");
-    }
-}
+    },
+});
 ```
 
 The same registry also supports user and message [context-menu commands](context-menu-commands.md).

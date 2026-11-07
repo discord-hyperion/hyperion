@@ -2,10 +2,10 @@ import { ChatInputCommandBuilder, ModalBuilder } from "@discordjs/builders";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import type { ModalSubmitInteraction } from "discord.js";
 import {
-    Command,
+    defineCommand,
     defineInput,
+    defineModal,
     type ModalContext,
-    ModalHandler,
     type ModalHandlerOptions,
     type ModalInputOptions,
     type ModalRegistry,
@@ -38,23 +38,18 @@ export const modalInputContracts = (
     });
     input satisfies ModalInputOptions<typeof schema>;
 
-    class CreateTodo extends ModalHandler<{ input: typeof input }> {
-        constructor() {
-            super({
-                builder: new ModalBuilder().setCustomId("todo.create"),
-                input,
-                guards: [
-                    ctx => {
-                        ctx.interaction satisfies ModalSubmitInteraction;
-                        // @ts-expect-error Guards run before input processing.
-                        ctx.input;
-                        throw new Error("Type-only fixture");
-                    },
-                ],
-            });
-        }
-
-        async run(ctx: ModalContext<{ input: typeof input }>) {
+    const CreateTodo = defineModal({
+        builder: new ModalBuilder().setCustomId("todo.create"),
+        input,
+        guards: [
+            ctx => {
+                ctx.interaction satisfies ModalSubmitInteraction;
+                // @ts-expect-error Guards run before input processing.
+                ctx.input;
+                throw new Error("Type-only fixture");
+            },
+        ],
+        async run(ctx) {
             const [issues, value] = ctx.input;
 
             if (issues) {
@@ -72,10 +67,10 @@ export const modalInputContracts = (
             value.missing;
             // @ts-expect-error Input is readonly.
             ctx.input = [null, value];
-        }
-    }
+        },
+    });
 
-    registry.set("todo.create", new CreateTodo());
+    registry.set("todo.create", CreateTodo);
     const withoutResolver = defineInput({ schema });
     const passthrough = (
         ctx: ModalContext<{ input: typeof withoutResolver }>,
@@ -94,14 +89,17 @@ export const modalInputContracts = (
     // @ts-expect-error Schema-free contexts have no input.
     plain.input;
     // @ts-expect-error Command resolvers cannot serve modal submissions.
-    type _WrongContext = ModalHandler<{
+    type _WrongContext = ModalContext<{
         input: ReturnType<typeof commandInput>;
     }>;
-    const wrongCommand = { builder: new ChatInputCommandBuilder(), input };
-    // @ts-expect-error Modal resolvers cannot serve chat-input commands.
-    wrongCommand satisfies ConstructorParameters<typeof InputCommand>[0];
+    const wrongCommand = defineCommand({
+        builder: new ChatInputCommandBuilder(),
+        // @ts-expect-error Modal resolvers cannot serve chat-input commands.
+        input,
+        run() {},
+    });
 
-    return { CreateTodo, passthrough };
+    return { CreateTodo, passthrough, wrongCommand };
 };
 
 const commandInput = () =>
@@ -116,15 +114,6 @@ const commandInput = () =>
         resolve: (_value, ctx) => ctx.interaction.commandName,
     });
 
-abstract class InputCommand extends Command<ReturnType<typeof commandInput>> {
-    constructor(options: {
-        builder: ChatInputCommandBuilder;
-        input: ReturnType<typeof commandInput>;
-    }) {
-        super(options);
-    }
-}
-
 export const contextFreeModalResolver = (
     schema: StandardSchemaV1<unknown, { name: string }>,
 ) => {
@@ -132,19 +121,15 @@ export const contextFreeModalResolver = (
         schema,
         resolve: async ({ name }) => ({ todo: { name } }),
     });
-    class ContextFree extends ModalHandler<{ input: typeof input }> {
-        constructor() {
-            super({
-                builder: new ModalBuilder().setCustomId("todo.create"),
-                input,
-            });
-        }
-        async run(ctx: ModalContext<{ input: typeof input }>) {
+    const ContextFree = defineModal({
+        builder: new ModalBuilder().setCustomId("todo.create"),
+        input,
+        async run(ctx) {
             const [issues, value] = ctx.input;
             if (issues) return;
             value.todo.name satisfies string;
-        }
-    }
+        },
+    });
 
     return ContextFree;
 };

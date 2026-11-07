@@ -81,7 +81,7 @@ for (const kind of componentKinds) {
 
         const broken = {
             "invalid export": "export default class {};",
-            "missing run": source("missing-run").replace("async run() {}", ""),
+            "missing run": source("missing-run").replace("async run() {},", ""),
             "invalid builder": source("x".repeat(101)),
             "missing custom ID": source(""),
             "invalid guard": source("guard", "guards: [{}]"),
@@ -177,12 +177,12 @@ for (const kind of componentKinds) {
             await writeFile(
                 path.join(commands, "ping.mjs"),
                 `
-        import { Command } from ${JSON.stringify(new URL("../src/commands/command.ts", import.meta.url).href)};
+        import { defineCommand } from ${JSON.stringify(new URL("../src/commands/command.ts", import.meta.url).href)};
         import { ChatInputCommandBuilder } from ${JSON.stringify(import.meta.resolve("@discordjs/builders"))};
-        export default class extends Command {
-            constructor() { super({ builder: new ChatInputCommandBuilder().setName("ping").setDescription("Ping") }); }
-            async run() {}
-        }
+        export default defineCommand({
+            builder: new ChatInputCommandBuilder().setName("ping").setDescription("Ping"),
+            async run() {},
+        })
     `,
             );
 

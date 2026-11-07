@@ -10,11 +10,11 @@ export type SubcommandGroupOptions = {
     guards?: readonly GuardProvider<CommandContext>[];
 };
 
-export abstract class SubcommandGroup {
+export class SubcommandGroup {
     readonly builder: ChatInputCommandSubcommandGroupBuilder;
     readonly guards: readonly GuardProvider<CommandContext>[];
 
-    protected constructor(options: SubcommandGroupOptions) {
+    constructor(options: SubcommandGroupOptions) {
         if (
             !(options.builder instanceof ChatInputCommandSubcommandGroupBuilder)
         ) {
@@ -78,3 +78,12 @@ export abstract class SubcommandGroup {
         return builder;
     }
 }
+
+/** Defines a subcommand group: its description and the guards its subcommands share. */
+export const defineSubcommandGroup = (options: SubcommandGroupOptions) => {
+    const definition = new SubcommandGroup(options);
+
+    Object.freeze(definition);
+
+    return definition;
+};

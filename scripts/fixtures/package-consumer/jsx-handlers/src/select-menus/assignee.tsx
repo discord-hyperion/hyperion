@@ -1,4 +1,4 @@
-import { type SelectMenuContext, SelectMenuHandler } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion/core";
 import {
     RoleSelect,
     renderRoleSelect,
@@ -7,36 +7,22 @@ import {
 } from "@hyperion/jsx";
 import { ComponentType } from "discord.js";
 
-type AssigneeSpec = { componentType: ComponentType.UserSelect };
-
-export default class extends SelectMenuHandler<AssigneeSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.UserSelect,
-            builder: renderUserSelect(
-                <UserSelect customId="consumer.assignee" maxValues={1} />,
-            ),
-        });
-    }
-
-    async run(ctx: SelectMenuContext<AssigneeSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.UserSelect,
+    builder: renderUserSelect(
+        <UserSelect customId="consumer.assignee" maxValues={1} />,
+    ),
+    async run(ctx) {
         await ctx.interaction.update({
             content: `Assignee: ${ctx.interaction.values.join(",")}`,
         });
-    }
-}
+    },
+});
 
 export const mismatchedBuilder = () =>
-    class extends SelectMenuHandler<AssigneeSpec> {
-        constructor() {
-            super({
-                componentType: ComponentType.UserSelect,
-                // @ts-expect-error A role-select template can't serve a user-select handler.
-                builder: renderRoleSelect(
-                    <RoleSelect customId="consumer.assignee" />,
-                ),
-            });
-        }
-
-        async run() {}
-    };
+    defineSelectMenu({
+        componentType: ComponentType.UserSelect,
+        // @ts-expect-error A role-select template can't serve a user-select handler.
+        builder: renderRoleSelect(<RoleSelect customId="consumer.assignee" />),
+        async run() {},
+    });

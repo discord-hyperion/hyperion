@@ -1,26 +1,21 @@
 # @hyperion/core
 
 Hyperion is a TypeScript framework for Discord bots using discord.js v15.
-It provides class-based commands, components, guards, discovery, and typed
-interaction contexts.
+You define commands, components, events, and guards with functions, and it
+discovers them, deploys your commands, and types every interaction context.
 
 ```ts
-import { Command, type CommandContext } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 
-export default class extends Command {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("ping")
-                .setDescription("Check whether the bot is responding."),
-        });
-    }
-
-    async run(ctx: CommandContext) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("ping")
+        .setDescription("Check whether the bot is responding."),
+    async run(ctx) {
         await ctx.interaction.reply("Pong!");
-    }
-}
+    },
+});
 ```
 
 Use Node.js 24.17.0 or newer and the exact discord.js and @discordjs/builders

@@ -1,7 +1,8 @@
-import { EventHandler } from "@hyperion/core";
+import { defineEvent } from "@hyperion/core";
 
-export default class extends EventHandler {
+export default defineEvent({
+    event: "invalidated",
     async run(ctx) {
         ctx.client.emit("consumer:event", "second", ctx.args.length);
-    }
-}
+    },
+});

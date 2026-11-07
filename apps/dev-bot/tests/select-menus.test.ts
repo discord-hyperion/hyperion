@@ -28,13 +28,17 @@ test("development colour command and filesystem menu complete the selection flow
 
     t.after(() => client.destroy());
     await client.commands.load(new URL("../", import.meta.url));
-    const command = client.commands.get("colour");
+    const command = client.commands.resolveSubcommand("select", "colour");
     assert.ok(command);
     const dispatcher = new InteractionDispatcher(client);
     const { interaction: commandInteraction, reply } =
         createChatInputInteraction({
             id: "colour-command",
-            commandName: "colour",
+            commandName: "select",
+            options: {
+                getSubcommand: () => "colour",
+                getSubcommandGroup: () => null,
+            },
             user: { id: "user" },
         });
     await dispatcher.dispatch(commandInteraction);

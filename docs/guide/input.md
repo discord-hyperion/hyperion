@@ -9,37 +9,31 @@ the list of problems.
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { Command, type CommandContext, defineInput } from "@hyperion/core";
+import { defineCommand } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 import * as v from "valibot";
 
-const input = defineInput({
-    schema: v.object({
-        text: v.pipe(v.string(), v.trim(), v.minLength(1, "Say something!")),
-        times: v.optional(v.number(), 1),
-    }),
-});
-
-export default class EchoCommand extends Command<typeof input> {
-    constructor() {
-        super({
-            builder: new ChatInputCommandBuilder()
-                .setName("echo")
-                .setDescription("Repeat a message.")
-                .addStringOptions(o =>
-                    o
-                        .setName("text")
-                        .setDescription("What to say")
-                        .setRequired(true),
-                )
-                .addIntegerOptions(o =>
-                    o.setName("times").setDescription("How many times"),
-                ),
-            input,
-        });
-    }
-
-    async run(ctx: CommandContext<typeof input>) {
+export default defineCommand({
+    builder: new ChatInputCommandBuilder()
+        .setName("echo")
+        .setDescription("Repeat a message.")
+        .addStringOptions(o =>
+            o.setName("text").setDescription("What to say").setRequired(true),
+        )
+        .addIntegerOptions(o =>
+            o.setName("times").setDescription("How many times"),
+        ),
+    input: {
+        schema: v.object({
+            text: v.pipe(
+                v.string(),
+                v.trim(),
+                v.minLength(1, "Say something!"),
+            ),
+            times: v.optional(v.number(), 1),
+        }),
+    },
+    async run(ctx) {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.reply({
@@ -50,19 +44,22 @@ export default class EchoCommand extends Command<typeof input> {
         }
 
         await ctx.interaction.reply(value.text.repeat(value.times));
-    }
-}
+    },
+});
 ```
 
 The builder still decides what Discord shows, and the schema decides what's
 valid and fills in defaults. Any [Standard Schema](https://standardschema.dev)
-library works. `defineInput()` takes:
+library works. `input` takes:
 
 | Option    | What it's for                                                                                                       |
 | --------- | ------------------------------------------------------------------------------------------------------------------- |
 | `schema`  | Checks the options and gives them their types.                                                                      |
 | `resolve` | Optional. Turns the checked values into what your handler needs. See [resolving the values](#resolving-the-values). |
 | `defer`   | Optional. Defers before validating. See [deferring](#deferring).                                                    |
+
+Everything is typed from the schema, with no annotations. To share input between
+handlers, define it once with `defineInput()` and pass that instead.
 
 `ctx.input` is either `[null, value]` or `[issues, undefined]`. Hyperion never
 replies to validation problems for you, so you choose the wording. Return after
@@ -86,11 +83,11 @@ Often you want the _thing_ an option points to, not the raw value. Add `resolve`
 to turn validated values into whatever your handler needs:
 
 ```ts fragment
-const input = defineInput({
+input: {
     schema: v.object({ id: v.string() }),
     defer: true,
     resolve: async ({ id }) => ({ todo: await todos.find(id) }),
-});
+},
 ```
 
 Now `ctx.input` holds `{ todo }` instead of `{ id }`. The resolver only runs when
@@ -102,8 +99,8 @@ missing todo can simply be `null`. Its second argument is the handler's context.
 Lookups can be slow, so Hyperion can defer before validating:
 
 ```ts fragment
-defineInput({ schema, defer: true }); // a private reply, for any handler
-defineInput({ schema, defer: "update" }); // the message, for select menus and modals
+input: { schema, defer: true }, // a private reply, for any handler
+input: { schema, defer: "update" }, // the message, for select menus and modals
 ```
 
 Either way, finish with `editReply()`. See [responding](responding.md).
@@ -120,7 +117,7 @@ the user gets the generic error message.
 
 ## Subcommands, modals, select menus, and context menus
 
-- Subcommands work the same way: `Subcommand<typeof input>`.
-- Modal forms use the same `defineInput()`; see [modals](modals.md#validating-the-fields).
+- Subcommands take `input` the same way.
+- Modal forms do too; see [modals](modals.md#validating-the-fields).
 - Select menus too; see [select menus](select-menus.md#checking-the-pick).
 - Context-menu commands have no options, so they don't take input.

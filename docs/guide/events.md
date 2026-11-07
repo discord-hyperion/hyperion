@@ -11,26 +11,22 @@ discord.js spells it (`clientReady`, `messageCreate`, …):
 
 ```ts
 // src/events/clientReady/10-startup-message.ts
-import { type EventContext, EventHandler } from "@hyperion/core";
-import type { Events } from "discord.js";
+import { defineEvent } from "@hyperion/core";
+import { Events } from "discord.js";
 
-export default class extends EventHandler<Events.ClientReady> {
-    constructor() {
-        super({ once: true });
-    }
-
-    async run(ctx: EventContext<Events.ClientReady>) {
+export default defineEvent({
+    event: Events.ClientReady,
+    once: true,
+    async run(ctx) {
         const [client] = ctx.args;
         ctx.logger.info({ userId: client.user.id }, "Ready!");
-    }
-}
+    },
+});
 ```
 
-`ctx.args` holds the event's arguments, in the same order discord.js passes them.
-The generic types them, so keep it in sync with the folder (TypeScript can't see
-folder names). Leave out the constructor if you don't need options.
-
-`once: true` runs the handler for the first occurrence only.
+`event` names the event again, which types `ctx.args`: the event's arguments, in
+the order discord.js passes them. Hyperion checks it matches the folder when it
+loads the file. `once: true` runs the handler for the first occurrence only.
 
 ## Order
 

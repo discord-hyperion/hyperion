@@ -1,9 +1,5 @@
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import {
-    defineInput,
-    type SelectMenuContext,
-    SelectMenuHandler,
-} from "@hyperion/core";
+import { defineInput, defineSelectMenu } from "@hyperion/core";
 import { ComponentType, MessageFlags } from "discord.js";
 import * as v from "valibot";
 
@@ -12,25 +8,18 @@ const input = defineInput({
     schema: v.pipe(v.array(v.picklist(["blue", "green", "red"])), v.length(1)),
 });
 
-type ChooseColourSpec = { input: typeof input };
-
-export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
-    constructor() {
-        super({
-            componentType: ComponentType.StringSelect,
-            builder: new StringSelectMenuBuilder()
-                .setCustomId("colour.choose")
-                .setPlaceholder("Choose a colour")
-                .addOptions(
-                    { label: "Blue", value: "blue" },
-                    { label: "Green", value: "green" },
-                    { label: "Red", value: "red" },
-                ),
-            input,
-        });
-    }
-
-    async run(ctx: SelectMenuContext<ChooseColourSpec>) {
+export default defineSelectMenu({
+    componentType: ComponentType.StringSelect,
+    builder: new StringSelectMenuBuilder()
+        .setCustomId("colour.choose")
+        .setPlaceholder("Choose a colour")
+        .addOptions(
+            { label: "Blue", value: "blue" },
+            { label: "Green", value: "green" },
+            { label: "Red", value: "red" },
+        ),
+    input,
+    async run(ctx) {
         const [issues, colours] = ctx.input;
 
         if (issues) {
@@ -46,5 +35,5 @@ export default class ChooseColour extends SelectMenuHandler<ChooseColourSpec> {
             content: `You chose ${colours[0]}.`,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});

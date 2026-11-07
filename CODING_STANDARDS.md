@@ -6,9 +6,10 @@ expressions, no `public`, formatting), so they are not repeated here.
 
 ## Structure
 
-- Handlers (commands, components, events) are classes, because discovery loads
-  default-exported subclasses. Prefer shared implementations or generic types over
-  empty `Base<X>` subclasses.
+- Handlers (commands, components, events) are defined with `defineCommand()`,
+  `defineButton()`, and the other define functions, which infer their types from
+  the options ([ADR 0008](docs/adr/0008-handlers-are-defined-with-functions.md)).
+  The classes behind them are internal: export them as types only.
 - Guards are execution checks, not handlers: define them with `defineGuard()` and
   closures ([ADR 0003](docs/adr/0003-guards-are-definitions-not-classes.md)).
 - Use Discord's `Collection` for keyed stores, including tests and examples;

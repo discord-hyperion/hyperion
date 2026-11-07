@@ -11,13 +11,13 @@ import type {
 import * as v from "valibot";
 import {
     type ButtonContext,
-    Command,
+    defineCommand,
     defineInput,
+    defineModal,
     defineParams,
+    defineSelectMenu,
     type ModalContext,
-    ModalHandler,
     type SelectMenuContext,
-    SelectMenuHandler,
     type SelectMenuHandlerOptions,
 } from "../src/index.ts";
 
@@ -52,24 +52,19 @@ const assignee = defineInput({
 
 type Priority = { input: typeof priority };
 
-export class PriorityMenu extends SelectMenuHandler<Priority> {
-    constructor() {
-        super({
-            componentType: 3 as ComponentType.StringSelect,
-            customId: "todo.priority",
-            input: priority,
-            guards: [
-                ctx => {
-                    ctx.interaction satisfies StringSelectMenuInteraction;
-                    // @ts-expect-error Guards run before input.
-                    ctx.input;
-                    throw new Error("Type-only fixture");
-                },
-            ],
-        });
-    }
-
-    async run(ctx: SelectMenuContext<Priority>) {
+export const PriorityMenu = defineSelectMenu({
+    componentType: 3 as ComponentType.StringSelect,
+    customId: "todo.priority",
+    input: priority,
+    guards: [
+        ctx => {
+            ctx.interaction satisfies StringSelectMenuInteraction;
+            // @ts-expect-error Guards run before input.
+            ctx.input;
+            throw new Error("Type-only fixture");
+        },
+    ],
+    async run(ctx) {
         const [issues, value] = ctx.input;
 
         if (issues) {
@@ -81,39 +76,28 @@ export class PriorityMenu extends SelectMenuHandler<Priority> {
         value satisfies ("low" | "high")[];
         // @ts-expect-error Input is readonly.
         ctx.input = [null, value];
-    }
-}
+    },
+});
 
-type Assign = {
-    componentType: ComponentType.UserSelect;
-    params: typeof ticket;
-    input: typeof assignee;
-};
-
-export class AssignMenu extends SelectMenuHandler<Assign> {
-    constructor() {
-        super({
-            componentType: 5 as ComponentType.UserSelect,
-            params: ticket,
-            input: assignee,
-        });
-    }
-
-    async run(ctx: SelectMenuContext<Assign>) {
+export const AssignMenu = defineSelectMenu({
+    componentType: 5 as ComponentType.UserSelect,
+    params: ticket,
+    input: assignee,
+    async run(ctx) {
         const [, params] = ctx.params;
         const [issues, user] = ctx.input;
         if (issues || !params) return;
         params.ticketId satisfies string;
         user?.username satisfies string | undefined;
-    }
-}
+    },
+});
 
 export const specContracts = (plain: SelectMenuContext) => {
     plain.interaction satisfies StringSelectMenuInteraction;
     // @ts-expect-error Plain select contexts have no input.
     plain.input;
     // @ts-expect-error A misspelled key is rejected, not ignored.
-    type _SelectTypo = SelectMenuHandler<{ inptu: typeof priority }>;
+    type _SelectTypo = SelectMenuContext<{ inptu: typeof priority }>;
     // @ts-expect-error A misspelled key is rejected, not ignored.
     type _ModalTypo = ModalContext<{ parms: typeof ticket }>;
     // @ts-expect-error Buttons take no input.
@@ -127,46 +111,35 @@ export const specContracts = (plain: SelectMenuContext) => {
     // @ts-expect-error A template supplies the custom ID, so customId is rejected.
     both satisfies SelectMenuHandlerOptions<Priority>;
     // @ts-expect-error The resolver needs a user select with params.
-    type _WrongMenu = SelectMenuHandler<{ input: typeof assignee }>;
+    type _WrongMenu = SelectMenuContext<{ input: typeof assignee }>;
 
-    class MissingInput extends SelectMenuHandler<Priority> {
-        constructor() {
-            // @ts-expect-error A typed handler must configure its input.
-            super({
-                componentType: 3 as ComponentType.StringSelect,
-                customId: "todo.priority",
-            });
-        }
+    const MissingInput = defineSelectMenu({
+        componentType: 3 as ComponentType.StringSelect,
+        customId: "todo.priority",
+        async run(ctx) {
+            // @ts-expect-error A handler without input has no ctx.input.
+            void ctx.input;
+        },
+    });
 
-        async run() {}
-    }
-
-    class UpdateModal extends ModalHandler<{ input: typeof priority }> {
-        constructor() {
-            super({ customId: "todo.rename", input: priority });
-        }
-
-        async run() {}
-    }
+    const UpdateModal = defineModal({
+        customId: "todo.rename",
+        input: priority,
+        async run() {},
+    });
 
     return [MissingInput, UpdateModal];
 };
 
-abstract class InputCommand extends Command<typeof priorityCommand> {}
-const priorityCommand = defineInput({
-    schema: v.object({ name: v.string() }),
-    defer: true,
-});
 const updateCommand = defineInput({
     schema: v.object({ name: v.string() }),
     defer: "update",
 });
 
-export const commandContracts = () => {
-    const builder = new ChatInputCommandBuilder();
-    const options = { builder, input: updateCommand };
-    // @ts-expect-error Commands have no message to update.
-    options satisfies ConstructorParameters<typeof InputCommand>[0];
-
-    return InputCommand;
-};
+export const commandContracts = () =>
+    defineCommand({
+        builder: new ChatInputCommandBuilder(),
+        // @ts-expect-error Commands have no message to update.
+        input: updateCommand,
+        run() {},
+    });

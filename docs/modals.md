@@ -2,10 +2,10 @@
 
 For form, handler, and custom-ID terminology, see the [component glossary](GLOSSARY.md#components).
 
-Hyperion discovers default-exported `ModalHandler` subclasses recursively under
-`<root>/src/modals` and stores them in `client.modals`, keyed by exact custom ID.
-The directory is optional. Each handler needs a public zero-argument constructor,
-an ID, and `run(ctx)`. It should also offer its form as a
+Hyperion discovers the handlers `defineModal()` returns, default-exported
+recursively under `<root>/src/modals`, and stores them in `client.modals`, keyed
+by exact custom ID. The directory is optional. Each handler needs an ID and
+`run(ctx)`. It should also offer its form as a
 [template](GLOSSARY.md#components): a `ModalBuilder` from `@discordjs/builders`.
 The template is optional, but recommended, because `input` reads the form's
 text-input custom IDs and keeping both in one handler keeps them in agreement.
@@ -37,30 +37,25 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { ModalHandler, type ModalContext } from "@hyperion/core";
+import { defineModal } from "@hyperion/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
-export default class SubmitFeedback extends ModalHandler {
-    constructor() {
-        super({
-            builder: new ModalBuilder()
-                .setCustomId("feedback.submit")
-                .setTitle("Feedback")
-                .addLabelComponents(
-                    new LabelBuilder()
-                        .setLabel("Your feedback")
-                        .setTextInputComponent(
-                            new TextInputBuilder()
-                                .setCustomId("feedback.message")
-                                .setStyle(TextInputStyle.Paragraph)
-                                .setRequired(true)
-                                .setMaxLength(1_000),
-                        ),
+export default defineModal({
+    builder: new ModalBuilder()
+        .setCustomId("feedback.submit")
+        .setTitle("Feedback")
+        .addLabelComponents(
+            new LabelBuilder()
+                .setLabel("Your feedback")
+                .setTextInputComponent(
+                    new TextInputBuilder()
+                        .setCustomId("feedback.message")
+                        .setStyle(TextInputStyle.Paragraph)
+                        .setRequired(true)
+                        .setMaxLength(1_000),
                 ),
-        });
-    }
-
-    async run(ctx: ModalContext) {
+        ),
+    async run(ctx) {
         const message =
             ctx.interaction.components.getTextInputValue("feedback.message");
 
@@ -69,8 +64,8 @@ export default class SubmitFeedback extends ModalHandler {
             flags: MessageFlags.Ephemeral,
             allowedMentions: { parse: [] },
         });
-    }
-}
+    },
+});
 ```
 
 This uses the installed discord.js v15 APIs: labels wrap text inputs, and
@@ -127,28 +122,18 @@ const input = defineInput({
     schema: v.object({ title: v.pipe(v.string(), v.trim(), v.minLength(1)) }),
 });
 
-type RenameTicketSpec = {
-    params: typeof renameTicketForm;
-    input: typeof input;
-};
-
-export default class RenameTicket extends ModalHandler<RenameTicketSpec> {
-    constructor() {
-        super({
-            params: renameTicketForm,
-            builder: new ModalBuilder()
-                .setCustomId(renameTicketForm.id)
-                .setTitle("Rename ticket") /* … "title" text input */,
-            input,
-            guards: [paramOwner("owner")],
-        });
-    }
-
-    async run(ctx: ModalContext<RenameTicketSpec>) {
+export default defineModal({
+    params: renameTicketForm,
+    builder: new ModalBuilder()
+        .setCustomId(renameTicketForm.id)
+        .setTitle("Rename ticket") /* … "title" text input */,
+    input,
+    guards: [paramOwner("owner")],
+    async run(ctx) {
         const [paramIssues, params] = ctx.params; // Which ticket, from the custom ID.
         const [inputIssues, value] = ctx.input; // The new title, from the form.
-    }
-}
+    },
+});
 
 // In a button handler:
 await ctx.interaction.showModal(
@@ -189,20 +174,19 @@ deferred message updates receive ephemeral follow-ups. An error after
 `deferUpdate()` never overwrites the source message. Failed error responses are
 logged and contained.
 
-## Type arguments
+## Types
 
-`ModalHandler` and `ModalContext` take one object type argument with the
-optional keys `params` and `input`, named like the constructor options. With no
-type argument there are neither. Name the object once with a type alias and pass
-it to both. Unknown keys are type errors, as is an input whose resolver expects
-other params.
+`defineModal()` infers `ctx.params` from `params` and `ctx.input` from `input`,
+so a handler takes no type argument. `ModalContext` keeps one object type
+argument with the optional keys `params` and `input`, for helpers written
+outside a handler. Unknown keys there are type errors, as is an input whose
+resolver expects other params.
 
 ## Typed submission input
 
 Modal handlers can optionally configure `input` with a Standard Schema-compatible
-schema, deferral, and whole-input resolution. Use `defineInput`,
-`ModalHandler<{ input: typeof input }>`, and `ModalContext<{ input: typeof input }>` to infer handler
-values. The optional `builder` supplies the shared form template; `customId` or
+schema, deferral, and whole-input resolution, inline or from `defineInput()`.
+`defineModal()` infers the handler's values from it. The optional `builder` supplies the shared form template; `customId` or
 `params` defines routing. Keep a template to use `client.modals.build()`, or author
 the form separately with a matching custom ID and text-input IDs.
 

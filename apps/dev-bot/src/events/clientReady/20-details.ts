@@ -1,12 +1,10 @@
-import { type EventContext, EventHandler } from "@hyperion/core";
-import type { Events } from "discord.js";
+import { defineEvent } from "@hyperion/core";
+import { Events } from "discord.js";
 
-export default class extends EventHandler<Events.ClientReady> {
-    constructor() {
-        super({ once: true });
-    }
-
-    async run(ctx: EventContext<Events.ClientReady>) {
+export default defineEvent({
+    event: Events.ClientReady,
+    once: true,
+    async run(ctx) {
         ctx.logger.info(
             {
                 commandCount: ctx.client.commands.size,
@@ -14,5 +12,5 @@ export default class extends EventHandler<Events.ClientReady> {
             },
             "Development bot startup details",
         );
-    }
-}
+    },
+});

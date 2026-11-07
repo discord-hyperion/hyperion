@@ -9,13 +9,11 @@ import {
 import {
     type AnySelectMenuHandler,
     defineGuard,
+    defineModal,
     defineParams,
+    defineSelectMenu,
     type GuardProvider,
-    type ModalContext,
-    ModalHandler,
-    type ModalInputOptions,
     type SelectMenuContext,
-    SelectMenuHandler,
     type SelectMenuInputDefinition,
 } from "../src/index.ts";
 import { selectKinds } from "./support/select-kinds.ts";
@@ -35,25 +33,21 @@ const pick = defineParams({
 type Spec = { input: SelectMenuInputDefinition };
 type Run = (ctx: SelectMenuContext<Spec>) => Promise<void>;
 
-class InputMenu extends SelectMenuHandler<Spec> {
-    constructor(
-        input: SelectMenuInputDefinition,
-        private readonly execute: Run,
-        guards: readonly GuardProvider<SelectMenuContext>[] = [],
-        componentType = ComponentType.StringSelect,
-    ) {
-        super({
-            componentType: componentType as ComponentType.StringSelect,
-            customId: "todo.priority",
-            input,
-            guards,
-        });
-    }
-
-    run(ctx: SelectMenuContext<Spec>) {
-        return this.execute(ctx);
-    }
-}
+const inputMenu = (
+    input: SelectMenuInputDefinition,
+    execute: Run,
+    guards: readonly GuardProvider<SelectMenuContext>[] = [],
+    componentType = ComponentType.StringSelect,
+    customId = "todo.priority",
+): AnySelectMenuHandler =>
+    defineSelectMenu({
+        componentType: componentType as ComponentType.StringSelect,
+        customId,
+        // An erased definition stands in for whatever input a case tests.
+        input: input as never,
+        guards,
+        run: ctx => execute(ctx as unknown as SelectMenuContext<Spec>),
+    });
 
 const check = (
     predicate: (ctx: SelectMenuContext) => boolean | Promise<boolean>,
@@ -95,7 +89,7 @@ test("select guards precede deferral, schema, resolver, and handler", async t =>
     };
     client.selectMenus.set(
         "todo.priority",
-        new InputMenu(
+        inputMenu(
             input,
             async ctx => {
                 order.push("handler");
@@ -132,12 +126,13 @@ test("every select kind passes its selected values or IDs to the schema", async 
         });
         client.selectMenus.set(
             kind.customId,
-            new (class extends InputMenu {
-                constructor() {
-                    super({ schema: schema(validate) }, run, [], kind.type);
-                    Object.assign(this, { customId: kind.customId });
-                }
-            })() as unknown as AnySelectMenuHandler,
+            inputMenu(
+                { schema: schema(validate) },
+                run,
+                [],
+                kind.type,
+                kind.customId,
+            ),
         );
         const fixture = kind.interaction({ ids: ["first", "second"] });
 
@@ -157,7 +152,7 @@ test("an empty selection reaches the schema as an empty array", async t => {
     const run = mock.fn<Run>(async () => {});
     client.selectMenus.set(
         "todo.priority",
-        new InputMenu(
+        inputMenu(
             { schema: schema(validate) },
             run,
         ) as unknown as AnySelectMenuHandler,
@@ -179,7 +174,7 @@ test("schema issues reach the handler and skip the resolver", async t => {
     });
     client.selectMenus.set(
         "todo.priority",
-        new InputMenu(
+        inputMenu(
             { schema: schema(() => ({ issues })), resolve },
             run,
         ) as unknown as AnySelectMenuHandler,
@@ -202,11 +197,9 @@ test("guard rejection skips deferral, schema, and resolver", async t => {
     const run = mock.fn<Run>(async () => {});
     client.selectMenus.set(
         "todo.priority",
-        new InputMenu(
-            { defer: "update", schema: schema(validate), resolve },
-            run,
-            [check(() => false)],
-        ) as unknown as AnySelectMenuHandler,
+        inputMenu({ defer: "update", schema: schema(validate), resolve }, run, [
+            check(() => false),
+        ]) as unknown as AnySelectMenuHandler,
     );
     const fixture = selection();
 
@@ -223,7 +216,7 @@ test("resolver failures skip the handler and report the input stage", async t =>
     const run = mock.fn<Run>(async () => {});
     client.selectMenus.set(
         "todo.priority",
-        new InputMenu(
+        inputMenu(
             {
                 schema: schema(values => ({ value: values })),
                 resolve: async () => {
@@ -251,7 +244,7 @@ test('defer: "update" acknowledges with deferUpdate() before the schema', async 
     });
     client.selectMenus.set(
         "todo.priority",
-        new InputMenu(
+        inputMenu(
             {
                 defer: "update",
                 schema: schema(values => {
@@ -277,7 +270,7 @@ test("deferral leaves an interaction a guard already acknowledged alone", async 
     const run = mock.fn<Run>(async () => {});
     client.selectMenus.set(
         "todo.priority",
-        new InputMenu(
+        inputMenu(
             { defer: "update", schema: schema(values => ({ value: values })) },
             run,
             [
@@ -309,38 +302,30 @@ test("params reach guards and resolvers; input reaches only the handler", async 
     });
     client.selectMenus.routes.set(
         pick.id,
-        new (class extends SelectMenuHandler<ParamsSpec> {
-            constructor() {
-                super({
-                    componentType: ComponentType.StringSelect,
-                    params: pick,
-                    input: {
-                        schema: schema(values => ({ value: values })),
-                        resolve: (_value: unknown, ctx: SelectMenuContext) => {
-                            assert.ok("params" in ctx);
-                            seen.push("resolve");
+        defineSelectMenu({
+            componentType: ComponentType.StringSelect,
+            params: pick,
+            input: {
+                schema: schema(values => ({ value: values })),
+                resolve: (_value: unknown, ctx: SelectMenuContext) => {
+                    assert.ok("params" in ctx);
+                    seen.push("resolve");
 
-                            return "resolved";
-                        },
-                    },
-                    guards: [
-                        ctx => {
-                            assert.deepEqual(ctx.params, [
-                                null,
-                                { owner: "caller" },
-                            ]);
-                            seen.push("guard");
+                    return "resolved";
+                },
+            },
+            guards: [
+                ctx => {
+                    assert.deepEqual(ctx.params, [null, { owner: "caller" }]);
+                    seen.push("guard");
 
-                            return check(() => true);
-                        },
-                    ],
-                });
-            }
-
-            run(ctx: SelectMenuContext<ParamsSpec>) {
+                    return check(() => true);
+                },
+            ],
+            run(ctx) {
                 return run(ctx);
-            }
-        })() as unknown as AnySelectMenuHandler,
+            },
+        }) as unknown as AnySelectMenuHandler,
     );
 
     await dispatcher.dispatch(
@@ -354,7 +339,7 @@ test("params reach guards and resolvers; input reaches only the handler", async 
     assert.equal(run.mock.callCount(), 1);
 });
 
-test("select-menu constructors reject invalid input configuration", () => {
+test("defineSelectMenu rejects invalid input configuration", () => {
     const valid = schema(() => {
         throw new Error("Must not execute");
     });
@@ -366,32 +351,26 @@ test("select-menu constructors reject invalid input configuration", () => {
     ];
     for (const [input, expected] of cases) {
         assert.throws(
-            () => Reflect.construct(InputMenu, [input, async () => {}]),
+            () => inputMenu(input as SelectMenuInputDefinition, async () => {}),
             expected,
         );
     }
 });
 
-class UpdateModal extends ModalHandler<{ input: ModalInputOptions }> {
-    constructor(private readonly execute: () => Promise<void>) {
-        super({
-            customId: "todo.rename",
-            input: {
-                defer: "update",
-                schema: schema(values => ({ value: values })),
-            },
-        });
-    }
-
-    run(_ctx: ModalContext<{ input: ModalInputOptions }>) {
-        return this.execute();
-    }
-}
+const updateModal = (execute: () => Promise<void>) =>
+    defineModal({
+        customId: "todo.rename",
+        input: {
+            defer: "update",
+            schema: schema(values => ({ value: values })),
+        },
+        run: () => execute(),
+    });
 
 test('modals opened from a message can defer: "update"', async t => {
     const { client, dispatcher } = await createTestClient(t);
     const run = mock.fn(async () => {});
-    client.modals.set("todo.rename", new UpdateModal(run));
+    client.modals.set("todo.rename", updateModal(run));
     const fixture = createModalInteraction({
         customId: "todo.rename",
         message: { id: "message" },
@@ -407,7 +386,7 @@ test('modals opened from a message can defer: "update"', async t => {
 test('modals not opened from a message fail defer: "update" at the input stage', async t => {
     const { client, dispatcher, records } = await createTestClient(t);
     const run = mock.fn(async () => {});
-    client.modals.set("todo.rename", new UpdateModal(run));
+    client.modals.set("todo.rename", updateModal(run));
     const fixture = createModalInteraction({
         customId: "todo.rename",
         components: { data: [] },

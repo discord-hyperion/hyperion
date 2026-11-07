@@ -70,16 +70,12 @@ export const loadEventHandlers = async (root: string | URL, logger: Logger) => {
             delete require.cache[require.resolve(file)];
             const url = pathToFileURL(file);
             url.searchParams.set("hyperion-load", randomUUID());
-            handler = await loadHandler(file, EventHandler, url);
+            handler = await loadHandler(file, EventHandler, "defineEvent", url);
 
-            if (typeof handler.run !== "function") {
+            if (handler.event !== event) {
                 throw new TypeError(
-                    "Event handlers must provide a run() method.",
+                    `Event handler is for "${handler.event}" but is in the "${event}" folder.`,
                 );
-            }
-
-            if (typeof handler.once !== "boolean") {
-                throw new TypeError("Event handler once must be a boolean.");
             }
         } catch (cause) {
             throw new Error(`Failed to load event handler from "${file}".`, {

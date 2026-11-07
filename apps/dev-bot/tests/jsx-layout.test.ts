@@ -16,11 +16,17 @@ test("JSX layout command replies with a private layout message", async t => {
     );
 
     t.after(() => rm(root, { recursive: true, force: true }));
-    await mkdir(path.join(root, "src", "commands"), { recursive: true });
+    const jsx = path.join(root, "src", "commands", "[jsx]");
+    await mkdir(jsx, { recursive: true });
 
     await writeFile(
-        path.join(root, "src", "commands", "layout.tsx"),
-        `export { default } from ${JSON.stringify(new URL("../src/commands/(components)/jsx-layout.tsx", import.meta.url).href)};`,
+        path.join(jsx, "index.ts"),
+        `export { default } from ${JSON.stringify(new URL("../src/commands/[jsx]/index.ts", import.meta.url).href)};`,
+    );
+
+    await writeFile(
+        path.join(jsx, "layout.tsx"),
+        `export { default } from ${JSON.stringify(new URL("../src/commands/[jsx]/layout.tsx", import.meta.url).href)};`,
     );
 
     const client = await HyperionClient.create({
@@ -35,7 +41,11 @@ test("JSX layout command replies with a private layout message", async t => {
 
     const avatar = "https://cdn.example.com/avatar.png";
     const fixture = createChatInputInteraction({
-        commandName: "jsx-layout",
+        commandName: "jsx",
+        options: {
+            getSubcommand: () => "layout",
+            getSubcommandGroup: () => null,
+        },
         user: {
             id: "caller",
             username: "Caller",

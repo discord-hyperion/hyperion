@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { HyperionClient } from "@hyperion/core";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
-import CreateTodo from "../src/commands/(general)/[todo]/create.ts";
-import GetTodo from "../src/commands/(general)/[todo]/get.ts";
+import CreateTodo from "../src/commands/[todo]/create.ts";
+import GetTodo from "../src/commands/[todo]/get.ts";
 
-for (const Handler of [CreateTodo, GetTodo]) {
-    test(`${Handler.name || "todo handler"} displays issue messages instead of object coercions`, async t => {
+for (const [name, handler] of [
+    ["create", CreateTodo],
+    ["get", GetTodo],
+] as const) {
+    test(`todo ${name} displays issue messages instead of object coercions`, async t => {
         const client = await HyperionClient.create({
             name: "TodoTest",
             discord: { intents: [] },
@@ -20,7 +23,7 @@ for (const Handler of [CreateTodo, GetTodo]) {
             { message: "Deadline must be a timestamp", path: ["deadline"] },
         ];
 
-        await new Handler().run({
+        await handler.run({
             client,
             logger: client.logger,
             interaction: fixture.interaction,

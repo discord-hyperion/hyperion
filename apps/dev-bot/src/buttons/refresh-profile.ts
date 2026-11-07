@@ -3,19 +3,14 @@ import {
     PrimaryButtonBuilder,
     SecondaryButtonBuilder,
 } from "@discordjs/builders";
-import { type ButtonContext, ButtonHandler, ownerOnly } from "@hyperion/core";
+import { defineButton, ownerOnly } from "@hyperion/core";
 
-export default class RefreshProfileButton extends ButtonHandler {
-    constructor() {
-        super({
-            builder: new PrimaryButtonBuilder()
-                .setCustomId("profile.refresh")
-                .setLabel("Refresh profile"),
-            guards: [ownerOnly],
-        });
-    }
-
-    async run(ctx: ButtonContext) {
+const refreshProfile = defineButton({
+    builder: new PrimaryButtonBuilder()
+        .setCustomId("profile.refresh")
+        .setLabel("Refresh profile"),
+    guards: [ownerOnly],
+    async run(ctx) {
         await ctx.interaction.deferUpdate();
 
         const user = await ctx.client.users.fetch(ctx.interaction.user.id, {
@@ -23,7 +18,7 @@ export default class RefreshProfileButton extends ButtonHandler {
         });
 
         // build() returns a fresh copy, so clicks never mutate the shared template.
-        const builder = ctx.client.buttons.build(this.customId);
+        const builder = ctx.client.buttons.build(refreshProfile.customId);
         const fetchedAt = new Intl.DateTimeFormat("en-SG", {
             timeZone: "Asia/Singapore",
             dateStyle: "medium",
@@ -43,5 +38,7 @@ export default class RefreshProfileButton extends ButtonHandler {
                 new ActionRowBuilder().addComponents(builder, timestamp),
             ],
         });
-    }
-}
+    },
+});
+
+export default refreshProfile;
