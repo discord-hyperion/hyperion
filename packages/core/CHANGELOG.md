@@ -1,5 +1,11 @@
 # @hyperion/core
 
+## 0.7.0
+
+### Minor Changes
+
+- 6a91b6f: Skip deploying commands that haven't changed. Before each bulk overwrite, the registry reads the registered commands and compares them, so a restart with unchanged commands sends no deployment request. The `commands.deployed` log lists the added, removed, and changed commands. If the registered commands can't be read, it deploys anyway.
+
 ## 0.6.0
 
 ### Minor Changes
