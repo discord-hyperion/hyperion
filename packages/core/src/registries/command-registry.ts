@@ -44,11 +44,11 @@ type CommandState = {
 };
 
 const definitionClasses = {
-    command: Command,
-    parent: ParentCommand,
-    group: SubcommandGroup,
-    subcommand: Subcommand,
-};
+    command: [Command, "defineCommand"],
+    parent: [ParentCommand, "defineParentCommand"],
+    group: [SubcommandGroup, "defineSubcommandGroup"],
+    subcommand: [Subcommand, "defineSubcommand"],
+} as const;
 
 /** Builds an ephemeral hierarchy from current membership, never from cached payloads. */
 const commandEntries = (state: CommandState, loading = false) => {
@@ -333,9 +333,12 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                 if (!classification) continue;
                 const { kind, path: parsed } = classification;
 
+                const [baseClass, definer] = definitionClasses[kind];
+
                 const command = await loadHandler<CommandDefinition>(
                     file,
-                    definitionClasses[kind],
+                    baseClass,
+                    definer,
                 );
 
                 metadata.set(command, {

@@ -46,17 +46,43 @@ export const discoverHandlerFiles = async (
     return { directory, files };
 };
 
+/**
+ * The handler a module default-exports from `definer`, such as `defineButton()`.
+ * A default-exported subclass still loads until handlers stop being classes.
+ */
 export const loadHandler = async <Instance>(
     file: string,
     baseClass: RegistryBaseClass<Instance>,
+    definer: string,
     url = pathToFileURL(file),
-) => {
+): Promise<Instance> => {
     const module = await import(url.href);
-    const HandlerClass = module.default;
+    const handler: unknown = module.default;
 
-    assertRegistryClass(HandlerClass, baseClass);
+    if (handler instanceof baseClass) return handler as Instance;
 
-    return new HandlerClass();
+    if (
+        typeof handler === "function" &&
+        handler.prototype instanceof baseClass
+    ) {
+        assertRegistryClass(handler, baseClass);
+
+        const instance = new handler();
+        const inherited = (baseClass.prototype as { run?: unknown }).run;
+
+        // The base class forwards run() to a defined handler's function, so a
+        // subclass has to override it.
+        if (
+            inherited !== undefined &&
+            (instance as { run?: unknown }).run === inherited
+        ) {
+            throw new TypeError("Handlers must provide a run() method.");
+        }
+
+        return instance;
+    }
+
+    throw new TypeError(`Expected a default export from ${definer}().`);
 };
 
 type ComponentData = ReturnType<Template["toJSON"]>;
@@ -72,6 +98,7 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
     root: string | URL,
     folder: Exclude<HandlerFolder, "commands" | "events">,
     baseClass: RegistryBaseClass<Instance>,
+    definer: string,
     validate: (handler: Instance, data: ComponentData) => void,
     logger?: Logger,
     routes?: Collection<string, Instance>,
@@ -88,7 +115,7 @@ export const loadComponentHandlers = async <Instance extends ComponentHandler>(
         let handler: Instance;
 
         try {
-            handler = await loadHandler(file, baseClass);
+            handler = await loadHandler(file, baseClass, definer);
 
             if (typeof handler.run !== "function") {
                 throw new TypeError(

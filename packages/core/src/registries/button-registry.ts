@@ -47,6 +47,7 @@ export class ButtonRegistry extends Collection<string, ButtonHandler> {
             root,
             "buttons",
             ButtonHandler,
+            "defineButton",
             button => {
                 if (!(button.builder instanceof CustomIdButtonBuilder)) {
                     throw new TypeError(

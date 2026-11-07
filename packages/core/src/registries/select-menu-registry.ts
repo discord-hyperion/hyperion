@@ -64,6 +64,7 @@ export class SelectMenuRegistry extends Collection<
             root,
             "select-menus",
             SelectMenuHandler,
+            "defineSelectMenu",
             (selectMenu, data) => {
                 if (
                     ![

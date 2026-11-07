@@ -342,7 +342,7 @@ export class InteractionDispatcher {
         handler: {
             readonly guards: readonly GuardProvider<Context>[];
             readonly params?: ParamsDefinition | undefined;
-            run: (ctx: Context) => Promise<void>;
+            run: (ctx: Context) => void | Promise<void>;
         },
         ctx: Context,
         kind: HandlerKind,

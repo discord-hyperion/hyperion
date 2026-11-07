@@ -113,7 +113,7 @@ export const specContracts = (plain: SelectMenuContext) => {
     // @ts-expect-error Plain select contexts have no input.
     plain.input;
     // @ts-expect-error A misspelled key is rejected, not ignored.
-    type _SelectTypo = SelectMenuHandler<{ inptu: typeof priority }>;
+    type _SelectTypo = SelectMenuContext<{ inptu: typeof priority }>;
     // @ts-expect-error A misspelled key is rejected, not ignored.
     type _ModalTypo = ModalContext<{ parms: typeof ticket }>;
     // @ts-expect-error Buttons take no input.
@@ -127,7 +127,7 @@ export const specContracts = (plain: SelectMenuContext) => {
     // @ts-expect-error A template supplies the custom ID, so customId is rejected.
     both satisfies SelectMenuHandlerOptions<Priority>;
     // @ts-expect-error The resolver needs a user select with params.
-    type _WrongMenu = SelectMenuHandler<{ input: typeof assignee }>;
+    type _WrongMenu = SelectMenuContext<{ input: typeof assignee }>;
 
     class MissingInput extends SelectMenuHandler<Priority> {
         constructor() {

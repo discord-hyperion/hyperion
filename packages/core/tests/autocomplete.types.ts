@@ -25,7 +25,7 @@ export const autocompleteContracts = (
         choices: readonly ApplicationCommandOptionChoiceData[],
     ) => Promise<void>;
     command.autocomplete satisfies
-        | ((ctx: AutocompleteContext) => Promise<void>)
+        | ((ctx: AutocompleteContext) => void | Promise<void>)
         | undefined;
     defaultCtx.interaction.reply;
 

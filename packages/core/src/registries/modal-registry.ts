@@ -47,6 +47,7 @@ export class ModalRegistry extends Collection<string, ModalHandler> {
             root,
             "modals",
             ModalHandler,
+            "defineModal",
             modal => {
                 if (!(modal.builder instanceof ModalBuilder)) {
                     throw new TypeError(

@@ -31,8 +31,11 @@ export const subcommandContracts = (
     leaf.builder satisfies ChatInputCommandSubcommandBuilder;
     parent.guards satisfies readonly GuardProvider<CommandContext>[];
     leaf.guards satisfies readonly GuardProvider<CommandContext>[];
-    leaf.run(ctx) satisfies Promise<void>;
-    leaf.autocomplete?.(autocompleteCtx) satisfies Promise<void> | undefined;
+    leaf.run(ctx) satisfies void | Promise<void>;
+    leaf.autocomplete?.(autocompleteCtx) satisfies
+        | void
+        | Promise<void>
+        | undefined;
     parent.serialize("tools", Object.freeze([leaf]));
 
     // @ts-expect-error Parent metadata has no executable handler.
@@ -136,9 +139,6 @@ export const subcommandContracts = (
         async run(_ctx: CommandContext) {}
     }
 
-    // @ts-expect-error Concrete leaves must implement run.
-    class MissingRun extends Subcommand {}
-
     class WrongContext extends Search {
         // @ts-expect-error Leaves cannot handle user context-menu command contexts.
         async run(_ctx: CommandContext<ApplicationCommandType.User>) {}
@@ -150,7 +150,6 @@ export const subcommandContracts = (
         WrongParent,
         ContextMenuParent,
         TopLevelLeaf,
-        MissingRun,
         WrongContext,
     };
 };

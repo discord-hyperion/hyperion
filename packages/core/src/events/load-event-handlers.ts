@@ -70,7 +70,13 @@ export const loadEventHandlers = async (root: string | URL, logger: Logger) => {
             delete require.cache[require.resolve(file)];
             const url = pathToFileURL(file);
             url.searchParams.set("hyperion-load", randomUUID());
-            handler = await loadHandler(file, EventHandler, url);
+            handler = await loadHandler(file, EventHandler, "defineEvent", url);
+
+            if (handler.event !== undefined && handler.event !== event) {
+                throw new TypeError(
+                    `Event handler is for "${handler.event}" but is in the "${event}" folder.`,
+                );
+            }
 
             if (typeof handler.run !== "function") {
                 throw new TypeError(

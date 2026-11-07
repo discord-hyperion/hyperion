@@ -83,6 +83,8 @@ export const modalParamsContracts = (registry: ModalRegistry) => {
     registry.build(rename, { ticketId: "a1b2c3d4" });
 
     // @ts-expect-error A resolver that reads params needs a params handler.
+    type _Literal = ModalContext<{ input: typeof input }>;
+
     class Literal extends ModalHandler<{ input: typeof input }> {
         constructor() {
             // @ts-expect-error The same mismatch rejects the input option.

@@ -94,7 +94,7 @@ export const modalInputContracts = (
     // @ts-expect-error Schema-free contexts have no input.
     plain.input;
     // @ts-expect-error Command resolvers cannot serve modal submissions.
-    type _WrongContext = ModalHandler<{
+    type _WrongContext = ModalContext<{
         input: ReturnType<typeof commandInput>;
     }>;
     const wrongCommand = { builder: new ChatInputCommandBuilder(), input };

@@ -1,4 +1,5 @@
 export {
+    defineEvent,
     type EventContext,
     EventHandler,
     type EventHandlerOptions,

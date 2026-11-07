@@ -5,6 +5,7 @@ export {
     type CommandContext,
     type CommandOptions,
     type CommandType,
+    defineCommand,
 } from "./command.ts";
 export {
     type CommandInputOptions,
@@ -14,9 +15,18 @@ export {
     type CommandInputSchema,
     defineInput,
 } from "./command-input.ts";
-export { ParentCommand, type ParentCommandOptions } from "./parent-command.ts";
-export { Subcommand, type SubcommandOptions } from "./subcommand.ts";
 export {
+    defineParentCommand,
+    ParentCommand,
+    type ParentCommandOptions,
+} from "./parent-command.ts";
+export {
+    defineSubcommand,
+    Subcommand,
+    type SubcommandOptions,
+} from "./subcommand.ts";
+export {
+    defineSubcommandGroup,
     SubcommandGroup,
     type SubcommandGroupOptions,
 } from "./subcommand-group.ts";

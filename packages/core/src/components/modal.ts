@@ -16,9 +16,14 @@ import { handlerCustomId } from "./handler-options.ts";
 import type {
     AnyInputDefinition,
     EmptySpec,
+    HandlerInput,
+    HandlerResult,
+    InferredInput,
+    InferredSpec,
     InputContext,
     InputOptions,
     KnownKeys,
+    NoResolve,
     ParamsContext,
     RouteOptions,
     SpecInput,
@@ -63,23 +68,26 @@ export type ValidModalSpec<Spec> = ModalSpec &
         input?: ModalInputDefinition<SpecParams<Spec>>;
     };
 
+/** The context for a spec the caller built, so its keys are already known. */
+type ModalContextOf<Spec> = ModalParamsContext<SpecParams<Spec>> &
+    InputContext<SpecInput<Spec>>;
+
 export type ModalContext<Spec extends ValidModalSpec<Spec> = EmptySpec> =
-    ModalParamsContext<SpecParams<Spec>> & InputContext<SpecInput<Spec>>;
+    ModalContextOf<Spec>;
 
-export type ModalHandlerOptions<Spec extends ValidModalSpec<Spec> = EmptySpec> =
-    {
-        /** Guards run before input, so they see params but never `ctx.input`. */
-        guards?: readonly GuardProvider<ModalParamsContext<SpecParams<Spec>>>[];
-    } & InputOptions<SpecInput<Spec>, ModalInputDefinition<SpecParams<Spec>>> &
-        /*
-         * A form template (`builder`) is recommended, since `input` reads its
-         * modal-control custom IDs; callers get copies through `client.modals.build()`.
-         */
-        RouteOptions<SpecParams<Spec>, ModalBuilder>;
+type ModalRun<Spec> = (ctx: ModalContextOf<Spec>) => HandlerResult;
 
-export abstract class ModalHandler<
-    Spec extends ValidModalSpec<Spec> = EmptySpec,
-> {
+export type ModalHandlerOptions<Spec extends ModalSpec = EmptySpec> = {
+    /** Guards run before input, so they see params but never `ctx.input`. */
+    guards?: readonly GuardProvider<ModalParamsContext<SpecParams<Spec>>>[];
+} & InputOptions<SpecInput<Spec>, ModalInputDefinition<SpecParams<Spec>>> &
+    /*
+     * A form template (`builder`) is recommended, since `input` reads its
+     * modal-control custom IDs; callers get copies through `client.modals.build()`.
+     */
+    RouteOptions<SpecParams<Spec>, ModalBuilder>;
+
+export class ModalHandler<Spec extends ModalSpec = EmptySpec> {
     readonly builder: ModalBuilder | undefined;
     readonly params: ParamsDefinition | undefined;
     /** The exact custom ID, or the route for a params handler. */
@@ -89,8 +97,11 @@ export abstract class ModalHandler<
     >[];
 
     readonly input: ModalInputDefinition | undefined;
+    // Stored loosely so handlers of different specs stay assignable, as an
+    // abstract method's would; run() restores the type.
+    readonly #run: ((ctx: never) => HandlerResult) | undefined;
 
-    protected constructor(options: ModalHandlerOptions<Spec>) {
+    constructor(options: ModalHandlerOptions<Spec> & { run?: ModalRun<Spec> }) {
         this.params = validateParams(options.params);
         this.customId = handlerCustomId(
             "Modal",
@@ -114,7 +125,59 @@ export abstract class ModalHandler<
                 );
             }
         }
+
+        this.#run = options.run;
     }
 
-    abstract run(ctx: ModalContext<Spec>): Promise<void>;
+    run(ctx: ModalContextOf<Spec>): HandlerResult {
+        if (!this.#run) {
+            throw new TypeError("Modal handlers must provide a run() method.");
+        }
+
+        return this.#run(ctx as never);
+    }
 }
+
+type DefinedModalSpec<
+    Params,
+    Schema extends CommandInputSchema | undefined,
+    Result,
+    Defer extends InputDefer,
+> = InferredSpec<{
+    params: Params;
+    input: InferredInput<
+        Schema,
+        Result,
+        ModalParamsContext<Params & (ParamsDefinition | undefined)>,
+        Defer
+    >;
+}>;
+
+/** Defines a modal handler. Its params, input, and context types are inferred. */
+export const defineModal = <
+    Params extends ParamsDefinition | undefined = undefined,
+    Schema extends CommandInputSchema | undefined = undefined,
+    Result = NoResolve,
+    Defer extends InputDefer = false,
+>(
+    options: {
+        params?: Params;
+        input?: HandlerInput<Schema, Result, ModalParamsContext<Params>, Defer>;
+        guards?: readonly GuardProvider<ModalParamsContext<Params>>[];
+        run: ModalRun<DefinedModalSpec<Params, Schema, Result, Defer>>;
+    } & RouteOptions<NoInfer<Params>, ModalBuilder>,
+): ModalHandler<DefinedModalSpec<Params, Schema, Result, Defer>> => {
+    if (typeof options?.run !== "function") {
+        throw new TypeError("Modal handlers must provide a run() function.");
+    }
+
+    // The options match the inferred spec; TypeScript can't relate the two
+    // forms while the type parameters are still generic.
+    const handler = new ModalHandler<
+        DefinedModalSpec<Params, Schema, Result, Defer>
+    >(options as never);
+
+    Object.freeze(handler);
+
+    return handler;
+};

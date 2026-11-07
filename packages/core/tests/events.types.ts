@@ -1,4 +1,4 @@
-import { Events, type PartialMessage } from "discord.js";
+import type { Events, PartialMessage } from "discord.js";
 import {
     type EventContext,
     EventHandler,
@@ -41,8 +41,6 @@ class Empty extends EventHandler<Events.Invalidated> {
 
 // @ts-expect-error Custom application events are outside the initial scope.
 type Custom = EventContext<"application:custom">;
-// @ts-expect-error Event selection is filesystem metadata, not constructor options.
-new Ready({ event: Events.ClientReady });
 // @ts-expect-error Event names follow the SDK map and casing.
 const wrongName: EventName = "client-ready";
 class Wrong extends EventHandler<Events.ClientReady> {
