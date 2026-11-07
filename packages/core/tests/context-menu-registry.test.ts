@@ -196,6 +196,7 @@ for (const [label, contents] of [
             "destroy",
             async () => {},
         );
+        t.mock.method(REST.prototype, "get", async () => []);
         const put = t.mock.method(REST.prototype, "put", async () => []);
 
         await assert.rejects(
@@ -275,6 +276,7 @@ for (const contextsOnly of [false, true]) {
         }
 
         const requests: unknown[] = [];
+        t.mock.method(REST.prototype, "get", async () => []);
         const put = t.mock.method(
             REST.prototype,
             "put",
@@ -327,6 +329,7 @@ test("invalid context builders retain serialization source and prevent REST call
         source(ApplicationCommandType.User, "x".repeat(33)),
     );
 
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     await assert.rejects(
@@ -385,6 +388,7 @@ test("indexed Discord validation failures identify the context-menu source even 
         "https://discord.com/api/v10/applications/123/commands",
         { body: [] },
     );
+    t.mock.method(REST.prototype, "get", async () => []);
     t.mock.method(REST.prototype, "put", async () => {
         throw failure;
     });

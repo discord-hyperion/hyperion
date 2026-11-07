@@ -175,6 +175,7 @@ for (const setter of ["setNameLocalizations", "setDescriptionLocalizations"]) {
             await add("[ticket]/{invalid}/view.mjs", leafSource());
             const registry = new CommandRegistry();
             await registry.load(root);
+            t.mock.method(REST.prototype, "get", async () => []);
             const put = t.mock.method(REST.prototype, "put", async () => []);
 
             await assert.rejects(registry.register(credentials), error => {
@@ -435,6 +436,7 @@ test("registration composes fresh native groups with metadata and never accumula
     assert.ok(group);
     const attach = t.mock.method(group.builder, "addSubcommands");
     const bodies: unknown[] = [];
+    t.mock.method(REST.prototype, "get", async () => []);
     t.mock.method(
         REST.prototype,
         "put",
@@ -529,6 +531,7 @@ for (const scenario of [
             );
         }
 
+        t.mock.method(REST.prototype, "get", async () => []);
         const put = t.mock.method(REST.prototype, "put", async () => []);
         for (let attempt = 0; attempt < 2; attempt++) {
             await assert.rejects(registry.register(credentials), error => {
@@ -584,6 +587,7 @@ test("indexed deployment errors preserve the cause and parent, group, and leaf s
         "https://discord.com/api/v10/applications/123/commands",
         { body: [] },
     );
+    t.mock.method(REST.prototype, "get", async () => []);
     t.mock.method(REST.prototype, "put", async () => {
         throw failure;
     });
@@ -637,6 +641,7 @@ for (const failure of [
 
         t.after(() => client.destroy());
         await client.commands.load(root);
+        t.mock.method(REST.prototype, "get", async () => []);
         const put = t.mock.method(REST.prototype, "put", async () => []);
         await client.commands.register(credentials);
         assert.equal(put.mock.callCount(), 1);

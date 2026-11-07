@@ -29,12 +29,6 @@ implemented item links a reference doc.
   - Decide: separate package or a `@hyperion/core/testing` subpath; how much of
     guilds, members, channels, and messages to fake; typed options once
     generated types exist. Leave clocks to the runner's fake timers.
-- [ ] Deploy commands only when they change.
-  - Today every startup with deployment options PUTs the full command list
-    (`packages/core/src/registries/command-registry.ts`). Compare with what's
-    registered first, skip the request when nothing changed, and log what
-    changed.
-  - Makes restart-based development cheap (see the next item).
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete
@@ -62,6 +56,8 @@ implemented item links a reference doc.
 
 - Chat-input commands, subcommands, and deployment. See
   [command registration](command-registration.md) and [command paths](command-paths.md).
+- Deployment that skips unchanged commands. See
+  [command registration](command-registration.md).
 - Subcommand groups. See [subcommand groups](subcommand-groups.md).
 - Context-menu commands with typed lookup. See
   [context-menu commands](context-menu-commands.md).

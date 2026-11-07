@@ -95,6 +95,7 @@ type Payload = {
 };
 const captureRest = (t: TestContext) => {
     const bodies: Payload[][] = [];
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(
         REST.prototype,
         "put",

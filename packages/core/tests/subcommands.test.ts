@@ -160,6 +160,7 @@ test("registration composes sibling subcommands into one parent and preserves op
     await add("standalone.mjs", standaloneSource("standalone"));
     const registry = new CommandRegistry();
     await registry.load(root);
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(
         REST.prototype,
         "put",
@@ -377,6 +378,7 @@ test("subcommand serialization failures retain the leaf source and make no REST 
 
     const registry = new CommandRegistry();
     await registry.load(root);
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     await assert.rejects(
@@ -438,6 +440,7 @@ test("indexed Discord errors retain all contributing subcommand sources", async 
         "https://discord.com/api/v10/applications/123/commands",
         { body: [] },
     );
+    t.mock.method(REST.prototype, "get", async () => []);
     t.mock.method(REST.prototype, "put", async () => {
         throw failure;
     });

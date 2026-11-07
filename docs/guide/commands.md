@@ -152,6 +152,10 @@ Commands deploy when the client is created, if you passed `commands` options:
 - With `guildIds`, each listed server gets your commands immediately.
 - Without it, they deploy globally.
 
+Hyperion checks what Discord already has first, and skips a scope when nothing
+changed, so restarting is cheap. When something did change, the log lists which
+commands were added, removed, or changed.
+
 Deploying overwrites every command in that scope, so anything registered outside
 Hyperion disappears. If your command folder is empty, Hyperion skips deploying
 rather than wiping everything. And if one server fails partway through a

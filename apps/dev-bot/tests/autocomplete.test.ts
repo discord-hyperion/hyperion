@@ -84,6 +84,7 @@ test("discovery and mocked registration preserve autocomplete flags without exec
     `,
     );
 
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(
         REST.prototype,
         "put",
