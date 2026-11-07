@@ -8,7 +8,7 @@ import type {
     InputDefer,
 } from "../commands/command-input.ts";
 import type { InteractionContext } from "../contexts/index.ts";
-import { isGuard } from "../guards/guard.ts";
+import { freezeGuards } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { validateInput } from "../util/validate-input.ts";
 import { type ParamsDefinition, validateParams } from "./custom-id-params.ts";
@@ -114,17 +114,7 @@ export class ModalHandler<Spec extends ModalSpec = EmptySpec> {
             options.input as ModalInputDefinition | undefined,
             { update: true },
         );
-        this.guards = Object.freeze([...(options.guards ?? [])]);
-
-        for (const provider of this.guards) {
-            if (typeof provider === "function") continue;
-
-            if (!isGuard(provider)) {
-                throw new TypeError(
-                    "Modal guards must be guards from defineGuard() or guard factories.",
-                );
-            }
-        }
+        this.guards = freezeGuards("Modal", options.guards);
 
         this.#run = options.run;
     }

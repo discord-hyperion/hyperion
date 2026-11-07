@@ -1,7 +1,7 @@
 import type { CustomIdButtonBuilder } from "@discordjs/builders";
 import type { ButtonInteraction } from "discord.js";
 import type { InteractionContext } from "../contexts/index.ts";
-import { isGuard } from "../guards/guard.ts";
+import { freezeGuards } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import { type ParamsDefinition, validateParams } from "./custom-id-params.ts";
 import { handlerCustomId } from "./handler-options.ts";
@@ -54,17 +54,7 @@ export class ButtonHandler<Spec extends ButtonSpec = EmptySpec> {
             options.builder,
         );
         this.builder = options.builder;
-        this.guards = Object.freeze([...(options.guards ?? [])]);
-
-        for (const provider of this.guards) {
-            if (typeof provider === "function") continue;
-
-            if (!isGuard(provider)) {
-                throw new TypeError(
-                    "Button guards must be guards from defineGuard() or guard factories.",
-                );
-            }
-        }
+        this.guards = freezeGuards("Button", options.guards);
 
         this.#run = options.run;
     }

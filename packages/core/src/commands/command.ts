@@ -18,7 +18,7 @@ import type {
     NoResolve,
 } from "../components/handler-spec.ts";
 import type { InteractionContext } from "../contexts/index.ts";
-import { isGuard } from "../guards/guard.ts";
+import { freezeGuards } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import type {
     CommandInputDefinition,
@@ -136,17 +136,7 @@ export class Command<Definition = ApplicationCommandType.ChatInput> {
             type === ApplicationCommandType.ChatInput,
         );
 
-        this.guards = Object.freeze([...(options.guards ?? [])]);
-
-        for (const provider of this.guards) {
-            if (typeof provider === "function") continue;
-
-            if (!isGuard(provider)) {
-                throw new TypeError(
-                    "Command guards must be guards from defineGuard() or guard factories.",
-                );
-            }
-        }
+        this.guards = freezeGuards("Command", options.guards);
 
         this.#run = options.run;
 

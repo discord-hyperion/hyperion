@@ -6,13 +6,13 @@ import type {
     InferredInput,
     NoResolve,
 } from "../components/handler-spec.ts";
+import { freezeGuards } from "../guards/guard.ts";
 import type { GuardProvider } from "../guards/index.ts";
 import type { AutocompleteContext, CommandContext } from "./command.ts";
 import type {
     CommandInputDefinition,
     CommandInputSchema,
 } from "./command-input.ts";
-import { freezeCommandGuards } from "./freeze-command-guards.ts";
 import { validateCommandInput } from "./validate-command-input.ts";
 
 export type SubcommandOptions<
@@ -58,7 +58,7 @@ export class Subcommand<
         this.builder = options.builder;
 
         this.input = validateCommandInput(options.input);
-        this.guards = freezeCommandGuards(options.guards);
+        this.guards = freezeGuards("Command", options.guards);
         this.#run = options.run;
 
         if (options.autocomplete !== undefined) {
