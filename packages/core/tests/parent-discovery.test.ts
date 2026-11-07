@@ -257,6 +257,7 @@ test("autocomplete and deployment do not invoke inherited guard factories", asyn
 
     t.after(() => client.destroy());
     await client.commands.load(root);
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     await client.commands.register({
@@ -297,6 +298,7 @@ test("the SDK rejects an oversized composed parent before any REST call", async 
     }
     const registry = new CommandRegistry();
     await registry.load(root);
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     await assert.rejects(

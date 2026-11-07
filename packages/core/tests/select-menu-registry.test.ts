@@ -51,6 +51,7 @@ test("loads all supported selects together without REST registration", async t =
         channelSource("channel.choose"),
     );
 
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     const client = await HyperionClient.create({

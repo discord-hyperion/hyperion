@@ -40,6 +40,7 @@ test("command discovery and deployment leave guard factories unevaluated", async
         'defineCommand({ guards: [() => { throw new Error("Factory ran at startup"); }],',
     );
     await writeFile(path.join(directory, "guarded.mjs"), source);
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     const client = await HyperionClient.create({
@@ -74,6 +75,7 @@ test("an invalid event handler stops initialization before any deployment", asyn
         "bad JavaScript",
     );
 
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     await assert.rejects(
@@ -142,6 +144,7 @@ test("rejects invalid exports and skips missing command directories without REST
     const root = await createTempRoot(t, "hyperion-invalid-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     await writeFile(
@@ -162,6 +165,7 @@ test("initializes commands and bulk registers once per unique guild without logi
     await mkdir(directory, { recursive: true });
     await writeFile(path.join(directory, "ping.mjs"), commandSource("ping"));
     const requests: { route: string; body: unknown }[] = [];
+    t.mock.method(REST.prototype, "get", async () => []);
     t.mock.method(
         REST.prototype,
         "put",
@@ -207,6 +211,7 @@ test("supports global registration and rejects unsafe empty configuration", asyn
     const root = await createTempRoot(t, "hyperion-global-");
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
     const registry = new CommandRegistry();
     const options = { applicationId: "123", token: "test-token" };
@@ -236,6 +241,7 @@ test("initialization rejects when deployment fails", async t => {
     const directory = path.join(root, "src", "commands");
     await mkdir(directory, { recursive: true });
     await writeFile(path.join(directory, "ping.mjs"), commandSource("ping"));
+    t.mock.method(REST.prototype, "get", async () => []);
     t.mock.method(REST.prototype, "put", async () => {
         throw new Error("Deployment failed");
     });
@@ -290,6 +296,7 @@ test("maps indexed Discord errors to builder command source files", async t => {
             files: undefined,
         },
     );
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => {
         throw apiError;
     });
@@ -334,6 +341,7 @@ test("still rejects commands without an executable run method", async t => {
 
 test("initialization skips absent or empty conventional folders and ignores other locations", async t => {
     const root = await createTempRoot(t, "hyperion-conventions-");
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
     await mkdir(path.join(root, "commands"));
 
@@ -399,6 +407,7 @@ test("builder validation errors identify the source and prevent deployment", asy
 
     const registry = new CommandRegistry();
     await registry.load(root);
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     await assert.rejects(

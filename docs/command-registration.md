@@ -117,6 +117,21 @@ All files load before any deployment request is sent, event handlers included. P
 performs one bulk overwrite per unique guild. Omitting `guildIds` performs a
 global bulk overwrite. An explicitly empty guild list is rejected.
 
+Before each overwrite, the registry reads the scope's registered commands
+(`GET` with `with_localizations=true`) and compares them with the serialized
+body. The comparison ignores command order, server-side fields (`id`,
+`application_id`, `guild_id`, `version`, and localized names), empty values,
+fields at Discord's documented defaults, and the order of numeric sets such as
+`contexts`. For guild scopes, it also ignores `contexts`, `integration_types`,
+and `dm_permission`, which Discord applies only to global commands and doesn't
+return as sent. Option and choice order still count. When nothing differs, the
+scope is skipped and logged as `commands.unchanged`; otherwise the overwrite
+logs the added, removed, and changed command names, with the paths of the
+fields that differ for each changed command. If the registered commands
+can't be read, the registry logs a warning and overwrites anyway, so a failed
+comparison never leaves commands stale. A field Discord fills in some other
+way only causes an unnecessary overwrite.
+
 **Bulk overwrites replace all application commands in the selected scope, including
 commands registered outside Hyperion.** Initialization skips empty registries;
 directly calling `register()` on an empty registry is rejected to avoid accidentally

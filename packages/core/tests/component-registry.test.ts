@@ -131,6 +131,7 @@ for (const kind of componentKinds) {
                 ),
             );
 
+            t.mock.method(REST.prototype, "get", async () => []);
             const put = t.mock.method(REST.prototype, "put", async () => []);
 
             const client = await HyperionClient.create({
@@ -191,6 +192,7 @@ for (const kind of componentKinds) {
                 "export default class {};",
             );
 
+            t.mock.method(REST.prototype, "get", async () => []);
             const put = t.mock.method(REST.prototype, "put", async () => []);
 
             await assert.rejects(

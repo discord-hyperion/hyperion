@@ -197,6 +197,7 @@ test("errors stay visible at error level and users still receive error responses
 test("initialization reports missing directories and skips deployment", async t => {
     const root = await createTempRoot(t, "hyperion-logging-");
     const capture = captureLogs();
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     const client = await HyperionClient.create({

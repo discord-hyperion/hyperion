@@ -29,6 +29,7 @@ const interaction = (
 };
 
 test("development subcommands load and execute through the client listener", async t => {
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     const client = await HyperionClient.create({

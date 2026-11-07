@@ -15,6 +15,7 @@ import {
 import { ParentCommand } from "../commands/parent-command.ts";
 import { Subcommand } from "../commands/subcommand.ts";
 import { SubcommandGroup } from "../commands/subcommand-group.ts";
+import { commandChanges } from "./command-changes.ts";
 import { discoverHandlerFiles, loadHandler } from "./load-modules.ts";
 import { classifyCommandPath } from "./parse-command-path.ts";
 
@@ -495,7 +496,10 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
         );
     }
 
-    /** Replaces all application commands in each selected scope. */
+    /**
+     * Replaces all application commands in each selected scope, skipping a
+     * scope whose registered commands already match.
+     */
     async register(options: CommandRegistrationOptions) {
         if (!options.applicationId.trim() || !options.token.trim()) {
             throw new Error(
@@ -535,6 +539,27 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
 
         for (const route of routes) {
             const started = performance.now();
+            const changes = await this.changesAt(rest, route, body, {
+                guild: options.guildIds !== undefined,
+            });
+
+            if (
+                changes &&
+                !changes.added.length &&
+                !changes.removed.length &&
+                !changes.changed.length
+            ) {
+                this.logger?.info(
+                    {
+                        event: "commands.unchanged",
+                        route,
+                        count: body.length,
+                        durationMs: Math.round(performance.now() - started),
+                    },
+                    "Application commands unchanged; skipped deployment",
+                );
+                continue;
+            }
 
             try {
                 await rest.put(route, { body });
@@ -543,6 +568,7 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                         event: "commands.deployed",
                         route,
                         count: body.length,
+                        ...changes,
                         durationMs: Math.round(performance.now() - started),
                     },
                     "Application commands deployed",
@@ -586,6 +612,33 @@ export class CommandRegistry extends Collection<string, CommandHandler> {
                     { cause },
                 );
             }
+        }
+    }
+
+    /** What a deployment would change, or `undefined` when Discord can't say. */
+    private async changesAt(
+        rest: REST,
+        route: `/${string}`,
+        body: readonly object[],
+        scope: { readonly guild: boolean },
+    ) {
+        try {
+            const registered = await rest.get(route, {
+                query: new URLSearchParams({ with_localizations: "true" }),
+            });
+
+            if (!Array.isArray(registered)) {
+                throw new TypeError("Discord didn't return a command list.");
+            }
+
+            return commandChanges(body, registered, scope);
+        } catch (error) {
+            this.logger?.warn(
+                { event: "commands.compare_failed", route, err: error },
+                "Couldn't read registered commands; deploying all of them",
+            );
+
+            return undefined;
         }
     }
 }

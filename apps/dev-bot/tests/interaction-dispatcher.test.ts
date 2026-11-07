@@ -28,6 +28,7 @@ test("filesystem-loaded ping runs through the client's interaction listener", as
         `export { default } from ${JSON.stringify(new URL("../src/commands/ping.ts", import.meta.url).href)};`,
     );
 
+    t.mock.method(REST.prototype, "get", async () => []);
     const put = t.mock.method(REST.prototype, "put", async () => []);
 
     const client = await HyperionClient.create({

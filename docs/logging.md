@@ -30,7 +30,11 @@ No global console interception or background formatting worker is installed.
 - Command loading: start, completion, count, duration, or failure. Debug level
   includes discovered source paths and skipped missing command directories.
 - Command registration: start, completion, or failure, plus each deployment's
-  route, count, and duration. Empty registries emit a skipped event.
+  route, count, and duration. `commands.deployed` also lists the `added`,
+  `removed`, and `changed` command names, and `differences` maps each changed
+  command to the field paths that differ; `commands.unchanged` records a scope
+  that needed no request, and `commands.compare_failed` warns when the
+  registered commands couldn't be read. Empty registries emit a skipped event.
 - Initialization: final command, button, select menu, modal, and event-handler counts and duration.
   Component counts include params handlers, which `client.buttons.size` and the
   other collection sizes leave out.
