@@ -5,9 +5,9 @@ A throwaway Fumadocs build of `docs/guide`. See
 It is private, not wired into CI or Turbo, and not a decision to publish.
 
 ```sh
-pnpm --filter @hyperion/docs-site-fumadocs site:build   # stage the guide, then export to out/
-pnpm --filter @hyperion/docs-site-fumadocs site:check   # check links, code, search, and routes
-pnpm --filter @hyperion/docs-site-fumadocs site:serve   # serve out/ like a plain static host
+pnpm --filter @hyperion-js/docs-site-fumadocs site:build   # stage the guide, then export to out/
+pnpm --filter @hyperion-js/docs-site-fumadocs site:check   # check links, code, search, and routes
+pnpm --filter @hyperion-js/docs-site-fumadocs site:serve   # serve out/ like a plain static host
 ```
 
 The build uses the base path `/discord-hyperion`. Set `SITE_BASE=` (empty) for a

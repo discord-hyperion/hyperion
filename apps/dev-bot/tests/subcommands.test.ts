@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient } from "@hyperion-js/core";
 import { REST } from "discord.js";
 import {
     createAutocompleteInteraction,

@@ -1,5 +1,5 @@
-import { defineSelectMenu } from "@hyperion/core";
-import { renderStringSelect } from "@hyperion/jsx";
+import { defineSelectMenu } from "@hyperion-js/core";
+import { renderStringSelect } from "@hyperion-js/jsx";
 import { ComponentType } from "discord.js";
 import { JsxPriority } from "../views/jsx-priority.tsx";
 

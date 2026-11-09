@@ -3,7 +3,7 @@
 Researched on 2026-10-29. This is input to a proposed feature, not an implemented
 API or a dependency selection. No candidate was installed or benchmarked during
 this research. The subsequent [JSX guide](../jsx.md) supersedes package placement
-and feature scope; current implementation uses the separate `@hyperion/jsx`
+and feature scope; current implementation uses the separate `@hyperion-js/jsx`
 package. See the [embed benchmark](jsx-embed-benchmark.md) for later measurements.
 
 ## Question and requirements

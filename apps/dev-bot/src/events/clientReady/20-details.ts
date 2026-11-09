@@ -1,4 +1,4 @@
-import { defineEvent } from "@hyperion/core";
+import { defineEvent } from "@hyperion-js/core";
 import { Events } from "discord.js";
 
 export default defineEvent({

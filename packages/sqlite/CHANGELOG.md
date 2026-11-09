@@ -1,4 +1,4 @@
-# @hyperion/sqlite
+# @hyperion-js/sqlite
 
 ## 0.2.0
 

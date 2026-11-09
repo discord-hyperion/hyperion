@@ -9,7 +9,7 @@ Hyperion runs on prerelease versions of discord.js v15 and `@discordjs/builders`
 so install the exact versions it was built against:
 
 ```npm
-npm install @hyperion/core discord.js@15.0.0-dev.1792497873-5050a3b54 @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
+npm install @hyperion-js/core discord.js@15.0.0-dev.1792497873-5050a3b54 @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
 ```
 
 ## Project layout
@@ -40,7 +40,7 @@ command gets a builder from `@discordjs/builders` and a `run()` function:
 ```ts
 // src/commands/ping.ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 
 export default defineCommand({
     builder: new ChatInputCommandBuilder()
@@ -59,7 +59,7 @@ you always have.
 
 ```ts
 // index.ts
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient } from "@hyperion-js/core";
 
 const token = process.env.DISCORD_TOKEN;
 const applicationId = process.env.DISCORD_APPLICATION_ID;

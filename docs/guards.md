@@ -18,7 +18,7 @@ stops at the first rejection or error.
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand, defineGuard, ownerOnly } from "@hyperion/core";
+import { defineCommand, defineGuard, ownerOnly } from "@hyperion-js/core";
 
 const allowedGuild = (guildId: string) =>
     defineGuard({
@@ -196,7 +196,7 @@ receives an ephemeral follow-up.
 Supply `onFail()` to take control of the rejection response:
 
 ```ts
-import { defineGuard, type InteractionContext } from "@hyperion/core";
+import { defineGuard, type InteractionContext } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 export const threadsOnly = defineGuard<InteractionContext>({

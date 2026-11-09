@@ -1,6 +1,6 @@
 # JSX layout messages
 
-`@hyperion/jsx` renders layout messages (Discord's "Components V2") through
+`@hyperion-js/jsx` renders layout messages (Discord's "Components V2") through
 `renderMessage()`. Terms follow the [glossary](GLOSSARY.md#components): a
 **layout message** is built entirely from **layout components** and interactive
 controls, with no `content` or `embeds`.
@@ -20,7 +20,7 @@ import {
     Subtext,
     TextDisplay,
     Thumbnail,
-} from "@hyperion/jsx";
+} from "@hyperion-js/jsx";
 
 await ctx.interaction.reply(
     renderMessage(

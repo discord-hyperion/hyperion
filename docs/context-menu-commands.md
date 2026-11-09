@@ -20,7 +20,7 @@ duplicate configuration.
 
 ```ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { defineCommand, ownerOnly } from "@hyperion/core";
+import { defineCommand, ownerOnly } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 export default defineCommand({
@@ -48,7 +48,7 @@ invoking `interaction.user`, not the selected `targetUser`.
 
 ```ts
 import { MessageContextCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 export default defineCommand({

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient } from "@hyperion-js/core";
 import { ClientUser, Events } from "discord.js";
 
 test("filesystem ready handlers execute in order once, alongside internal readiness", async t => {

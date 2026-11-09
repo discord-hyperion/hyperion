@@ -20,7 +20,7 @@ import {
     renderUserSelect,
     StringSelect,
     UserSelect,
-} from "@hyperion/jsx";
+} from "@hyperion-js/jsx";
 
 const View: Component<{ name: string }> = ({ name }) => (
     <Embed>

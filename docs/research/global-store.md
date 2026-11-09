@@ -61,10 +61,10 @@ application responsibility; framework database integration remains out of scope.
 This is an illustrative consumer API, not runnable against the current release:
 
 ```ts
-import { HyperionClient, type CommandContext } from "@hyperion/core";
+import { HyperionClient, type CommandContext } from "@hyperion-js/core";
 import { Collection } from "discord.js";
 
-declare module "@hyperion/core" {
+declare module "@hyperion-js/core" {
     // biome-ignore lint/style/useConsistentTypeDefinitions: Interfaces support module augmentation.
     interface HyperionStore {
         cooldowns: Collection<string, number>;

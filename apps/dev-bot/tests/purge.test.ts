@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { mock, type TestContext, test } from "node:test";
-import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
+import { HyperionClient, InteractionDispatcher } from "@hyperion-js/core";
 import { type PermissionResolvable, PermissionsBitField } from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 import purge from "../src/commands/(moderation)/purge.ts";

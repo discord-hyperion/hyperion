@@ -1,5 +1,5 @@
-import { defineInput, defineModal } from "@hyperion/core";
-import { renderModal } from "@hyperion/jsx";
+import { defineInput, defineModal } from "@hyperion-js/core";
+import { renderModal } from "@hyperion-js/jsx";
 import * as v from "valibot";
 import { TodoForm } from "../views/todo-form.tsx";
 

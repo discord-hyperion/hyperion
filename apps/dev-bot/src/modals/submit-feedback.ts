@@ -3,7 +3,7 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { defineModal } from "@hyperion/core";
+import { defineModal } from "@hyperion-js/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
 export default defineModal({

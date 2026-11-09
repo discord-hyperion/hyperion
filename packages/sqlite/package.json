@@ -1,5 +1,5 @@
 {
-    "name": "@hyperion/sqlite",
+    "name": "@hyperion-js/sqlite",
     "version": "0.2.0",
     "type": "module",
     "license": "ISC",

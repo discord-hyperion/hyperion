@@ -80,7 +80,7 @@ that the bot was invited to each server in `guildIds`.
 
 ## A "…" row failed validation: …
 
-A `@hyperion/sqlite` write or read didn't match the table's schema, and nothing
+A `@hyperion-js/sqlite` write or read didn't match the table's schema, and nothing
 was written. The schema's messages follow the colon. If a column can be empty,
 make its schema nullable: SQLite gives back `null`, not `undefined`. See
 [storing data](storing-data.md).

@@ -1,4 +1,4 @@
-import { Bold, Modal } from "@hyperion/jsx";
+import { Bold, Modal } from "@hyperion-js/jsx";
 
 export const TodoForm = () => (
     <Modal customId="todo.create" title="Create todo">

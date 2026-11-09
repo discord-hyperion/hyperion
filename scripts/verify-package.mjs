@@ -79,7 +79,7 @@ const configure = async (directory, name) => {
                 verbatimModuleSyntax: true,
                 allowJs: true,
                 jsx: "react-jsx",
-                jsxImportSource: "@hyperion/jsx",
+                jsxImportSource: "@hyperion-js/jsx",
             },
             include: [
                 "consumer.ts",

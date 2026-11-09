@@ -1,11 +1,11 @@
-# @hyperion/sqlite
+# @hyperion-js/sqlite
 
 Store your bot's data in SQLite with table helpers that validate every row. It
 wraps [better-sqlite3](https://github.com/WiseLibs/better-sqlite3), works with any
-bot, and doesn't depend on `@hyperion/core`.
+bot, and doesn't depend on `@hyperion-js/core`.
 
 ```ts
-import { createDatabase } from "@hyperion/sqlite";
+import { createDatabase } from "@hyperion-js/sqlite";
 import * as v from "valibot";
 
 const db = createDatabase({
@@ -34,7 +34,7 @@ todos.all({ owner: "1234567890" });
 You'll need Node.js 24.17 or newer, then install the driver beside this package:
 
 ```sh
-npm install @hyperion/sqlite better-sqlite3
+npm install @hyperion-js/sqlite better-sqlite3
 ```
 
 better-sqlite3 ships prebuilt binaries for the common platforms, so there's

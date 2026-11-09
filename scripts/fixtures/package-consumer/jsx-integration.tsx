@@ -3,7 +3,7 @@ import {
     StringSelectMenuBuilder,
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
-import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
+import { HyperionClient, InteractionDispatcher } from "@hyperion-js/core";
 import {
     ActionRow,
     Button,
@@ -13,7 +13,7 @@ import {
     renderEmbed,
     renderModal,
     StringSelect,
-} from "@hyperion/jsx";
+} from "@hyperion-js/jsx";
 import {
     BaseInteraction,
     type ButtonInteraction,

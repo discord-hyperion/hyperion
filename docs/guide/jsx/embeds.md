@@ -4,7 +4,7 @@ An embed is the card Discord shows under a message: a title, some text, and a fe
 fields. In JSX you write those parts as children of `<Embed>`:
 
 ```tsx
-import { Bold, Br, Embed, Link, renderEmbed } from "@hyperion/jsx";
+import { Bold, Br, Embed, Link, renderEmbed } from "@hyperion-js/jsx";
 
 const embed = renderEmbed(
     <Embed color={0x57f287}>
@@ -46,7 +46,7 @@ each on a single line, and don't put one inside an inline component.
 Got Markdown you wrote yourself, like a list? `Raw` passes it through untouched:
 
 ```tsx
-import { Embed, Raw, renderEmbed } from "@hyperion/jsx";
+import { Embed, Raw, renderEmbed } from "@hyperion-js/jsx";
 
 const embed = renderEmbed(
     <Embed>
@@ -66,7 +66,7 @@ If you build the same kind of embed in several places, turn it into a function.
 Props carry the parts that change:
 
 ```tsx
-import { Embed, renderEmbed } from "@hyperion/jsx";
+import { Embed, renderEmbed } from "@hyperion-js/jsx";
 
 type Todo = { title: string; owner: string };
 

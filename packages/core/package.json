@@ -1,5 +1,5 @@
 {
-    "name": "@hyperion/core",
+    "name": "@hyperion-js/core",
     "version": "0.8.0",
     "type": "module",
     "license": "ISC",

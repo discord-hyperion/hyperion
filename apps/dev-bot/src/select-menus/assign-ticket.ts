@@ -3,7 +3,7 @@ import {
     defineSelectMenu,
     paramOwner,
     type SelectMenuContext,
-} from "@hyperion/core";
+} from "@hyperion-js/core";
 import { ComponentType, MessageFlags } from "discord.js";
 import { ticketSchema } from "../buttons/close-ticket.ts";
 

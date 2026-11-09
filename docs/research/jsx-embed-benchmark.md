@@ -4,7 +4,7 @@ Measured on 2026-10-31 using Node 24.20.0, TypeScript 7.0.2, tsx 4.23.15, and
 `@discordjs/builders@2.0.0-dev.1792497873-5050a3b54` and
 `@discordjs/formatters@1.0.0-dev.1792497873-5050a3b54` on the development machine.
 These figures were refreshed after adopting the formatter helpers.
-Run `pnpm --filter @hyperion/jsx benchmark` to repeat the measurement.
+Run `pnpm --filter @hyperion-js/jsx benchmark` to repeat the measurement.
 
 The fixture creates one embed with a plain title, a bold description, color, and
 five mapped fields. It asserts equality with native builder JSON before timing.

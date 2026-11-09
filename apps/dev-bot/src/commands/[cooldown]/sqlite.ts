@@ -1,5 +1,5 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
+import { defineSubcommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 import { cooldowns } from "../../database.ts";
 

@@ -1,5 +1,5 @@
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { defineCommand, ownerOnly } from "@hyperion/core";
+import { defineCommand, ownerOnly } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 export default defineCommand({

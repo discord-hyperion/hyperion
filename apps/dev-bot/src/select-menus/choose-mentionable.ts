@@ -1,5 +1,5 @@
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion-js/core";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({

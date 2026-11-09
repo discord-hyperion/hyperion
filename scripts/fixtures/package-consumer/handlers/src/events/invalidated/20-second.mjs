@@ -1,4 +1,4 @@
-import { defineEvent } from "@hyperion/core";
+import { defineEvent } from "@hyperion-js/core";
 
 export default defineEvent({
     event: "invalidated",

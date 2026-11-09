@@ -4,7 +4,7 @@ import {
     guildOnly,
     requireBotPermissions,
     requirePermissions,
-} from "@hyperion/core";
+} from "@hyperion-js/core";
 import { InteractionContextType, MessageFlags } from "discord.js";
 
 export default defineCommand({

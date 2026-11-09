@@ -12,7 +12,7 @@ autocomplete on each string, integer, or number option that needs suggestions.
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 const topics = ["commands", "buttons", "select-menus", "modals"];

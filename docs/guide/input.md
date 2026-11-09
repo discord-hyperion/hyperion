@@ -9,7 +9,7 @@ the list of problems.
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 import * as v from "valibot";
 

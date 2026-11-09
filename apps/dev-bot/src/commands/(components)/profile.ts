@@ -3,7 +3,7 @@ import {
     ChatInputCommandBuilder,
     SecondaryButtonBuilder,
 } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 export default defineCommand({

@@ -1,5 +1,5 @@
 // Check documentation: relative links (and their heading anchors) resolve, and
-// code examples import real packages and names that `@hyperion/*` exports.
+// code examples import real packages and names that `@hyperion-js/*` exports.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -100,9 +100,11 @@ const exportsOf = (entry, visited = new Set()) => {
 };
 
 const packages = {
-    "@hyperion/core": exportsOf(path.join(root, "packages/core/src/index.ts")),
-    "@hyperion/jsx": exportsOf(path.join(root, "packages/jsx/lib/index.ts")),
-    "@hyperion/sqlite": exportsOf(
+    "@hyperion-js/core": exportsOf(
+        path.join(root, "packages/core/src/index.ts"),
+    ),
+    "@hyperion-js/jsx": exportsOf(path.join(root, "packages/jsx/lib/index.ts")),
+    "@hyperion-js/sqlite": exportsOf(
         path.join(root, "packages/sqlite/lib/index.ts"),
     ),
 };

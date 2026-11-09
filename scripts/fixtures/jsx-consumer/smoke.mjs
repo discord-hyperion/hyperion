@@ -18,9 +18,9 @@ import {
     renderModal,
     renderStringSelect,
     StringSelect,
-} from "@hyperion/jsx";
-import { jsxDEV } from "@hyperion/jsx/jsx-dev-runtime";
-import { Fragment, jsx, jsxs } from "@hyperion/jsx/jsx-runtime";
+} from "@hyperion-js/jsx";
+import { jsxDEV } from "@hyperion-js/jsx/jsx-dev-runtime";
+import { Fragment, jsx, jsxs } from "@hyperion-js/jsx/jsx-runtime";
 
 const view = jsxs(Embed, {
     children: [
@@ -35,7 +35,7 @@ assert.equal(
     renderEmbed(jsxDEV(Fragment, { children: view })).toJSON().title,
     "Standalone",
 );
-assert.throws(() => import.meta.resolve("@hyperion/core"), {
+assert.throws(() => import.meta.resolve("@hyperion-js/core"), {
     code: "ERR_MODULE_NOT_FOUND",
 });
 console.log(

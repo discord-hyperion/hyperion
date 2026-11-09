@@ -1,4 +1,4 @@
-import { StringSelect } from "@hyperion/jsx";
+import { StringSelect } from "@hyperion-js/jsx";
 
 export const JsxPriority = ({
     current = "low",

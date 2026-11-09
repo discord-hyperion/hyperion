@@ -1,7 +1,7 @@
 # Release operations
 
 Public packages use independent Changesets versions. A new package, such as
-`@hyperion/sqlite`, starts at 0.0.0 with a minor changeset proposing its first
+`@hyperion-js/sqlite`, starts at 0.0.0 with a minor changeset proposing its first
 0.1.0 release. The workspace root is private. While core
 is 0.x, project policy uses minor bumps for breaking changes and patch bumps for
 compatible fixes; these are review decisions.
@@ -75,7 +75,7 @@ remains the workspace package manager.
 ## Manual publication
 
 After a reviewed version PR is merged, dispatch **Publish package** at the reviewed
-branch/commit with the selected package (`@hyperion/core`, `@hyperion/jsx`, or `@hyperion/sqlite`), its
+branch/commit with the selected package (`@hyperion-js/core`, `@hyperion-js/jsx`, or `@hyperion-js/sqlite`), its
 exact reviewed version, and the `latest` channel. The release guard
 requires main, a non-prerelease version matching the manifest, no prerelease state,
 and no pending unversioned notes. The job also requires the enable variable and

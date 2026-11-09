@@ -50,7 +50,7 @@ templates.
 
 ```ts
 import { PrimaryButtonBuilder } from "@discordjs/builders";
-import { defineButton } from "@hyperion/core";
+import { defineButton } from "@hyperion-js/core";
 
 export default defineButton({
     builder: new PrimaryButtonBuilder()
@@ -217,7 +217,7 @@ application data are not logged automatically.
 
 ## JSX authoring
 
-`@hyperion/jsx` provides `Button` and `renderButton()` for native interactive
+`@hyperion-js/jsx` provides `Button` and `renderButton()` for native interactive
 templates, and `ActionRow` with `renderComponents()` for message controls.
 Core's `ButtonHandler` and JSX's `Button` can be imported together. Link buttons
 belong in message rows and cannot be templates. Rendering does not

@@ -1,5 +1,5 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
+import { defineSubcommand } from "@hyperion-js/core";
 import {
     ActionRow,
     Bold,
@@ -13,7 +13,7 @@ import {
     Subtext,
     TextDisplay,
     Thumbnail,
-} from "@hyperion/jsx";
+} from "@hyperion-js/jsx";
 
 export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
@@ -33,7 +33,7 @@ export default defineSubcommand({
                         <TextDisplay>
                             <H2>Hello, {user.username}</H2>
                             This message is a <Bold>layout message</Bold>.
-                            <Subtext>Authored with @hyperion/jsx</Subtext>
+                            <Subtext>Authored with @hyperion-js/jsx</Subtext>
                         </TextDisplay>
                     </Section>
                     <Separator />

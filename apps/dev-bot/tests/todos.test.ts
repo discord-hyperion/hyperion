@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient } from "@hyperion-js/core";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 import GetTodo from "../src/commands/[todo]/get.ts";
 import { todos } from "../src/database.ts";

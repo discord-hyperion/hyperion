@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createDatabase, RowValidationError, sql } from "@hyperion/sqlite";
+import { createDatabase, RowValidationError, sql } from "@hyperion-js/sqlite";
 import * as v from "valibot";
 
 const db = createDatabase({
@@ -28,7 +28,7 @@ flags.set("maintenance", true, { ttl: 60_000 });
 assert.equal(flags.get("maintenance"), true);
 assert.throws(() => flags.set("when", new Date()), TypeError);
 db.close();
-assert.throws(() => import.meta.resolve("@hyperion/core"), {
+assert.throws(() => import.meta.resolve("@hyperion-js/core"), {
     code: "ERR_MODULE_NOT_FOUND",
 });
 console.log(

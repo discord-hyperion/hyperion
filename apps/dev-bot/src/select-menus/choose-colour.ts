@@ -1,5 +1,5 @@
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { defineInput, defineSelectMenu } from "@hyperion/core";
+import { defineInput, defineSelectMenu } from "@hyperion-js/core";
 import { ComponentType, MessageFlags } from "discord.js";
 import * as v from "valibot";
 
