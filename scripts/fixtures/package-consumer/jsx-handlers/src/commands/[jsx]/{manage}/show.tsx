@@ -5,7 +5,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("show")
         .setDescription("JSX embed"),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             embeds: [
                 renderEmbed(

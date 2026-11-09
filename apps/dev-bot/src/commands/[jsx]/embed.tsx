@@ -6,7 +6,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("embed")
         .setDescription("Show an embed authored with Hyperion JSX."),
-    async run(ctx) {
+    run: async ctx => {
         const embed = renderEmbed(
             <Embed color={0x57f287}>
                 <Embed.Title>Todo preview</Embed.Title>

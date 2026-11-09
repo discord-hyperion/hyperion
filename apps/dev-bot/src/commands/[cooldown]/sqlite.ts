@@ -11,7 +11,7 @@ export default defineSubcommand({
         .setDescription(
             "Try a 10-second cooldown stored in SQLite, which survives restarts.",
         ),
-    async run(ctx) {
+    run: async ctx => {
         const { user } = ctx.interaction;
         const until = cooldowns.get(user.id);
 

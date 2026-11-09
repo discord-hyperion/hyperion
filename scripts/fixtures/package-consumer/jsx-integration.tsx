@@ -112,7 +112,7 @@ try {
         replied: false,
         isChatInputCommand: BaseInteraction.prototype.isChatInputCommand,
         isButton: BaseInteraction.prototype.isButton,
-        async update(value: unknown) {
+        update: async (value: unknown) => {
             updates.push(value);
         },
     };
@@ -137,7 +137,7 @@ try {
         isChatInputCommand: BaseInteraction.prototype.isChatInputCommand,
         isButton: BaseInteraction.prototype.isButton,
         isSelectMenu: BaseInteraction.prototype.isSelectMenu,
-        async update(value: unknown) {
+        update: async (value: unknown) => {
             selections.push(value);
         },
     };
@@ -177,7 +177,7 @@ try {
         isButton: BaseInteraction.prototype.isButton,
         isSelectMenu: BaseInteraction.prototype.isSelectMenu,
         isModalSubmit: BaseInteraction.prototype.isModalSubmit,
-        async reply(value: unknown) {
+        reply: async (value: unknown) => {
             replies.push(value);
         },
     };

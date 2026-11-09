@@ -32,7 +32,7 @@ export default defineModal({
                         .setStyle(TextInputStyle.Paragraph),
                 ),
         ),
-    async run(ctx) {
+    run: async ctx => {
         const message =
             ctx.interaction.components.getTextInputValue("feedback.message");
 
@@ -82,7 +82,7 @@ export default defineModal({
             title: v.pipe(v.string(), v.trim(), v.minLength(1)),
         }),
     },
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.reply({
@@ -128,7 +128,7 @@ export default defineModal({
     builder: renameForm, // its custom ID is the route, "ticket.rename-form"
     input,
     guards: [paramOwner("owner")],
-    async run(ctx) {
+    run: async ctx => {
         const [paramIssues, params] = ctx.params; // which ticket
         const [inputIssues, value] = ctx.input; // what the user typed
     },

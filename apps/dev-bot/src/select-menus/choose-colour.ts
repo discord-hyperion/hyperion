@@ -19,7 +19,7 @@ export default defineSelectMenu({
             { label: "Red", value: "red" },
         ),
     input,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, colours] = ctx.input;
 
         if (issues) {

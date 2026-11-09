@@ -73,7 +73,7 @@ export const inferredInputContracts = (
                 throw new Error("Type-only fixture");
             },
         ],
-        async run(ctx) {
+        run: async ctx => {
             const [issues, value] = ctx.input;
 
             if (issues) {
@@ -105,7 +105,7 @@ export const inferredInputContracts = (
             .setName("todo")
             .setDescription("Todo"),
         input,
-        async run(ctx) {
+        run: async ctx => {
             const [issues, value] = ctx.input;
             if (issues) return;
             value.todo satisfies Todo | null;

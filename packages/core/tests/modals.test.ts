@@ -121,7 +121,7 @@ test("embedded selects are resolved by the modal without invoking message select
     const MessageMenu = defineSelectMenu({
         componentType: ComponentType.StringSelect,
         builder,
-        run() {
+        run: () => {
             return execute();
         },
     });
@@ -134,7 +134,7 @@ test("embedded selects are resolved by the modal without invoking message select
                     .setLabel("Colour")
                     .setStringSelectMenuComponent(builder),
             ),
-        async run(ctx) {
+        run: async ctx => {
             await ctx.interaction.reply(
                 ctx.interaction.components
                     .getStringSelectValues("colour.choose")
@@ -204,10 +204,10 @@ test("modal custom rejection owns the response and guards are snapshotted", asyn
         defineGuard<ModalContext>({
             name: "Deny",
             description: "Denied",
-            run() {
+            run: () => {
                 return false;
             },
-            async onFail(ctx: ModalContext) {
+            onFail: async (ctx: ModalContext) => {
                 await ctx.interaction.reply("Custom rejection");
             },
         });

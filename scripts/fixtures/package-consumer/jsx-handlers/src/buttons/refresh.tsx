@@ -7,7 +7,7 @@ export default defineButton({
             Refresh
         </Button>,
     ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({ content: "Refreshed" });
     },
 });

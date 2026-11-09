@@ -93,7 +93,7 @@ export const contextMenuContracts = (
 
     const IncorrectMessage = defineCommand({
         builder: new UserContextCommandBuilder().setName("Inspect"),
-        async run(ctx) {
+        run: async ctx => {
             // @ts-expect-error A user builder makes a user command, which has no target message.
             await ctx.interaction.reply(ctx.interaction.targetMessage.id);
         },

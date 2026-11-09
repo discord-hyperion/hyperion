@@ -10,7 +10,7 @@ export default defineSelectMenu({
             <StringSelect.Option label="High" value="high" />
         </StringSelect>,
     ),
-    async run(ctx) {
+    run: async ctx => {
         ctx.interaction.values satisfies readonly string[];
         await ctx.interaction.update({
             content: `Priority: ${ctx.interaction.values.join(",")}`,

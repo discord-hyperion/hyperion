@@ -14,7 +14,7 @@ export default defineSubcommand({
                 .setName("disabled")
                 .setDescription("Disable the demo button."),
         ),
-    async run(ctx) {
+    run: async ctx => {
         const disabled =
             ctx.interaction.options.getBoolean("disabled") ?? false;
         const components = renderComponents(

@@ -17,7 +17,7 @@ export default defineSubcommand({
         .addStringOptions(option =>
             option.setName("id").setDescription("The id of the todo."),
         ),
-    async run(ctx) {
+    run: async ctx => {
         const [issues, input] = ctx.input;
 
         if (issues) {

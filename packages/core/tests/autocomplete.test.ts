@@ -123,7 +123,7 @@ for (const missing of ["command", "hook", "response"]) {
                 builder: new ChatInputCommandBuilder()
                     .setName("search")
                     .setDescription("No hook"),
-                async run() {
+                run: async () => {
                     throw new Error("Not command execution");
                 },
             });

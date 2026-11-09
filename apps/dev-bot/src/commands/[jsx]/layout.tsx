@@ -21,7 +21,7 @@ export default defineSubcommand({
         .setDescription(
             "Show a layout message (Components V2) authored with JSX.",
         ),
-    async run(ctx) {
+    run: async ctx => {
         const { user } = ctx.interaction;
         const avatar = user.displayAvatarURL();
 

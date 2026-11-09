@@ -55,7 +55,7 @@ export default defineModal({
                         .setMaxLength(1_000),
                 ),
         ),
-    async run(ctx) {
+    run: async ctx => {
         const message =
             ctx.interaction.components.getTextInputValue("feedback.message");
 
@@ -129,7 +129,7 @@ export default defineModal({
         .setTitle("Rename ticket") /* … "title" text input */,
     input,
     guards: [paramOwner("owner")],
-    async run(ctx) {
+    run: async ctx => {
         const [paramIssues, params] = ctx.params; // Which ticket, from the custom ID.
         const [inputIssues, value] = ctx.input; // The new title, from the form.
     },

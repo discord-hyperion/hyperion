@@ -38,7 +38,7 @@ export default defineSubcommand({
                     .setRequired(false),
         ),
     input,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
 
         if (issues) {

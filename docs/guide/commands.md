@@ -21,7 +21,7 @@ export default defineCommand({
                 .setDescription("What to say")
                 .setRequired(true),
         ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: ctx.interaction.options.getString("text", true),
             allowedMentions: { parse: [] },
@@ -90,7 +90,7 @@ export default defineSubcommand({
         .addStringOptions(option =>
             option.setName("id").setDescription("Ticket ID").setRequired(true),
         ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply(
             `Closing ${ctx.interaction.options.getString("id", true)}.`,
         );
@@ -134,7 +134,7 @@ import { MessageFlags } from "discord.js";
 // A MessageContextCommandBuilder makes a message command instead.
 export default defineCommand({
     builder: new UserContextCommandBuilder().setName("Inspect"),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: `That's ${ctx.interaction.targetUser.username}.`,
             flags: MessageFlags.Ephemeral,

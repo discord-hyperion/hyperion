@@ -3,7 +3,7 @@ import { Embed, renderEmbed } from "@hyperion/jsx";
 import { Events } from "discord.js";
 export default defineEvent({
     event: Events.Invalidated,
-    async run(ctx) {
+    run: async ctx => {
         const embed = renderEmbed(
             <Embed>
                 <Embed.Title>10</Embed.Title>

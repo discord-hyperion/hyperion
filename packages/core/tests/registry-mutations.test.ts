@@ -116,7 +116,7 @@ const standaloneCommand = (name = "ping") =>
         builder: new ChatInputCommandBuilder()
             .setName(name)
             .setDescription("Standalone"),
-        async run() {},
+        run: async () => {},
     });
 
 test("deleting a leaf changes the next deployment without reloading", async t => {
@@ -228,7 +228,7 @@ test("replacement parent and group definitions are used by registration and disp
         return defineGuard({
             name: "test-guard",
             description: "Allowed",
-            run() {
+            run: () => {
                 events.push(`${name} guard`);
 
                 return true;
@@ -343,7 +343,7 @@ test("standalone slash and context-menu commands can be inserted with Collection
     const slash = standaloneCommand("inspect");
     const InspectUser = defineCommand({
         builder: new UserContextCommandBuilder().setName("Inspect"),
-        async run() {},
+        run: async () => {},
     });
     const menu = InspectUser;
     assert.ok(registry instanceof Collection);
@@ -433,7 +433,7 @@ for (const group of [undefined, "settings"]) {
             builder: new ChatInputCommandSubcommandBuilder()
                 .setName("manual")
                 .setDescription("Manual"),
-            async run(_ctx) {},
+            run: async _ctx => {},
         });
         const manual = ManualLeaf;
         const key = CommandRegistry.subcommandKey("ticket", "manual", group);

@@ -9,7 +9,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("role")
         .setDescription("Try a role select menu."),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: "Choose a role.",
             flags: MessageFlags.Ephemeral,

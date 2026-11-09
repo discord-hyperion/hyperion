@@ -74,7 +74,7 @@ export default defineButton({
         .setCustomId(closeTicket.id) // the template carries the route
         .setLabel("Close"),
     guards: [paramOwner("owner")],
-    async run(ctx) {
+    run: async ctx => {
         const [issues, params] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({

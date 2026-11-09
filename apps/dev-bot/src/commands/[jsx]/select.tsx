@@ -19,7 +19,7 @@ export default defineSubcommand({
         .addBooleanOptions(option =>
             option.setName("disabled").setDescription("Disable the menu."),
         ),
-    async run(ctx) {
+    run: async ctx => {
         const current = ctx.interaction.options.getString("priority") ?? "low";
         const disabled =
             ctx.interaction.options.getBoolean("disabled") ?? false;

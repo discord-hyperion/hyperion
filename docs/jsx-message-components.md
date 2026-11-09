@@ -68,7 +68,7 @@ export default defineButton({
             Refresh profile
         </Button>,
     ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({ content: "Refresh requested." });
     },
 });

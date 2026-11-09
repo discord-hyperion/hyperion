@@ -4,7 +4,7 @@ import { MessageFlags } from "discord.js";
 
 export default defineCommand({
     builder: new MessageContextCommandBuilder().setName("Inspect"),
-    async run(ctx) {
+    run: async ctx => {
         const message = ctx.interaction.targetMessage;
 
         await ctx.interaction.reply({

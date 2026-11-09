@@ -128,7 +128,7 @@ test("compose preserves native metadata and localizations in a fresh builder eac
             builder: new ChatInputCommandSubcommandBuilder()
                 .setName(name)
                 .setDescription("Action"),
-            async run() {},
+            run: async () => {},
         });
     const view = createLeaf("view");
     const update = createLeaf("update");

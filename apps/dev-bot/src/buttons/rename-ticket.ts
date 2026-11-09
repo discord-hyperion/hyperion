@@ -13,7 +13,7 @@ export const renameTicket = defineParams({
 export default defineButton({
     params: renameTicket,
     guards: [paramOwner("owner", "Only the ticket's author can rename it.")],
-    async run(ctx) {
+    run: async ctx => {
         const [issues, params] = ctx.params;
 
         if (issues) {

@@ -44,7 +44,7 @@ export default defineSelectMenu({
             { label: "Blue", value: "blue" },
             { label: "Green", value: "green" },
         ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({
             content: `You chose ${ctx.interaction.values[0]}.`,
             allowedMentions: { parse: [] },
@@ -95,7 +95,7 @@ export default defineSelectMenu({
         .setPlaceholder("Choose a user")
         .setMinValues(1)
         .setMaxValues(1),
-    async run(ctx) {
+    run: async ctx => {
         const names = ctx.interaction.users.map(user => user.username);
 
         await ctx.interaction.update({
@@ -132,7 +132,7 @@ export default defineSelectMenu({
         .setPlaceholder("Choose a role")
         .setMinValues(1)
         .setMaxValues(1),
-    async run(ctx) {
+    run: async ctx => {
         const names = ctx.interaction.roles.map(role => role.name);
 
         await ctx.interaction.update({
@@ -168,7 +168,7 @@ export default defineSelectMenu({
         .setPlaceholder("Choose users or roles")
         .setMinValues(0)
         .setMaxValues(5),
-    async run(ctx) {
+    run: async ctx => {
         const { values, users, roles } = ctx.interaction;
         const names = values.map(
             id => users.get(id)?.username ?? roles.get(id)?.name ?? id,
@@ -208,7 +208,7 @@ export default defineSelectMenu({
         .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
         .setMinValues(0)
         .setMaxValues(5),
-    async run(ctx) {
+    run: async ctx => {
         const names = ctx.interaction.values.map(id => {
             const channel = ctx.interaction.channels.get(id);
             return channel && "name" in channel ? (channel.name ?? id) : id;
@@ -274,7 +274,7 @@ export default defineSelectMenu({
         .setCustomId(assignTicket.id)
         .setPlaceholder("Assign to…"),
     guards: [paramOwner("owner")],
-    async run(ctx) {
+    run: async ctx => {
         const [issues, params] = ctx.params; // From the custom ID.
         const assignee = ctx.interaction.users.first(); // From the click.
     },
@@ -317,7 +317,7 @@ export default defineSelectMenu({
             { label: "Red", value: "red" },
         ),
     input,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, colours] = ctx.input;
 
         if (issues) {

@@ -56,7 +56,7 @@ export default defineButton({
     builder: new PrimaryButtonBuilder()
         .setCustomId("profile.refresh")
         .setLabel("Refresh profile"),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.deferUpdate();
         const user = await ctx.client.users.fetch(ctx.interaction.user.id, {
             force: true,
@@ -103,7 +103,7 @@ export default defineButton({
     builder: new PrimaryButtonBuilder()
         .setCustomId(todoDone.id)
         .setLabel("Done"),
-    async run(ctx) {
+    run: async ctx => {
         const [issues, params] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({

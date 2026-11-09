@@ -36,7 +36,7 @@ const handlers = [
                         option.setName("todo").setDescription("ID"),
                     ),
                 input,
-                run() {},
+                run: () => {},
             }),
     ],
     [
@@ -50,7 +50,7 @@ const handlers = [
                         option.setName("todo").setDescription("ID"),
                     ),
                 input,
-                run() {},
+                run: () => {},
             }),
     ],
 ] as const;
@@ -154,7 +154,7 @@ test("context-menu commands reject input configuration at runtime", () => {
                 builder: new UserContextCommandBuilder().setName("Inspect"),
                 // @ts-expect-error Exercise runtime rejection for JavaScript callers.
                 input: { schema },
-                run() {},
+                run: () => {},
             }),
         /require a chat-input command/,
     );

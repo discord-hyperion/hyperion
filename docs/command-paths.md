@@ -80,7 +80,7 @@ export default defineSubcommand({
         .addStringOptions(option =>
             option.setName("id").setDescription("Ticket ID").setRequired(true),
         ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: `Selected ticket: ${ctx.interaction.options.getString("id", true)}`,
             allowedMentions: { parse: [] },

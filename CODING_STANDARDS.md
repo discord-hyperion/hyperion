@@ -25,9 +25,11 @@ expressions, no `public`, formatting), so they are not repeated here.
 
 ## Functions and types
 
-- Prefer arrow functions for standalone functions, callbacks, and type signatures
-  (`run: (ctx: Context) => Promise<void>`). Keep normal class methods. Use function
-  declarations only when their semantics are required.
+- Prefer arrow functions for standalone functions, callbacks, type signatures
+  (`run: (ctx: Context) => Promise<void>`), and functions in object literals
+  (`run: async ctx => { … }`, not `async run(ctx) { … }`). Keep normal class
+  methods. Use function declarations, method shorthand, getters, or generators only
+  when their semantics (such as `this`) are required.
 - Omit redundant `override` on implemented methods; keep modifiers that express
   required semantics. `noImplicitOverride` stays off.
 - Infer implemented method return types. Keep explicit return types on abstract

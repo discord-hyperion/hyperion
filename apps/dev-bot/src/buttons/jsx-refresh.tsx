@@ -7,7 +7,7 @@ export default defineButton({
             Refresh JSX demo
         </Button>,
     ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({
             content: "JSX button handled through the existing button registry.",
         });

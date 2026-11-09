@@ -136,7 +136,7 @@ describe("button params routing", () => {
             builder: new PrimaryButtonBuilder()
                 .setCustomId("todo.done:1:2:3")
                 .setLabel("Literal"),
-            async run() {},
+            run: async () => {},
         });
         registry.set(literal.customId, literal);
         registry.routes.set(todoDone.id, todoButton(async () => {}) as never);
@@ -224,7 +224,7 @@ describe("button params loading", () => {
                     params: todoDone,
                     // @ts-expect-error Exercise runtime rejection for JavaScript callers.
                     customId: "x",
-                    async run() {},
+                    run: async () => {},
                 }),
             /either a customId or params/,
         );
@@ -238,7 +238,7 @@ describe("button params dispatch", () => {
             defineGuard<TodoContext>({
                 name: "SeesParams",
                 description: "Denied",
-                run(ctx: TodoContext) {
+                run: (ctx: TodoContext) => {
                     seen.push(ctx.params);
 
                     return ctx.params[1]?.owner === ctx.interaction.user.id;
@@ -289,10 +289,10 @@ describe("button params dispatch", () => {
             defineGuard<TodoContext>({
                 name: "IssueGuard",
                 description: "Invalid params",
-                run(ctx: TodoContext) {
+                run: (ctx: TodoContext) => {
                     return guard(ctx);
                 },
-                async onFail(ctx: TodoContext) {
+                onFail: async (ctx: TodoContext) => {
                     await ctx.interaction.reply("rejected");
                 },
             });

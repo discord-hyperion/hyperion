@@ -93,10 +93,10 @@ export const subcommandContracts = (
                 return ownerOnly;
             },
         ],
-        async run(ctx) {
+        run: async ctx => {
             await ctx.interaction.reply("Result");
         },
-        async autocomplete(ctx) {
+        autocomplete: async ctx => {
             ctx.interaction.options.getFocused();
             await ctx.interaction.respond([]);
         },
@@ -115,13 +115,13 @@ export const subcommandContracts = (
     const TopLevelLeaf = defineSubcommand({
         // @ts-expect-error Leaves require a native subcommand builder.
         builder: new ChatInputCommandBuilder(),
-        async run(_ctx) {},
+        run: async _ctx => {},
     });
 
     const WrongContext = defineSubcommand({
         builder: new ChatInputCommandSubcommandBuilder().setName("wrong"),
         // @ts-expect-error Leaves cannot handle user context-menu command contexts.
-        async run(_ctx: CommandContext<ApplicationCommandType.User>) {},
+        run: async (_ctx: CommandContext<ApplicationCommandType.User>) => {},
     });
 
     return {

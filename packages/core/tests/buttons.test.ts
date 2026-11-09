@@ -127,10 +127,10 @@ test("custom button guard onFail receives the invocation context", async t => {
         defineGuard<ButtonContext>({
             name: "Deny",
             description: "No access",
-            run() {
+            run: () => {
                 return false;
             },
-            async onFail(ctx: ButtonContext) {
+            onFail: async (ctx: ButtonContext) => {
                 await ctx.interaction.reply("Custom rejection");
             },
         });

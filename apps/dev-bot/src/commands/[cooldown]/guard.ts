@@ -17,7 +17,7 @@ export default defineSubcommand({
                 entries: cooldowns,
             }),
     ],
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply(
             "Done. Run it again within 10 seconds and the guard stops you.",
         );

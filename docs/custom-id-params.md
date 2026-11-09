@@ -104,7 +104,7 @@ encoder, but cannot be used with `build()`.
 ```ts fragment
 export default defineButton({
     params: todoDoneId,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.params;
         if (issues) {
             await ctx.interaction.reply({
