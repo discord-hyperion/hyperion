@@ -1,14 +1,22 @@
 import assert from "node:assert/strict";
 import { mock, type TestContext, test } from "node:test";
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { MessageFlags } from "discord.js";
+import {
+    MessageFlags,
+    PermissionFlagsBits,
+    type PermissionResolvable,
+    PermissionsBitField,
+} from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 import { type CommandContext, defineCommand } from "../src/commands/index.ts";
 import {
     defineGuard,
     type Guard,
     type GuardProvider,
+    guildOnly,
     ownerOnly,
+    requireBotPermissions,
+    requirePermissions,
 } from "../src/guards/index.ts";
 import { createTestClient } from "./support/test-client.ts";
 
@@ -339,4 +347,103 @@ test("closure guards keep state across invocations", async t => {
     }
 
     assert.equal(execute.mock.callCount(), 2);
+});
+
+const inGuild = (permissions: {
+    member?: PermissionResolvable[];
+    app?: PermissionResolvable[];
+}) =>
+    createChatInputInteraction({
+        commandName: "test",
+        user: { id: "member" },
+        guildId: "guild",
+        member: { id: "member" },
+        memberPermissions: new PermissionsBitField(permissions.member).freeze(),
+        appPermissions: new PermissionsBitField(permissions.app).freeze(),
+    });
+
+const replyText = (fixture: {
+    reply: { mock: { calls: { arguments: unknown[] }[] } };
+}) =>
+    (
+        fixture.reply.mock.calls[0]?.arguments[0] as
+            | { content?: string }
+            | undefined
+    )?.content;
+
+test("guildOnly rejects interactions from outside a server", async t => {
+    const { client, dispatcher } = await setup(t);
+    const execute = mock.fn(async (_ctx: CommandContext) => {});
+    client.commands.set("test", guardedCommand([guildOnly], execute));
+    const dm = interaction();
+
+    await dispatcher.dispatch(inGuild({}).interaction);
+    await dispatcher.dispatch(dm.interaction);
+
+    assert.equal(execute.mock.callCount(), 1);
+    assert.equal(replyText(dm), "Use this in a server.");
+});
+
+test("requirePermissions checks the member's permissions, and admins pass", async t => {
+    const { client, dispatcher } = await setup(t);
+    const execute = mock.fn(async (_ctx: CommandContext) => {});
+    client.commands.set(
+        "test",
+        guardedCommand(
+            [
+                requirePermissions(
+                    PermissionFlagsBits.ManageMessages,
+                    "KickMembers",
+                ),
+            ],
+            execute,
+        ),
+    );
+    const partial = inGuild({ member: ["ManageMessages"] });
+    const dm = interaction();
+
+    await dispatcher.dispatch(
+        inGuild({ member: ["ManageMessages", "KickMembers"] }).interaction,
+    );
+    await dispatcher.dispatch(
+        inGuild({ member: ["Administrator"] }).interaction,
+    );
+    await dispatcher.dispatch(partial.interaction);
+    await dispatcher.dispatch(dm.interaction);
+
+    assert.equal(execute.mock.callCount(), 2);
+    assert.equal(
+        replyText(partial),
+        "You need the Kick Members and Manage Messages permissions to use this.",
+    );
+    assert.equal(dm.reply.mock.callCount(), 1);
+});
+
+test("requireBotPermissions checks the bot's permissions in the channel", async t => {
+    const { client, dispatcher } = await setup(t);
+    const execute = mock.fn(async (_ctx: CommandContext) => {});
+    client.commands.set(
+        "test",
+        guardedCommand([requireBotPermissions("ManageRoles")], execute),
+    );
+    const lacking = inGuild({ app: ["SendMessages"] });
+
+    await dispatcher.dispatch(inGuild({ app: ["ManageRoles"] }).interaction);
+    await dispatcher.dispatch(lacking.interaction);
+
+    assert.equal(execute.mock.callCount(), 1);
+    assert.equal(
+        replyText(lacking),
+        "I need the Manage Roles permission here.",
+    );
+});
+
+test("permission guards reject an empty or unknown permission list up front", () => {
+    assert.throws(() => requirePermissions(), /needs at least one permission/);
+    assert.throws(
+        () => requireBotPermissions(0n),
+        /needs at least one permission/,
+    );
+    // @ts-expect-error not a permission name
+    assert.throws(() => requirePermissions("ManageEverything"));
 });

@@ -20,6 +20,7 @@ import {
     MessagePayload,
     type ModalComponentResolver,
     ModalSubmitInteraction,
+    type PermissionsBitField,
     type Role,
     type SelectMenuInteraction,
     type SelectMenuType,
@@ -43,6 +44,8 @@ type CommonData = {
     user?: UserData;
     member?: MemberData | null;
     guild?: Pick<Guild, "id"> | null;
+    memberPermissions?: Readonly<PermissionsBitField> | null;
+    appPermissions?: Readonly<PermissionsBitField> | null;
     deferred?: boolean;
     replied?: boolean;
     ephemeral?: boolean | null;
@@ -134,6 +137,8 @@ const createFixture = <T>(
         guildId: data.guildId ?? null,
         guild: data.guild ? { ...data.guild } : null,
         member: data.member ? { ...data.member } : null,
+        memberPermissions: data.memberPermissions ?? null,
+        appPermissions: data.appPermissions ?? null,
         user: { ...(data.user ?? { id: "test-user" }) },
         ...(kind === "autocomplete"
             ? {}

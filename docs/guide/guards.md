@@ -2,7 +2,7 @@
 
 A guard is a check that runs before your handler. Return `true` to let the
 interaction through, `false` to stop it. They're how you say "owner only",
-"servers only", or "slow down" without cluttering every `run()` method.
+"moderators only", or "slow down" without cluttering every `run()` method.
 
 ## Using a guard
 
@@ -36,10 +36,10 @@ Give `defineGuard()` a name, a description, and a check:
 ```ts
 import { defineGuard } from "@hyperion/core";
 
-export const guildOnly = defineGuard({
-    name: "guild-only",
-    description: "Use this in a server.",
-    run: ctx => ctx.interaction.inGuild(),
+export const threadsOnly = defineGuard({
+    name: "threads-only",
+    description: "Use this in a thread.",
+    run: ctx => ctx.interaction.channel?.isThread() ?? false,
 });
 ```
 
@@ -125,15 +125,15 @@ Factories can be async, and they're skipped if an earlier guard already said no.
 Add `onFail()` to send your own reply instead of the description:
 
 ```ts fragment
-export const guildOnly = defineGuard<InteractionContext>({
-    name: "guild-only",
-    description: "Use this in a server.",
-    run: ctx => ctx.interaction.inGuild(),
+export const threadsOnly = defineGuard<InteractionContext>({
+    name: "threads-only",
+    description: "Use this in a thread.",
+    run: ctx => ctx.interaction.channel?.isThread() ?? false,
     onFail: async ctx => {
         if (!ctx.interaction.isRepliable()) return;
 
         await ctx.interaction.reply({
-            content: "Tickets belong to a server. Run this there instead.",
+            content: "Open a thread first, then run this there.",
             flags: MessageFlags.Ephemeral,
         });
     },
@@ -150,6 +150,21 @@ export const guildOnly = defineGuard<InteractionContext>({
 - **`ownerOnly`**: only the bot application's owner (the team owner, for team
   apps). Hyperion looks the owner up from Discord and caches it, so there's
   nothing to configure.
+- **`guildOnly`**: only in a server, not in DMs.
+- **`requirePermissions()`** and **`requireBotPermissions()`**: the user, or
+  the bot, needs every permission you list, in the channel it's used in:
+
+  ```ts fragment
+  guards: [
+      requirePermissions("ManageMessages"),
+      requireBotPermissions("ManageMessages"),
+  ];
+  ```
+
+  The rejection lists the permissions you asked for: "You need the Manage
+  Messages permission to use this." For commands, `setDefaultMemberPermissions()` on the builder
+  also hides the command from people who can't use it; the guard still protects
+  buttons and menus.
 - **`cooldown()`**: rejects while a key is cooling down. You own the collection
   of timers, so one cooldown can span several commands. Use a factory to key it
   per user:

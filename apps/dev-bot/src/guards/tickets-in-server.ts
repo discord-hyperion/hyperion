@@ -1,9 +1,12 @@
 import { defineGuard, type InteractionContext } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
-/** Rejects interactions outside a server, with its own private reply. */
-export const guildOnly = defineGuard<InteractionContext>({
-    name: "guild-only",
+/**
+ * Like the built-in guildOnly, but with its own private reply, to show
+ * onFail().
+ */
+export const ticketsInServer = defineGuard<InteractionContext>({
+    name: "tickets-in-server",
     description: "Use this in a server.",
     run: ctx => ctx.interaction.inGuild(),
     onFail: async ctx => {
