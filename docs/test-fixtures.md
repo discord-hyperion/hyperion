@@ -18,7 +18,8 @@ selects the matching typed interaction for any of the five supported select kind
 Every call creates fresh acknowledgment state and mock histories.
 
 Supply scenario data explicitly: options and focused-option resolvers, selected
-values, resolved Collections, context-menu targets, and modal component resolvers.
+values, resolved Collections, context-menu targets, modal component resolvers,
+and `memberPermissions` / `appPermissions` bitfields (both `null` by default).
 Missing methods are not silently stubbed. Native predicates use discriminants such
 as `type`, `commandType`, and `componentType`; mismatched-routing tests can alter
 the appropriate discriminant explicitly instead of rewriting predicate logic.

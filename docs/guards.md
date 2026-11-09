@@ -4,8 +4,9 @@ See the [execution glossary](GLOSSARY.md#execution) for guard and guard-provider
 terminology.
 
 Guards are execution checks, not handlers: define them with `defineGuard()`
-rather than a class. `ownerOnly`, `cooldown()`, and `paramOwner()` are built-in
-guards supplied by Hyperion, located in `src/guards/builtins` and exported from
+rather than a class. `ownerOnly`, `guildOnly`, `requirePermissions()`,
+`requireBotPermissions()`, `cooldown()`, and `paramOwner()` are built-in guards
+supplied by Hyperion, located in `src/guards/builtins` and exported from
 the public library entry point. Use them directly; define your own only for
 application-specific checks.
 
@@ -115,6 +116,26 @@ does not run. `client.getOwnerId()` exposes the same cached lookup. Guards are
 runtime checks and do not change Discord command visibility or command
 permission settings.
 
+`guildOnly` passes only when `interaction.inGuild()` is true, so it rejects DMs
+and group DMs. Its description is "Use this in a server."
+
+`requirePermissions(...permissions)` passes when `interaction.memberPermissions`
+has every given permission; Discord computes it for the invoking member in the
+interaction's channel, so channel overwrites apply. `requireBotPermissions()`
+checks `interaction.appPermissions`, the bot's permissions in that channel. Both
+accept any discord.js `PermissionResolvable` (names, `PermissionFlagsBits`, or
+bigints), pass for `Administrator`, and fail closed when the permissions are
+missing, as outside a server. Arguments are resolved when the guard is created:
+an unknown name throws, and an empty list throws `RangeError`. The description
+lists every requested permission, not only the missing ones, for example "You need the
+Kick Members and Manage Messages permissions to use this." or "I need the Manage
+Roles permission here." Names come from the discord.js flag names, so
+`ManageGuild` reads "Manage Guild". Use `onFail()` in a custom guard for other
+wording. These guards are runtime checks. For commands, also consider
+`setDefaultMemberPermissions()` on the builder, which hides the command from
+members without the permission; guards still matter for components and for
+permissions that change after deployment.
+
 `cooldown()` takes the key, duration, and a collection the application owns:
 
 ```ts fragment
@@ -178,15 +199,15 @@ Supply `onFail()` to take control of the rejection response:
 import { defineGuard, type InteractionContext } from "@hyperion/core";
 import { MessageFlags } from "discord.js";
 
-export const guildOnly = defineGuard<InteractionContext>({
-    name: "guild-only",
-    description: "This command requires a server.",
-    run: ctx => ctx.interaction.inGuild(),
+export const threadsOnly = defineGuard<InteractionContext>({
+    name: "threads-only",
+    description: "Use this in a thread.",
+    run: ctx => ctx.interaction.channel?.isThread() ?? false,
     onFail: async ctx => {
         if (!ctx.interaction.isRepliable()) return;
 
         await ctx.interaction.reply({
-            content: "Please run this in a server.",
+            content: "Open a thread first, then run this there.",
             flags: MessageFlags.Ephemeral,
         });
     },
@@ -231,5 +252,5 @@ The dispatcher supports command, [button](./buttons.md),
 [select menu](./select-menus.md), and [modal](./modals.md) guards. A button guard
 is a `Guard<ButtonContext>`, a select-menu guard a `Guard<SelectMenuContext>`.
 Guards shared across interaction types can accept `InteractionContext`, as
-`ownerOnly` and `cooldown()` do. Each handler has its own guard list: restricting
+every built-in except `paramOwner()` does. Each handler has its own guard list: restricting
 a command does not automatically restrict its components.

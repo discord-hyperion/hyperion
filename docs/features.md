@@ -66,7 +66,8 @@ implemented item links a reference doc.
   template's custom ID is its handler's. See
   [buttons](buttons.md), [select menus](select-menus.md), and [modals](modals.md).
 - Typed custom-ID params. See [custom-ID params](custom-id-params.md).
-- Guards through `defineGuard()`. See [guards](guards.md).
+- Guards through `defineGuard()`, with built-in owner, server, permission,
+  cooldown, and param-owner guards. See [guards](guards.md).
 - Typed input for commands, every modal control, and select menus, with async
   resolvers. See [typed command input](input-validation.md),
   [modal input validation](modal-input-validation.md), and
