@@ -9,7 +9,7 @@ import {
 import { defineCommand } from "@hyperion/core";
 import { closeTicket } from "../../buttons/close-ticket.ts";
 import { renameTicket } from "../../buttons/rename-ticket.ts";
-import { guildOnly } from "../../guards/guild-only.ts";
+import { ticketsInServer } from "../../guards/tickets-in-server.ts";
 import { assignTicket } from "../../select-menus/assign-ticket.ts";
 
 export default defineCommand({
@@ -25,7 +25,7 @@ export default defineCommand({
                 .setRequired(true)
                 .setMaxLength(100),
         ),
-    guards: [guildOnly],
+    guards: [ticketsInServer],
     async run(ctx) {
         const subject = ctx.interaction.options.getString("subject", true);
         // Handlers stay stateless: the ticket's identity travels in each control.
