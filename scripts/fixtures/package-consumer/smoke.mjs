@@ -9,7 +9,7 @@ import {
     defineButton,
     defineModal,
     HyperionClient,
-} from "@hyperion/core";
+} from "@hyperion-js/core";
 import { Client, Events } from "discord.js";
 
 const ExampleButton = defineButton({

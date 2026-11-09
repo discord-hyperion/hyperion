@@ -1,5 +1,5 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { cooldown, defineSubcommand } from "@hyperion/core";
+import { cooldown, defineSubcommand } from "@hyperion-js/core";
 import { Collection } from "discord.js";
 
 // In memory: a restart forgets every cooldown. Compare /cooldown sqlite.

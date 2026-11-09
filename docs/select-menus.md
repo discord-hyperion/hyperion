@@ -32,7 +32,7 @@ Every build leaves the shared template unchanged.
 
 ```ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion-js/core";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({
@@ -85,7 +85,7 @@ user has a cached guild member.
 
 ```ts
 import { UserSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion-js/core";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({
@@ -122,7 +122,7 @@ depending on guild cache state; `.name` is available on either. Narrow with
 
 ```ts
 import { RoleSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion-js/core";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({
@@ -158,7 +158,7 @@ the selection and guild data; a role selection does not have a user entry.
 
 ```ts
 import { MentionableSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion-js/core";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({
@@ -197,7 +197,7 @@ channel type before using cache-specific methods.
 
 ```ts
 import { ChannelSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion-js/core";
 import { ChannelType, ComponentType } from "discord.js";
 
 export default defineSelectMenu({
@@ -299,7 +299,7 @@ modals:
 
 ```ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu, defineInput } from "@hyperion/core";
+import { defineSelectMenu, defineInput } from "@hyperion-js/core";
 import { ComponentType, MessageFlags } from "discord.js";
 import * as v from "valibot";
 
@@ -378,7 +378,7 @@ state in application-owned storage rather than fields on a shared handler.
 
 ## JSX select authoring
 
-`@hyperion/jsx` can author a native template for every select type with
+`@hyperion-js/jsx` can author a native template for every select type with
 `renderStringSelect()`, `renderUserSelect()`, `renderRoleSelect()`,
 `renderMentionableSelect()`, and `renderChannelSelect()`, and render any of them
 inside an `ActionRow` with `renderComponents()` for a fresh message instance.

@@ -65,7 +65,7 @@ shared guards, but it doesn't run anything itself:
 ```ts
 // src/commands/[ticket]/index.ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineParentCommand } from "@hyperion/core";
+import { defineParentCommand } from "@hyperion-js/core";
 import { InteractionContextType } from "discord.js";
 
 export default defineParentCommand({
@@ -81,7 +81,7 @@ to it defines a subcommand with a subcommand builder:
 ```ts
 // src/commands/[ticket]/close.ts
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
+import { defineSubcommand } from "@hyperion-js/core";
 
 export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
@@ -109,7 +109,7 @@ group definition, then put subcommand files beside it:
 ```ts
 // src/commands/[ticket]/{settings}/index.ts
 import { ChatInputCommandSubcommandGroupBuilder } from "@discordjs/builders";
-import { defineSubcommandGroup } from "@hyperion/core";
+import { defineSubcommandGroup } from "@hyperion-js/core";
 
 export default defineSubcommandGroup({
     builder: new ChatInputCommandSubcommandGroupBuilder().setDescription(
@@ -128,7 +128,7 @@ command type, so `ctx.interaction` is typed for it:
 
 ```ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 // A MessageContextCommandBuilder makes a message command instead.

@@ -3,7 +3,7 @@ import {
     PrimaryButtonBuilder,
     SecondaryButtonBuilder,
 } from "@discordjs/builders";
-import { defineButton, ownerOnly } from "@hyperion/core";
+import { defineButton, ownerOnly } from "@hyperion-js/core";
 
 const refreshProfile = defineButton({
     builder: new PrimaryButtonBuilder()

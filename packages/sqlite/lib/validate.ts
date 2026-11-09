@@ -26,7 +26,7 @@ export const validate = <Schema extends StandardSchemaV1>(
         result.catch(() => {});
 
         throw new TypeError(
-            `${subject} uses a schema that validates asynchronously; @hyperion/sqlite needs a synchronous schema.`,
+            `${subject} uses a schema that validates asynchronously; @hyperion-js/sqlite needs a synchronous schema.`,
         );
     }
 

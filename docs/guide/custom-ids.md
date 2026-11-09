@@ -11,7 +11,7 @@ hand it back to your handler, validated and typed.
 
 ```ts
 // src/buttons/close-ticket.ts
-import { defineParams } from "@hyperion/core";
+import { defineParams } from "@hyperion-js/core";
 import * as v from "valibot";
 
 export const closeTicket = defineParams({

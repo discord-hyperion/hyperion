@@ -4,9 +4,9 @@
     "description": "",
     "scripts": {
         "prepare": "git config core.hooksPath .githooks",
-        "start": "pnpm --filter @hyperion/dev-bot start",
-        "dev": "pnpm --filter @hyperion/dev-bot dev",
-        "start:debug": "pnpm --filter @hyperion/dev-bot start:debug",
+        "start": "pnpm --filter @hyperion-js/dev-bot start",
+        "dev": "pnpm --filter @hyperion-js/dev-bot dev",
+        "start:debug": "pnpm --filter @hyperion-js/dev-bot start:debug",
         "check": "biome check . && node scripts/check-docs.mjs && node scripts/check-examples.mjs && node scripts/check-layout.mjs",
         "check:docs": "node scripts/check-docs.mjs",
         "check:fix": "node scripts/fix-changed.mjs",

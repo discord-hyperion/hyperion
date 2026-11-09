@@ -46,7 +46,7 @@ leaves across multiple folders. Put this in `(support)/[ticket]/index.ts`:
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineParentCommand, ownerOnly } from "@hyperion/core";
+import { defineParentCommand, ownerOnly } from "@hyperion-js/core";
 import { InteractionContextType } from "discord.js";
 
 export default defineParentCommand({
@@ -71,7 +71,7 @@ For example, put this in `(support)/[ticket]/close.ts`:
 
 ```ts
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
+import { defineSubcommand } from "@hyperion-js/core";
 
 export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()

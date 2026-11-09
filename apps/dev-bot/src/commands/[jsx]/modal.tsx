@@ -1,6 +1,6 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
-import { renderModal } from "@hyperion/jsx";
+import { defineSubcommand } from "@hyperion-js/core";
+import { renderModal } from "@hyperion-js/jsx";
 import { TodoForm } from "../../views/todo-form.tsx";
 
 export default defineSubcommand({

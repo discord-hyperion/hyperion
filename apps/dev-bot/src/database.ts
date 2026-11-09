@@ -1,4 +1,4 @@
-import { createDatabase } from "@hyperion/sqlite";
+import { createDatabase } from "@hyperion-js/sqlite";
 import * as v from "valibot";
 
 // Without DATABASE_PATH, todos last until the bot stops; tests rely on that.

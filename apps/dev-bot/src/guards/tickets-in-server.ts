@@ -1,4 +1,4 @@
-import { defineGuard, type InteractionContext } from "@hyperion/core";
+import { defineGuard, type InteractionContext } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
 /**

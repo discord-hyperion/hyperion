@@ -1,8 +1,8 @@
 # JSX authoring
 
-`@hyperion/jsx` is a JSX runtime that renders native Discord builders for
+`@hyperion-js/jsx` is a JSX runtime that renders native Discord builders for
 embeds, modals, message controls, and layout messages. It depends on neither
-`@hyperion/core` nor React. Implementation lives in `packages/jsx/lib`; workspace
+`@hyperion-js/core` nor React. Implementation lives in `packages/jsx/lib`; workspace
 imports resolve source, and published imports resolve JavaScript and declarations
 in `dist`. See [runtime research](research/jsx-runtimes.md) for why it is a
 Hyperion-owned runtime.
@@ -32,7 +32,7 @@ APIs, and changes made after rendering should be validated again before sending.
 {
     "compilerOptions": {
         "jsx": "react-jsx",
-        "jsxImportSource": "@hyperion/jsx"
+        "jsxImportSource": "@hyperion-js/jsx"
     },
     "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.jsx"]
 }
@@ -75,13 +75,20 @@ indexes and numeric event priorities. See [architecture](architecture.md).
 - Nesting is limited to 128 levels, counting arrays and component calls as well as
   elements, so recursive structures throw instead of exhausting the stack.
 - Elements are recognized by module-private identity. Elements from one installed
-  copy of `@hyperion/jsx` are rejected by another copy (for example when two
+  copy of `@hyperion-js/jsx` are rejected by another copy (for example when two
   versions are installed), so keep a single version in an application.
 
 ## Embeds
 
 ```tsx fragment
-import { Bold, Br, Embed, Link, renderEmbed, UserMention } from "@hyperion/jsx";
+import {
+    Bold,
+    Br,
+    Embed,
+    Link,
+    renderEmbed,
+    UserMention,
+} from "@hyperion-js/jsx";
 
 const embed = renderEmbed(
     <Embed color={0x57f287} timestamp={new Date()}>

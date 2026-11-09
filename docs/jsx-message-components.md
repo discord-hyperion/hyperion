@@ -59,8 +59,8 @@ for `disabled` when validators are enabled.
 ## Handler template
 
 ```tsx
-import { defineButton } from "@hyperion/core";
-import { Button, renderButton } from "@hyperion/jsx";
+import { defineButton } from "@hyperion-js/core";
+import { Button, renderButton } from "@hyperion-js/jsx";
 
 export default defineButton({
     builder: renderButton(
@@ -81,8 +81,8 @@ its clicks. Don't store per-user values on the shared template; use
 ## Message example
 
 ```tsx
-import type { CommandContext } from "@hyperion/core";
-import { ActionRow, Button, renderComponents } from "@hyperion/jsx";
+import type { CommandContext } from "@hyperion-js/core";
+import { ActionRow, Button, renderComponents } from "@hyperion-js/jsx";
 
 export const showProfileControls = async (
     ctx: CommandContext,

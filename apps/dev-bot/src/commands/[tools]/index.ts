@@ -1,5 +1,5 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineParentCommand } from "@hyperion/core";
+import { defineParentCommand } from "@hyperion-js/core";
 import { InteractionContextType } from "discord.js";
 
 export default defineParentCommand({

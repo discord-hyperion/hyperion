@@ -1,4 +1,4 @@
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient } from "@hyperion-js/core";
 import { db } from "./src/database.ts";
 
 const token = process.env.DISCORD_TOKEN;

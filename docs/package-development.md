@@ -1,9 +1,9 @@
 # Package development and publication artifacts
 
-The workspace resolves `@hyperion/core` to `packages/core/src/index.ts`. Workspace
-consumers use this public export through a workspace dependency. `@hyperion/jsx`
+The workspace resolves `@hyperion-js/core` to `packages/core/src/index.ts`. Workspace
+consumers use this public export through a workspace dependency. `@hyperion-js/jsx`
 resolves to `packages/jsx/lib/index.ts` and has production/development automatic
-runtime subpaths; it has no dependency on core. `@hyperion/sqlite` resolves to
+runtime subpaths; it has no dependency on core. `@hyperion-js/sqlite` resolves to
 `packages/sqlite/lib/index.ts`, also without core. Run `npm view` from outside the
 workspace: the root `devEngines` names pnpm, so npm refuses to run inside it.
 Run source checks and tests without compiling first:
@@ -25,7 +25,7 @@ declaration maps.
 Packing the core package runs its `prepack` build:
 
 ```sh
-pnpm --filter @hyperion/core pack --pack-destination /tmp/hyperion-artifacts
+pnpm --filter @hyperion-js/core pack --pack-destination /tmp/hyperion-artifacts
 ```
 
 pnpm applies `publishConfig.exports` to the tarball manifest: published consumers

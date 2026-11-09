@@ -1,5 +1,5 @@
-import { defineEvent } from "@hyperion/core";
-import { Embed, renderEmbed } from "@hyperion/jsx";
+import { defineEvent } from "@hyperion-js/core";
+import { Embed, renderEmbed } from "@hyperion-js/jsx";
 import { Events } from "discord.js";
 export default defineEvent({
     event: Events.Invalidated,

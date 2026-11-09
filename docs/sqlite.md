@@ -1,6 +1,6 @@
 # SQLite storage
 
-`@hyperion/sqlite` (`packages/sqlite`) is optional storage over `better-sqlite3`.
+`@hyperion-js/sqlite` (`packages/sqlite`) is optional storage over `better-sqlite3`.
 It doesn't depend on core, and core stays database-free. The design record is
 [ADR 0005](adr/0005-optional-sqlite-package-on-better-sqlite3.md).
 

@@ -11,7 +11,7 @@ discord.js spells it (`clientReady`, `messageCreate`, …):
 
 ```ts
 // src/events/clientReady/10-startup-message.ts
-import { defineEvent } from "@hyperion/core";
+import { defineEvent } from "@hyperion-js/core";
 import { Events } from "discord.js";
 
 export default defineEvent({

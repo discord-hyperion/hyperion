@@ -35,8 +35,8 @@ inputs, and test what the prototype did not (see "Not tested" below).
 
 ## Repository constraints
 
-The [architecture](../architecture.md) separates `@hyperion/core` and
-`@hyperion/jsx`; the root and package manifests use ESM, TypeScript NodeNext,
+The [architecture](../architecture.md) separates `@hyperion-js/core` and
+`@hyperion-js/jsx`; the root and package manifests use ESM, TypeScript NodeNext,
 pnpm, Turbo, and source exports for development. The root compiler dependency is
 TypeScript `^7.0.2`. Core and JSX currently have different pre-1.0 versions.
 A documentation build can be isolated without adding compilation to bot

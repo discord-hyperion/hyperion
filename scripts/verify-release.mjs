@@ -28,9 +28,9 @@ const beta = {
     ref: "refs/heads/release/beta",
     pre: { mode: "pre", tag: "beta" },
 };
-assert.equal(releasePackage("@hyperion/core"), "core");
-assert.equal(releasePackage("@hyperion/jsx"), "jsx");
-assert.throws(() => releasePackage("@hyperion/dev-bot"));
+assert.equal(releasePackage("@hyperion-js/core"), "core");
+assert.equal(releasePackage("@hyperion-js/jsx"), "jsx");
+assert.throws(() => releasePackage("@hyperion-js/dev-bot"));
 assert.throws(() => releasePackage("../../private"));
 assert.throws(() => releasePackage("toString"));
 validateRelease(stable);
@@ -72,7 +72,7 @@ const write = (relative, data) =>
     );
 const read = async relative =>
     JSON.parse(await readFile(path.join(temporary, relative), "utf8"));
-const changeset = (bump, name = "@hyperion/core") =>
+const changeset = (bump, name = "@hyperion-js/core") =>
     write(
         ".changeset/verification.md",
         `---\n"${name}": ${bump}\n---\n\nVerify ${bump} version planning.\n`,
@@ -113,32 +113,32 @@ try {
     );
 
     await write("packages/core/package.json", {
-        name: "@hyperion/core",
+        name: "@hyperion-js/core",
         version: "0.1.0",
     });
 
     await write("packages/jsx/package.json", {
-        name: "@hyperion/jsx",
+        name: "@hyperion-js/jsx",
         version: "0.0.0",
     });
 
     await write("packages/consumer/package.json", {
-        name: "@hyperion/consumer",
+        name: "@hyperion-js/consumer",
         version: "1.0.0",
-        dependencies: { "@hyperion/core": "workspace:^0.1.0" },
+        dependencies: { "@hyperion-js/core": "workspace:^0.1.0" },
     });
 
     await write("packages/peer-consumer/package.json", {
-        name: "@hyperion/peer-consumer",
+        name: "@hyperion-js/peer-consumer",
         version: "1.0.0",
-        peerDependencies: { "@hyperion/core": "^0.1.0" },
+        peerDependencies: { "@hyperion-js/core": "^0.1.0" },
     });
 
     await write("apps/dev-bot/package.json", {
-        name: "@hyperion/dev-bot",
+        name: "@hyperion-js/dev-bot",
         version: "0.0.0",
         private: true,
-        dependencies: { "@hyperion/core": "workspace:*" },
+        dependencies: { "@hyperion-js/core": "workspace:*" },
     });
 
     run("git", ["init", "--quiet"]);
@@ -183,7 +183,7 @@ try {
         "PASS patch release: changelog generated, compatible dependents and private bot unchanged",
     );
 
-    await changeset("minor", "@hyperion/jsx");
+    await changeset("minor", "@hyperion-js/jsx");
     cli("version");
     assert.equal((await read("packages/jsx/package.json")).version, "0.1.0");
     assert.equal((await read("packages/core/package.json")).version, "0.1.1");
@@ -191,7 +191,7 @@ try {
     run(process.execPath, [
         path.join(root, "scripts/check-release.mjs"),
         "--package",
-        "@hyperion/jsx",
+        "@hyperion-js/jsx",
         "--version",
         "0.1.0",
         "--channel",
@@ -203,7 +203,7 @@ try {
         run(process.execPath, [
             path.join(root, "scripts/check-release.mjs"),
             "--package",
-            "@hyperion/jsx",
+            "@hyperion-js/jsx",
             "--version",
             "0.1.1",
             "--channel",
@@ -225,7 +225,7 @@ try {
     );
     assert.match(
         (await read("packages/consumer/package.json")).dependencies[
-            "@hyperion/core"
+            "@hyperion-js/core"
         ],
         /0\.2\.0/,
     );

@@ -3,7 +3,7 @@ import {
     type KeyValueStore,
     sql,
     type Table,
-} from "@hyperion/sqlite";
+} from "@hyperion-js/sqlite";
 import * as v from "valibot";
 
 const schema = v.object({

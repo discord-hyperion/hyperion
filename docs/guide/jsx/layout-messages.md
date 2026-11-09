@@ -17,7 +17,7 @@ import {
     Subtext,
     TextDisplay,
     Thumbnail,
-} from "@hyperion/jsx";
+} from "@hyperion-js/jsx";
 
 const message = renderMessage(
     <Container accent={0x5865f2}>
@@ -69,7 +69,7 @@ Give each gallery item a URL, plus a short description (alt text) for people who
 can't see the image:
 
 ```tsx
-import { MediaGallery, renderMessage } from "@hyperion/jsx";
+import { MediaGallery, renderMessage } from "@hyperion-js/jsx";
 
 const message = renderMessage(
     <MediaGallery>

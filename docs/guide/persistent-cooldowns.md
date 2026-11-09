@@ -9,14 +9,14 @@ SQLite, so a restart doesn't hand everyone a free use.
 1. Install the storage package and its driver:
 
    ```npm
-   npm install @hyperion/sqlite better-sqlite3
+   npm install @hyperion-js/sqlite better-sqlite3
    ```
 
 2. Open a database and give cooldowns their own namespace:
 
    ```ts
    // src/database.ts
-   import { createDatabase } from "@hyperion/sqlite";
+   import { createDatabase } from "@hyperion-js/sqlite";
    import * as v from "valibot";
 
    export const db = createDatabase({ path: "bot.db" });
@@ -30,7 +30,7 @@ SQLite, so a restart doesn't hand everyone a free use.
 
    ```ts fragment
    // src/guards/persistent-cooldown.ts
-   import { defineGuard, type InteractionContext } from "@hyperion/core";
+   import { defineGuard, type InteractionContext } from "@hyperion-js/core";
    import { cooldowns } from "../database.ts";
 
    export const persistentCooldown = (key: string, durationMs: number) =>

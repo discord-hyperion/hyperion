@@ -7,9 +7,9 @@ indicate that a feature is implemented.
 
 ## Package boundaries
 
-The pnpm workspace contains `@hyperion/core` in `packages/core`, the independent
-`@hyperion/jsx` authoring package in `packages/jsx`, and the independent
-`@hyperion/sqlite` storage package in `packages/sqlite`. Shared tooling, documentation,
+The pnpm workspace contains `@hyperion-js/core` in `packages/core`, the independent
+`@hyperion-js/jsx` authoring package in `packages/jsx`, and the independent
+`@hyperion-js/sqlite` storage package in `packages/sqlite`. Shared tooling, documentation,
 and interaction mocks stay at the root. Add future utility or plugin packages when they have a
 concrete responsibility.
 
@@ -22,7 +22,7 @@ Applications can consume any combination of the packages.
 Framework responsibilities remain split across `client`, `commands`, `components`,
 `contexts`, `guards`, `events`, `registries`, `execution`, `logging`, and `util`.
 Each folder has an `index.ts` barrel; expose public APIs through
-`packages/core/src/index.ts`. The bot consumes the public `@hyperion/core` export
+`packages/core/src/index.ts`. The bot consumes the public `@hyperion-js/core` export
 through a workspace dependency. Local exports resolve source directly, so tsx
 development requires no compilation. Internal imports use relative `.ts` paths;
 repository-only TypeScript path aliases are unnecessary.

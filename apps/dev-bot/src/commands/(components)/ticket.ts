@@ -6,7 +6,7 @@ import {
     SecondaryButtonBuilder,
     UserSelectMenuBuilder,
 } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 import { closeTicket } from "../../buttons/close-ticket.ts";
 import { renameTicket } from "../../buttons/rename-ticket.ts";
 import { ticketsInServer } from "../../guards/tickets-in-server.ts";

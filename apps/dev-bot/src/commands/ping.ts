@@ -1,5 +1,5 @@
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand, ownerOnly } from "@hyperion/core";
+import { defineCommand, ownerOnly } from "@hyperion-js/core";
 
 export default defineCommand({
     builder: new ChatInputCommandBuilder()

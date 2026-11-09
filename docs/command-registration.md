@@ -4,7 +4,7 @@ Place commands in `<bot root>/src/commands` and pass registration credentials to
 `HyperionClient.create()`. Individual handler paths are fixed by convention.
 
 ```ts
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient } from "@hyperion-js/core";
 
 const token = process.env.DISCORD_TOKEN;
 const applicationId = process.env.DISCORD_APPLICATION_ID;
@@ -81,7 +81,7 @@ Commands accept a `ChatInputCommandBuilder` from the v15-compatible
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 
 export default defineCommand({
     builder: new ChatInputCommandBuilder()

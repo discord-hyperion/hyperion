@@ -3,7 +3,7 @@
 A modal is a pop-up form. You describe it with `Modal`, render it, and show it:
 
 ```tsx
-import { Modal, renderModal } from "@hyperion/jsx";
+import { Modal, renderModal } from "@hyperion-js/jsx";
 
 const form = renderModal(
     <Modal customId="todo.create" title="Create todo">
@@ -34,7 +34,7 @@ Want each person to see different starting values? Put the form in a function an
 pass the values in as props:
 
 ```tsx
-import { Modal, renderModal } from "@hyperion/jsx";
+import { Modal, renderModal } from "@hyperion-js/jsx";
 
 type TodoFormProps = { initialName?: string };
 
@@ -61,7 +61,7 @@ form. Fetch any suggestions first, then pass them in.
 Labels can hold more than text inputs. Drop in any select menu, or a file upload:
 
 ```tsx
-import { Modal, renderModal, StringSelect, UserSelect } from "@hyperion/jsx";
+import { Modal, renderModal, StringSelect, UserSelect } from "@hyperion-js/jsx";
 
 const form = renderModal(
     <Modal customId="ticket.create" title="New ticket">

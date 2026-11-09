@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { mock, type TestContext, test } from "node:test";
-import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
+import { HyperionClient, InteractionDispatcher } from "@hyperion-js/core";
 import {
     ApplicationCommandOptionType,
     type AutocompleteFocusedOption,
@@ -64,7 +64,7 @@ test("discovery and mocked registration preserve autocomplete flags without exec
     );
     t.after(() => rm(root, { recursive: true, force: true }));
     await mkdir(path.join(root, "src", "commands"), { recursive: true });
-    const commandModule = import.meta.resolve("@hyperion/core");
+    const commandModule = import.meta.resolve("@hyperion-js/core");
     const buildersModule = import.meta.resolve("@discordjs/builders");
 
     await writeFile(

@@ -4,7 +4,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { EmbedBuilder } from "@discordjs/builders";
-import { HyperionClient } from "@hyperion/core";
+import { HyperionClient } from "@hyperion-js/core";
 import { Events } from "discord.js";
 import { createChatInputInteraction } from "../../../tests/fixtures/interactions.ts";
 

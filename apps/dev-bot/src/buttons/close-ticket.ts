@@ -3,7 +3,7 @@ import {
     defineButton,
     defineParams,
     paramOwner,
-} from "@hyperion/core";
+} from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 import * as v from "valibot";
 

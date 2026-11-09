@@ -2,12 +2,12 @@
 
 You've probably built an embed with discord.js before: `new EmbedBuilder()`,
 then `.setTitle()`, `.addFields()`, and so on, one call after another. It works,
-but once a message has a few parts, the shape gets hard to see. `@hyperion/jsx`
+but once a message has a few parts, the shape gets hard to see. `@hyperion-js/jsx`
 lets you write the message the way it looks, then turns it into the same
 builders you'd have made by hand.
 
 ```tsx
-import { Bold, Embed, renderEmbed } from "@hyperion/jsx";
+import { Bold, Embed, renderEmbed } from "@hyperion-js/jsx";
 
 const embed = renderEmbed(
     <Embed color={0x57f287}>
@@ -21,7 +21,7 @@ const embed = renderEmbed(
 
 `renderEmbed()` hands back an ordinary `EmbedBuilder`, so sending it is plain
 discord.js: `await interaction.reply({ embeds: [embed] })`. The package doesn't
-need React and doesn't depend on `@hyperion/core`, so everything in this guide
+need React and doesn't depend on `@hyperion-js/core`, so everything in this guide
 works with any discord.js bot. If you do use Hyperion, see
 [JSX with Hyperion](jsx-with-hyperion.md) for how the two fit together.
 
@@ -31,7 +31,7 @@ You'll need Node.js 24.17 or newer. Install the package with the
 `@discordjs/builders` prerelease it was built against:
 
 ```npm
-npm install @hyperion/jsx @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
+npm install @hyperion-js/jsx @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
 ```
 
 Then tell TypeScript to use this package's JSX runtime:
@@ -40,7 +40,7 @@ Then tell TypeScript to use this package's JSX runtime:
 {
     "compilerOptions": {
         "jsx": "react-jsx",
-        "jsxImportSource": "@hyperion/jsx"
+        "jsxImportSource": "@hyperion-js/jsx"
     },
     "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

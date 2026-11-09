@@ -44,7 +44,7 @@ Read the relevant reference before implementation or review:
   [Logging](docs/logging.md).
 - Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
   work: [Feature backlog](docs/features.md).
-- Storage, `@hyperion/sqlite`, or migrations: [SQLite storage](docs/sqlite.md).
+- Storage, `@hyperion-js/sqlite`, or migrations: [SQLite storage](docs/sqlite.md).
   Core stays database-free.
 
 ## Documentation

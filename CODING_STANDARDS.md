@@ -76,4 +76,4 @@ if (!y) continue;
 - Behaviour changes update the reference doc (`docs/*.md`) and the matching guide
   page (`docs/guide/`), following [the writing style](docs/writing-style.md). The
   guide never contradicts the reference.
-- Examples import from `@hyperion/core` and `@hyperion/jsx`.
+- Examples import from `@hyperion-js/core` and `@hyperion-js/jsx`.

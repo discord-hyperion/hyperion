@@ -1,5 +1,5 @@
-import { defineSelectMenu } from "@hyperion/core";
-import { renderUserSelect, UserSelect } from "@hyperion/jsx";
+import { defineSelectMenu } from "@hyperion-js/core";
+import { renderUserSelect, UserSelect } from "@hyperion-js/jsx";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({

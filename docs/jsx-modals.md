@@ -86,7 +86,7 @@ never include form values.
 ## Example
 
 ```tsx
-import { Bold, Modal, renderModal } from "@hyperion/jsx";
+import { Bold, Modal, renderModal } from "@hyperion-js/jsx";
 
 const TodoForm = ({ initialName = "" }: { initialName?: string }) => (
     <Modal customId="todo.create" title="Create todo">

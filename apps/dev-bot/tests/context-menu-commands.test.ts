@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { type TestContext, test } from "node:test";
-import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
+import { HyperionClient, InteractionDispatcher } from "@hyperion-js/core";
 import { ApplicationCommandType, MessageFlags } from "discord.js";
 import {
     createMessageContextInteraction,

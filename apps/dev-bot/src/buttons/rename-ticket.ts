@@ -1,4 +1,4 @@
-import { defineButton, defineParams, paramOwner } from "@hyperion/core";
+import { defineButton, defineParams, paramOwner } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 import { renameTicketForm } from "../modals/rename-ticket.ts";
 import { ticketSchema } from "./close-ticket.ts";

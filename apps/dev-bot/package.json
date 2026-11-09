@@ -1,5 +1,5 @@
 {
-    "name": "@hyperion/dev-bot",
+    "name": "@hyperion-js/dev-bot",
     "private": true,
     "version": "0.0.0",
     "type": "module",
@@ -11,13 +11,13 @@
         "start:debug": "tsx --inspect --env-file-if-exists=.env index.ts"
     },
     "dependencies": {
-        "@hyperion/core": "workspace:*",
+        "@hyperion-js/core": "workspace:*",
         "discord.js": "15.0.0-dev.1792497873-5050a3b54",
         "@discordjs/builders": "2.0.0-dev.1792497873-5050a3b54",
         "valibot": "^1.5.0",
         "date-fns": "^4.4.0",
-        "@hyperion/jsx": "workspace:*",
-        "@hyperion/sqlite": "workspace:*",
+        "@hyperion-js/jsx": "workspace:*",
+        "@hyperion-js/sqlite": "workspace:*",
         "better-sqlite3": "^13.0.3"
     }
 }

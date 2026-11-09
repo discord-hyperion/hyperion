@@ -12,7 +12,7 @@ Put handlers in `src/select-menus`:
 ```ts
 // src/select-menus/choose-colour.ts
 import { StringSelectMenuBuilder } from "@discordjs/builders";
-import { defineSelectMenu } from "@hyperion/core";
+import { defineSelectMenu } from "@hyperion-js/core";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({

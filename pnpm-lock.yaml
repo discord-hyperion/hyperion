@@ -241,13 +241,13 @@ importers:
       '@discordjs/builders':
         specifier: 2.0.0-dev.1792497873-5050a3b54
         version: 2.0.0-dev.1792497873-5050a3b54
-      '@hyperion/core':
+      '@hyperion-js/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@hyperion/jsx':
+      '@hyperion-js/jsx':
         specifier: workspace:*
         version: link:../../packages/jsx
-      '@hyperion/sqlite':
+      '@hyperion-js/sqlite':
         specifier: workspace:*
         version: link:../../packages/sqlite
       better-sqlite3:

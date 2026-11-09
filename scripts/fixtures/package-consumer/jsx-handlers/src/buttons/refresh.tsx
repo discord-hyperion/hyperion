@@ -1,5 +1,5 @@
-import { defineButton } from "@hyperion/core";
-import { Button, renderButton } from "@hyperion/jsx";
+import { defineButton } from "@hyperion-js/core";
+import { Button, renderButton } from "@hyperion-js/jsx";
 
 export default defineButton({
     builder: renderButton(

@@ -1,6 +1,13 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
-import { Bold, Br, Code, CodeBlock, Embed, renderEmbed } from "@hyperion/jsx";
+import { defineSubcommand } from "@hyperion-js/core";
+import {
+    Bold,
+    Br,
+    Code,
+    CodeBlock,
+    Embed,
+    renderEmbed,
+} from "@hyperion-js/jsx";
 
 export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()

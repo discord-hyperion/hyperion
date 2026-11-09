@@ -5,7 +5,7 @@ import {
     defineInput,
     defineSelectMenu,
     type SelectMenuContext,
-} from "@hyperion/core";
+} from "@hyperion-js/core";
 import { type Collection, ComponentType, Events, type User } from "discord.js";
 import * as v from "valibot";
 

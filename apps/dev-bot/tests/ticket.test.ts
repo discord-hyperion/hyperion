@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { type TestContext, test } from "node:test";
 import type { ModalBuilder } from "@discordjs/builders";
-import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
+import { HyperionClient, InteractionDispatcher } from "@hyperion-js/core";
 import { Collection, ComponentType, MessageFlags } from "discord.js";
 import {
     createButtonInteraction,

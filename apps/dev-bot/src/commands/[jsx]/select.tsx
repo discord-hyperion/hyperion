@@ -1,6 +1,6 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
-import { ActionRow, renderComponents } from "@hyperion/jsx";
+import { defineSubcommand } from "@hyperion-js/core";
+import { ActionRow, renderComponents } from "@hyperion-js/jsx";
 import { JsxPriority } from "../../views/jsx-priority.tsx";
 
 export default defineSubcommand({

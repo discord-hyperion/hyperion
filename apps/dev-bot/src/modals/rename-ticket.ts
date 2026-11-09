@@ -9,7 +9,7 @@ import {
     defineParams,
     type ModalContext,
     paramOwner,
-} from "@hyperion/core";
+} from "@hyperion-js/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 import * as v from "valibot";
 import { ticketSchema } from "../buttons/close-ticket.ts";

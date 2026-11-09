@@ -1,6 +1,6 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineSubcommand } from "@hyperion/core";
-import { Embed, renderEmbed } from "@hyperion/jsx";
+import { defineSubcommand } from "@hyperion-js/core";
+import { Embed, renderEmbed } from "@hyperion-js/jsx";
 export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("show")

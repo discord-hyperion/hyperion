@@ -1,5 +1,5 @@
 import { ChatInputCommandSubcommandBuilder } from "@discordjs/builders";
-import { defineInput, defineSubcommand } from "@hyperion/core";
+import { defineInput, defineSubcommand } from "@hyperion-js/core";
 import { todos } from "../../database.ts";
 import { getTodoSchema } from "./index.ts";
 

@@ -11,7 +11,7 @@ Put handlers in `src/buttons`:
 ```ts
 // src/buttons/refresh-profile.ts
 import { PrimaryButtonBuilder } from "@discordjs/builders";
-import { defineButton } from "@hyperion/core";
+import { defineButton } from "@hyperion-js/core";
 
 export default defineButton({
     builder: new PrimaryButtonBuilder()

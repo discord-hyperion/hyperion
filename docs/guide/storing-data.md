@@ -1,7 +1,7 @@
 # SQLite
 
 Sooner or later your bot needs to remember something: a todo list, a member's
-XP, a guild's settings. `@hyperion/sqlite` keeps it in a SQLite file next to your
+XP, a guild's settings. `@hyperion-js/sqlite` keeps it in a SQLite file next to your
 bot, and checks every row against a schema on the way in and out.
 
 It's a separate package, and it works with any bot, Hyperion or not.
@@ -11,13 +11,13 @@ It's a separate package, and it works with any bot, Hyperion or not.
 Install it with the driver it runs on:
 
 ```npm
-npm install @hyperion/sqlite better-sqlite3
+npm install @hyperion-js/sqlite better-sqlite3
 ```
 
 Then open a database and describe your tables:
 
 ```ts
-import { createDatabase } from "@hyperion/sqlite";
+import { createDatabase } from "@hyperion-js/sqlite";
 import * as v from "valibot";
 
 export const db = createDatabase({
@@ -123,7 +123,7 @@ delete it.
 For anything the helpers don't cover, write SQL with the `sql` tag:
 
 ```ts fragment
-import { sql } from "@hyperion/sqlite";
+import { sql } from "@hyperion-js/sqlite";
 import * as v from "valibot";
 
 const counts = db.all(

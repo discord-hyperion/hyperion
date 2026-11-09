@@ -1,5 +1,5 @@
-import { defineInput, defineModal, type ModalContext } from "@hyperion/core";
-import { Modal, renderModal } from "@hyperion/jsx";
+import { defineInput, defineModal, type ModalContext } from "@hyperion-js/core";
+import { Modal, renderModal } from "@hyperion-js/jsx";
 import * as v from "valibot";
 
 const input = defineInput({

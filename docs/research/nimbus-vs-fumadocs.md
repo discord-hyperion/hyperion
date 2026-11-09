@@ -190,7 +190,7 @@ under a base path, and the dialog in a browser, are **unverified**.
   - The starter is TypeScript (`astro.config.ts`, `src/components.ts`,
     `content.config.ts`) and type-checks with `astro check` on TS 5. The root
     [`tsconfig.json`](../../tsconfig.json) includes `apps/**/*.ts(x)`, so the
-    root `tsc` (TS 7, `@hyperion/jsx` as JSX source) would pick those files up.
+    root `tsc` (TS 7, `@hyperion-js/jsx` as JSX source) would pick those files up.
     The Fumadocs prototype avoided this by using only JavaScript. A Nimbus site
     would need an exclusion in the root tsconfig, or a JavaScript conversion of
     the starter, which would fight the copy-in upgrade flow.
@@ -239,7 +239,7 @@ Concretely, against the current setup:
   code-fidelity checks mostly carry over once paths change from `out/` to
   `dist/`.
 - **`.github/workflows/pages.yml`:**
-  - The filter (`--filter @hyperion/docs-site-fumadocs`), the working directory,
+  - The filter (`--filter @hyperion-js/docs-site-fumadocs`), the working directory,
     and `pages deploy out` become the new package and `dist`.
   - `NEXT_TELEMETRY_DISABLED` goes away. Astro's equivalent telemetry setting
     should be checked (unverified).

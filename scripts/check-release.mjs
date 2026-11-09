@@ -6,9 +6,9 @@ import { parseArgs } from "node:util";
 
 export const releasePackage = name => {
     const packages = {
-        "@hyperion/core": "core",
-        "@hyperion/jsx": "jsx",
-        "@hyperion/sqlite": "sqlite",
+        "@hyperion-js/core": "core",
+        "@hyperion-js/jsx": "jsx",
+        "@hyperion-js/sqlite": "sqlite",
     };
     assert.ok(
         Object.hasOwn(packages, name),
@@ -84,7 +84,7 @@ if (
 ) {
     const { values } = parseArgs({
         options: {
-            package: { type: "string", default: "@hyperion/core" },
+            package: { type: "string", default: "@hyperion-js/core" },
             version: { type: "string" },
             channel: { type: "string" },
             ref: { type: "string" },

@@ -9,7 +9,7 @@ interaction through, `false` to stop it. They're how you say "owner only",
 Every handler (commands, buttons, menus, modals) takes a `guards` array:
 
 ```ts fragment
-import { defineCommand, ownerOnly } from "@hyperion/core";
+import { defineCommand, ownerOnly } from "@hyperion-js/core";
 
 export default defineCommand({
     builder: new ChatInputCommandBuilder()
@@ -34,7 +34,7 @@ buttons it sends, so add guards to those buttons as well.
 Give `defineGuard()` a name, a description, and a check:
 
 ```ts
-import { defineGuard } from "@hyperion/core";
+import { defineGuard } from "@hyperion-js/core";
 
 export const threadsOnly = defineGuard({
     name: "threads-only",

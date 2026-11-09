@@ -1,6 +1,6 @@
 # Key-value namespaces on the SQLite package
 
-`@hyperion/sqlite` adds `db.kv(namespace, schema?)`: string keys, plain JSON
+`@hyperion-js/sqlite` adds `db.kv(namespace, schema?)`: string keys, plain JSON
 values, and optional expiry, stored in one table the package creates itself,
 `_hyperion_kv (namespace, key, value, expires)`. It sits beside the table
 helpers instead of replacing them, because bot data that needs filtering or

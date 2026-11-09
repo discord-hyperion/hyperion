@@ -1,5 +1,5 @@
-import { defineEvent } from "@hyperion/core";
-import { Embed, renderEmbed } from "@hyperion/jsx";
+import { defineEvent } from "@hyperion-js/core";
+import { Embed, renderEmbed } from "@hyperion-js/jsx";
 export default defineEvent({
     event: "invalidated",
     run: async ctx => {

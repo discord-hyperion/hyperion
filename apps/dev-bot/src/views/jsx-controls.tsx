@@ -1,4 +1,4 @@
-import { ActionRow, Button } from "@hyperion/jsx";
+import { ActionRow, Button } from "@hyperion-js/jsx";
 
 export const JsxControls = ({ disabled = false }: { disabled?: boolean }) => (
     <>

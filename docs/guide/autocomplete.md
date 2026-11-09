@@ -10,7 +10,7 @@ Turn on autocomplete for the option, then add an `autocomplete()` method:
 
 ```ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
-import { defineCommand } from "@hyperion/core";
+import { defineCommand } from "@hyperion-js/core";
 
 const topics = ["commands", "buttons", "select-menus", "modals"];
 

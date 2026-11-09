@@ -9,14 +9,14 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const directory = await mkdtemp(path.join(os.tmpdir(), "hyperion-cache-"));
 const sourceTasks = ["typecheck", "test"];
 const checks = [
-    "@hyperion/core#typecheck",
-    "@hyperion/core#test",
-    "@hyperion/dev-bot#typecheck",
-    "@hyperion/dev-bot#test",
-    "@hyperion/jsx#typecheck",
-    "@hyperion/jsx#test",
-    "@hyperion/sqlite#typecheck",
-    "@hyperion/sqlite#test",
+    "@hyperion-js/core#typecheck",
+    "@hyperion-js/core#test",
+    "@hyperion-js/dev-bot#typecheck",
+    "@hyperion-js/dev-bot#test",
+    "@hyperion-js/jsx#typecheck",
+    "@hyperion-js/jsx#test",
+    "@hyperion-js/sqlite#typecheck",
+    "@hyperion-js/sqlite#test",
 ];
 const coreChecks = checks.slice(0, 2);
 const botChecks = checks.slice(2, 4);

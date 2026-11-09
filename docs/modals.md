@@ -23,7 +23,7 @@ registration and loading them does not log the bot in.
 
 ## JSX authoring
 
-`@hyperion/jsx` can author the native builder with `Modal`, `Modal.Label`,
+`@hyperion-js/jsx` can author the native builder with `Modal`, `Modal.Label`,
 `Modal.TextInput`, `Modal.TextDisplay`, and `renderModal()`. Core's
 `ModalHandler` and JSX's `Modal` can be imported together. See [JSX modals](jsx-modals.md)
 for defaults, validation, and fresh per-user initial values. JSX does not change
@@ -37,7 +37,7 @@ import {
     ModalBuilder,
     TextInputBuilder,
 } from "@discordjs/builders";
-import { defineModal } from "@hyperion/core";
+import { defineModal } from "@hyperion-js/core";
 import { MessageFlags, TextInputStyle } from "discord.js";
 
 export default defineModal({

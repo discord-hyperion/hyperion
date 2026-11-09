@@ -91,8 +91,8 @@ checked even when native validators are disabled.
 ## Handler template
 
 ```tsx
-import { defineSelectMenu } from "@hyperion/core";
-import { StringSelect, renderStringSelect } from "@hyperion/jsx";
+import { defineSelectMenu } from "@hyperion-js/core";
+import { StringSelect, renderStringSelect } from "@hyperion-js/jsx";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({
@@ -119,8 +119,8 @@ are strings, not inferred literal unions. To validate them, add core
 Entity selects work the same way with their own renderer and `componentType`:
 
 ```tsx
-import { defineSelectMenu } from "@hyperion/core";
-import { UserSelect, renderUserSelect } from "@hyperion/jsx";
+import { defineSelectMenu } from "@hyperion-js/core";
+import { UserSelect, renderUserSelect } from "@hyperion-js/jsx";
 import { ComponentType } from "discord.js";
 
 export default defineSelectMenu({
@@ -142,8 +142,8 @@ export default defineSelectMenu({
 ## Message example
 
 ```tsx
-import type { CommandContext } from "@hyperion/core";
-import { ActionRow, StringSelect, renderComponents } from "@hyperion/jsx";
+import type { CommandContext } from "@hyperion-js/core";
+import { ActionRow, StringSelect, renderComponents } from "@hyperion-js/jsx";
 
 export const showPriority = async (
     ctx: CommandContext,

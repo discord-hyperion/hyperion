@@ -4,7 +4,7 @@ Buttons and select menus are what make a message do something. Put them in an
 `ActionRow`, then render the rows:
 
 ```tsx
-import { ActionRow, Button, renderComponents } from "@hyperion/jsx";
+import { ActionRow, Button, renderComponents } from "@hyperion-js/jsx";
 
 const components = renderComponents(
     <ActionRow>
@@ -28,7 +28,7 @@ A string select menu lets people pick from choices you supply. Each option has a
 label to show and a value your bot receives:
 
 ```tsx
-import { ActionRow, renderComponents, StringSelect } from "@hyperion/jsx";
+import { ActionRow, renderComponents, StringSelect } from "@hyperion-js/jsx";
 
 const components = renderComponents(
     <ActionRow>
@@ -61,7 +61,7 @@ For users, roles, or channels, there's a component per kind:
 They take no options, and pre-selecting takes an array of IDs:
 
 ```tsx fragment
-import { ActionRow, ChannelSelect, renderComponents } from "@hyperion/jsx";
+import { ActionRow, ChannelSelect, renderComponents } from "@hyperion-js/jsx";
 import { ChannelType } from "discord.js";
 
 const components = renderComponents(

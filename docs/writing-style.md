@@ -144,7 +144,7 @@ These belong in reference docs, ADRs, or git history, not the guide:
 
 ## Examples
 
-- Import from `@hyperion/core` and `@hyperion/jsx`, never old package names.
+- Import from `@hyperion-js/core` and `@hyperion-js/jsx`, never old package names.
 - Use self-contained examples that readers can adapt to their own bots.
   `pnpm check` compiles every `ts`/`tsx` block as its own module, so include its
   imports. Tag a deliberately partial block, such as one that uses `ctx` or a

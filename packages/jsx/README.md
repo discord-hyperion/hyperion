@@ -1,11 +1,11 @@
-# @hyperion/jsx
+# @hyperion-js/jsx
 
 Write Discord embeds, buttons, menus, layout messages, and modal forms as JSX,
 and get back the ordinary discord.js builders. It works on its own or with
-`@hyperion/core`, and React isn't involved.
+`@hyperion-js/core`, and React isn't involved.
 
 ```tsx fragment
-import { Bold, Embed, renderEmbed } from "@hyperion/jsx";
+import { Bold, Embed, renderEmbed } from "@hyperion-js/jsx";
 
 const embed = renderEmbed(
     <Embed color={0x57f287}>
@@ -34,7 +34,7 @@ in this package's peer dependencies. Then point TypeScript at the JSX runtime:
 {
     "compilerOptions": {
         "jsx": "react-jsx",
-        "jsxImportSource": "@hyperion/jsx"
+        "jsxImportSource": "@hyperion-js/jsx"
     },
     "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
@@ -56,7 +56,7 @@ import {
     renderMessage,
     Subtext,
     TextDisplay,
-} from "@hyperion/jsx";
+} from "@hyperion-js/jsx";
 
 await interaction.reply(
     renderMessage(
@@ -81,6 +81,6 @@ The guide walks through each part with examples:
 - [Layout messages](https://hyperion-docs-6h7.pages.dev/jsx/layout-messages/)
 - [Modals](https://hyperion-docs-6h7.pages.dev/jsx/modals/)
 
-Using `@hyperion/core`? See
+Using `@hyperion-js/core`? See
 [JSX with Hyperion](https://hyperion-docs-6h7.pages.dev/jsx/with-hyperion/)
 for templates, params, and `.tsx` handlers.

@@ -1,6 +1,6 @@
 # JSX with Hyperion
 
-`@hyperion/jsx` works fine on its own, but it fits Hyperion especially well.
+`@hyperion-js/jsx` works fine on its own, but it fits Hyperion especially well.
 Hyperion handlers can keep a **template**, a ready-made button, menu, or form,
 and JSX is a comfortable way to write one. This page covers how the two fit
 together. New to the JSX package? Start with the [JSX guide](jsx.md).
@@ -21,8 +21,8 @@ is the JSX way to write one:
 
 ```tsx
 // src/buttons/refresh-profile.tsx
-import { defineButton } from "@hyperion/core";
-import { Button, renderButton } from "@hyperion/jsx";
+import { defineButton } from "@hyperion-js/core";
+import { Button, renderButton } from "@hyperion-js/jsx";
 
 export default defineButton({
     builder: renderButton(
@@ -69,8 +69,8 @@ writes the values after it:
 
 ```tsx
 // src/buttons/close-ticket.tsx
-import { defineButton, defineParams } from "@hyperion/core";
-import { Button, renderButton } from "@hyperion/jsx";
+import { defineButton, defineParams } from "@hyperion-js/core";
+import { Button, renderButton } from "@hyperion-js/jsx";
 import * as v from "valibot";
 
 export const closeTicket = defineParams({
@@ -115,8 +115,8 @@ A modal handler keeps its form the same way, with `renderModal()`:
 
 ```tsx
 // src/modals/create-todo.tsx
-import { defineModal } from "@hyperion/core";
-import { Modal, renderModal } from "@hyperion/jsx";
+import { defineModal } from "@hyperion-js/core";
+import { Modal, renderModal } from "@hyperion-js/jsx";
 
 const TodoForm = () => (
     <Modal customId="todo.create" title="Create todo">

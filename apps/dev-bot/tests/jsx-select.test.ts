@@ -4,7 +4,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { ActionRowBuilder, StringSelectMenuBuilder } from "@discordjs/builders";
-import { HyperionClient, InteractionDispatcher } from "@hyperion/core";
+import { HyperionClient, InteractionDispatcher } from "@hyperion-js/core";
 import { ComponentType } from "discord.js";
 import {
     createChatInputInteraction,
