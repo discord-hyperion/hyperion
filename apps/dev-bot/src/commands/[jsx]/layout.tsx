@@ -44,7 +44,7 @@ export default defineSubcommand({
                         />
                     </MediaGallery>
                     <ActionRow>
-                        <Button url="https://github.com/favylicious/hyperion">
+                        <Button url="https://github.com/discord-hyperion/hyperion">
                             View Hyperion
                         </Button>
                     </ActionRow>
