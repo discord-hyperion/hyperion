@@ -40,8 +40,13 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            - name: Reject prerelease state on main
-              run: test ! -f .changeset/pre.json
+            - name: Allow only beta prerelease state
+              run: |
+                  test ! -f .changeset/pre.json || node -e '
+                  const pre = require("./.changeset/pre.json");
+                  if (pre.mode !== "pre" || pre.tag !== "beta") {
+                      throw new Error("main allows only Changesets beta prerelease mode.");
+                  }'
 
             - name: Create or update reviewed version PR
               id: version

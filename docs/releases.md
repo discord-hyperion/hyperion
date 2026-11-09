@@ -100,7 +100,8 @@ just to retry an unchecked artifact.
 ## Beta prerelease
 
 `main` is in Changesets prerelease mode with the `beta` tag (`.changeset/pre.json`),
-so the version PR produces `-beta.N` versions. Publish them with the `beta`
+so the version PR produces `-beta.N` versions; the version workflow fails on any
+other prerelease state. Publish them with the `beta`
 channel; the guard requires main, a `-beta.N` version, and active beta
 prerelease state, and rejects a beta on `latest` or a stable version on `beta`.
 
