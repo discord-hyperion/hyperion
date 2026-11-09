@@ -1,4 +1,4 @@
-# @hyperion/core
+# @hyperion-js/core
 
 ## 0.8.0
 

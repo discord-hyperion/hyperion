@@ -1,4 +1,4 @@
-# @hyperion/jsx
+# @hyperion-js/jsx
 
 ## 0.3.0
 
