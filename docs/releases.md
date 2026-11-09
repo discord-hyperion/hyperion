@@ -1,10 +1,10 @@
 # Release operations
 
-Public packages use independent Changesets versions. A new package, such as
-`@hyperion-js/sqlite`, starts at 0.0.0 with a minor changeset proposing its first
-0.1.0 release. The workspace root is private. While core
-is 0.x, project policy uses minor bumps for breaking changes and patch bumps for
-compatible fixes; these are review decisions.
+Public packages use independent Changesets versions and publish under the
+`@hyperion-js` npm scope. The workspace root is private. Until discord.js v15 is
+stable, `main` stays in [beta prerelease mode](#beta-prerelease), and every
+release is a `1.0.0-beta.N` version on the `beta` channel. Breaking changes
+between betas are expected; bump types are review decisions.
 
 ## Changes and reviewed version PRs
 
@@ -52,14 +52,16 @@ Actions tab. Merging the version PR does not publish anything.
 ## Maintainer setup before enabling publication
 
 These are separate maintainer operations; this migration does not perform them.
-1. Confirm ownership/access to the `@hyperion` npm namespace and public-package
-   publication rights. Establish the initial package through the registry's
-   required bootstrap process before configuring its trusted publisher.
+1. Confirm access to the `@hyperion-js` npm org. npm configures trusted
+   publishing only on a package that exists, so publish each package's first
+   version by hand: build the verified tarballs with
+   `pnpm verify:package --pack-destination <directory>`, then run
+   `npm publish <tarball> --access public --tag beta` for each one.
 2. Verify the advertised minimum Node/TypeScript versions, Discord peer pins,
    package contents, and consumer contract before the first release. Local
    migration checks establish only their actual installed versions.
-3. Create the GitHub environment `npm`, restrict allowed branches to `main` and
-   `release/beta`, and configure required reviewers for publication approval.
+3. Create the GitHub environment `npm`, restrict its deployment branches to
+   `main`, and configure required reviewers for publication approval.
 4. Configure npm trusted publishing for this repository's `publish.yml` workflow
    and the exact `npm` environment. Use GitHub-hosted runners. Regular publication
    uses OIDC rather than a stored npm token.
@@ -74,12 +76,12 @@ remains the workspace package manager.
 
 ## Manual publication
 
-After a reviewed version PR is merged, dispatch **Publish package** at the reviewed
-branch/commit with the selected package (`@hyperion-js/core`, `@hyperion-js/jsx`, or `@hyperion-js/sqlite`), its
-exact reviewed version, and the `latest` channel. The release guard
-requires main, a non-prerelease version matching the manifest, no prerelease state,
-and no pending unversioned notes. The job also requires the enable variable and
-`npm` environment approval.
+After a reviewed version PR is merged, dispatch **Publish package** on main with
+the selected package (`@hyperion-js/core`, `@hyperion-js/jsx`, or
+`@hyperion-js/sqlite`), its exact reviewed version, and the channel: `beta` while
+prerelease mode is active, `latest` after it exits. The release guard requires
+main, a version matching the manifest and the channel, and no pending unversioned
+notes. The job also requires the enable variable and `npm` environment approval.
 
 The job runs type checks, tests, release-tool checks, Biome, and uncached packed
 consumer verification. The latter retains the exact tarball it verified via
@@ -95,23 +97,16 @@ GitHub releases or Git tags automatically. A failed or repeated publish of an
 already-published version needs maintainer inspection; do not change a version
 just to retry an unchecked artifact.
 
-## Opt-in beta branch
+## Beta prerelease
 
-Create `release/beta` only when a beta cycle is needed. On that branch, update
-Changesets `baseBranch` to `release/beta`, run `pnpm changeset pre enter beta`, add
-notes, and run `pnpm version-packages`. Review these generated changes through a
-PR to that branch and dispatch CI there. The automatic version workflow currently
-handles main only.
+`main` is in Changesets prerelease mode with the `beta` tag (`.changeset/pre.json`),
+so the version PR produces `-beta.N` versions. Publish them with the `beta`
+channel; the guard requires main, a `-beta.N` version, and active beta
+prerelease state, and rejects a beta on `latest` or a stable version on `beta`.
 
-Dispatch publication from `release/beta` with the exact reviewed `-beta.N` version
-and `beta` channel. The guard requires active beta prerelease state. It rejects a
-beta on latest, a stable version on beta, and mismatched branches. Main retains
-its ordinary non-prerelease flow throughout the beta cycle.
-
-To graduate a beta, run `pnpm changeset pre exit` and `pnpm version-packages`,
-review the resulting normal version, restore `baseBranch` to main, and merge
-through the ordinary reviewed path. Never merge active prerelease state into
-main. See [Changesets prereleases](https://changesets.dev/guide/prereleases).
+Graduate when discord.js v15 has a stable release: run `pnpm changeset pre exit`
+in a PR, let the version PR produce the stable versions, and publish them on
+`latest`. See [Changesets prereleases](https://changesets.dev/guide/prereleases).
 
 ## Verification and pinned tools
 

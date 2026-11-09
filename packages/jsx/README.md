@@ -27,8 +27,10 @@ it is plain discord.js.
 
 ## Setup
 
-You'll need Node.js 24.17 or newer and the `@discordjs/builders` version listed
-in this package's peer dependencies. Then point TypeScript at the JSX runtime:
+Install it with `npm install @hyperion-js/jsx@beta`; it's in beta alongside
+discord.js v15. You'll need Node.js 24.17 or newer and the `@discordjs/builders`
+version listed in this package's peer dependencies. Then point TypeScript at the
+JSX runtime:
 
 ```json
 {

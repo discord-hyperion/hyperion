@@ -4,6 +4,7 @@ import {
     cp,
     mkdir,
     mkdtemp,
+    readdir,
     readFile,
     rm,
     symlink,
@@ -25,7 +26,7 @@ const beta = {
     version: "0.2.0-beta.0",
     expectedVersion: "0.2.0-beta.0",
     channel: "beta",
-    ref: "refs/heads/release/beta",
+    ref: "refs/heads/main",
     pre: { mode: "pre", tag: "beta" },
 };
 assert.equal(releasePackage("@hyperion-js/core"), "core");
@@ -40,7 +41,7 @@ for (const invalid of [
     { ...stable, ref: "refs/heads/feature" },
     { ...stable, pre: beta.pre },
     { ...stable, version: beta.version, expectedVersion: beta.version },
-    { ...beta, ref: stable.ref },
+    { ...beta, ref: "refs/heads/release/beta" },
     { ...beta, pre: undefined },
     { ...beta, pre: { mode: "exit", tag: "beta" } },
     { ...beta, channel: "next" },
@@ -49,7 +50,7 @@ for (const invalid of [
     assert.throws(() => validateRelease(invalid));
 }
 console.log(
-    "PASS release guards: exact version, stable/beta branch and tag isolation",
+    "PASS release guards: exact version, main-only publication, and tag isolation",
 );
 
 const temporary = await mkdtemp(path.join(os.tmpdir(), "hyperion-version-"));
@@ -239,12 +240,16 @@ try {
     cli("version");
     const version = (await read("packages/core/package.json")).version;
     assert.match(version, /^0\.2\.1-beta\.0$/);
-    validateRelease({
-        ...beta,
-        version,
-        expectedVersion: version,
-        pre: await read(".changeset/pre.json"),
-    });
+    const pre = await read(".changeset/pre.json");
+    validateRelease({ ...beta, version, expectedVersion: version, pre });
+    // Versioning a beta consumes its notes, so the publish guard's
+    // pending-notes check passes in prerelease mode.
+    assert.deepEqual(
+        (await readdir(path.join(temporary, ".changeset"))).filter(
+            name => name.endsWith(".md") && name !== "README.md",
+        ),
+        [],
+    );
     cli("pre", "exit");
     cli("version");
     assert.equal((await read("packages/core/package.json")).version, "0.2.1");
