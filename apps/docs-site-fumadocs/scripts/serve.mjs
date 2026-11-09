@@ -1,6 +1,6 @@
 // A plain static server for the exported site, like a simple host: no redirects,
 // no rewrites. Serves DIST under SITE_BASE.
-//   DIST=out SITE_BASE=/discord-hyperion PORT=4331 node scripts/serve.mjs
+//   DIST=out SITE_BASE=/hyperion PORT=4331 node scripts/serve.mjs
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { createServer } from "node:http";
 import path from "node:path";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const site = fileURLToPath(new URL("..", import.meta.url));
 const dist = path.join(site, process.env.DIST ?? "out");
-const base = (process.env.SITE_BASE ?? "/discord-hyperion").replace(/\/$/, "");
+const base = (process.env.SITE_BASE ?? "/hyperion").replace(/\/$/, "");
 const types = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript",

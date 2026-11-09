@@ -10,7 +10,7 @@ pnpm --filter @hyperion-js/docs-site-fumadocs site:check   # check links, code, 
 pnpm --filter @hyperion-js/docs-site-fumadocs site:serve   # serve out/ like a plain static host
 ```
 
-The build uses the base path `/discord-hyperion`. Set `SITE_BASE=` (empty) for a
+The build uses the base path `/hyperion`. Set `SITE_BASE=` (empty) for a
 root deployment, and `DIST=out-root` to keep two builds side by side.
 `docs/guide` stays the source of truth: `scripts/stage.mjs` copies it into a
 gitignored `content/` folder at build time. Two remark plugins in

@@ -43,7 +43,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/favylicious/discord-hyperion.git",
+        "url": "git+https://github.com/favylicious/hyperion.git",
         "directory": "packages/sqlite"
     }
 }
