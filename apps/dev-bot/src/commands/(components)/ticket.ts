@@ -26,7 +26,7 @@ export default defineCommand({
                 .setMaxLength(100),
         ),
     guards: [ticketsInServer],
-    async run(ctx) {
+    run: async ctx => {
         const subject = ctx.interaction.options.getString("subject", true);
         // Handlers stay stateless: the ticket's identity travels in each control.
         const ticket = {

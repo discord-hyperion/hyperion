@@ -31,7 +31,7 @@ and a [guard](guards.md) to check the clicker.
            .setCustomId(deleteTodo.id)
            .setLabel("Delete"),
        guards: [paramOwner("owner", "Only you can delete your todo.")],
-       async run(ctx) {
+       run: async ctx => {
            const [issues, params] = ctx.params;
 
            if (issues) {

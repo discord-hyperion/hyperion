@@ -58,7 +58,7 @@ export default defineModal({
     input,
     // The submission is a separate interaction, so ownership is checked again.
     guards: [paramOwner("owner", "Only the ticket's author can rename it.")],
-    async run(ctx) {
+    run: async ctx => {
         const [paramIssues, params] = ctx.params;
         const [inputIssues, value] = ctx.input;
 

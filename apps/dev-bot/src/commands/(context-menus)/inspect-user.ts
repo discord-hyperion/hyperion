@@ -5,7 +5,7 @@ import { MessageFlags } from "discord.js";
 export default defineCommand({
     builder: new UserContextCommandBuilder().setName("Inspect"),
     guards: [ownerOnly],
-    async run(ctx) {
+    run: async ctx => {
         const user = ctx.interaction.targetUser;
 
         await ctx.interaction.reply({

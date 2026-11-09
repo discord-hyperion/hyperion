@@ -6,7 +6,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("version")
         .setDescription("Show the Node.js version running the bot"),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: `Node.js version: ${process.version}.`,
             flags: MessageFlags.Ephemeral,

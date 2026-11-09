@@ -18,7 +18,7 @@ const input = defineInput({
 export default defineModal({
     builder: renderModal(<TodoForm />),
     input,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
 
         if (issues) {

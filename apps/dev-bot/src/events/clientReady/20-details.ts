@@ -4,7 +4,7 @@ import { Events } from "discord.js";
 export default defineEvent({
     event: Events.ClientReady,
     once: true,
-    async run(ctx) {
+    run: async ctx => {
         ctx.logger.info(
             {
                 commandCount: ctx.client.commands.size,

@@ -48,7 +48,7 @@ export default defineCommand({
                 .setRequired(true)
                 .setAutocomplete(true),
         ),
-    async autocomplete(ctx) {
+    autocomplete: async ctx => {
         const focused = ctx.interaction.options.getFocused();
 
         if (focused.name !== "query") {
@@ -68,7 +68,7 @@ export default defineCommand({
             matches.slice(0, 25).map(({ name, value }) => ({ name, value })),
         );
     },
-    async run(ctx) {
+    run: async ctx => {
         const query = ctx.interaction.options.getString("query", true);
         const topic = topics.find(topic => topic.value === query);
 

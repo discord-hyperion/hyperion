@@ -17,7 +17,7 @@ export default defineButton({
     builder: new PrimaryButtonBuilder()
         .setCustomId("profile.refresh")
         .setLabel("Refresh profile"),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({ content: "Refreshed!" });
     },
 });
@@ -69,7 +69,7 @@ template. A handler can refer to itself through its own constant:
 ```ts fragment
 const refresh = defineButton({
     builder: refreshButton,
-    async run(ctx) {
+    run: async ctx => {
         const button = ctx.client.buttons
             .build(refresh.customId)
             .setLabel("Refreshed");
@@ -95,7 +95,11 @@ A command's guards don't carry over to the buttons it sends, so protect the
 button itself:
 
 ```ts fragment
-defineButton({ builder: refreshButton, guards: [ownerOnly], async run() {} });
+defineButton({
+    builder: refreshButton,
+    guards: [ownerOnly],
+    run: async () => {},
+});
 ```
 
 For what happens when a click fails, see [responding](responding.md).

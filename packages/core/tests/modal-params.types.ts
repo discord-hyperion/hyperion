@@ -47,7 +47,7 @@ export const RenameTicket = defineModal({
             return paramOwner("owner");
         },
     ],
-    async run(ctx) {
+    run: async ctx => {
         const [paramIssues, params] = ctx.params;
 
         if (paramIssues) {
@@ -81,21 +81,21 @@ export const modalParamsContracts = (registry: ModalRegistry) => {
         // @ts-expect-error Input that reads params makes this a params handler.
         customId: "literal",
         input,
-        async run() {},
+        run: async () => {},
     });
 
     const Both = defineModal({
         params: rename,
         // @ts-expect-error Params handlers cannot also declare a literal custom ID.
         customId: "ticket.rename",
-        async run() {},
+        run: async () => {},
     });
 
     const Typo = defineModal({
         params: rename,
         // @ts-expect-error The key must exist in the params.
         guards: [paramOwner("ownr")],
-        async run() {},
+        run: async () => {},
     });
 
     return [Literal, Both, Typo];

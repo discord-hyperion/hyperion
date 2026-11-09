@@ -38,7 +38,7 @@ import { Events } from "discord.js";
 export default defineEvent({
     event: Events.ClientReady,
     once: true,
-    async run(ctx) {
+    run: async ctx => {
         const [client] = ctx.args;
         ctx.logger.info({ userId: client.user.id }, "Startup handler running");
     },

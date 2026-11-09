@@ -10,7 +10,7 @@ const refreshProfile = defineButton({
         .setCustomId("profile.refresh")
         .setLabel("Refresh profile"),
     guards: [ownerOnly],
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.deferUpdate();
 
         const user = await ctx.client.users.fetch(ctx.interaction.user.id, {

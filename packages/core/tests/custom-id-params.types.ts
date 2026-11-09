@@ -31,7 +31,7 @@ export const encoderContracts = () => {
 
 const WithParams = defineButton({
     params,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.params;
 
         if (issues) {
@@ -57,7 +57,7 @@ export const handlerContracts = (plain: ButtonContext) => {
 
 export const Literal = defineButton({
     builder: new PrimaryButtonBuilder().setCustomId("x").setLabel("x"),
-    async run() {},
+    run: async () => {},
 });
 
 export const exclusiveOptions = () => {
@@ -65,7 +65,7 @@ export const exclusiveOptions = () => {
         params,
         // @ts-expect-error Params handlers cannot also declare a literal custom ID.
         customId: "x",
-        async run() {},
+        run: async () => {},
     });
 
     return Both;

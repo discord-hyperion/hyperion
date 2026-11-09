@@ -12,7 +12,7 @@ export default defineSelectMenu({
             maxValues={1}
         />,
     ),
-    async run(ctx) {
+    run: async ctx => {
         const usernames = ctx.interaction.users.map(user => user.username);
 
         await ctx.interaction.update({

@@ -16,11 +16,11 @@ const ExampleButton = defineButton({
     builder: new PrimaryButtonBuilder()
         .setCustomId("button")
         .setLabel("Button"),
-    async run() {},
+    run: async () => {},
 });
 const ExampleModal = defineModal({
     builder: new ModalBuilder().setCustomId("modal").setTitle("Modal"),
-    async run() {},
+    run: async () => {},
 });
 assert.ok(ExampleButton.builder instanceof PrimaryButtonBuilder);
 assert.ok(ExampleModal.builder instanceof ModalBuilder);

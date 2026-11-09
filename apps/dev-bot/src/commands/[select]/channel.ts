@@ -9,7 +9,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("channel")
         .setDescription("Try a channel select menu."),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: "Choose channels.",
             flags: MessageFlags.Ephemeral,

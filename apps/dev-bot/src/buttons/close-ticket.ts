@@ -28,7 +28,7 @@ export default defineButton({
     params: closeTicket,
     // The custom ID is client-controlled, so ownership is checked on every click.
     guards: [paramOwner("owner", "Only the ticket's author can close it.")],
-    async run(ctx) {
+    run: async ctx => {
         const [issues, params] = ctx.params;
 
         if (issues) {

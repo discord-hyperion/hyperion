@@ -46,7 +46,7 @@ const createParamsMenu = (
         componentType: kind.type as ComponentType.StringSelect,
         params: pick,
         guards,
-        run(ctx) {
+        run: ctx => {
             return execute(ctx);
         },
     }) as unknown as AnySelectMenuHandler;
@@ -131,7 +131,7 @@ for (const kind of selectKinds) {
 describe("select menu params definitions", () => {
     test("handlers require exactly one of a customId or params, and a select type", () => {
         const construct = (options: object) =>
-            defineSelectMenu({ ...options, async run() {} } as never);
+            defineSelectMenu({ ...options, run: async () => {} } as never);
 
         assert.throws(
             () =>
@@ -215,7 +215,7 @@ test("paramOwner works on button params with the default description", async t =
         defineButton({
             params: pick,
             guards: [paramOwner("owner")],
-            run(_ctx) {
+            run: _ctx => {
                 return execute();
             },
         }) as never,

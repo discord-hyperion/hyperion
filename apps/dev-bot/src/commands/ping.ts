@@ -6,7 +6,7 @@ export default defineCommand({
         .setName("ping")
         .setDescription("Check whether the bot is responding."),
     guards: [ownerOnly],
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply("Pong!");
     },
 });

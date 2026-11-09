@@ -18,7 +18,7 @@ export const TypedCommand = defineCommand({
         .setName("typed")
         .setDescription("Typed"),
     input,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
         if (issues) return;
         value.todo.id satisfies string;
@@ -32,7 +32,7 @@ export const TypedCommand = defineCommand({
 
 const ReadyHandler = defineEvent({
     event: Events.ClientReady,
-    async run(ctx) {
+    run: async ctx => {
         ctx.args[0].user.id satisfies string;
         // @ts-expect-error Readiness provides one argument, not an arbitrary tuple.
         ctx.args[1];
@@ -50,7 +50,7 @@ export const PriorityMenu = defineSelectMenu({
     customId: "priority",
     componentType: ComponentType.StringSelect,
     input: priority,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
         if (issues) return;
         value satisfies ("low" | "high")[];
@@ -64,7 +64,7 @@ export const InlineInput = defineSelectMenu({
         schema: v.array(v.string()),
         resolve: ids => ({ first: ids[0] }),
     },
-    run(ctx) {
+    run: ctx => {
         ctx.interaction.users satisfies Collection<string, User>;
         const [issues, value] = ctx.input;
         if (issues) return;

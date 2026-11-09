@@ -130,10 +130,10 @@ for (const type of [
             defineGuard<MenuContext>({
                 name: "Deny",
                 description: "Denied",
-                run() {
+                run: () => {
                     return false;
                 },
-                async onFail(ctx: MenuContext) {
+                onFail: async (ctx: MenuContext) => {
                     await ctx.interaction.reply("Custom rejection");
                 },
             });
@@ -233,7 +233,7 @@ for (const type of [
             builder: new ChatInputCommandBuilder()
                 .setName("inspect")
                 .setDescription("Inspect"),
-            async run() {
+            run: async () => {
                 throw new Error("Not a slash invocation");
             },
         });

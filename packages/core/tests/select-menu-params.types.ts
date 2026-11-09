@@ -25,7 +25,7 @@ export const Assign = defineSelectMenu({
     componentType: ComponentType.UserSelect,
     params: assign,
     guards: [paramOwner("owner")],
-    async run(ctx) {
+    run: async ctx => {
         ctx.interaction satisfies UserSelectMenuInteraction;
         const [issues, params] = ctx.params;
 
@@ -52,7 +52,7 @@ export const selectContracts = (plain: SelectMenuContext) => {
         params: assign,
         // @ts-expect-error The template must be the kind of menu the handler answers.
         builder: new UserSelectMenuBuilder().setCustomId("ticket.assign"),
-        async run() {},
+        run: async () => {},
     });
 
     const Both = defineSelectMenu({
@@ -60,14 +60,14 @@ export const selectContracts = (plain: SelectMenuContext) => {
         params: assign,
         // @ts-expect-error Params handlers cannot also declare a literal custom ID.
         customId: "ticket.assign",
-        async run() {},
+        run: async () => {},
     });
 
     const WithTemplate = defineSelectMenu({
         componentType: ComponentType.UserSelect,
         params: assign,
         builder: new UserSelectMenuBuilder().setPlaceholder("Assign"),
-        async run() {},
+        run: async () => {},
     });
 
     return [Mismatched, Both, WithTemplate];
@@ -78,14 +78,14 @@ export const paramOwnerContracts = () => {
         params: assign,
         // @ts-expect-error The key must exist in the params.
         guards: [paramOwner("ownr")],
-        async run() {},
+        run: async () => {},
     });
 
     const NotAString = defineButton({
         params: counted,
         // @ts-expect-error The owner param must be a string.
         guards: [paramOwner("owner")],
-        async run() {},
+        run: async () => {},
     });
 
     return [Typo, NotAString];

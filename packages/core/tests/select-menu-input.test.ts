@@ -55,7 +55,7 @@ const check = (
     defineGuard<SelectMenuContext>({
         name: "Check",
         description: "Denied",
-        run(ctx: SelectMenuContext) {
+        run: (ctx: SelectMenuContext) => {
             return predicate(ctx);
         },
     });
@@ -322,7 +322,7 @@ test("params reach guards and resolvers; input reaches only the handler", async 
                     return check(() => true);
                 },
             ],
-            run(ctx) {
+            run: ctx => {
                 return run(ctx);
             },
         }) as unknown as AnySelectMenuHandler,

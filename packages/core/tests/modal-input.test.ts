@@ -68,7 +68,7 @@ const check = (predicate: (ctx: ModalContext) => boolean | Promise<boolean>) =>
     defineGuard<ModalContext>({
         name: "Check",
         description: "Denied",
-        run(ctx: ModalContext) {
+        run: (ctx: ModalContext) => {
             return predicate(ctx);
         },
     });
@@ -376,7 +376,7 @@ test("schemas own missing-field defaults, trimming, and successful output withou
     const Typed = defineModal({
         builder: builder(),
         input,
-        async run(ctx) {
+        run: async ctx => {
             assert.deepEqual(ctx.input, [
                 null,
                 { name: "Todo", description: "Default" },

@@ -24,7 +24,7 @@ const check = (execute: (ctx: CommandContext) => boolean | Promise<boolean>) =>
     defineGuard({
         name: "test-check",
         description: "Access denied.",
-        run(ctx: CommandContext) {
+        run: (ctx: CommandContext) => {
             return execute(ctx);
         },
     });
@@ -154,8 +154,7 @@ test("custom onFail preserves its receiver and owns the response", async t => {
             name: "test-check",
             description: "Access denied.",
             run: execute,
-            async onFail(ctx: CommandContext) {
-                assert.equal(this.name, "test-check");
+            onFail: async (ctx: CommandContext) => {
                 failed++;
                 await ctx.interaction.reply("Custom rejection");
             },

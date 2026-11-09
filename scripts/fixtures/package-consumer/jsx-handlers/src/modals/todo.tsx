@@ -19,7 +19,7 @@ export default defineModal({
         </Modal>,
     ),
     input,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
 
         if (issues) {

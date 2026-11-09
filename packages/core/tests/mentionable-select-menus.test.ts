@@ -47,7 +47,7 @@ test("mentionable guard factories receive mixed resolved data and can reject a s
         defineGuard<AnySelectContext>({
             name: "DenyRoles",
             description: "Choose users only.",
-            run(ctx: AnySelectContext) {
+            run: (ctx: AnySelectContext) => {
                 return (
                     ctx.interaction.isMentionableSelectMenu() &&
                     ctx.interaction.roles.size === 0

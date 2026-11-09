@@ -87,7 +87,7 @@ export default defineCommand({
     builder: new ChatInputCommandBuilder()
         .setName("ping")
         .setDescription("Check whether the bot is responding."),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply("Pong!");
     },
 });

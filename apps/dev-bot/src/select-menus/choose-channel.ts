@@ -10,7 +10,7 @@ export default defineSelectMenu({
         .setChannelTypes(ChannelType.GuildText, ChannelType.GuildVoice)
         .setMinValues(0)
         .setMaxValues(5),
-    async run(ctx) {
+    run: async ctx => {
         const names = ctx.interaction.values.map(id => {
             const channel = ctx.interaction.channels.get(id);
 

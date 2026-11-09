@@ -49,7 +49,7 @@ export const modalInputContracts = (
                 throw new Error("Type-only fixture");
             },
         ],
-        async run(ctx) {
+        run: async ctx => {
             const [issues, value] = ctx.input;
 
             if (issues) {
@@ -96,7 +96,7 @@ export const modalInputContracts = (
         builder: new ChatInputCommandBuilder(),
         // @ts-expect-error Modal resolvers cannot serve chat-input commands.
         input,
-        run() {},
+        run: () => {},
     });
 
     return { CreateTodo, passthrough, wrongCommand };
@@ -124,7 +124,7 @@ export const contextFreeModalResolver = (
     const ContextFree = defineModal({
         builder: new ModalBuilder().setCustomId("todo.create"),
         input,
-        async run(ctx) {
+        run: async ctx => {
             const [issues, value] = ctx.input;
             if (issues) return;
             value.todo.name satisfies string;

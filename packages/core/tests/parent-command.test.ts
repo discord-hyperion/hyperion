@@ -41,14 +41,14 @@ const createLeaf = (
     defineSubcommand({
         builder,
         ...(guards === undefined ? {} : { guards }),
-        async run() {},
+        run: async () => {},
     });
 
 const check = () =>
     defineGuard({
         name: "Check",
         description: "Denied",
-        run(_ctx: CommandContext) {
+        run: (_ctx: CommandContext) => {
             return true;
         },
     });

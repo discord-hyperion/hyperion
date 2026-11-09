@@ -211,7 +211,7 @@ export const createMenu = (
                 componentType: ComponentType.StringSelect;
             }>
         >[],
-        run(ctx) {
+        run: ctx => {
             return execute(ctx as AnySelectContext);
         },
     });

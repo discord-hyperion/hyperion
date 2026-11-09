@@ -25,7 +25,7 @@ export default defineCommand({
                 .setRequired(true)
                 .setAutocomplete(true),
         ),
-    async autocomplete(ctx) {
+    autocomplete: async ctx => {
         const focused = ctx.interaction.options.getFocused();
 
         await ctx.interaction.respond(
@@ -35,7 +35,7 @@ export default defineCommand({
                 .map(topic => ({ name: topic, value: topic })),
         );
     },
-    async run(ctx) {
+    run: async ctx => {
         const query = ctx.interaction.options.getString("query", true);
         await ctx.interaction.reply(
             topics.includes(query)

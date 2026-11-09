@@ -14,7 +14,7 @@ export default defineSubcommand({
                 .setMaxLength(200)
                 .setAutocomplete(true),
         ),
-    async autocomplete(ctx) {
+    autocomplete: async ctx => {
         const focused = ctx.interaction.options.getFocused();
 
         if (focused.name !== "text") return;
@@ -29,7 +29,7 @@ export default defineSubcommand({
                 .map(text => ({ name: text, value: text })),
         );
     },
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: ctx.interaction.options.getString("text", true),
             flags: MessageFlags.Ephemeral,

@@ -7,7 +7,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("modal")
         .setDescription("Open a personalized JSX todo form."),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.showModal(renderModal(<TodoForm />));
     },
 });

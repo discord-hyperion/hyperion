@@ -6,7 +6,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("latency")
         .setDescription("Show the bot's gateway heartbeat latency"),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content:
                 ctx.client.ping === null

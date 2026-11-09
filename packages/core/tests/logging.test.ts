@@ -129,7 +129,7 @@ test("command context gets a correlated logger and completion timing", async t =
         builder: new ChatInputCommandBuilder()
             .setName("ping")
             .setDescription("Ping"),
-        async run(ctx) {
+        run: async ctx => {
             ctx.logger.debug({ checkpoint: "ready" }, "Handler checkpoint");
             await ctx.interaction.reply("Pong!");
         },
@@ -173,7 +173,7 @@ test("errors stay visible at error level and users still receive error responses
         builder: new ChatInputCommandBuilder()
             .setName("ping")
             .setDescription("Ping"),
-        async run() {
+        run: async () => {
             throw new Error("Handler failed");
         },
     });

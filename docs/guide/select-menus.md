@@ -24,7 +24,7 @@ export default defineSelectMenu({
             { label: "Blue", value: "blue" },
             { label: "Green", value: "green" },
         ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({
             content: `You chose ${ctx.interaction.values[0]}.`,
         });
@@ -58,7 +58,7 @@ export default defineSelectMenu({
     builder: new UserSelectMenuBuilder()
         .setCustomId("user.choose")
         .setPlaceholder("Choose a user"),
-    async run(ctx) {
+    run: async ctx => {
         const names = ctx.interaction.users.map(user => user.username);
         await ctx.interaction.update({
             content: `Selected: ${names.join(", ")}`,
@@ -98,7 +98,7 @@ export default defineSelectMenu({
     customId: "colour.choose",
     componentType: ComponentType.StringSelect,
     input,
-    async run(ctx) {
+    run: async ctx => {
         const [issues, colours] = ctx.input;
 
         if (issues) {

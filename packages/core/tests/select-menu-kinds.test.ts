@@ -15,7 +15,7 @@ const deny = (description = "Denied") =>
     defineGuard<AnySelectContext>({
         name: "Deny",
         description,
-        run() {
+        run: () => {
             return false;
         },
     });
@@ -94,10 +94,10 @@ for (const kind of selectKinds) {
                 defineGuard<AnySelectContext>({
                     name: "DenyEmpty",
                     description: "Denied",
-                    run(ctx: AnySelectContext) {
+                    run: (ctx: AnySelectContext) => {
                         return resolvedEntries(ctx.interaction).length === 0;
                     },
-                    async onFail(ctx: AnySelectContext) {
+                    onFail: async (ctx: AnySelectContext) => {
                         await ctx.interaction.reply("Choose again.");
                     },
                 });

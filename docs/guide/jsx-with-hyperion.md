@@ -30,7 +30,7 @@ export default defineButton({
             Refresh
         </Button>,
     ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({ content: "Refreshed!" });
     },
 });
@@ -86,7 +86,7 @@ export default defineButton({
             Close
         </Button>,
     ),
-    async run(ctx) {
+    run: async ctx => {
         const [issues, params] = ctx.params;
         if (issues) return;
 
@@ -128,7 +128,7 @@ const TodoForm = () => (
 
 export default defineModal({
     builder: renderModal(<TodoForm />),
-    async run(ctx) {
+    run: async ctx => {
         const name = ctx.interaction.components.getTextInputValue("name");
 
         await ctx.interaction.reply(`Created "${name}".`);

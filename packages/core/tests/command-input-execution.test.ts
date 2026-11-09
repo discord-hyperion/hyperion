@@ -35,7 +35,7 @@ const check = (
     defineGuard({
         name: "Check",
         description: "Denied",
-        run(ctx: CommandContext) {
+        run: (ctx: CommandContext) => {
             return predicate(ctx);
         },
     });
@@ -537,7 +537,7 @@ test("schema-free commands keep the original context and do not extract options"
                 return true;
             }),
         ],
-        async run(ctx) {
+        run: async ctx => {
             assert.equal(ctx, guarded);
             assert.equal("input" in ctx, false);
             await ctx.interaction.reply("Plain");
@@ -748,7 +748,7 @@ test("defineInput infers a concrete handler's output without running callbacks d
                 option.setName("todo").setDescription("Todo"),
             ),
         input,
-        async run(ctx) {
+        run: async ctx => {
             const [issues, value] = ctx.input;
             assert.equal(issues, null);
             if (issues) return;

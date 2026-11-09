@@ -85,7 +85,7 @@ export default defineSubcommand({
             todo: await fakeApi.getTodo(id),
         }),
     },
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.editReply({

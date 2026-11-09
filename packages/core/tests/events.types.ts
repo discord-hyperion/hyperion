@@ -7,7 +7,7 @@ import {
 
 const Ready = defineEvent({
     event: Events.ClientReady,
-    async run(ctx) {
+    run: async ctx => {
         const [client] = ctx.args;
         client.user.id satisfies string;
         ctx.client.events.size satisfies number;
@@ -18,7 +18,7 @@ const Ready = defineEvent({
 
 const Update = defineEvent({
     event: Events.MessageUpdate,
-    async run(ctx) {
+    run: async ctx => {
         const [oldMessage, newMessage] = ctx.args;
         oldMessage.id satisfies string;
         newMessage.content satisfies string;
@@ -31,7 +31,7 @@ const Update = defineEvent({
 
 const Empty = defineEvent({
     event: Events.Invalidated,
-    async run(ctx) {
+    run: async ctx => {
         ctx.args satisfies readonly [];
         // @ts-expect-error This event carries no arguments.
         ctx.args[0];
@@ -49,7 +49,7 @@ const wrongName: EventName = "client-ready";
 const Wrong = defineEvent({
     // @ts-expect-error The run context must match the named event.
     event: Events.ClientReady,
-    async run(_ctx: EventContext<Events.Debug>) {},
+    run: async (_ctx: EventContext<Events.Debug>) => {},
 });
 void [Ready, Update, Empty, Wrong];
 

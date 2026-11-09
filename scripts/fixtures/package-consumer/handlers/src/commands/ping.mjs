@@ -4,5 +4,5 @@ export default defineCommand({
     builder: new ChatInputCommandBuilder()
         .setName("ping")
         .setDescription("Ping"),
-    async run() {},
+    run: async () => {},
 });

@@ -25,7 +25,7 @@ export default defineSelectMenu({
     componentType: ComponentType.UserSelect,
     params: assignTicket,
     guards: [paramOwner("owner", "Only the ticket's author can assign it.")],
-    async run(ctx) {
+    run: async ctx => {
         // Params come from the custom ID; the selection comes from the click.
         const [issues, params] = ctx.params;
         const assignee = ctx.interaction.users.first();

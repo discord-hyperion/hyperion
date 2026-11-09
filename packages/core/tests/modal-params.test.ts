@@ -82,7 +82,7 @@ const createRenameModal = (
         builder: form(),
         input: { ...input, ...options } as typeof input,
         guards,
-        run(ctx) {
+        run: ctx => {
             return execute(ctx);
         },
     }) as unknown as ModalHandler;
@@ -118,7 +118,7 @@ describe("modal params dispatch", () => {
             defineGuard<ModalContext<{ params: typeof rename }>>({
                 name: "SeesParams",
                 description: "Denied",
-                run(ctx: ModalContext<{ params: typeof rename }>) {
+                run: (ctx: ModalContext<{ params: typeof rename }>) => {
                     order.push("guard");
                     assert.deepEqual(ctx.params, [null, ticket]);
                     assert.equal("input" in ctx, false);
@@ -245,7 +245,7 @@ describe("undecodable routes log for every kind", () => {
             pick.id,
             defineButton({
                 params: pick,
-                async run() {},
+                run: async () => {},
             }) as unknown as ButtonHandler,
         );
         client.selectMenus.routes.set(
@@ -253,7 +253,7 @@ describe("undecodable routes log for every kind", () => {
             defineSelectMenu({
                 componentType: ComponentType.UserSelect,
                 params: pick,
-                async run() {},
+                run: async () => {},
             }) as never,
         );
 
@@ -355,7 +355,7 @@ describe("modal params loading", () => {
                     params: rename,
                     // @ts-expect-error Exercise runtime rejection for JavaScript callers.
                     customId: "x",
-                    async run() {},
+                    run: async () => {},
                 }),
             /either a customId or params/,
         );
@@ -376,7 +376,7 @@ describe("build(definition, values)", () => {
                 defineButton({
                     params: pick,
                     ...(template && { builder: template }),
-                    async run() {},
+                    run: async () => {},
                 }),
             template: () =>
                 new PrimaryButtonBuilder().setCustomId("pick").setLabel("Pick"),
@@ -389,7 +389,7 @@ describe("build(definition, values)", () => {
                     componentType: ComponentType.UserSelect,
                     params: pick,
                     ...(template && { builder: template }),
-                    async run() {},
+                    run: async () => {},
                 }),
             template: () =>
                 new UserSelectMenuBuilder()
@@ -403,7 +403,7 @@ describe("build(definition, values)", () => {
                 defineModal({
                     params: pick,
                     ...(template && { builder: template }),
-                    async run() {},
+                    run: async () => {},
                 }),
             template: () => form("pick"),
         },

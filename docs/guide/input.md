@@ -33,7 +33,7 @@ export default defineCommand({
             times: v.optional(v.number(), 1),
         }),
     },
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
         if (issues) {
             await ctx.interaction.reply({

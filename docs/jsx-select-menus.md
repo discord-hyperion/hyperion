@@ -103,7 +103,7 @@ export default defineSelectMenu({
             <StringSelect.Option label="High" value="high" />
         </StringSelect>,
     ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({
             content: `Selected: ${ctx.interaction.values.join(", ") || "None"}.`,
             allowedMentions: { parse: [] },
@@ -128,7 +128,7 @@ export default defineSelectMenu({
     builder: renderUserSelect(
         <UserSelect customId="user.choose" maxValues={1} />,
     ),
-    async run(ctx) {
+    run: async ctx => {
         const names = ctx.interaction.users.map(user => user.username);
 
         await ctx.interaction.update({

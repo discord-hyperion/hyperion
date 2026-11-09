@@ -16,7 +16,7 @@ export default defineCommand({
         .setName("shutdown")
         .setDescription("Stop the bot."),
     guards: [ownerOnly],
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply("Shutting down.");
         await ctx.client.destroy();
     },

@@ -10,7 +10,7 @@ export default defineCommand({
     builder: new ChatInputCommandBuilder()
         .setName("profile")
         .setDescription("Try a button that fetches fresh profile data."),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: "Press refresh to load your profile.",
             flags: MessageFlags.Ephemeral,

@@ -12,7 +12,7 @@ export default defineSelectMenu({
     builder: renderUserSelect(
         <UserSelect customId="consumer.assignee" maxValues={1} />,
     ),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.update({
             content: `Assignee: ${ctx.interaction.values.join(",")}`,
         });
@@ -24,5 +24,5 @@ export const mismatchedBuilder = () =>
         componentType: ComponentType.UserSelect,
         // @ts-expect-error A role-select template can't serve a user-select handler.
         builder: renderRoleSelect(<RoleSelect customId="consumer.assignee" />),
-        async run() {},
+        run: async () => {},
     });

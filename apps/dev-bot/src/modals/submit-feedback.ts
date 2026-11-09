@@ -21,7 +21,7 @@ export default defineModal({
                         .setMaxLength(1_000),
                 ),
         ),
-    async run(ctx) {
+    run: async ctx => {
         const message =
             ctx.interaction.components.getTextInputValue("feedback.message");
 

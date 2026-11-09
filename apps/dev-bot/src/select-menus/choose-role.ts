@@ -9,7 +9,7 @@ export default defineSelectMenu({
         .setPlaceholder("Choose a role")
         .setMinValues(1)
         .setMaxValues(1),
-    async run(ctx) {
+    run: async ctx => {
         const roleNames = ctx.interaction.roles.map(role => role.name);
 
         await ctx.interaction.update({

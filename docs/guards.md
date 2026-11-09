@@ -32,7 +32,7 @@ export default defineCommand({
         .setName("admin-ping")
         .setDescription("Check the bot's administrative access."),
     guards: [ownerOnly, allowedGuild("YOUR_SERVER_ID")],
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply("Pong!");
     },
 });

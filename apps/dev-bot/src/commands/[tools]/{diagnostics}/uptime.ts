@@ -6,7 +6,7 @@ export default defineSubcommand({
     builder: new ChatInputCommandSubcommandBuilder()
         .setName("uptime")
         .setDescription("Show how long this process has been running"),
-    async run(ctx) {
+    run: async ctx => {
         await ctx.interaction.reply({
             content: `Process uptime: ${Math.floor(process.uptime())} seconds.`,
             flags: MessageFlags.Ephemeral,

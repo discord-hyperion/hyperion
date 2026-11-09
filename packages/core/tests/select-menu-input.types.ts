@@ -64,7 +64,7 @@ export const PriorityMenu = defineSelectMenu({
             throw new Error("Type-only fixture");
         },
     ],
-    async run(ctx) {
+    run: async ctx => {
         const [issues, value] = ctx.input;
 
         if (issues) {
@@ -83,7 +83,7 @@ export const AssignMenu = defineSelectMenu({
     componentType: 5 as ComponentType.UserSelect,
     params: ticket,
     input: assignee,
-    async run(ctx) {
+    run: async ctx => {
         const [, params] = ctx.params;
         const [issues, user] = ctx.input;
         if (issues || !params) return;
@@ -116,7 +116,7 @@ export const specContracts = (plain: SelectMenuContext) => {
     const MissingInput = defineSelectMenu({
         componentType: 3 as ComponentType.StringSelect,
         customId: "todo.priority",
-        async run(ctx) {
+        run: async ctx => {
             // @ts-expect-error A handler without input has no ctx.input.
             void ctx.input;
         },
@@ -125,7 +125,7 @@ export const specContracts = (plain: SelectMenuContext) => {
     const UpdateModal = defineModal({
         customId: "todo.rename",
         input: priority,
-        async run() {},
+        run: async () => {},
     });
 
     return [MissingInput, UpdateModal];
@@ -141,5 +141,5 @@ export const commandContracts = () =>
         builder: new ChatInputCommandBuilder(),
         // @ts-expect-error Commands have no message to update.
         input: updateCommand,
-        run() {},
+        run: () => {},
     });
