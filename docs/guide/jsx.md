@@ -31,7 +31,7 @@ You'll need Node.js 24.17 or newer. Install the package with the
 `@discordjs/builders` prerelease it was built against:
 
 ```npm
-npm install @hyperion-js/jsx @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
+npm install @hyperion-js/jsx@beta @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
 ```
 
 Then tell TypeScript to use this package's JSX runtime:

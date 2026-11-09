@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
     publish:
-        if: vars.NPM_PUBLISH_ENABLED == 'true' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/beta')
+        if: vars.NPM_PUBLISH_ENABLED == 'true' && github.ref == 'refs/heads/main'
         environment: npm
         runs-on: ubuntu-latest
         timeout-minutes: 15

@@ -5,6 +5,9 @@ commands, buttons, menus, modals, and event handlers in folders, and Hyperion
 loads them, deploys your commands, and routes every interaction to the right
 place. You write the parts that make your bot yours.
 
+Hyperion is in beta until discord.js v15 has a stable release, so expect
+breaking changes between versions until 1.0.
+
 New here? Start with [getting started](getting-started.md), then pick whatever
 your bot needs next.
 

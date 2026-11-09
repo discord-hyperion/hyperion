@@ -18,6 +18,10 @@ export default defineCommand({
 });
 ```
 
+Hyperion is in beta until discord.js v15 has a stable release, so expect breaking
+changes between versions until 1.0. Install it with
+`npm install @hyperion-js/core@beta`.
+
 Use Node.js 24.17.0 or newer and the exact discord.js and @discordjs/builders
 prereleases declared as peers in this package. The initial TypeScript consumer
 verification baseline is 7.x. Minimum-version checks are required before release.

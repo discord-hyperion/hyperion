@@ -34,7 +34,7 @@ todos.all({ owner: "1234567890" });
 You'll need Node.js 24.17 or newer, then install the driver beside this package:
 
 ```sh
-npm install @hyperion-js/sqlite better-sqlite3
+npm install @hyperion-js/sqlite@beta better-sqlite3
 ```
 
 better-sqlite3 ships prebuilt binaries for the common platforms, so there's
