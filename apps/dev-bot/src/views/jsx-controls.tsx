@@ -13,7 +13,7 @@ export const JsxControls = ({ disabled = false }: { disabled?: boolean }) => (
             </Button>
         </ActionRow>
         <ActionRow>
-            <Button url="https://github.com/favylicious/discord-hyperion">
+            <Button url="https://github.com/favylicious/hyperion">
                 View Hyperion
             </Button>
         </ActionRow>

@@ -1,5 +1,5 @@
 // Check the built site against the prototype acceptance list. Run after a build:
-//   DIST=out SITE_BASE=/discord-hyperion node scripts/check-site.mjs
+//   DIST=out SITE_BASE=/hyperion node scripts/check-site.mjs
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,7 +10,7 @@ const site = fileURLToPath(new URL("..", import.meta.url));
 const repoRoot = path.resolve(site, "../..");
 const guide = path.join(repoRoot, "docs/guide");
 const dist = path.join(site, process.env.DIST ?? "out");
-const base = (process.env.SITE_BASE ?? "/discord-hyperion").replace(/\/$/, "");
+const base = (process.env.SITE_BASE ?? "/hyperion").replace(/\/$/, "");
 
 const results = [];
 const check = (name, ok, detail = "") => {

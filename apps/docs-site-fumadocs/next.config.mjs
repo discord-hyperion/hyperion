@@ -2,10 +2,7 @@ import { createMDX } from "fumadocs-mdx/next";
 
 const withMDX = createMDX({ configPath: "source.config.mjs" });
 // Keep in step with scripts/stage.mjs. Empty means a root deployment.
-const basePath = (process.env.SITE_BASE ?? "/discord-hyperion").replace(
-    /\/$/,
-    "",
-);
+const basePath = (process.env.SITE_BASE ?? "/hyperion").replace(/\/$/, "");
 
 /** @type {import('next').NextConfig} */
 const config = {
