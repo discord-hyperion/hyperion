@@ -1,5 +1,11 @@
 # @hyperion/core
 
+## 0.8.0
+
+### Minor Changes
+
+- 142c47c: Add built-in `guildOnly`, `requirePermissions()`, and `requireBotPermissions()` guards. The permission guards check the member's or the bot's permissions in the interaction's channel, reject outside a server, and list the permissions they asked for in their reply.
+
 ## 0.7.0
 
 ### Minor Changes
