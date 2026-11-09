@@ -1,4 +1,4 @@
-export const repo = "https://github.com/favylicious/hyperion";
+export const repo = "https://github.com/discord-hyperion/hyperion";
 
 // The site is public but the repository is private, so nothing links into it:
 // no GitHub header link, no edit links, and guide links to reference docs become
