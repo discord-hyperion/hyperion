@@ -57,8 +57,8 @@ export const validateRelease = ({
         );
         assert.equal(
             ref,
-            "refs/heads/release/beta",
-            "beta is published only from release/beta.",
+            "refs/heads/main",
+            "beta is published only from main.",
         );
         assert.match(
             version,

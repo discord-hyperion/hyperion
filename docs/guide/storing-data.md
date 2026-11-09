@@ -11,7 +11,7 @@ It's a separate package, and it works with any bot, Hyperion or not.
 Install it with the driver it runs on:
 
 ```npm
-npm install @hyperion-js/sqlite better-sqlite3
+npm install @hyperion-js/sqlite@beta better-sqlite3
 ```
 
 Then open a database and describe your tables:

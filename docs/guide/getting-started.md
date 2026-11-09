@@ -5,11 +5,12 @@ application with a bot token, and a server to test in.
 
 ## Installing
 
-Hyperion runs on prerelease versions of discord.js v15 and `@discordjs/builders`,
-so install the exact versions it was built against:
+Hyperion is in beta and runs on prerelease versions of discord.js v15 and
+`@discordjs/builders`, so install the beta with the exact versions it was built
+against:
 
 ```npm
-npm install @hyperion-js/core discord.js@15.0.0-dev.1792497873-5050a3b54 @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
+npm install @hyperion-js/core@beta discord.js@15.0.0-dev.1792497873-5050a3b54 @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
 ```
 
 ## Project layout
