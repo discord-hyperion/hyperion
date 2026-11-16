@@ -30,4 +30,4 @@ The published package exposes its root entry point as ESM JavaScript with
 TypeScript declarations. CommonJS callers can use dynamic import. Workspace
 development resolves TypeScript source directly through tsx without a build.
 
-See the [guide](https://hyperion-docs-6h7.pages.dev) to get started.
+See the [guide](https://hyperion.favteo.com) to get started.

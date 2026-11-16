@@ -77,12 +77,12 @@ await interaction.reply(
 ## Learn more
 
 The guide walks through each part with examples:
-- [Getting started with JSX](https://hyperion-docs-6h7.pages.dev/jsx/)
-- [Embeds and text](https://hyperion-docs-6h7.pages.dev/jsx/embeds/)
-- [Buttons and menus](https://hyperion-docs-6h7.pages.dev/jsx/message-components/)
-- [Layout messages](https://hyperion-docs-6h7.pages.dev/jsx/layout-messages/)
-- [Modals](https://hyperion-docs-6h7.pages.dev/jsx/modals/)
+- [Getting started with JSX](https://hyperion.favteo.com/jsx/)
+- [Embeds and text](https://hyperion.favteo.com/jsx/embeds/)
+- [Buttons and menus](https://hyperion.favteo.com/jsx/message-components/)
+- [Layout messages](https://hyperion.favteo.com/jsx/layout-messages/)
+- [Modals](https://hyperion.favteo.com/jsx/modals/)
 
 Using `@hyperion-js/core`? See
-[JSX with Hyperion](https://hyperion-docs-6h7.pages.dev/jsx/with-hyperion/)
+[JSX with Hyperion](https://hyperion.favteo.com/jsx/with-hyperion/)
 for templates, params, and `.tsx` handlers.

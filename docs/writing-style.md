@@ -5,7 +5,7 @@ Hyperion keeps two kinds of documentation:
   agents. Dense is fine; completeness matters more than flow.
 - **The guide** (`docs/guide/`): written for people building bots. It should read
   like a knowledgeable friend explaining things, not like a specification.
-  Readers use [the docs site](https://hyperion-docs-6h7.pages.dev), so write for
+  Readers use [the docs site](https://hyperion.favteo.com), so write for
   how a page renders there. It only needs to stay readable on GitHub.
 
 This page covers the guide. When a feature changes, update the reference doc
