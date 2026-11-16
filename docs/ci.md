@@ -57,9 +57,13 @@ It builds only; it never publishes.
 
 Publishing is a separate workflow, [`pages.yml`](../.github/workflows/pages.yml). On
 pushes to `main` that touch the same inputs, apart from other workflows, it
-builds, runs the same checks, and uploads `out/` to the Cloudflare Pages project `hyperion-docs`
-(`hyperion-docs-6h7.pages.dev`) with Wrangler. It needs the `CLOUDFLARE_API_TOKEN`
-repository secret, a token with only the account permission Cloudflare Pages: Edit.
+builds, runs the same checks, and deploys `out/` with `cf deploy` as the
+assets-only Cloudflare Worker `hyperion-docs`, served at `hyperion.favteo.com`.
+[`cloudflare.config.ts`](../apps/docs-site-fumadocs/cloudflare.config.ts) names
+the Worker, its custom domain, and its 404 and trailing-slash handling. `cf` runs
+pinned through `pnpm dlx`, not as a dependency. It needs the `CLOUDFLARE_API_TOKEN`
+repository secret, a token with the account permission Workers Scripts: Write and
+the `favteo.com` zone permission Workers Routes: Write.
 Only the publish step receives it, since install and build run third-party code.
 The account ID is not secret and is written in the workflow. Pull requests are
 never published.

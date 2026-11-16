@@ -109,7 +109,7 @@ jobs:
         timeout-minutes: 10
         env:
             NEXT_TELEMETRY_DISABLED: "1"
-            # Build the way the published site is built: at the root of pages.dev.
+            # Build the way the published site is built: at the root of hyperion.favteo.com.
             SITE_BASE: ""
 
         steps:
