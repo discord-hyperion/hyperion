@@ -68,7 +68,7 @@ check(
 check("404 page exists", existsSync(path.join(dist, "404.html")));
 check(
     "landing page is the guide README",
-    /<h1[^>]*>\s*Hyperion guide\s*<\/h1>/.test(
+    /<h1[^>]*>\s*Intro\s*<\/h1>/.test(
         readFileSync(path.join(dist, "index.html"), "utf8"),
     ),
 );
@@ -231,7 +231,7 @@ if (repoIsPublic) {
         "edit links point at the original Markdown",
         editLink("jsx/embeds", "jsx/embeds.md") &&
             editLink("jsx", "jsx.md") &&
-            editLink("jsx/with-hyperion", "jsx-with-hyperion.md") &&
+            editLink("jsx/with-hyperion", "jsx/with-hyperion.md") &&
             editLink("", "README.md"),
     );
 } else {

@@ -1,6 +1,6 @@
 # Buttons
 
-A button handler runs when a user clicks a button your bot sent. Handlers do not store state between clicks. If a button needs data such as a ticket ID, encode it in the [custom ID](custom-ids.md) or load it from storage.
+A button handler runs when a user clicks a button your bot sent. Because routing is based on the button's custom ID, handlers survive bot restarts without maintaining per-message collectors. Handlers do not store state between clicks, so encode per-message data such as a ticket ID in the [custom ID](custom-ids.md) or load it from storage.
 
 ## Defining a button handler
 
@@ -31,11 +31,23 @@ The `builder` acts as the handler's template. Commands copy this template when s
 | `guards`   | Checks that run before `run()`. See [Guards](guards.md).                                    |
 | `run`      | Function executed on each click.                                                            |
 
-Provide the custom ID in one place only. TypeScript and runtime loading reject a handler that defines both `builder` and `customId`. Link and premium buttons do not send interactions to your bot and cannot be used as templates.
+Use `builder` when the button's appearance is reusable so callers get consistent copies from `build()`. Use `customId` when callers construct the button inline (for example with [JSX](jsx/with-hyperion.md) or per-message layouts) and only need routing.
+
+Provide the custom ID in one place only: TypeScript and startup validation reject a handler that sets both `builder` and `customId`. Link and premium buttons do not send interactions and cannot be used as templates. Fixed-ID handlers match only the exact custom ID (no prefixes, wildcards, or regex), and unmatched clicks are ignored so your own collectors still work (see [Unmatched interactions](how-hyperion-works.md#unmatched-interactions)).
 
 ## Sending the button
 
-Call `ctx.client.buttons.build()` inside a command or handler to get a fresh copy of the template:
+A handler's `builder` is a single shared template. Calling `ctx.client.buttons.build()` clones that template into a fresh copy you can customize per message:
+
+```text
+Handler template (shared, stays unchanged)
+  "profile.refresh"  label: "Refresh profile"
+        │
+        ├── build("profile.refresh") ─▶ copy A (sent on message 1)
+        └── build("profile.refresh") ─▶ copy B ─▶ .setDisabled(true)
+```
+
+Mutating a copy returned by `build()` never modifies the shared template or copies sent on other messages. Select-menu and modal handlers use the same template-and-copy model via `client.selectMenus.build()` and `client.modals.build()`.
 
 ```ts fragment
 await ctx.interaction.reply({
@@ -48,13 +60,11 @@ await ctx.interaction.reply({
 });
 ```
 
-Each call returns a new builder instance, so you can modify its label or disable it for one message without affecting other messages. `build()` throws if no handler is loaded for that ID or if the handler has no template.
-
-Templates are optional. If you prefer to build buttons manually where you send them, pass `customId` instead of `builder` in `defineButton()`.
+`build()` throws if no handler is loaded for that ID, if the handler has no template, or if you pass a `params` route string without its values.
 
 ## Updating the button after a click
 
-Because handler definitions and templates are shared across all interactions, always call `build()` to get a new copy before editing a button on click. Store the handler in a variable to reference its `customId`:
+Always call `build()` to get a new copy before editing a button on click. Assigning the handler to a variable lets you pass `refresh.customId` instead of repeating the string literal:
 
 ```ts fragment
 const refresh = defineButton({
@@ -75,18 +85,21 @@ export default refresh;
 
 ## Sharing one handler across many buttons
 
-If you send the same kind of button on many messages, such as a Close button on every ticket, use `params` to encode the ticket ID in each button's custom ID. See [Data in custom IDs](custom-ids.md).
+When many messages share the same kind of button, such as a Close button on every ticket, use `params` to encode the ticket ID in each button's custom ID. See [Data in custom IDs](custom-ids.md).
 
 ## Guards
 
-Guards on the command that sent a button do not protect later button clicks. Add guards directly to the button handler:
+> [!WARNING]
+> Guards on the command that sent a button do not protect later button clicks. Attach guards directly to the button handler.
 
 ```ts fragment
 export default defineButton({
     builder: refreshButton,
     guards: [ownerOnly],
-    run: async () => {},
+    run: async ctx => {
+        await ctx.interaction.update({ content: "Refreshed!" });
+    },
 });
 ```
 
-For how Hyperion handles rejected guards and thrown errors, see [Responding](responding.md).
+For how Hyperion handles rejected guards and thrown errors, see [Handling errors](how-hyperion-works.md#handling-errors).

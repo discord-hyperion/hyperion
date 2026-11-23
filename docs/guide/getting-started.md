@@ -1,18 +1,22 @@
 # Getting started
 
-This guide walks you through creating a bot that responds to `/ping`. You need Node.js 24.17 or newer, a Discord application with a bot token, and a test server.
+Create a Hyperion bot that responds to `/ping`. You need Node.js 24.17 or newer, a Discord application with a bot token, and a test server.
 
 ## Installing
 
-Hyperion is in beta and targets prerelease versions of `discord.js` v15 and `@discordjs/builders`. Install the exact versions it was built against:
+Hyperion targets prerelease builds of `discord.js` v15 and `@discordjs/builders` (see the [FAQ](faq.md) for why prerelease versions are pinned). Install the exact versions it was built against, along with `tsx` to run TypeScript directly:
 
 ```npm
 npm install @hyperion-js/core@beta discord.js@15.0.0-dev.1792497873-5050a3b54 @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
 ```
 
+```npm
+npm install -D tsx
+```
+
 ## Project layout
 
-Hyperion discovers handlers from folders under `src/`, next to your entry file. Start with this layout:
+Hyperion discovers handlers from five fixed folders under `src/`: `commands`, `buttons`, `select-menus`, `modals`, and `events`. Missing folders are skipped at startup, so you only need to create the ones your bot uses:
 
 ```files
 my-bot/
@@ -75,19 +79,26 @@ const client = await HyperionClient.create({
 await client.login(token);
 ```
 
-`HyperionClient.create()` loads every handler, validates your configuration, and deploys your commands before it returns. Configuration errors fail immediately at startup instead of when a user triggers an interaction. Logging in to Discord is a separate step.
+`root` defaults to `process.cwd()`, so anchoring it with `new URL("./", import.meta.url)` ensures Hyperion finds `src/` regardless of the working directory you launch from. `name` labels the bot's log output, and passing `commands` enables loading and deploying `src/commands/`.
 
-Passing `guildIds` deploys commands only to those servers, where updates appear right away. Omit `guildIds` to deploy commands globally.
+`HyperionClient.create()` loads every handler, validates your configuration, and deploys your commands before it returns, so mistakes fail at startup rather than on a user interaction. Passing `guildIds` deploys commands to those servers immediately; omit `guildIds` to deploy globally. Logging in to Discord is a separate step.
 
 > [!NOTE]
-> Hyperion does not load `.env` files for you. Load environment variables with Node's `--env-file` flag or a package like [`dotenv`](https://www.npmjs.com/package/dotenv).
+> Hyperion does not load `.env` files for you. Load environment variables with Node's `--env-file` flag or a package such as [`dotenv`](https://www.npmjs.com/package/dotenv).
 
 ## Running the bot
 
-Run `index.ts` with a TypeScript runner such as `tsx`. Invite the bot to your test server, wait for the ready log, and run `/ping`.
+Invite the bot to your test server with both the `bot` and `applications.commands` OAuth2 scopes, then start it with `tsx`:
+
+```sh
+npx tsx --env-file=.env index.ts
+```
+
+Wait for the `Discord client ready` log entry, then run `/ping` in your test server.
 
 ## Next steps
 
-- Learn about subcommands and context menus in [Commands](commands.md).
-- Add interactive controls in [Buttons](buttons.md) and [Select menus](select-menus.md).
+- Read [How Hyperion works](how-hyperion-works.md) to see the startup flow, interaction pipeline, and error handling.
+- Add subcommands and context menus in [Commands](commands.md).
+- Handle interactive controls in [Buttons](buttons.md) and [Select menus](select-menus.md).
 - Restrict who can use handlers in [Guards](guards.md).

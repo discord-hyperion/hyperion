@@ -9,23 +9,23 @@ Start with [Getting started](getting-started.md), then read the pages for the fe
 ## Basics
 
 - [Getting started](getting-started.md). Create a client and write your first command.
+- [How Hyperion works](how-hyperion-works.md). Understand startup discovery and deployment, the interaction pipeline, responding, and error handling.
 - [Commands](commands.md). Define slash commands, subcommands, and context menus.
-- [Responding](responding.md). Learn how Hyperion handles deferring, errors, and unmatched interactions.
 
 ## Interactions
 
 - [Buttons](buttons.md). Handle button clicks and reuse button templates.
 - [Select menus](select-menus.md). Handle string, user, role, mentionable, and channel menus.
-- [Modals](modals.md). Show forms and validate submitted fields.
+- [Modals](modals.md). Show forms and validate submitted modal controls.
 - [Data in custom IDs](custom-ids.md). Pass typed data through a control's custom ID.
 - [Autocomplete](autocomplete.md). Return dynamic option suggestions while a user types.
 
 ## Validation
 
 - [Guards](guards.md). Run permission, ownership, and rate-limit checks before a handler executes.
-- [Typed input](input.md). Validate command options, select menus, and modal fields with a schema.
+- [Typed input](input.md). Validate command options, select menus, and modal controls with a schema.
 
-## Other features
+## Events & logging
 
 - [Events](events.md). Run ordered handlers for Discord client events such as `messageCreate`.
 - [Logging](logging.md). Configure Pino logging and use the scoped `ctx.logger`.
@@ -33,15 +33,15 @@ Start with [Getting started](getting-started.md), then read the pages for the fe
 ## Packages
 
 These optional packages work with any discord.js bot, with or without `@hyperion-js/core`.
-- [JSX](jsx.md). Write embeds, buttons, select menus, layout messages, and modals as JSX. See [JSX with Hyperion](jsx-with-hyperion.md) for using JSX with Hyperion handlers.
-- [SQLite](storing-data.md). Store data in SQLite with schema-validated tables and key-value namespaces.
+- [JSX](jsx.md). Write embeds, buttons, select menus, layout messages, and modals as JSX. See [JSX with Hyperion](jsx/with-hyperion.md) for using JSX with Hyperion handlers.
+- [SQLite](sqlite.md). Store data in SQLite with schema-validated tables and key-value namespaces.
 
 ## Mini-guides
 
 - [Confirming destructive actions](confirm-before-acting.md). Send a delete confirmation button that only the original user can click.
 - [Keeping cooldowns across restarts](persistent-cooldowns.md). Build a cooldown guard backed by SQLite.
 
-## Other resources
+## Help
 
 - [Troubleshooting](troubleshooting.md). Startup errors, runtime issues, and how to fix them.
-- [FAQ](faq.md). Answers to common questions.
+- [FAQ](faq.md). Answers to common adoption and architecture questions.

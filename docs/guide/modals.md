@@ -1,6 +1,6 @@
 # Modals
 
-A modal handler runs when a user submits a Discord modal form. Hyperion routes the submission to the handler matching the modal's custom ID. See the discord.js guide on [modals](https://discordjs.guide/legacy/interactions/modals) for an overview of modal builders.
+A modal handler runs when a user submits a Discord modal form. Hyperion routes each submission to the handler matching the modal's custom ID. See the discord.js guide on [modals](https://discordjs.guide/legacy/interactions/modals) for an overview of Discord modal builders.
 
 ## Defining a modal handler
 
@@ -48,25 +48,30 @@ Modal handlers accept these options:
 | `builder`  | Optional form template. Its custom ID becomes the handler's custom ID.                                        |
 | `customId` | Fixed custom ID to match when you do not provide a template.                                                  |
 | `params`   | Typed parameter definition for dynamic custom IDs. See [Passing data with params](#passing-data-with-params). |
-| `input`    | Optional schema for submitted form fields. See [Validating fields](#validating-fields).                       |
+| `input`    | Optional schema for submitted modal controls. See [Validating modal controls](#validating-modal-controls).    |
 | `guards`   | Checks that run before `run()`. See [Guards](guards.md).                                                      |
 | `run`      | Function executed on each submission.                                                                         |
 
-Include a `builder` template when using `input` so Hyperion can inspect the form's fields.
+`builder` is optional even when using `input`—Hyperion reads modal controls directly from the submitted interaction—but keeping a template next to the schema keeps modal-control custom IDs and validation rules in one file.
 
 ## Showing the modal
 
-Call `ctx.client.modals.build()` from a command, button, or select-menu handler:
+Modal templates work like [button templates](buttons.md#sending-the-button): call `ctx.client.modals.build()` from a command, button, or select-menu handler to get a fresh copy of the template:
 
 ```ts fragment
 await ctx.interaction.showModal(ctx.client.modals.build("feedback.submit"));
 ```
 
-`build()` returns a fresh copy of the template, so you can pre-fill fields for one user without affecting other users.
+Because `build()` returns an independent copy, you can pre-fill modal controls for one user without affecting other users.
 
-## Validating fields
+> [!WARNING]
+> `showModal()` acknowledges the opening interaction. Never reply, defer, or enable `input.defer` on the command or component handler that opens the modal. Setting `input.defer` on the modal handler itself applies to the later submission, not opening the form.
 
-Instead of reading fields manually from `ctx.interaction.components`, pass an `input` schema to receive validated, typed values in `ctx.input`:
+When a modal is opened from a button or select menu rather than a slash command, `ctx.interaction.isFromMessage()` returns `true` and lets you update the source message directly (or set `input: { schema, defer: "update" }`). Using `defer: "update"` on a modal opened from a slash command fails at the `input` stage.
+
+## Validating modal controls
+
+Instead of reading submitted modal controls manually from `ctx.interaction.components`, pass an `input` schema to receive validated, typed values in `ctx.input`:
 
 ```ts fragment
 // todoForm has the custom ID "todo.create", which becomes the handler's custom ID.
@@ -94,48 +99,63 @@ export default defineModal({
 });
 ```
 
-Hyperion passes an object to the schema with one key per form control, named by that control's custom ID:
+Hyperion passes an object to the schema with one key per modal control, named by that control's custom ID:
 
-| Control                       | Value passed to the schema               |
-| ----------------------------- | ---------------------------------------- |
-| Text input                    | String, or `""` if left empty            |
-| Select menu or checkbox group | Array of selected values or Discord IDs  |
-| File upload                   | Array of discord.js `Attachment` objects |
-| Radio group                   | Selected value, or `null`                |
-| Checkbox                      | `true` or `false`                        |
+| Modal control                 | Value passed to the schema                                            |
+| ----------------------------- | --------------------------------------------------------------------- |
+| Text input                    | String, or `""` if left empty                                         |
+| Select menu or checkbox group | Array of selected values or Discord IDs (`[]` if optional and empty)  |
+| File upload                   | Array of discord.js `Attachment` objects (`[]` if optional and empty) |
+| Radio group                   | Selected value, or `null`                                             |
+| Checkbox                      | `true` or `false`                                                     |
 
-To convert selected IDs into fetched users, roles, or database records, add a `resolve` function. See [Typed input](input.md#resolving-values).
+Dotted control custom IDs (such as `"feedback.message"`) become literal flat keys on the object rather than nested objects. Duplicate control custom IDs in the same submission fail input processing when `input` is configured. To convert selected IDs into fetched users, roles, or database records, add a `resolve` function; see [Resolving values](input.md#resolving-values).
 
 ## Passing data with params
 
-When a user submits a modal, the handler that opened it has already finished. To track which record the form applies to, such as which ticket to rename, encode that ID in the modal's custom ID with `params`:
+When a user submits a modal, the handler that opened it has already finished. Encode identifiers such as the target ticket ID in the modal's custom ID with `params`:
 
 ```ts fragment
-export const renameTicketForm = defineParams({
+export const renameTicketFormId = defineParams({
     id: "ticket.rename-form",
     keys: ["ticketId", "owner"],
     schema: v.object({ ticketId: v.string(), owner: v.string() }),
 });
 
 export default defineModal({
-    params: renameTicketForm,
+    params: renameTicketFormId,
     builder: renameForm, // Must have custom ID "ticket.rename-form"
     input,
     guards: [paramOwner("owner")],
     run: async ctx => {
         const [paramIssues, params] = ctx.params;
         const [inputIssues, value] = ctx.input;
+
+        if (paramIssues || inputIssues) {
+            await ctx.interaction.reply({
+                content: "That form submission is invalid or out of date.",
+                flags: MessageFlags.Ephemeral,
+            });
+
+            return;
+        }
+
+        await ctx.interaction.reply(
+            `Renamed ticket ${params.ticketId} to "${value.title}".`,
+        );
     },
 });
 
 // Inside the button or command that opens the modal:
 await ctx.interaction.showModal(
-    ctx.client.modals.build(renameTicketForm, params),
+    ctx.client.modals.build(renameTicketFormId, params),
 );
 ```
 
-Hyperion decodes and validates `params` before running guards, so `paramOwner("owner")` checks that the submitting user matches the `owner` ID encoded when the form opened. See [Data in custom IDs](custom-ids.md) for details.
+Hyperion validates `params` before guards run, so `paramOwner("owner")` verifies the submitting user before `input` or `run()` executes. If `params` fail validation and guards still allow execution, `input` still runs so `run()` receives both tuples. See the [interaction pipeline](how-hyperion-works.md#interaction-pipeline) and [Data in custom IDs](custom-ids.md).
 
 ## Guards
 
-Guards on the command or button that opened a modal do not run when the modal is submitted. Attach guards to the modal handler itself. The opener's guards control who can open the form, and the modal's guards verify permissions again when the user submits it, in case roles changed while the form was open.
+Guards on the command or button that opened a modal do not run when the modal is submitted. Attach guards to the modal handler itself: the opener's guards control who can open the form, and the modal's guards verify permissions again on submission in case roles changed while the form was open.
+
+`client.modals` has its own custom-ID namespace separate from buttons and select menus. For how Hyperion handles rejected guards and thrown errors, see [Handling errors](how-hyperion-works.md#handling-errors).

@@ -10,7 +10,6 @@ export const repoIsPublic = false;
 const moved = {
     "README.md": "index.md",
     "jsx.md": "jsx/index.md",
-    "jsx-with-hyperion.md": "jsx/with-hyperion.md",
 };
 
 /** Where a guide file is staged, relative to the content folder. */

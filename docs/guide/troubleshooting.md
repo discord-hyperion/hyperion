@@ -1,10 +1,12 @@
 # Troubleshooting
 
-Hyperion validates your handlers during `HyperionClient.create()`, so most configuration mistakes fail at startup with an error describing what went wrong. In the messages below, `"..."` represents a file path, command name, or value from your project. When an error starts with "Failed to load", the underlying reason follows the colon or appears under `[cause]`.
+Hyperion validates your handlers during `HyperionClient.create()`, so most configuration mistakes fail at startup. In the messages below, `"..."` represents a file path, command name, or value from your project. When an error starts with `"Failed to load"`, the underlying cause follows the colon or appears under `[cause]`.
 
-## No commands were found; refusing to overwrite commands with an empty list.
+## Startup and commands
 
-Hyperion found no command files and refused to deploy an empty list, which would remove your existing commands from Discord. This usually happens when `root` defaults to the current working directory and you start the bot from a different folder. Set `root` explicitly to your entry file's directory:
+### Commands did not deploy ("No commands found; skipping deployment")
+
+During `HyperionClient.create()`, Hyperion skips deployment instead of throwing when `options.commands` is omitted or `<root>/src/commands/` is missing or empty. This most often happens when `root` defaults to `process.cwd()` and you launch the bot from a different directory. Set `root` explicitly relative to your entry file:
 
 ```ts fragment
 const client = await HyperionClient.create({
@@ -13,58 +15,84 @@ const client = await HyperionClient.create({
 });
 ```
 
-Confirm that your command files are inside `src/commands/` next to that entry file.
+Confirm that `commands` is configured and that your command files live under `src/commands/` next to that entry file. Set `logging: { level: "debug" }` to print the exact directories Hyperion scans.
 
-## Expected a default export from define...().
+### No commands were found; refusing to overwrite commands with an empty list.
 
-Every file inside a handler folder must default-export the result of the matching `define*()` function, such as `defineCommand()` in `src/commands/`. Named exports, missing `export default` statements, or non-handler helper files placed inside a handler folder all trigger this error. Move shared helpers to a separate directory such as `src/lib/`.
+This throws when you call `client.commands.register()` directly while the command registry is empty—either `client.commands.load()` was never called, or `root` pointed at a directory with no command files. Load commands first and verify `root` points at the directory containing `src/commands/`. See [Deploying](commands.md#deploying).
 
-## Duplicate command name "..." in "...".
+### Expected a default export from define...().
 
-Two command files register the same command name. Discord command names come from `.setName()` on the builder, not from the filename, so copying an existing command file without updating `.setName()` causes this error.
+Every file inside a handler folder must default-export the result of the matching `define*()` function, such as `defineCommand()` in `src/commands/`. Named exports, missing `export default` statements, helper files placed inside a handler folder, or subcommand mismatches (such as using `defineCommand()` inside a `[parent]` folder instead of `defineSubcommand()`, or in `[parent]/index.ts` instead of `defineParentCommand()`) all trigger this error. Move shared helpers to a separate directory such as `src/lib/`.
 
-## Invalid command folder "..."; use (category), [parent], or {group}.
+### Duplicate command name "..." in "...".
 
-Every subfolder under `src/commands/` must use one of the three delimiter styles: `(category)` for categories, `[parent]` for parent commands, or `{group}` for subcommand groups. See [Folder convention](commands.md#folder-convention).
+Two command files register the same command name. Standalone commands and subcommands take their Discord name from `.setName()` on the builder rather than from the filename, so copying an existing file without updating `.setName()` causes this error.
 
-## Button handlers with a template take its custom ID; remove customId.
+### Invalid command folder "..."; use (category), [parent], or {group}.
 
-The handler specifies both `builder` and `customId`. Because the template's custom ID becomes the handler's custom ID, remove `customId`. The same rule applies to select menus and modals.
+A subfolder under `src/commands/` has empty, mismatched, or malformed delimiters (such as `()`, `[ticket)`, or `foo[bar]`). Use `(category)` (or a plain unmarked folder name) for command categories, `[parent]` for parent commands, or `{group}` for subcommand groups. See [Folder convention](commands.md#folder-convention).
 
-## Button templates need the params route "..." as their custom ID.
+### Missing parent definition for "..." (referenced by "...").
 
-A handler that uses [custom ID params](custom-ids.md) must set its template's custom ID to the params route via `.setCustomId(definition.id)`. If the template uses a different custom ID, Hyperion throws `... template custom ID "..." doesn't match the params route "..."` instead.
+A `[parent]` folder contains subcommands without a `[parent]/index.ts` file exporting `defineParentCommand()`. The sibling error `Missing group definition for "..." (referenced by "...").` means a `{group}` folder is missing `{group}/index.ts` exporting `defineSubcommandGroup()`. Add the missing `index.ts` definition; see [Subcommands](commands.md#subcommands).
 
-## Button custom IDs must not exceed 100 characters.
+### Parent commands cannot define options or subcommands directly.
 
-Discord limits custom IDs to 100 characters. Shorten the static custom ID, or shorten the params route and values. The related error `Custom ID for "..." exceeds 100 characters.` occurs when `build()` or a params function encodes a custom ID longer than 100 characters.
+A parent builder in `[parent]/index.ts` called `addSubcommands()` or added options directly. Keep the parent builder to top-level metadata only and put each subcommand in its own `defineSubcommand()` file under `[parent]`. The sibling error `Parent builder name "..." must match folder name "...".` occurs when `.setName()` on a parent builder disagrees with the `[parent]` folder name. See [Subcommands](commands.md#subcommands).
 
-## Duplicate priority ... for event "..." in "..." and "...".
+### Failed to register application commands at "...": ...
 
-Two handlers in the same event folder share the same numeric filename prefix. Change one of the numbers. Gaps between numbers are allowed. See [Events](events.md#order).
+Discord rejected the command deployment request; the text after the colon is Discord's error message. For invalid command definitions, Hyperion appends `body[N]: "<name>" (<file>)` lines pointing to the offending file. Verify that `token` and `applicationId` belong to the same application, and if Discord returns `Missing Access` for a guild, re-invite the bot to that server with the `applications.commands` scope.
 
-## Event handler "..." must be inside a folder named after a Discord client event.
+## Components
 
-Place event handler files inside a folder whose name matches the exact discord.js event name and casing, such as `src/events/messageCreate/` rather than `src/events/message-create/`.
+### Button handlers with a template take its custom ID; remove customId.
 
-## Event handler is for "..." but is in the "..." folder.
+The handler specifies both `builder` and `customId`. Remove `customId` so the template's custom ID is used. The same rule applies to select menus and modals, as does the sibling error `... handlers accept either a customId or params, not both.`
 
-The `event` option passed to `defineEvent()` does not match the parent folder name. Move the file into the matching event folder or update the `event` option.
+### Button templates need the params route "..." as their custom ID.
 
-## Failed to register application commands at "...": ...
+A handler using [custom-ID params](custom-ids.md) must set its template's custom ID to the route via `.setCustomId(definition.id)`. If the template uses a different custom ID, Hyperion throws `... template custom ID "..." doesn't match the params route "..."` instead.
 
-Discord rejected the command deployment request, and the text after the colon is Discord's error message. Verify that `token` and `applicationId` belong to the same Discord application and that the bot is a member of every server listed in `guildIds`.
+### Button custom IDs must not exceed 100 characters.
 
-## A "..." row failed validation: ...
+Discord limits custom IDs to 100 characters. Shorten the static custom ID, or shorten the params route and values. The related error `Custom ID for "..." exceeds 100 characters.` throws when `build()` or a params encoder generates a string over 100 characters.
 
-A `@hyperion-js/sqlite` read or write failed its table schema, and nothing was written. The schema validation issues follow the colon. If a SQLite column can be empty, mark that field nullable in your schema because SQLite returns `null` rather than `undefined`. See [SQLite](storing-data.md).
+## Events
 
-## ... isn't a safe integer.
+### Duplicate priority ... for event "..." in "..." and "...".
 
-A JavaScript number passed to SQLite exceeded `Number.MAX_SAFE_INTEGER`. This almost always happens with Discord snowflake IDs. Store IDs in `TEXT` columns and pass them as strings.
+Two handlers for the same event share the same numeric filename prefix. Prefixes parse as integers, so `01-a.ts` and `1-b.ts` collide as priority `1`. Change one of the numbers; gaps are allowed. See [Order](events.md#order).
 
-## "This interaction failed" in Discord
+### Event handler "..." must be inside a folder named after a Discord client event.
 
-Discord displays this message when your bot does not acknowledge an interaction within three seconds. Because Hyperion ignores custom IDs that do not match a registered handler, check these two things:
-- The control's custom ID matches the handler's custom ID exactly. For params handlers, construct the control with `build()` or the params function so the route and values are encoded properly.
-- Your handler replies, updates, or defers before slow work finishes. See [Responding](responding.md).
+Place event files inside a top-level folder under `src/events/` matching the exact discord.js event name and casing, such as `src/events/messageCreate/` rather than `src/events/message-create/` or directly inside `src/events/`.
+
+### Event handler is for "..." but is in the "..." folder.
+
+The `event` option passed to `defineEvent()` does not match the top-level event folder under `src/events/`. Move the file into the matching event folder or update the `event` option.
+
+## SQLite
+
+### A "..." row failed validation: ...
+
+A `@hyperion-js/sqlite` table read or write failed its schema, and nothing was written. If a SQLite column can be empty, mark that property nullable because SQLite returns `null` rather than `undefined`. Key-value namespaces throw the sibling error `The "..." value for "..." failed validation: ...`, and async schemas throw `... uses a schema that validates asynchronously; @hyperion-js/sqlite needs a synchronous schema.` See [SQLite](sqlite.md).
+
+### ... isn't a safe integer.
+
+A JavaScript number passed to SQLite exceeded `Number.MAX_SAFE_INTEGER`, almost always a Discord snowflake ID. Store IDs in `TEXT` columns and pass them as strings.
+
+## Runtime
+
+### Input defer: "update" needs an interaction from a message, such as a component or a modal it opened.
+
+A modal handler configured with `input: { defer: "update" }` was opened from a slash command instead of a button or select menu, so there is no source message to update. Switch to `defer: true`, or omit `defer` and branch on `ctx.interaction.isFromMessage()` in `run()`. See [Modals](modals.md#showing-the-modal) and [Deferring before validation](input.md#deferring-before-validation).
+
+### "This interaction failed" in Discord
+
+Discord displays this message when an interaction is not acknowledged within three seconds. Check these causes:
+- **Unmatched custom ID:** Hyperion ignores unmatched component custom IDs. Verify the custom ID matches exactly, and for `params` handlers make sure you built the control with `build(def, values)` or the params encoder rather than sending the template directly (`logging: { level: "debug" }` logs `*.params.undecodable` on segment-count mismatches).
+- **Mismatched select-menu type:** A select-menu handler's `componentType` does not match the menu sent, leaving the interaction unmatched.
+- **Unanswered `onFail()`:** A guard's custom `onFail()` returned without replying. See [Custom rejection replies](guards.md#custom-rejection-replies).
+- **Late acknowledgment:** Your handler did slow work before replying, updating, or deferring. See [Responding and automatic deferring](how-hyperion-works.md#responding-and-automatic-deferring).

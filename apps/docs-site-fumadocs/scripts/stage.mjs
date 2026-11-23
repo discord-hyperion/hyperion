@@ -1,8 +1,7 @@
 // Stage the human guide (docs/guide) for Fumadocs. The Markdown under docs/guide
 // stays authoritative: this copies it to content/docs (gitignored) and
 //   - adds the `title` frontmatter Fumadocs requires, taken from the first H1,
-//   - maps README.md to index.md, jsx.md to jsx/index.md (a folder index), and
-//     jsx-with-hyperion.md into that folder,
+//   - maps README.md to index.md and jsx.md to jsx/index.md (a folder index),
 //   - rewrites links to files outside the guide into GitHub URLs (or plain text
 //     while the repository is private), and re-points in-guide .md links at the
 //     staged files so Fumadocs can resolve them,
@@ -105,8 +104,8 @@ meta("", {
         "index",
         "---Basics---",
         "getting-started",
+        "how-hyperion-works",
         "commands",
-        "responding",
         "---Interactions---",
         "buttons",
         "select-menus",
@@ -116,16 +115,16 @@ meta("", {
         "---Validation---",
         "guards",
         "input",
-        "---Other features---",
+        "---Events & logging---",
         "events",
         "logging",
         "---Packages---",
         "jsx",
-        "storing-data",
+        "sqlite",
         "---Mini-guides---",
         "confirm-before-acting",
         "persistent-cooldowns",
-        "---Other resources---",
+        "---Help---",
         "troubleshooting",
         "faq",
     ],
@@ -134,11 +133,11 @@ meta("jsx", {
     title: "JSX",
     pages: [
         "index",
+        "with-hyperion",
         "embeds",
         "message-components",
         "layout-messages",
         "modals",
-        "with-hyperion",
     ],
 });
 
