@@ -1,58 +1,47 @@
-# Hyperion guide
+# Intro
 
-Hyperion is a framework for building Discord bots with discord.js v15. You put
-commands, buttons, menus, modals, and event handlers in folders, and Hyperion
-loads them, deploys your commands, and routes every interaction to the right
-place. You write the parts that make your bot yours.
+Hyperion is a TypeScript framework for building Discord bots with discord.js v15. Put your commands, buttons, select menus, modals, and event handlers in folders, and Hyperion loads them, deploys your commands, and routes incoming interactions.
 
-Hyperion is in beta until discord.js v15 has a stable release, so expect
-breaking changes between versions until 1.0.
+Hyperion is in beta until discord.js v15 reaches a stable release. Expect breaking changes between versions until 1.0.
 
-New here? Start with [getting started](getting-started.md), then pick whatever
-your bot needs next.
+Start with [Getting started](getting-started.md), then read the pages for the features your bot uses.
 
 ## Basics
 
-- [Getting started](getting-started.md): create a client and your first command.
-- [Commands](commands.md): slash commands, subcommands, and context menus.
-- [Responding](responding.md): replying, deferring, and what happens on errors.
+- [Getting started](getting-started.md). Create a client and write your first command.
+- [How Hyperion works](how-hyperion-works.md). Understand startup discovery and deployment, the interaction pipeline, responding, and error handling.
+- [Commands](commands.md). Define slash commands, subcommands, and context menus.
 
 ## Interactions
 
-- [Buttons](buttons.md)
-- [Select menus](select-menus.md)
-- [Modals](modals.md)
-- [Data in custom IDs](custom-ids.md): one handler for many buttons, each with its own data.
-- [Autocomplete](autocomplete.md)
+- [Buttons](buttons.md). Handle button clicks and reuse button templates.
+- [Select menus](select-menus.md). Handle string, user, role, mentionable, and channel menus.
+- [Modals](modals.md). Show forms and validate submitted modal controls.
+- [Data in custom IDs](custom-ids.md). Pass typed data through a control's custom ID.
+- [Autocomplete](autocomplete.md). Return dynamic option suggestions while a user types.
 
 ## Validation
 
-- [Guards](guards.md): checks that run before your handler.
-- [Typed input](input.md): validate command options and form fields with a schema.
+- [Guards](guards.md). Run permission, ownership, and rate-limit checks before a handler executes.
+- [Typed input](input.md). Validate command options, select menus, and modal controls with a schema.
 
-## Everything else
+## Events & logging
 
-- [Events](events.md): react to Discord events like `messageCreate`.
-- [Logging](logging.md)
+- [Events](events.md). Run ordered handlers for Discord client events such as `messageCreate`.
+- [Logging](logging.md). Configure Pino logging and use the scoped `ctx.logger`.
 
 ## Packages
 
-Optional packages that work with any discord.js bot, and fit Hyperion well.
-- [JSX](jsx.md): embeds, buttons, layout messages, and forms as JSX.
-  [JSX with Hyperion](jsx-with-hyperion.md) keeps them as handler templates.
-- [SQLite](storing-data.md): keep data in SQLite with validated tables and
-  key-value namespaces.
+These optional packages work with any discord.js bot, with or without `@hyperion-js/core`.
+- [JSX](jsx.md). Write embeds, buttons, select menus, layout messages, and modals as JSX. See [JSX with Hyperion](jsx/with-hyperion.md) for using JSX with Hyperion handlers.
+- [SQLite](sqlite.md). Store data in SQLite with schema-validated tables and key-value namespaces.
 
-## How-to
+## Mini-guides
 
-- [Asking before deleting something](confirm-before-acting.md): a confirm button
-  only the right person can press.
-- [Keeping cooldowns across restarts](persistent-cooldowns.md): a cooldown guard
-  backed by SQLite.
+- [Confirming destructive actions](confirm-before-acting.md). Send a delete confirmation button that only the original user can click.
+- [Keeping cooldowns across restarts](persistent-cooldowns.md). Build a cooldown guard backed by SQLite.
 
-## When something breaks
+## Help
 
-- [Troubleshooting](troubleshooting.md): startup errors and what they mean.
-
-Looking for exact contracts, edge cases, or how something is implemented? The
-reference docs one folder up (`docs/*.md`) cover every detail.
+- [Troubleshooting](troubleshooting.md). Startup errors, runtime issues, and how to fix them.
+- [FAQ](faq.md). Answers to common adoption and architecture questions.

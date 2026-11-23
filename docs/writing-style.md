@@ -3,35 +3,42 @@
 Hyperion keeps two kinds of documentation:
 - **Reference docs** (`docs/*.md`): precise contracts for contributors and coding
   agents. Dense is fine; completeness matters more than flow.
-- **The guide** (`docs/guide/`): written for people building bots. It should read
-  like a knowledgeable friend explaining things, not like a specification.
-  Readers use [the docs site](https://hyperion-docs-6h7.pages.dev), so write for
-  how a page renders there. It only needs to stay readable on GitHub.
+- **The guide** (`docs/guide/`): direct technical documentation for developers
+  building bots. Readers use [the docs site](https://hyperion.favteo.com), so
+  write for how a page renders there while keeping it readable on GitHub.
 
 This page covers the guide. When a feature changes, update the reference doc
 first, then the matching guide page. The guide may leave details out; it must
 never contradict the reference docs.
 
-The voice is modelled on the [discord.js guide](https://discordjs.guide/).
-
 ## Voice
 
-- Talk to the reader as "you". Use "we" sparingly, for walking through something
-  together ("Let's add a guard").
-- Use contractions: "you'll", "don't", "it's".
-- A slight informal touch is welcome: a short aside in parentheses, a "that's
-  it", a "Sounds good? Great!". One per section at most; never jokes in warnings.
+- Address the reader as "you" and use direct imperatives ("Add a guard", "Set
+  `root` explicitly"). Do not use "we" or "Let's…".
+- Keep prose direct and plainspoken. Avoid banter, chatty filler ("that's it",
+  "Sounds good? Great!"), and parenthetical asides.
+- Contractions are optional where natural, never forced.
 - Prefer active voice. "Hyperion loads your buttons" beats "Buttons are loaded".
-- Say what things _do_, not what they _don't_. Lists of negatives ("does not
-  retain state, callbacks, sessions, or timers") become one positive sentence
-  ("Handlers don't remember anything between clicks").
+- Say what things _do_, not lists of what they _don't_. "Handlers don't store
+  state between clicks" beats "does not retain state, callbacks, sessions, or
+  timers".
+
+### Anti-slop guardrails
+
+| Avoid                                                                                         | Prefer                                                                                  |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Meta-narration ("In this section…", "This guide walks you through…", "Let's take a look at…") | State what the feature or step does directly ("Create a bot that responds to `/ping`.") |
+| Filler transitions ("It's worth noting…", "Simply put…", "Under the hood…")                   | Drop the throat-clearing and state the fact                                             |
+| Rhetorical questions as headings or transitions ("Need to share state?")                      | Noun or task headings and direct conditions ("To share state across handlers, pass…")   |
+| Contrast-formula padding ("Not just X — it's Y", "Whether you're A or B…")                    | One plain statement of scope or behavior                                                |
+| Hedging ("You might want to consider…")                                                       | Direct guidance ("Use `defer: true` when…")                                             |
 
 ## Hyperion, not discord.js
 
 The guide assumes readers already know discord.js: replying, deferring, builders,
 reading interaction values, and Discord's own rules and limits. Teach only what
 Hyperion adds or changes.
-- Don't restate discord.js or Discord behaviour, such as the three-second
+- Don't restate discord.js or Discord behavior, such as the three-second
   deadline, how to read a picked user, or which builder makes a message command.
   When the reader needs it, link the
   [discord.js guide](https://discordjs.guide/) or
@@ -41,12 +48,13 @@ Hyperion adds or changes.
 
 ## Page shape
 
-1. **Open with motivation.** One or two sentences: what problem this solves, often
-   by comparison with something the reader already knows ("You've probably sent
-   buttons with discord.js before…").
-2. **Show code early.** A complete, copyable example comes before the details.
-3. **Explain after the code.** Short paragraphs that point at what the example did.
-4. **Caveats last**, as short bullets or a single "Watch out" alert.
+1. **Open directly.** One or two sentences stating what the feature does and when
+   to use it. Skip conversational hooks.
+2. **Show code early.** Put a complete, compiling primary example before the
+   details.
+3. **Explain what matters right after.** Short paragraphs pointing at the
+   important choices and behavior.
+4. **Caveats last**, as short bullets or a single callout.
 
 Each section follows the same rhythm: a one-line definition, the API to use, an
 example, then notes.
@@ -56,49 +64,54 @@ example, then notes.
 Pick the type from the question the reader arrives with. Most pages are feature
 pages; the others are for questions a feature page answers badly.
 
-| Type            | Reader's question                      | Example                                                  |
-| --------------- | -------------------------------------- | -------------------------------------------------------- |
-| Overview        | "What's here, and where do I start?"   | [README.md](guide/README.md)                             |
-| Feature page    | "How does this part of Hyperion work?" | [buttons.md](guide/buttons.md)                           |
-| How-to          | "How do I get this one thing done?"    | [persistent-cooldowns.md](guide/persistent-cooldowns.md) |
-| Troubleshooting | "Why am I seeing this error?"          | [troubleshooting.md](guide/troubleshooting.md)           |
+| Type            | Reader's question                                        | Example                                                  |
+| --------------- | -------------------------------------------------------- | -------------------------------------------------------- |
+| Overview        | "What's here, and where do I start?"                     | [README.md](guide/README.md)                             |
+| Feature page    | "How does this part of Hyperion work?"                   | [buttons.md](guide/buttons.md)                           |
+| How-to          | "How do I get this one thing done?"                      | [persistent-cooldowns.md](guide/persistent-cooldowns.md) |
+| Troubleshooting | "Why am I seeing this error?"                            | [troubleshooting.md](guide/troubleshooting.md)           |
+| FAQ             | "Does Hyperion support X, or why does it work this way?" | [faq.md](guide/faq.md)                                   |
 
 **Overview.** One short paragraph on what Hyperion is, then the page list in
 groups, each link with a few words on what it covers. No code.
 
 **Feature page.** The page shape above. One feature per page: if the title needs
-"and", it's two pages. Headings follow the reader's path through the feature
-("Sending the button", "Changing the button after a click"), not the API's
-structure.
+"and", split it unless the two halves share one lifecycle. Headings follow the
+reader's path through the feature ("Sending the button", "Updating the button
+after a click"), not the API's structure.
 
 **How-to.** One task with a clear end, such as "Keeping cooldowns across restarts".
-- Title it with the task, imperative or "-ing" ("Moving a command into a
-  group").
-- Intro: at most two sentences saying what you'll have at the end.
+- Title it with the task, imperative or "-ing" ("Confirming destructive actions").
+- Intro: one or two sentences stating what the task builds.
 - Numbered steps, about ten at most; split a longer task into phases with
   headings. Each step is one action, with its code.
-- Finish with how to check it worked. Before a step that's hard to undo, like
+- Finish with how to verify it worked. Before a step that's hard to undo, like
   deploying commands or migrating a database, say what to check first and what
   to do if it's wrong.
-- Link the feature page for the why; don't explain it here.
+- Link the feature page for the why; don't repeat it here.
 
-**Troubleshooting.** One error per section.
-- Title the section with the exact message the reader sees, so searching for it
-  lands here.
-- Then the cause in one or two sentences, and the fix as code or steps.
+**Troubleshooting.** One error per subsection, grouped under `##` categories.
+- Title the subsection with the exact message the reader sees, so searching for
+  it lands here.
+- State the cause in one or two sentences, then the fix as code or steps.
 - Only errors Hyperion or Discord actually produce. Copy the message from the
-  code, and link the reference doc that owns it.
+  code, and link the owning guide or reference doc.
+
+**FAQ.** Adoption and architecture questions ("why / does it support / how does
+it fit"). Question-phrased `##` headings are the deliberate format on this page.
+Keep each answer to one short direct paragraph with links to owning pages.
 
 ### Before you finish a page
 
-- Every behaviour the page states matches the code and the reference doc. Never
-  describe behaviour you haven't checked; find the real value or leave it out.
-- Code blocks compile (`pnpm check`), or are tagged `fragment` on purpose.
+- Every behavior the page states matches the code and the reference doc. Never
+  describe behavior you haven't checked; find the real value or leave it out.
+- Primary examples compile (`pnpm check`); focused follow-up excerpts are tagged
+  `fragment` on purpose.
 - The page has one home in the [duplication table](#avoid-duplication); other
   pages link to it instead of repeating it.
-- A new page is listed in [README.md](guide/README.md) and in the site sidebar
-  (`apps/docs-site-fumadocs/scripts/stage.mjs`). Adding it there is part of
-  shipping it.
+- A new or renamed page is synced in [README.md](guide/README.md) and the site
+  scripts (`apps/docs-site-fumadocs/scripts/stage.mjs`, `lib/shared.js`,
+  `scripts/check-site.mjs`).
 
 ## Sentences and paragraphs
 
@@ -120,18 +133,35 @@ structure.
 ## Headings
 
 - Noun phrases or short task phrases: "Buttons with data", "Sending a menu",
-  "Guards". Not questions, not full sentences.
+  "Guards". Not full sentences, and not questions outside [FAQ](guide/faq.md).
 - Sentence case.
 
-## Words
+## Terminology
 
-- "Discord" (capitalised) is the platform; "discord.js" (lowercase) is the library.
+Use canonical [glossary](GLOSSARY.md) terms strictly for Hyperion-specific
+concepts. Use plain English for spec-level contract terms (`authoring component`,
+`event occurrence`, `guard provider`, `invocation`, `validated * input`) while
+honoring every `_Avoid_` ban in the glossary. Explain terms in passing rather
+than linking the glossary at the top of every page.
+- "Discord" (capitalized) is the platform; "discord.js" (lowercase) is the
+  library.
 - Plain verbs: send, reply, defer, show, click, pick, load.
-- Use the [glossary](GLOSSARY.md) terms (handler, guard, custom ID, params,
-  template), but explain them in passing instead of linking the glossary at the
-  top of every page.
-- Name the thing the reader types: `defineButton()`, `defineGuard()`, not "the
+- Name what the reader types: `defineButton()`, `defineGuard()`, not "the
   component-handler abstraction".
+
+| Concept                                  | Guide term                                                    | Bridge (if any)                                                                                              | Avoid                                    |
+| ---------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| `/` command                              | slash command                                                 | One `(also called chat-input commands)` bridge on [commands.md](guide/commands.md)                           | message-content command                  |
+| Folder grouping commands                 | command category                                              | —                                                                                                            | category folder, subcommand group        |
+| Parent / group `index.ts`                | parent definition, group definition                           | —                                                                                                            | subcommand handler                       |
+| Pre-handler check                        | guard                                                         | —                                                                                                            | precondition, autocomplete filter        |
+| Handler vs. Discord widget               | button/select-menu/modal handler vs. button/select menu/modal | —                                                                                                            | conflating handler and control           |
+| Shared `builder` on a handler            | template                                                      | —                                                                                                            | view, form factory                       |
+| Controls inside a modal                  | modal control                                                 | Reserve `field` for embed fields and schema keys                                                             | form field, modal field                  |
+| First segment of parameterized custom ID | route                                                         | Reserve `prefix` for numeric event prefixes and legacy prefix commands                                       | handler ID, route prefix, prefix         |
+| Encoded custom-ID values                 | custom-ID params (`params`)                                   | —                                                                                                            | payload, state                           |
+| Components V2 message / block            | layout message, layout component                              | One `(known in Discord's API as Components V2)` bridge on [layout-messages.md](guide/jsx/layout-messages.md) | Components V2 message, display component |
+| Only-visible-to-sender reply             | ephemeral (`ephemeral reply`, `ephemeral follow-up`)          | —                                                                                                            | private reply                            |
 
 ## What to leave out
 
@@ -144,31 +174,50 @@ These belong in reference docs, ADRs, or git history, not the guide:
 
 ## Examples
 
-- Import from `@hyperion-js/core` and `@hyperion-js/jsx`, never old package names.
-- Use self-contained examples that readers can adapt to their own bots.
-  `pnpm check` compiles every `ts`/`tsx` block as its own module, so include its
-  imports. Tag a deliberately partial block, such as one that uses `ctx` or a
-  name from an earlier block, ` ```ts fragment ` to skip it.
+- Import from `@hyperion-js/core`, `@hyperion-js/jsx`, and `@hyperion-js/sqlite`,
+  never old package names.
+- Use complete, compiling `ts`/`tsx` blocks for the first/primary example of a
+  handler or setup pattern on a page and for full how-to steps. `pnpm check`
+  compiles every untagged `ts`/`tsx` block as its own module, so include its
+  imports.
+- Tag focused follow-up snippets, call-site excerpts, and option/type variations
+  ` ```ts fragment ` (or ` ```tsx fragment `) when repeating imports and wrapper
+  boilerplate would obscure the point.
 - Keep comments short and useful: `// Runs once per click`.
 - Write install commands as a ` ```npm ` block with an `npm install` line. The
-  site shows it as npm, pnpm, and bun tabs.
+  site renders it as npm, pnpm, and bun tabs.
 
-## Callouts and file trees
+## Callouts, file trees, and diagrams
 
-The guide is plain Markdown, and these forms render as components on the site:
-- **Callouts:** a GitHub alert blockquote. Use `[!WARNING]` for something that
-  can lose data or surprise the reader (it shows as "Watch out"), `[!TIP]` for a
-  shortcut, and `[!NOTE]` sparingly for an aside. One per section at most.
+The guide is plain Markdown, and these forms render cleanly on both the docs site
+and GitHub:
+- **Callouts:** Use four GitHub alert types and drop `[!IMPORTANT]`:
+  - `[!CAUTION]` for guaranteed breakage, startup failure, or destructive
+    overwrites (such as deploying replacing all commands in a scope, or calling
+    `addSubcommands()` on a parent builder).
+  - `[!WARNING]` (renders as "Watch out") for non-obvious runtime behavior or
+    gotchas (such as command guards not protecting component clicks, or handlers
+    not storing state between clicks).
+  - `[!TIP]` for shortcuts or cross-links to stronger patterns.
+  - `[!NOTE]` sparingly for supplementary context.
+  - Use at most one callout per section, and never stack two callouts
+    back-to-back.
 
   ```md
-  > [!WARNING]
-  > Deploying replaces _all_ commands in that scope.
+  > [!CAUTION]
+  > Deploying overwrites every command in the target scope.
   ```
 
-- **File trees:** a ` ```files ` block drawn with `├──`, `│`, and `└──`, with a
-  trailing `/` on folders. Put only names in it; anything else on a line becomes
-  part of the name, so a tree that maps files to something (like command names)
-  stays a ` ```text ` block.
+- **File trees:** Use a ` ```files ` block drawn with `├──`, `│`, and `└──`, with
+  a trailing `/` on folders. Put only file and folder names in `files` blocks;
+  anything else on a line becomes part of the name.
+- **Diagrams:** Use plain-Markdown ` ```text ` blocks for flows, annotated trees,
+  and round-trips, and GFM tables for lookup matrices (never Mermaid). Keep
+  `text` diagram lines under ~68 characters and blocks under ~15 lines so they
+  do not wrap or scroll horizontally. Give each mental model one home in the
+  [duplication table](#avoid-duplication), and follow each diagram with two or
+  three direct sentences covering non-obvious rules the diagram cannot express
+  alone.
 
 ## Avoid duplication
 
@@ -176,21 +225,23 @@ Each topic has one home in the guide. Other pages link to it in one sentence.
 A package README introduces the package, shows one or two examples, and links to
 the guide; it doesn't repeat the guide.
 
-| Topic                                  | Home                                                     |
-| -------------------------------------- | -------------------------------------------------------- |
-| Replying, deferring, and error replies | [responding.md](guide/responding.md)                     |
-| Guards and their state                 | [guards.md](guide/guards.md)                             |
-| Data in custom IDs                     | [custom-ids.md](guide/custom-ids.md)                     |
-| Typed input                            | [input.md](guide/input.md)                               |
-| JSX setup and rendering                | [jsx.md](guide/jsx.md)                                   |
-| Embed text and reusable JSX views      | [embeds.md](guide/jsx/embeds.md)                         |
-| JSX buttons and menus                  | [message-components.md](guide/jsx/message-components.md) |
-| Layout messages                        | [layout-messages.md](guide/jsx/layout-messages.md)       |
-| JSX with Hyperion handlers             | [jsx-with-hyperion.md](guide/jsx-with-hyperion.md)       |
-| JSX form authoring                     | [modals.md](guide/jsx/modals.md)                         |
-| Logging                                | [logging.md](guide/logging.md)                           |
-| Storing data, tables, and key-value    | [storing-data.md](guide/storing-data.md)                 |
-| Startup errors and their fixes         | [troubleshooting.md](guide/troubleshooting.md)           |
+| Topic                                                             | Home                                                     |
+| ----------------------------------------------------------------- | -------------------------------------------------------- |
+| Startup flow, interaction pipeline, responding, and error replies | [how-hyperion-works.md](guide/how-hyperion-works.md)     |
+| Command folder routing and subcommand guard inheritance           | [commands.md](guide/commands.md)                         |
+| Shared handler templates vs. `build()` copies                     | [buttons.md](guide/buttons.md)                           |
+| Guards and their state                                            | [guards.md](guide/guards.md)                             |
+| Data in custom IDs and stateless `params` round-trip              | [custom-ids.md](guide/custom-ids.md)                     |
+| Typed input                                                       | [input.md](guide/input.md)                               |
+| JSX setup and rendering                                           | [jsx.md](guide/jsx.md)                                   |
+| JSX with Hyperion handlers                                        | [with-hyperion.md](guide/jsx/with-hyperion.md)           |
+| Embed text and reusable JSX views                                 | [embeds.md](guide/jsx/embeds.md)                         |
+| JSX buttons and menus                                             | [message-components.md](guide/jsx/message-components.md) |
+| Layout messages                                                   | [layout-messages.md](guide/jsx/layout-messages.md)       |
+| JSX form authoring                                                | [modals.md](guide/jsx/modals.md)                         |
+| Logging                                                           | [logging.md](guide/logging.md)                           |
+| Storing data, tables, and key-value                               | [sqlite.md](guide/sqlite.md)                             |
+| Startup errors and their fixes                                    | [troubleshooting.md](guide/troubleshooting.md)           |
 
 ## Example rewrite
 
@@ -199,5 +250,5 @@ the guide; it doesn't repeat the guide.
 > callbacks, sessions, timers, or update queues.
 >
 > **After:** A button handler runs when someone clicks a button your bot sent.
-> Handlers don't remember anything between clicks, so if a button needs data
-> (like which ticket it closes), put it in the custom ID or your own storage.
+> Handlers do not store state between clicks, so put per-message data (such as a
+> ticket ID) in the custom ID or your own storage.

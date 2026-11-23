@@ -1,13 +1,10 @@
 # Events
 
-Event handlers react to things happening on Discord: the bot coming online, a
-message being sent, someone joining. Drop a file in the right folder and
-Hyperion runs it every time that event fires.
+Event handlers run when Discord emits client events such as `clientReady` or `messageCreate`. Using `src/events/` gives you sequential file ordering, per-event FIFO queuing with backpressure, error isolation, graceful shutdown draining, and manual reloading. The `src/events/` folder is optional (skipped if absent), and Discord emits only the events covered by your configured `discord.intents`.
 
-## An event handler
+## Defining an event handler
 
-The first folder under `src/events` is the event's name, spelled exactly as
-discord.js spells it (`clientReady`, `messageCreate`, …):
+Create a top-level folder under `src/events/` named after the exact discord.js event name, such as `clientReady` or `messageCreate`:
 
 ```ts
 // src/events/clientReady/10-startup-message.ts
@@ -24,14 +21,13 @@ export default defineEvent({
 });
 ```
 
-`event` names the event again, which types `ctx.args`: the event's arguments, in
-the order discord.js passes them. Hyperion checks it matches the folder when it
-loads the file. `once: true` runs the handler for the first occurrence only.
+`ctx` provides three properties: `ctx.client`, `ctx.logger`, and `ctx.args`. The `event` option types `ctx.args` to match discord.js's exact argument tuple—including multi-argument events like `messageUpdate` and partial objects (Hyperion does not auto-fetch partials). During loading, Hyperion verifies that `event` matches the top-level folder directly under `src/events/`.
+
+Set `once: true` to run a handler only on the first accepted emission of that event (handler errors do not rearm it, and overflow-dropped emissions do not consume it). Event handlers do not support `guards` or `input`; check conditions inside `run()`.
 
 ## Order
 
-Several handlers can listen to the same event. They run one after another, in
-filename order:
+Multiple files can listen to the same event. Hyperion runs them sequentially in filename order:
 
 ```files
 src/events/messageCreate/
@@ -41,47 +37,41 @@ src/events/messageCreate/
     └── 30-preview.ts
 ```
 
-Numbered files run first, lowest number first (gaps are fine, so you can slot in
-`15-…` later). Unnumbered files run after them. Two files can't share a number
-for the same event. Subfolders are just for organising.
+Files with numeric prefixes run first, sorted as integers from lowest to highest (`01-a.ts` and `1-b.ts` collide as duplicate priority `1`). Leave gaps such as `10` and `20` so you can insert another handler without renaming existing files. Different events may reuse the same numbers. Unnumbered files run after numbered files in relative-path order, and subfolders inside an event folder are for organization only—they do not affect numeric priority order.
 
-Each event also runs one occurrence at a time: the whole chain finishes for one
-message before the next message starts. Different events don't wait for each
-other.
+Hyperion processes one emission of a given event at a time: all handlers for one `messageCreate` finish before the next `messageCreate` starts, while different event types run concurrently. Filename ordering applies only to files in `src/events/`; manual `client.on()` listeners and Hyperion's internal interaction dispatcher run separately.
 
-## When things go wrong
+## Error handling and queuing
 
-If a handler throws, Hyperion logs it and moves on to the next handler. One
-broken handler won't stop the rest.
+If an event handler throws, Hyperion logs the error as `event.failed` (never forwarding it to the client's `error` event) and continues to the next handler in the chain.
 
-If events arrive faster than you handle them, up to 1,000 per event wait in
-line. After that, the newest ones are dropped (and logged).
+When events arrive faster than your handlers finish, Hyperion queues up to `1_000` waiting emissions per event by default, excluding the currently running emission. Setting `maxPendingPerEvent: 0` disables waiting and drops any emission that arrives while one is active. When the queue is full, Hyperion drops the newest emission and logs a warning.
 
-## Settings
+## Configuration
+
+Configure queue limits and shutdown draining in `HyperionClient.create()`:
 
 ```ts fragment
 const client = await HyperionClient.create({
-    // …
+    // ...
     events: {
-        maxPendingPerEvent: 1_000, // how many can wait per event
-        shutdownTimeoutMs: 10_000, // how long destroy() waits for running handlers
+        maxPendingPerEvent: 1_000, // Waiting emissions per event (excluding active)
+        shutdownTimeoutMs: 10_000, // Maximum wait time during destroy()
     },
 });
 ```
 
-On `client.destroy()`, Hyperion stops taking new events and gives running ones
-up to `shutdownTimeoutMs` to finish.
+When you call `client.destroy()`, Hyperion detaches its own event listeners (leaving manual listeners intact) and waits up to `shutdownTimeoutMs` for running and already-queued emissions to finish. If the timeout expires, Hyperion discards remaining queued emissions, logs `events.shutdown.timeout`, and destroys the client (already-running JavaScript cannot be forcibly cancelled).
 
-## Reloading
+## Reloading event handlers
 
-`await client.events.load()` reloads your event files from disk. Anything already
-running finishes with the old version. If the reload fails, the old handlers keep
-working.
+Call `await client.events.load()` to reload event files from disk. Emissions already in progress finish with the previously loaded handlers, and if reloading fails, Hyperion keeps the existing handlers active.
 
-## Interactions
+`client.events.load()` re-imports changed handler entry files from disk, not shared helper modules they import (ordinary Node ESM module caching still applies). A successful reload rearms `once: true` handlers for future emissions without replaying past events. Calling `load()` after `client.destroy()` starts throws an error.
 
-You _can_ handle `interactionCreate` here, but Hyperion already routes commands,
-buttons, menus, and modals for you.
+## Handling interactions
+
+You can add a `src/events/interactionCreate/` handler, but Hyperion already routes commands, buttons, select menus, modals, and autocomplete interactions. See [Unmatched interactions](how-hyperion-works.md#unmatched-interactions).
 
 > [!WARNING]
-> If you add your own, make sure only one place responds to each interaction.
+> If you listen to `interactionCreate` manually, ensure that your listener and Hyperion's built-in dispatcher do not both respond to the same interaction.

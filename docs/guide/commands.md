@@ -1,16 +1,16 @@
 # Commands
 
-Commands live in `src/commands`. A plain file is a slash command, and the folder
-names around it decide whether it's grouped under a parent. You never register
-anything by hand.
+Slash commands (also called chat-input commands), subcommands, and context-menu commands live in `src/commands/`. Hyperion discovers each file in that folder, builds the command tree, and deploys it to Discord at startup.
 
-## Slash commands
+## Basic command structure
 
-You've already seen one in [getting started](getting-started.md):
-`defineCommand()` with a builder and a `run()` function. The builder is the source of truth for the
-name, description, and options:
+Define a standalone slash command with `defineCommand()`, passing a builder and a `run()` function:
 
-```ts fragment
+```ts
+// src/commands/echo.ts
+import { ChatInputCommandBuilder } from "@discordjs/builders";
+import { defineCommand } from "@hyperion-js/core";
+
 export default defineCommand({
     builder: new ChatInputCommandBuilder()
         .setName("echo")
@@ -30,37 +30,40 @@ export default defineCommand({
 });
 ```
 
-Want the options validated and typed for you? See [typed input](input.md).
+Every command file must default-export the result of its `define*()` function (`export default defineCommand(...)`). Hyperion ignores named exports and fails startup if a file has no valid default export.
 
-## Organising with folders
+> [!TIP]
+> To validate and type command options with a schema instead of calling `getString()`, see [Typed input](input.md).
 
-Three folder styles cover everything:
+## Folder convention
 
-| Folder   | What it means                        | Example                                                 |
-| -------- | ------------------------------------ | ------------------------------------------------------- |
-| `(name)` | A category, just for tidiness        | `(general)/ping.ts` → `/ping`                           |
-| `[name]` | A parent command                     | `[ticket]/close.ts` → `/ticket close`                   |
-| `{name}` | A subcommand group (inside a parent) | `[ticket]/{settings}/view.ts` → `/ticket settings view` |
+Folder names under `src/commands/` control command organization and subcommand nesting:
+
+| Folder   | Role                                 | Name source        | `index.ts`                           |
+| -------- | ------------------------------------ | ------------------ | ------------------------------------ |
+| `(name)` | Command category (organization only) | Ignored by Discord | Ignored barrel                       |
+| `[name]` | Parent command                       | Folder name        | Required (`defineParentCommand()`)   |
+| `{name}` | Subcommand group inside a parent     | Folder name        | Required (`defineSubcommandGroup()`) |
 
 ```text
 src/commands/
 ├── (general)/
-│   └── ping.ts                 → /ping
+│   └── ping.ts                 ─▶ /ping
 └── [ticket]/
-    ├── index.ts                → the /ticket parent
-    ├── close.ts                → /ticket close
+    ├── index.ts                ─▶ parent definition (parent guards)
+    ├── close.ts                ─▶ /ticket close
     └── {settings}/
-        ├── index.ts            → the "settings" group
-        └── view.ts             → /ticket settings view
+        ├── index.ts            ─▶ group definition (group guards)
+        └── view.ts             ─▶ /ticket settings view
 ```
 
-Categories never change a command's name, so move files between them freely.
+Standalone commands and subcommands take their Discord name from `.setName()` on the builder; their filenames are only for organization. Parent commands and subcommand groups take their name from the `[parent]` or `{group}` folder; if you call `.setName()` on a parent or group builder, it must match the folder name or loading fails. Command categories do not affect command names, so you can reorganize files across categories without changing registered commands.
 
 ## Subcommands
 
-A parent needs an `index.ts` that describes the top-level command. It holds the
-description and anything that applies to the whole command, like contexts or
-shared guards, but it doesn't run anything itself:
+To create subcommands, add a `[parent]` folder with an `index.ts` parent definition and one file per subcommand. You can nest `{group}` folders one level deeper inside a parent folder.
+
+The parent definition holds top-level metadata, contexts, permissions, and shared guards, and has no `run()` function. Define it with `defineParentCommand()`:
 
 ```ts
 // src/commands/[ticket]/index.ts
@@ -75,8 +78,7 @@ export default defineParentCommand({
 });
 ```
 
-The folder already says `ticket`, so you don't need `setName()`. Each file next
-to it defines a subcommand with a subcommand builder:
+Each leaf file inside `[ticket]/` defines one subcommand with `defineSubcommand()` and a `ChatInputCommandSubcommandBuilder`:
 
 ```ts
 // src/commands/[ticket]/close.ts
@@ -98,13 +100,14 @@ export default defineSubcommand({
 });
 ```
 
-Hyperion stitches the subcommands into the parent when it deploys. Don't add
-subcommands to the parent's builder yourself; it'll refuse to load.
+Files inside a `[parent]` folder must use `defineSubcommand()` rather than `defineCommand()`, standalone command files cannot use `defineSubcommand()`, and every `[parent]` or `{group}` folder must contain at least one subcommand or startup fails.
 
-## Subcommand groups
+> [!CAUTION]
+> Hyperion attaches discovered subcommands to the parent builder during loading. Do not call `addSubcommands()` or add options on the parent builder yourself, or loading will fail.
 
-Groups work the same way one level down. Add `{settings}/index.ts` with a
-group definition, then put subcommand files beside it:
+### Subcommand groups
+
+Add a `{group}/index.ts` group definition using `defineSubcommandGroup()`, then place subcommand files beside it:
 
 ```ts
 // src/commands/[ticket]/{settings}/index.ts
@@ -113,60 +116,69 @@ import { defineSubcommandGroup } from "@hyperion-js/core";
 
 export default defineSubcommandGroup({
     builder: new ChatInputCommandSubcommandGroupBuilder().setDescription(
-        "Configure ticket routing",
+        "Configure ticket routing.",
     ),
 });
 ```
 
-Guards stack from the outside in: parent guards run first, then the group's,
-then the subcommand's.
+### Guards
+
+[Guards](guards.md) inherit from the outermost definition inward. For `/ticket settings view`, execution flows in this order:
+
+```text
+parent guards ─▶ group guards ─▶ view guards ─▶ run()
+```
+
+If any guard returns `false`, execution stops immediately and no later guards or `run()` execute.
+
+> [!NOTE]
+> Autocomplete interactions skip parent, group, and subcommand guards. Check permissions inside [`autocomplete()`](autocomplete.md) whenever suggestions include private data.
 
 ## Context menus
 
-User and message commands use `defineCommand()` too. The builder decides the
-command type, so `ctx.interaction` is typed for it:
+Context-menu commands appear in Discord's right-click `Apps` menu on users or messages. Define them with `defineCommand()` and either `UserContextCommandBuilder` or `MessageContextCommandBuilder`—Hyperion infers the command type from the builder with no extra `type` option:
 
 ```ts
+// src/commands/inspect-user.ts
 import { UserContextCommandBuilder } from "@discordjs/builders";
 import { defineCommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
 
-// A MessageContextCommandBuilder makes a message command instead.
+// Use MessageContextCommandBuilder for a message context menu.
 export default defineCommand({
     builder: new UserContextCommandBuilder().setName("Inspect"),
     run: async ctx => {
         await ctx.interaction.reply({
-            content: `That's ${ctx.interaction.targetUser.username}.`,
+            content: `User: ${ctx.interaction.targetUser.username}`,
             flags: MessageFlags.Ephemeral,
         });
     },
 });
 ```
 
-Put context menus in `src/commands` or a category, but not inside a parent
-folder. One can share its name with a slash command.
+Place context-menu files directly in `src/commands/` or inside a `(category)` folder, never inside a `[parent]` folder. A context-menu command can share a name with a slash command because Discord separates them by command type. Context-menu commands have no command options and do not accept `input` or `autocomplete`.
 
 ## Deploying
 
-Commands deploy when the client is created, if you passed `commands` options:
-- With `guildIds`, each listed server gets your commands immediately.
-- Without it, they deploy globally.
+Pass the `commands` option to `HyperionClient.create()` to load `src/commands/` and deploy at startup:
+- With `guildIds`, commands deploy to each listed server immediately.
+- Without `guildIds`, commands deploy globally.
 
-Hyperion checks what Discord already has first, and skips a scope when nothing
-changed, so restarting is cheap. When something did change, the log lists which
-commands were added, removed, or changed.
+Omitting `commands` skips loading and deploying `src/commands/`. Hyperion compares your local definitions against Discord's registered commands and skips any scope with no changes; when commands change, it logs which commands were added, removed, or updated. If `src/commands/` is missing or empty, Hyperion skips deployment at startup so existing commands on Discord are not wiped.
 
-Deploying overwrites every command in that scope, so anything registered outside
-Hyperion disappears. If your command folder is empty, Hyperion skips deploying
-rather than wiping everything. And if one server fails partway through a
-multi-server deploy, the servers that already succeeded keep the new commands.
+> [!CAUTION]
+> Deploying overwrites every command in the target scope, including commands registered outside Hyperion.
+
+If deployment fails partway through a list of guilds, guilds that already succeeded keep their updated commands.
 
 ## Finding a command in code
 
-`client.commands` holds every loaded command:
+`client.commands` holds every loaded command and subcommand:
 
 ```ts fragment
 client.commands.resolve("ping");
+client.commands.resolve("Inspect", ApplicationCommandType.User);
 client.commands.resolveSubcommand("ticket", "close");
+// Argument order is (parent, subcommand, group).
 client.commands.resolveSubcommand("ticket", "view", "settings");
 ```

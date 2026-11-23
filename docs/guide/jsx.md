@@ -1,10 +1,6 @@
 # JSX
 
-You've probably built an embed with discord.js before: `new EmbedBuilder()`,
-then `.setTitle()`, `.addFields()`, and so on, one call after another. It works,
-but once a message has a few parts, the shape gets hard to see. `@hyperion-js/jsx`
-lets you write the message the way it looks, then turns it into the same
-builders you'd have made by hand.
+`@hyperion-js/jsx` lets you author Discord embeds, message controls, layout messages, and modals as JSX and render them into standard `@discordjs/builders` instances. It works standalone in any discord.js v15 bot without React or `@hyperion-js/core`.
 
 ```tsx
 import { Bold, Embed, renderEmbed } from "@hyperion-js/jsx";
@@ -19,22 +15,17 @@ const embed = renderEmbed(
 );
 ```
 
-`renderEmbed()` hands back an ordinary `EmbedBuilder`, so sending it is plain
-discord.js: `await interaction.reply({ embeds: [embed] })`. The package doesn't
-need React and doesn't depend on `@hyperion-js/core`, so everything in this guide
-works with any discord.js bot. If you do use Hyperion, see
-[JSX with Hyperion](jsx-with-hyperion.md) for how the two fit together.
+`renderEmbed()` returns a standard `EmbedBuilder`, so you send it with plain discord.js such as `await interaction.reply({ embeds: [embed] })`. Read the pages under [What you can build](#what-you-can-build) for standalone rendering, or jump to [JSX with Hyperion](jsx/with-hyperion.md) when using `@hyperion-js/core` handlers.
 
 ## Setup
 
-You'll need Node.js 24.17 or newer. Install the package with the
-`@discordjs/builders` prerelease it was built against:
+You need Node.js 24.17 or newer. Install `@hyperion-js/jsx` alongside the pinned `@discordjs/builders` prerelease it targets (see the [FAQ](faq.md) for why prereleases are pinned):
 
 ```npm
 npm install @hyperion-js/jsx@beta @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
 ```
 
-Then tell TypeScript to use this package's JSX runtime:
+Configure TypeScript to use the `@hyperion-js/jsx` runtime:
 
 ```json
 {
@@ -46,35 +37,29 @@ Then tell TypeScript to use this package's JSX runtime:
 }
 ```
 
-Put your views in `.tsx` files and run them with a runner such as `tsx`, or
-compile them for Node. (The option says `react-jsx`, but that's only the name of
-the transform; React isn't involved.)
+TypeScript names the automatic JSX transform `react-jsx`, even though React is neither installed nor used. Put JSX views in `.tsx` files and run them with `tsx` or compile them with `tsc`. If you launch `tsx` from outside the directory containing `tsconfig.json` (for example in a monorepo), pass `--tsconfig` so dynamically discovered `.tsx` handlers compile with the JSX runtime.
 
-## What are you sending?
+## What you can build
 
-- [Embeds and text](jsx/embeds.md): titles, fields, and formatting.
-- [Buttons and menus](jsx/message-components.md): controls, and templates for
-  your handlers.
-- [Layout messages](jsx/layout-messages.md): a whole message built from text,
-  images, and controls.
-- [Modals](jsx/modals.md): forms, including pre-filled ones.
+- [JSX with Hyperion](jsx/with-hyperion.md). Use JSX views as `@hyperion-js/core` handler templates or inline responses.
+- [Embeds and text](jsx/embeds.md). Titles, fields, mentions, and Markdown formatting components.
+- [Buttons and menus](jsx/message-components.md). Action rows, buttons, and select menus.
+- [Layout messages](jsx/layout-messages.md). Messages built from containers, text displays, media galleries, sections, and interactive controls.
+- [Modals](jsx/modals.md). Modal forms, including pre-filled inputs, select menus, and file uploads.
 
 ## How rendering works
 
-A view is just a function that returns JSX, and it runs again every time you
-render. Two things follow from that:
-- Views are synchronous, so fetch your data first and pass it in as props.
-- Every render gives you brand-new builders, so personalising one reply can't
-  leak into another.
+A JSX view evaluates synchronously each time you call a render function, returning fresh builder instances so mutating a rendered builder never affects other messages. Arrays, fragments, and conditional expressions work like standard JSX; use `<Br />` for line breaks and `{" "}` when you need an explicit space between adjacent elements.
 
-Arrays, fragments, and conditionals work the way you'd expect. Use `<Br />` for
-a line break, and `{" "}` when you need a space between two elements.
+Keep four runtime differences from React in mind:
+- There are no hooks, component state, intrinsic HTML tags (`<div>`), or event-handler props (`onClick`); unknown props throw `JSXRenderError`.
+- `null`, `undefined`, and booleans are omitted, while `0` renders as `"0"` (avoid `{count && ...}` when `count` can be zero).
+- Promises and prebuilt `@discordjs/builders` instances cannot be passed as children; fetch async data before rendering and pass it as props.
+- Keep a single installed copy of `@hyperion-js/jsx`, because JSX elements use module-private identity checks.
 
-When something's wrong, you get a `JSXRenderError` that points at the exact spot
-in your view. The underlying discord.js error is attached as `cause`.
+Structural violations throw `JSXRenderError` with a `path` to the invalid element; errors thrown by native builders or your own function components attach the original error as `cause`.
 
 > [!WARNING]
-> The `cause` can contain the values you passed in, so be careful about logging
-> it.
+> The attached `cause` may include user-provided values from your props, so avoid logging `cause` verbatim when handling sensitive input.
 
-The [authoring reference](../jsx.md) has the full rules.
+For every prop and validation rule, see the [JSX reference](../jsx.md).

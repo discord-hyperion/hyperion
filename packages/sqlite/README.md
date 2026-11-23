@@ -41,5 +41,5 @@ better-sqlite3 ships prebuilt binaries for the common platforms, so there's
 nothing to compile. Any [Standard Schema](https://standardschema.dev/) library
 works for rows, such as Valibot or Zod, as long as it validates synchronously.
 
-See the [guide](https://hyperion-docs-6h7.pages.dev/storing-data/)
+See the [guide](https://hyperion.favteo.com/sqlite/)
 for tables, queries, transactions, and migrations.

@@ -25,3 +25,6 @@ apps/dev-bot/*.db-*
 
 # Temporary modules from scripts/check-examples.mjs
 apps/dev-bot/.examples-*/
+
+# cf deploy build output
+apps/docs-site-fumadocs/.cloudflare/

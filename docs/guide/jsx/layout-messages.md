@@ -1,9 +1,6 @@
 # Layout messages
 
-An embed hangs a card under your message text. A **layout message** drops the
-plain message entirely and builds everything from pieces: text blocks, images,
-dividers, boxes with a coloured edge, and your buttons. (Discord calls this
-Components V2.)
+Layout messages (known in Discord's API as Components V2) replace plain message `content` and `embeds` with composable blocks such as text displays, containers, media galleries, dividers, and interactive controls. Render them with `renderMessage()`:
 
 ```tsx
 import {
@@ -26,7 +23,7 @@ const message = renderMessage(
         >
             <TextDisplay>
                 <H2>Your profile</H2>
-                You're all caught up.
+                You are all caught up.
                 <Subtext>Check back later for new tasks.</Subtext>
             </TextDisplay>
         </Section>
@@ -41,32 +38,24 @@ const message = renderMessage(
 );
 ```
 
-Send it with `await interaction.reply(message)`. `renderMessage()` returns the
-components together with the flag Discord needs, so there's nothing to remember.
-`{ ephemeral: true }` makes the reply private. Leave it out and the same result
-also works with `update()` and `editReply()`.
+Send the result directly with `await interaction.reply(message)`. `renderMessage()` returns `{ components, flags }`, where `flags` is the discord.js flag-name array `["IsComponentsV2"]`—or `["IsComponentsV2", "Ephemeral"]` when you pass `{ ephemeral: true }`—rather than a `MessageFlags` bitfield. To combine extra flags or file attachments, spread `message` into your reply options (such as `{ ...message, flags: [...message.flags, "SuppressNotifications"] }` or `{ ...message, files: [attachment] }`).
 
-## The pieces
+## Components
 
-- **`Container`**: a box around other pieces. `accent` colours its edge.
-  Containers sit at the top level and don't nest.
-- **`TextDisplay`**: a block of text, with the same
-  [formatting as embeds](embeds.md#formatting-text).
-- **`Section`**: one to three text displays with an `accessory` beside them,
-  either a `Thumbnail` or a `Button`.
-- **`MediaGallery`**: one to ten images or videos, as `MediaGallery.Item`
-  children.
-- **`Separator`**: space between pieces. It draws a divider line unless you pass
-  `divider={false}`, and `spacing="large"` adds more room.
-- **`ActionRow`**: your buttons and menus, at the top level or inside a container.
+| Component      | Props                                                                       | Placement and children                                                                               |
+| -------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `Container`    | Optional `accent`, `spoiler`                                                | Top-level only (cannot nest inside another `Container`); groups child blocks inside an accented box. |
+| `TextDisplay`  | —                                                                           | Rich Markdown text using the same [formatting components as embeds](embeds.md#formatting-text).      |
+| `Section`      | Required `accessory` (`Thumbnail` or interactive/link `Button`)             | Pairs 1–3 `TextDisplay` children with a side accessory.                                              |
+| `MediaGallery` | —                                                                           | Displays 1–10 images or videos via `MediaGallery.Item` children.                                     |
+| `Separator`    | Optional `divider` (`false` hides line), `spacing` (`"small"` or `"large"`) | Inserts vertical space and an optional divider between blocks.                                       |
+| `ActionRow`    | —                                                                           | Holds buttons or a select menu, at the top level or inside a `Container`.                            |
 
-Put a piece in the wrong place (a `Thumbnail` outside a section, say) and
-rendering throws a `JSXRenderError` that points right at it.
+Placing a component in an invalid parent (such as a `Thumbnail` outside a `Section`) or rendering an empty layout message throws `JSXRenderError`. Discord's `File` layout component is not implemented yet.
 
-## Images
+## Images and attachments
 
-Give each gallery item a URL, plus a short description (alt text) for people who
-can't see the image:
+Give each `MediaGallery.Item` a `url` and a `description` for alt text:
 
 ```tsx
 import { MediaGallery, renderMessage } from "@hyperion-js/jsx";
@@ -81,22 +70,16 @@ const message = renderMessage(
 );
 ```
 
-`Thumbnail` and `MediaGallery.Item` also take `spoiler`. To show a file you're
-uploading yourself, use an `attachment://filename` URL and pass the file in the
-reply's `files` option. The package doesn't upload it for you.
+`Container`, `Thumbnail`, and `MediaGallery.Item` all accept a `spoiler` prop. To display an uploaded file, set `url` to `attachment://filename` and spread `message` with `files`—`@hyperion-js/jsx` does not upload files itself:
+
+```ts fragment
+await interaction.reply({ ...message, files: [attachment] });
+```
 
 ## Updating a layout message
 
-A message that starts as a layout message stays one for good. To change it,
-render the new version with `renderMessage()` and pass it to `update()` or
-`editReply()`. Leave out `ephemeral`, since a sent message can't change who sees
-it. And don't add `content` or `embeds`; put visible text in a `TextDisplay`
-instead.
+Once a message is sent as a layout message, it stays a layout message on every subsequent edit—you cannot convert an existing plain or embed message into a layout message or remove the layout flag once sent. Render the updated view with `renderMessage()` without `{ ephemeral: true }` (TypeScript rejects passing an ephemeral layout message to `update()` or `editReply()`), and never pass `content` or `embeds`.
 
-Keep the whole message to 40 components, counting everything nested inside.
-Interactive custom IDs must be unique, as they are for any
-[buttons and menus](message-components.md).
+A layout message can contain at most 40 components total, including nested children (`MediaGallery.Item` entries do not count toward this limit). Interactive `customId`s must be unique across the message, just like standard [buttons and menus](message-components.md).
 
-Next up: [modals](modals.md). The [layout reference](../../jsx-layout.md) lists
-every prop and placement rule. Using Hyperion? See how
-[buttons in layout messages reach your handlers](../jsx-with-hyperion.md#layout-messages).
+Next, see [Modals](modals.md). For all props and placement rules, see the [JSX layout reference](../../jsx-layout.md). If you use `@hyperion-js/core`, see [Layout messages in JSX with Hyperion](with-hyperion.md#layout-messages).

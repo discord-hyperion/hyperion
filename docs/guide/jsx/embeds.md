@@ -1,7 +1,6 @@
 # Embeds and text
 
-An embed is the card Discord shows under a message: a title, some text, and a few
-fields. In JSX you write those parts as children of `<Embed>`:
+Describe a Discord embed as children of `<Embed>` and render it into a standard `EmbedBuilder` with `renderEmbed()`:
 
 ```tsx
 import { Bold, Br, Embed, Link, renderEmbed } from "@hyperion-js/jsx";
@@ -25,25 +24,35 @@ const embed = renderEmbed(
 );
 ```
 
-Send it with `await interaction.reply({ embeds: [embed] })`. What you get back is
-a normal `EmbedBuilder`, so you can still call its methods before sending.
+Send the result with `await interaction.reply({ embeds: [embed] })`. Because `renderEmbed()` returns an `EmbedBuilder`, you can chain any discord.js `EmbedBuilder` method on it afterward.
+
+`<Embed>` accepts optional `color`, `url`, and `timestamp` props, and supports seven child sections. Every section except `Embed.Field` is a singleton—repeating one throws `JSXRenderError`:
+
+| Element             | Props / children                                          | Text escaping                        |
+| ------------------- | --------------------------------------------------------- | ------------------------------------ |
+| `Embed.Title`       | Plain-text children                                       | Unescaped (no formatting components) |
+| `Embed.Description` | Rich-text children                                        | Auto-escaped                         |
+| `Embed.Field`       | `name` (rich text), optional `inline`, rich-text children | Auto-escaped                         |
+| `Embed.Author`      | `name`, optional `iconUrl`, `url` (no children)           | Unescaped string prop                |
+| `Embed.Footer`      | `text`, optional `iconUrl` (no children)                  | Unescaped string prop                |
+| `Embed.Image`       | `url` (no children)                                       | —                                    |
+| `Embed.Thumbnail`   | `url` (no children)                                       | —                                    |
 
 ## Formatting text
 
-Plain text is escaped for you, so a username with a `*` in it won't turn the
-rest of the line bold. When you do want formatting, reach for a component:
+Rich-text slots (`Embed.Description`, `Embed.Field` `name` and value, `TextDisplay`, and `Modal.TextDisplay`) escape literal text automatically so characters like `*` or `_` in user input cannot break Discord Markdown. Use formatting components for styled output:
 
 | Kind     | Components                                                                |
 | -------- | ------------------------------------------------------------------------- |
 | Inline   | `Bold`, `Italic`, `Underline`, `Strikethrough`, `Spoiler`, `Code`, `Link` |
 | Blocks   | `CodeBlock`                                                               |
-| Headings | `H1`, `H2`, `H3`, and `Subtext` for small grey text                       |
+| Headings | `H1`, `H2`, `H3`, and `Subtext` for small muted text                      |
 
-Headings each take their own line. They work in descriptions and field values,
-and also in [layout messages](layout-messages.md) and [modals](modals.md). Keep
-each on a single line, and don't put one inside an inline component.
+Heading components each occupy their own line and work in embed descriptions, field values, [layout messages](layout-messages.md), and [modals](modals.md). Keep headings on a single line and do not nest them inside inline components.
 
-Got Markdown you wrote yourself, like a list? `Raw` passes it through untouched:
+`Code` rejects backticks and line breaks, and `CodeBlock` accepts an optional `language` prop and rejects triple backticks (neither escapes its content). `Link` requires an absolute `http://` or `https://` URL and cannot nest another `Link`; violating any of these rules throws `JSXRenderError`.
+
+Wrap pre-formatted Markdown, such as a bulleted list, in `<Raw>` to bypass automatic escaping:
 
 ```tsx
 import { Embed, Raw, renderEmbed } from "@hyperion-js/jsx";
@@ -57,13 +66,11 @@ const embed = renderEmbed(
 );
 ```
 
-Titles, author names, and footers are plain text only, so a formatting component
-there throws an error. Field names can use inline formatting, but not headings.
+Plain-text slots (`Embed.Title` children, `Embed.Author` `name`, and `Embed.Footer` `text`) keep literal text unescaped and reject formatting components. `Embed.Field` `name` accepts inline formatting components, but not headings.
 
 ## Reusing a view
 
-If you build the same kind of embed in several places, turn it into a function.
-Props carry the parts that change:
+Extract repeated embed layouts into function components that accept props:
 
 ```tsx
 import { Embed, renderEmbed } from "@hyperion-js/jsx";
@@ -80,18 +87,12 @@ const TodoCard = ({ title, owner }: Todo) => (
 const embed = renderEmbed(<TodoCard title="Review the change" owner="Alex" />);
 ```
 
-Use `.map()` to make a field for each item in a list, and `&&` to leave an
-optional part out. Every render creates a new embed, so changing one builder
-afterwards never touches another.
+Use `.map()` to render lists of fields and `&&` to include optional elements. Each call to `renderEmbed()` builds a new `EmbedBuilder`, so mutating one instance never affects another.
 
 ## Mentions and limits
 
-`UserMention`, `RoleMention`, and `ChannelMention` write the mention text for an
-ID. They don't decide who gets pinged; your reply does.
+`UserMention`, `RoleMention`, and `ChannelMention` format Discord mention strings from an `id` prop, validating only that `id` is a non-empty string of digits (not that the entity exists). Mentions do not control notifications; set `allowedMentions` on your reply to control who gets pinged.
 
-One thing `renderEmbed()` can't see: Discord counts the 6,000-character limit
-across every embed in a message. Each call only checks its own embed, so keep an
-eye on the total yourself.
+Discord enforces a 6,000-character combined limit across all embeds in a single message. `renderEmbed()` validates one embed at a time, so verify the combined length yourself when sending multiple embeds together.
 
-Next up: [buttons and menus](message-components.md). The
-[embed reference](../../jsx.md) lists every prop.
+Next, see [Buttons and menus](message-components.md). For every embed prop and limit, see the [JSX reference](../../jsx.md).

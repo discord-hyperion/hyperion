@@ -1,34 +1,32 @@
-# Asking before deleting something
+# Confirming destructive actions
 
-Some commands are hard to undo. By the end of this page, `/todo delete` will
-reply with a Delete button that only the person who asked can press, and nothing
-is deleted until they do.
-
-It uses [data in custom IDs](custom-ids.md) to carry the todo and its owner,
-and a [guard](guards.md) to check the clicker.
+Add a confirmation button to a `/todo delete` command so nothing is deleted until the original user clicks Delete. This pattern pairs [custom-ID params](custom-ids.md) with the `paramOwner()` [guard](guards.md).
 
 ## Steps
 
-1. Describe what the button carries. It sits next to the button handler, so the
-   command can import it too:
+1. Define the params next to the button handler so the command can import them:
 
    ```ts fragment
    // src/buttons/delete-todo.ts
-   export const deleteTodo = defineParams({
+   import { DangerButtonBuilder } from "@discordjs/builders";
+   import { defineButton, defineParams, paramOwner } from "@hyperion-js/core";
+   import * as v from "valibot";
+   import { todos } from "../database.ts";
+
+   export const deleteTodoId = defineParams({
        id: "todo.delete",
        keys: ["todoId", "owner"],
        schema: v.object({ todoId: v.string(), owner: v.string() }),
    });
    ```
 
-2. Write the button handler in the same file. The template is the button
-   people see, and `paramOwner("owner")` turns everyone else away:
+2. Add the button handler in the same file, using `builder` for the confirmation button template and `paramOwner("owner")` to reject other users:
 
    ```ts fragment
    export default defineButton({
-       params: deleteTodo,
+       params: deleteTodoId,
        builder: new DangerButtonBuilder()
-           .setCustomId(deleteTodo.id)
+           .setCustomId(deleteTodoId.id)
            .setLabel("Delete"),
        guards: [paramOwner("owner", "Only you can delete your todo.")],
        run: async ctx => {
@@ -43,46 +41,43 @@ and a [guard](guards.md) to check the clicker.
                return;
            }
 
-           const deleted = todos.delete({ id: params.todoId });
+           const deleted = todos.delete({
+               id: params.todoId,
+               owner: ctx.interaction.user.id,
+           });
 
            await ctx.interaction.update({
-               content: deleted ? "Deleted." : "That todo was already gone.",
+               content: deleted ? "Deleted." : "That todo was already deleted.",
                components: [],
            });
        },
    });
    ```
 
-   The handler deletes by ID only after the guard has checked the owner. If
-   your todos can change hands, also check the stored owner before deleting:
-   the custom ID only tells you who the button was built for.
+   Scoping [`todos.delete()`](sqlite.md) by both `id` and `owner` verifies current storage ownership even if records can transfer after the button is sent. Remember that guards on `/todo delete` (such as `requirePermissions()`) do not run on button clicks—attach any required permission guards to the button handler as well (see [Button guards](buttons.md#guards)).
 
-3. In the command, reply with a copy of the button, built for this todo and
-   this user. Making the reply ephemeral keeps the button out of everyone
-   else's sight, and ignoring it is the same as cancelling:
+3. In `/todo delete`, build a copy of the button with the todo ID and requesting user ID, and send it in an ephemeral reply:
 
    ```ts fragment
-   // In /todo delete's run()
-   const button = ctx.client.buttons.build(deleteTodo, {
+   // Import ActionRowBuilder from "@discordjs/builders", MessageFlags from "discord.js",
+   // and deleteTodoId from "../buttons/delete-todo.ts".
+   const button = ctx.client.buttons.build(deleteTodoId, {
        todoId: id,
        owner: ctx.interaction.user.id,
    });
 
    await ctx.interaction.reply({
-       content: `Delete "${todo.title}"? This can't be undone.`,
+       content: `Delete "${todo.title}"? This cannot be undone.`,
        components: [new ActionRowBuilder().addComponents(button)],
        flags: MessageFlags.Ephemeral,
    });
    ```
 
-## Check it worked
+   Ephemeral confirmations expire after 15 minutes (Discord's interaction token window), and dismissing the message cancels the deletion. For public confirmations, add a Cancel button and re-check permissions on the handler.
 
-Run `/todo delete` and press Delete: the message changes to "Deleted." and the
-todo is gone. To check the guard, send the reply without
-`MessageFlags.Ephemeral` and have someone else press the button. They get "Only
-you can delete your todo." privately, and the todo stays.
+## Verifying it works
+
+Run `/todo delete` and click Delete. The message should update to `"Deleted."` and remove the todo from storage. To verify the guard, temporarily remove `flags: MessageFlags.Ephemeral` and ask another user to click the button: they should receive the ephemeral rejection `"Only you can delete your todo."`, and the todo should remain intact.
 
 > [!WARNING]
-> Change `keys` or their order after you've sent buttons, and the old buttons
-> decode wrongly. Give the new version a new `id` instead, as
-> [changing params later](custom-ids.md#changing-params-later) explains.
+> Do not add, remove, or reorder `keys` after sending buttons to Discord, because existing buttons will decode incorrectly. Use a new route `id` instead, as explained in [Changing params later](custom-ids.md#changing-params-later).
