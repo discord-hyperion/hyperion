@@ -1,13 +1,10 @@
 # Data in custom IDs
 
-Say every ticket message gets a Close button. You don't want a separate handler
-per ticket; you want _one_ handler that knows which ticket was clicked. Params
-let a button, select menu, or modal carry a little data in its custom ID, and
-hand it back to your handler, validated and typed.
+When many messages share the same button, menu, or modal, such as a Close button on every ticket, you need one handler that knows which ticket was clicked. Custom ID params let you encode small values into a control's custom ID and receive them validated and typed in your handler.
 
 ## Defining params
 
-`defineParams()` describes the data:
+Define the route, key order, and validation schema with `defineParams()`:
 
 ```ts
 // src/buttons/close-ticket.ts
@@ -24,34 +21,29 @@ export const closeTicket = defineParams({
 });
 ```
 
-| Option   | What it's for                                                                                            |
-| -------- | -------------------------------------------------------------------------------------------------------- |
-| `id`     | The route: the fixed start of every custom ID these params build.                                        |
-| `keys`   | The schema's fields, in the order they're written into the custom ID.                                    |
-| `schema` | Checks the values when a click arrives. Any [Standard Schema](https://standardschema.dev) library works. |
+| Option   | Purpose                                                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `id`     | Route prefix written at the start of every generated custom ID.                                                        |
+| `keys`   | Schema field names in the exact order they are serialized into the custom ID.                                          |
+| `schema` | Validates decoded values when an interaction arrives. Any [Standard Schema](https://standardschema.dev) library works. |
 
-The keys have to name exactly the schema's fields, or it won't compile. Pick any
-order, but once you've sent buttons, it's locked in (more on that
-[below](#changing-params-later)).
+`keys` must list every field in `schema` and no extras, or TypeScript rejects the definition. You can choose any key order initially, but once messages with that button are sent, changing the order breaks existing buttons. See [Changing params later](#changing-params-later).
 
 ## Building controls
 
-Call `build()` with the params and their values to get a copy of the handler's
-template with the values in its custom ID:
+Pass the params definition and values to `build()` to copy the handler's template with an encoded custom ID:
 
 ```ts fragment
 const button = ctx.client.buttons.build(closeTicket, {
     ticketId: "a1b2c3d4",
     owner: user.id,
 });
-// Its custom ID is "ticket.close:a1b2c3d4:123456789012345678".
+// Resulting custom ID: "ticket.close:a1b2c3d4:123456789012345678"
 ```
 
-Select menus and modals have the same `build()`. Building only writes the values
-in; the schema checks them when the click comes back.
+Select menus and modals support `build(definition, values)` in the same way. `build()` serializes the values into the custom ID without running the schema; validation runs when the interaction returns.
 
-No template? The params are also a function that returns the custom ID, for any
-builder:
+If your handler does not use a template, call the params definition as a function to generate the custom ID string for any builder:
 
 ```ts fragment
 new DangerButtonBuilder()
@@ -59,28 +51,28 @@ new DangerButtonBuilder()
     .setCustomId(closeTicket({ ticketId: "a1b2c3d4", owner: user.id }));
 ```
 
-Hyperion throws if a custom ID goes over Discord's 100 characters, so keep
-values short.
+Hyperion throws an error if the encoded custom ID exceeds Discord's 100-character limit, so keep routes and values short.
 
-## Reading the data
+## Reading params in a handler
 
-Give the handler `params` instead of a custom ID, and put them in its type
-argument:
+Pass `params` to `defineButton()`, `defineSelectMenu()`, or `defineModal()`. When using a template, set the template's custom ID to `params.id`:
 
 ```ts fragment
 export default defineButton({
     params: closeTicket,
     builder: new DangerButtonBuilder()
-        .setCustomId(closeTicket.id) // the template carries the route
+        .setCustomId(closeTicket.id)
         .setLabel("Close"),
     guards: [paramOwner("owner")],
     run: async ctx => {
         const [issues, params] = ctx.params;
+
         if (issues) {
             await ctx.interaction.reply({
                 content: "This button is out of date.",
                 flags: MessageFlags.Ephemeral,
             });
+
             return;
         }
 
@@ -92,45 +84,29 @@ export default defineButton({
 });
 ```
 
-`ctx.params` is `[issues, value]`, the same shape as [typed input](input.md). If
-the custom ID fails the schema, you get the issues and decide what to say.
+`ctx.params` is a tuple of `[null, value]` on success or `[issues, undefined]` on validation failure, matching the shape of [typed input](input.md). When validation fails, your handler decides what to reply.
 
-Select menus and modals take `params` the same way, beside their other
-options.
+## Verifying ownership
 
-## Don't trust the custom ID
-
-Custom IDs come back from the user's client, so treat params as claims, not
-facts. To stop other people using a control you built for one user, check the
-user it names against the user who clicked:
+Custom IDs come back from the user's client, so treat decoded values as untrusted input. To restrict a control to the user it was created for, add the `paramOwner()` guard:
 
 ```ts fragment
-guards: [paramOwner("owner", "Only the ticket's author can close it.")];
+guards: [paramOwner("owner", "Only the ticket author can close it.")];
 ```
 
-`paramOwner()` passes only when the params are valid _and_ the named user is the
-one who clicked. Params are checked before guards, so this works on buttons,
-menus, and modals alike. See [guards](guards.md).
+`paramOwner()` passes only when the params pass schema validation and the named field equals `ctx.interaction.user.id`. Because Hyperion validates params before running guards, `paramOwner()` works on buttons, select menus, and modals. See [Guards](guards.md).
 
 > [!WARNING]
-> That only proves the clicker is the user the ID names. It can't tell you the
-> ID wasn't edited, or that they still own the ticket. For anything that
-> matters, look the ticket up and check its owner in your handler.
+> `paramOwner()` checks only that the clicking user matches the ID stored in the custom ID. It cannot verify that the user still owns the resource in your database. For sensitive actions, look up the record and verify ownership in your handler.
 
 ## Changing params later
 
-Messages outlive your code. If you change the keys, their order, or what they
-mean, old buttons will decode wrongly. So give the new version a new route
-(`ticket.close.v2`). You can keep the old handler around to reply "This button
-is out of date."
+Messages stay in Discord channels after you redeploy your bot. If you add, remove, or reorder `keys` on an existing route, buttons on older messages will decode incorrectly. Instead, create a new route name such as `ticket.close.v2`. You can keep the old handler registered to reply that the button is out of date.
 
-A custom ID that matches a route but has the wrong number of values is ignored,
-and logged at debug level, so you can spot a template sent without its values.
+If an incoming custom ID matches a route prefix but has the wrong number of values, Hyperion ignores it and logs the mismatch at debug level.
 
-## A few rules
+## Rules
 
-- Routes must be unique per kind (buttons, menus, modals), and can't equal a
-  fixed custom ID of the same kind.
-- A handler has either a custom ID or params, never both.
-- Values are text in the custom ID. Use the schema to turn them into numbers or
-  booleans: `v.pipe(v.string(), v.toNumber())`.
+- Routes must be unique within each component kind and cannot match a fixed custom ID of the same kind.
+- A handler accepts either `customId` or `params`, never both.
+- Values are stored as strings in the custom ID. Convert numbers or booleans in your schema, for example with `v.pipe(v.string(), v.toNumber())`.

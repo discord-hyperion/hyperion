@@ -1,14 +1,13 @@
 # Autocomplete
 
-Autocomplete shows suggestions while someone types an option value. In
-Hyperion, it's just another method on your command: no extra folder, nothing to
-register.
+Autocomplete shows dynamic suggestions while a user types an option value. In Hyperion, autocomplete is an optional `autocomplete()` method on your command definition. You do not need a separate folder or handler file.
 
 ## Adding suggestions
 
-Turn on autocomplete for the option, then add an `autocomplete()` method:
+Enable autocomplete on an option in your command builder, then add an `autocomplete()` method to `defineCommand()`:
 
 ```ts
+// src/commands/topic.ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { defineCommand } from "@hyperion-js/core";
 
@@ -17,7 +16,7 @@ const topics = ["commands", "buttons", "select-menus", "modals"];
 export default defineCommand({
     builder: new ChatInputCommandBuilder()
         .setName("topic")
-        .setDescription("Explore a topic")
+        .setDescription("Explore a topic.")
         .addStringOptions(option =>
             option
                 .setName("query")
@@ -37,6 +36,7 @@ export default defineCommand({
     },
     run: async ctx => {
         const query = ctx.interaction.options.getString("query", true);
+
         await ctx.interaction.reply(
             topics.includes(query)
                 ? `Selected: ${query}.`
@@ -46,26 +46,16 @@ export default defineCommand({
 });
 ```
 
-One method handles every autocomplete option on the command, so if several
-options autocomplete, check which one is focused. Responding works as in plain
-discord.js; see the discord.js guide on
-[autocomplete](https://discordjs.guide/legacy/slash-commands/autocomplete).
+One `autocomplete()` method handles every autocomplete option on that command. If a command has multiple autocomplete options, inspect `ctx.interaction.options.getFocused(true).name` to branch on the active option. Responding works the same way as in plain discord.js. See the discord.js guide on [autocomplete](https://discordjs.guide/legacy/slash-commands/autocomplete).
 
-## Suggestions aren't validation
+## Validating the submitted value
 
-Users can ignore your suggestions and type anything, so `run()` still has to
-check the value (the example above does). Picking a suggestion only fills in the
-option; running the command is a separate interaction.
+Discord lets users ignore autocomplete suggestions and submit arbitrary text. Always validate the option value inside `run()`, as shown in the example above, or with [typed input](input.md). Selecting a suggestion only fills in the input field; running the command triggers a separate interaction.
 
-## Guards don't run here
+## Guards and autocomplete
 
-Your command's [guards](guards.md) don't run for autocomplete. Running them on
-every keystroke would burn through cooldowns. If suggestions reveal anything
-private, check who's asking inside `autocomplete()` itself.
+Command [guards](guards.md) do not run for autocomplete interactions. Discord sends an autocomplete interaction on every keystroke, which would repeatedly trigger guards such as cooldowns. If your suggestions expose private data, check permissions inside `autocomplete()` before responding.
 
-## If something goes wrong
+## Error handling
 
-If your method throws, finishes without responding, or the command has no
-`autocomplete()` method, Hyperion sends an empty list so the user's client
-doesn't hang. It can only do that once your method returns, so always `await`
-your work.
+If `autocomplete()` throws, finishes without calling `respond()`, or is missing from the command, Hyperion replies with an empty list of choices so the Discord client does not hang. Hyperion can only send that fallback after `autocomplete()` returns, so always `await` asynchronous work inside it.

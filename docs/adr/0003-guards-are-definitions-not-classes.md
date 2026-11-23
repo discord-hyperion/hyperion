@@ -12,7 +12,7 @@ distinguishable from factories at runtime, so structural lookalikes are rejected
 Keeping `extends Guard` alongside `defineGuard()` was rejected: two authoring
 styles for the same concept, and the class form added constructor boilerplate
 without enabling anything a closure cannot express. A special parameterized form,
-`defineGuard((arg) => ({ … }))`, was rejected because a bare function in a
+`defineGuard(arg => ({ … }))`, was rejected because a bare function in a
 `guards` array is indistinguishable from a guard factory at runtime. The built-in
 guards changed with this decision (`ownerOnly`, `cooldown()`, `paramOwner()`),
 which was accepted as a pre-1.0 breaking change.

@@ -1,14 +1,13 @@
 # Guards
 
-A guard is a check that runs before your handler. Return `true` to let the
-interaction through, `false` to stop it. They're how you say "owner only",
-"moderators only", or "slow down" without cluttering every `run()` method.
+A guard is a check that runs before a handler executes. Return `true` to allow the interaction or `false` to reject it. Use guards for checks such as ownership, permissions, and rate limits instead of repeating that logic in every `run()` method.
 
 ## Using a guard
 
-Every handler (commands, buttons, menus, modals) takes a `guards` array:
+Commands, buttons, select menus, and modals all accept a `guards` array:
 
 ```ts fragment
+import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { defineCommand, ownerOnly } from "@hyperion-js/core";
 
 export default defineCommand({
@@ -23,71 +22,68 @@ export default defineCommand({
 });
 ```
 
-Guards run in order, and the first one to say no stops everything after it.
-When a guard rejects, the user gets its description as a private reply.
+Guards run in array order. When a guard returns `false`, Hyperion stops the remaining guards and skips `run()`. By default, Hyperion sends the guard's `description` to the user as an ephemeral reply.
 
-Guards belong to the handler they're on. A command's guards don't protect the
-buttons it sends, so add guards to those buttons as well.
+Guards apply only to the handler they are attached to. A command's guards do not protect buttons, menus, or modals sent by that command, so attach guards to those component handlers as well.
 
-## Writing your own
+## Writing a custom guard
 
-Give `defineGuard()` a name, a description, and a check:
+Create a guard with `defineGuard()`, supplying a `name`, a `description`, and a `run()` check:
 
 ```ts
+// src/guards/threads-only.ts
 import { defineGuard } from "@hyperion-js/core";
 
 export const threadsOnly = defineGuard({
     name: "threads-only",
-    description: "Use this in a thread.",
+    description: "Use this command in a thread.",
     run: ctx => ctx.interaction.channel?.isThread() ?? false,
 });
 ```
 
-| Option        | What it's for                                                                                            |
-| ------------- | -------------------------------------------------------------------------------------------------------- |
-| `name`        | Shows in the logs when the guard rejects someone.                                                        |
-| `description` | The private reply a rejected user gets.                                                                  |
-| `run`         | Returns `true` to let the interaction through. Can be async.                                             |
-| `onFail`      | Optional. Replies instead of the description; see [custom rejection replies](#custom-rejection-replies). |
+| Option        | Purpose                                                                                   |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| `name`        | Identifier recorded in logs when the guard rejects an interaction.                        |
+| `description` | Default ephemeral reply sent when the guard rejects.                                      |
+| `run`         | Sync or async function returning `true` to allow or `false` to reject.                    |
+| `onFail`      | Optional custom reply handler. See [Custom rejection replies](#custom-rejection-replies). |
 
-A guard is for commands unless you say otherwise. To use one elsewhere, name the
-context it expects:
+By default, `defineGuard()` creates a command guard. To use a guard on buttons, modals, select menus, or all interaction types, specify the context type:
 
 ```ts fragment
-// Commands only (the default)
-defineGuard({ name, description, run: ctx => … });
+// Commands only, the default
+defineGuard({ name, description, run: ctx => true });
 
-// Buttons only: pass the context as a type argument…
-defineGuard<ButtonContext>({ name, description, run: ctx => … });
+// Buttons only, via a type argument
+defineGuard<ButtonContext>({ name, description, run: ctx => true });
 
-// …or type run's parameter
-defineGuard({ name, description, run: (ctx: ModalContext) => … });
+// Modals only, by typing the ctx parameter
+defineGuard({ name, description, run: (ctx: ModalContext) => true });
 
-// Every kind of handler
-defineGuard<InteractionContext>({ name, description, run: ctx => … });
+// Any handler type
+defineGuard<InteractionContext>({ name, description, run: ctx => true });
 ```
 
-TypeScript stops you from putting a guard on the wrong kind of handler.
+TypeScript prevents you from attaching a guard to an incompatible handler type.
 
-## Guards with settings
+## Parameterized guards
 
-Need a value, like an allowed server ID? Wrap the guard in a function:
+To pass configuration into a guard, such as an allowed server ID, wrap `defineGuard()` in a function:
 
 ```ts fragment
 const allowedGuild = (guildId: string) =>
     defineGuard({
         name: "allowed-guild",
-        description: "Use this in the configured server.",
+        description: "Use this command in the configured server.",
         run: ctx => ctx.interaction.guildId === guildId,
     });
 
 guards: [allowedGuild("123456789012345678")];
 ```
 
-## Keeping state
+## Storing state in a guard
 
-Guards don't have fields, but closures do the same job. Anything declared in the
-outer function lives as long as the guard:
+Use a closure inside the wrapper function to keep in-memory state for a guard:
 
 ```ts fragment
 const rateLimit = (max: number) => {
@@ -95,34 +91,32 @@ const rateLimit = (max: number) => {
 
     return defineGuard({
         name: "rate-limit",
-        description: "You're doing that too often.",
+        description: "You have reached the usage limit.",
         run: ctx => {
             const used = counts.get(ctx.interaction.user.id) ?? 0;
             counts.set(ctx.interaction.user.id, used + 1);
+
             return used < max;
         },
     });
 };
 ```
 
-For state shared between several guards, create it outside and pass it in. For
-state that should be fresh on every interaction, use a factory (below).
+To share state across multiple guards, create the collection outside the wrapper and pass it in. To construct a guard dynamically for each interaction, use a guard factory.
 
-## Factories
+## Guard factories
 
-Instead of a guard, you can put a function in `guards` that _returns_ one. It's
-called each time an interaction reaches it, with the same context the handler
-gets:
+You can pass a function in the `guards` array that returns a guard. Hyperion calls the factory with the handler context each time an interaction reaches that position in the array:
 
 ```ts fragment
 guards: [ctx => accessCheck(ctx.interaction.user.id)];
 ```
 
-Factories can be async, and they're skipped if an earlier guard already said no.
+Factories can be async. If an earlier guard rejects, later factories are not called.
 
 ## Custom rejection replies
 
-Add `onFail()` to send your own reply instead of the description:
+Add `onFail()` to send a custom response instead of the default `description` reply:
 
 ```ts fragment
 export const threadsOnly = defineGuard<InteractionContext>({
@@ -133,7 +127,7 @@ export const threadsOnly = defineGuard<InteractionContext>({
         if (!ctx.interaction.isRepliable()) return;
 
         await ctx.interaction.reply({
-            content: "Open a thread first, then run this there.",
+            content: "Open a thread first, then run this command there.",
             flags: MessageFlags.Ephemeral,
         });
     },
@@ -141,18 +135,13 @@ export const threadsOnly = defineGuard<InteractionContext>({
 ```
 
 > [!WARNING]
-> When `onFail()` exists, Hyperion sends nothing itself, so make sure you
-> respond. If an earlier guard already replied, check `replied` or `deferred`
-> first.
+> When `onFail()` is defined, Hyperion does not send a fallback reply for the rejection. Always respond inside `onFail()`, and check `replied` or `deferred` if an earlier guard may have acknowledged the interaction.
 
 ## Built-in guards
 
-- **`ownerOnly`**: only the bot application's owner (the team owner, for team
-  apps). Hyperion looks the owner up from Discord and caches it, so there's
-  nothing to configure.
-- **`guildOnly`**: only in a server, not in DMs.
-- **`requirePermissions()`** and **`requireBotPermissions()`**: the user, or
-  the bot, needs every permission you list, in the channel it's used in:
+- **`ownerOnly`.** Allows only the Discord application owner, or the team owner for team-owned applications. Hyperion fetches and caches the owner from Discord automatically.
+- **`guildOnly`.** Allows the interaction only inside a server, rejecting direct messages.
+- **`requirePermissions()` and `requireBotPermissions()`.** Checks that the user or the bot has every listed permission in the current channel:
 
   ```ts fragment
   guards: [
@@ -161,38 +150,30 @@ export const threadsOnly = defineGuard<InteractionContext>({
   ];
   ```
 
-  The rejection lists the permissions you asked for: "You need the Manage
-  Messages permission to use this." For commands, `setDefaultMemberPermissions()` on the builder
-  also hides the command from people who can't use it; the guard still protects
-  buttons and menus.
-- **`cooldown()`**: rejects while a key is cooling down. You own the collection
-  of timers, so one cooldown can span several commands. Use a factory to key it
-  per user:
+  When rejected, the default reply lists the missing permissions, such as "You need the Manage Messages permission to use this." For slash commands, you can also call `setDefaultMemberPermissions()` on the builder to hide the command in Discord's UI. Use the guard as well for buttons, menus, and runtime enforcement.
+
+- **`cooldown()`.** Rejects interactions while a key is on cooldown. You pass your own `Collection<string, number>`, so multiple handlers can share a single cooldown table. Wrap `cooldown()` in a factory to key it per user:
 
   ```ts fragment
   const cooldowns = new Collection<string, number>();
 
   guards: [
-          ctx =>
+      ctx =>
           cooldown({
-              key: `refresh:${ctx.interaction.user.id}`, // what's cooling down
+              key: `refresh:${ctx.interaction.user.id}`,
               durationMs: 5_000,
-              entries: cooldowns, // where the timers live
+              entries: cooldowns,
           }),
   ];
   ```
 
-  The cooldown starts as soon as the guard passes, even if the handler fails
-  later. It lives in memory, so it resets on restart. For one that survives
-  restarts, keep it in [SQLite](storing-data.md#quick-values) with a `ttl`.
-- **`paramOwner()`**: for handlers with [params](custom-ids.md). Passes only
-  when the params are valid and the key you name holds the clicking user's ID.
-  An optional second argument replaces the description.
+  The cooldown starts as soon as the guard passes, even if the handler fails afterward. Because `Collection` is stored in memory, cooldowns reset when the bot restarts. For cooldowns that persist across restarts, store them in [SQLite key-value namespaces](storing-data.md#key-value-namespaces) with a `ttl`, or follow [Keeping cooldowns across restarts](persistent-cooldowns.md).
 
-## Things to know
+- **`paramOwner()`.** Works on handlers that use [custom ID params](custom-ids.md). Passes only when the params pass validation and the specified key matches `ctx.interaction.user.id`. Pass an optional second argument to customize the rejection message.
 
-- Hyperion doesn't defer before guards, so keep them fast.
-- Guards never see `ctx.input`; [typed input](input.md) is processed after they pass.
-- Autocomplete skips guards entirely; see [autocomplete](autocomplete.md).
-- If a guard throws, the user gets the generic error message described in
-  [responding](responding.md).
+## Constraints
+
+- Hyperion does not defer before running guards, so keep guard checks fast.
+- Guards run before [typed input](input.md) validation and cannot read `ctx.input`.
+- Autocomplete interactions skip guards. See [Autocomplete](autocomplete.md).
+- If a guard throws an error, Hyperion logs it and sends a generic error message. See [Responding](responding.md).

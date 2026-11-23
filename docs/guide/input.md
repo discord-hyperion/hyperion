@@ -1,13 +1,13 @@
 # Typed input
 
-Reading options one by one with `getString()` gets tedious, and you still have to
-check every value yourself. Typed input lets you describe the options with a
-schema instead. Hyperion validates them and hands your handler typed values, or
-the list of problems.
+Reading command options manually with `getString()` and validating each value adds boilerplate. Typed input lets you define a schema for your options so Hyperion validates them and passes either typed values or validation issues to `run()`.
 
-## A command with input
+## Defining command input
+
+Pass an `input` object with a `schema` to `defineCommand()`:
 
 ```ts
+// src/commands/echo.ts
 import { ChatInputCommandBuilder } from "@discordjs/builders";
 import { defineCommand } from "@hyperion-js/core";
 import { MessageFlags } from "discord.js";
@@ -17,29 +17,34 @@ export default defineCommand({
     builder: new ChatInputCommandBuilder()
         .setName("echo")
         .setDescription("Repeat a message.")
-        .addStringOptions(o =>
-            o.setName("text").setDescription("What to say").setRequired(true),
+        .addStringOptions(option =>
+            option
+                .setName("text")
+                .setDescription("What to say")
+                .setRequired(true),
         )
-        .addIntegerOptions(o =>
-            o.setName("times").setDescription("How many times"),
+        .addIntegerOptions(option =>
+            option.setName("times").setDescription("How many times"),
         ),
     input: {
         schema: v.object({
             text: v.pipe(
                 v.string(),
                 v.trim(),
-                v.minLength(1, "Say something!"),
+                v.minLength(1, "Enter at least one character."),
             ),
             times: v.optional(v.number(), 1),
         }),
     },
     run: async ctx => {
         const [issues, value] = ctx.input;
+
         if (issues) {
             await ctx.interaction.reply({
                 content: issues.map(issue => issue.message).join("\n"),
                 flags: MessageFlags.Ephemeral,
             });
+
             return;
         }
 
@@ -48,39 +53,32 @@ export default defineCommand({
 });
 ```
 
-The builder still decides what Discord shows, and the schema decides what's
-valid and fills in defaults. Any [Standard Schema](https://standardschema.dev)
-library works. `input` takes:
+The command builder still defines the options Discord displays to users, while the schema validates the values and applies defaults. Any [Standard Schema](https://standardschema.dev) library works, including Valibot and Zod.
 
-| Option    | What it's for                                                                                                       |
-| --------- | ------------------------------------------------------------------------------------------------------------------- |
-| `schema`  | Checks the options and gives them their types.                                                                      |
-| `resolve` | Optional. Turns the checked values into what your handler needs. See [resolving the values](#resolving-the-values). |
-| `defer`   | Optional. Defers before validating. See [deferring](#deferring).                                                    |
+| Option    | Purpose                                                                                                           |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `schema`  | Validates incoming values and determines their TypeScript types.                                                  |
+| `resolve` | Optional function that transforms validated values before `run()`. See [Resolving values](#resolving-values).     |
+| `defer`   | Optional automatic defer before validation runs. See [Deferring before validation](#deferring-before-validation). |
 
-Everything is typed from the schema, with no annotations. To share input between
-handlers, define it once with `defineInput()` and pass that instead.
+TypeScript infers `ctx.input` from your schema without manual type annotations. To reuse the same input definition across multiple handlers, wrap it in `defineInput()` and pass that variable to each handler.
 
-`ctx.input` is either `[null, value]` or `[issues, undefined]`. Hyperion never
-replies to validation problems for you, so you choose the wording. Return after
-handling issues and TypeScript knows `value` is safe.
+`ctx.input` is always a tuple: `[null, value]` when validation succeeds, or `[issues, undefined]` when it fails. Hyperion does not send validation errors automatically, so you control the error reply. After checking `if (issues)` and returning, TypeScript narrows `value` to the validated type.
 
-## What the schema receives
+## Values passed to the schema
 
-The schema gets one key per option of the command, or of the subcommand that
-ran:
+For commands and subcommands, Hyperion builds an object with one key per option:
 
-| Option                           | The schema gets                               |
-| -------------------------------- | --------------------------------------------- |
-| Left out by the user             | `undefined`; use `v.optional()` for a default |
-| String, integer, number, boolean | The value                                     |
-| User, role, channel, mentionable | The ID                                        |
-| Attachment                       | The attachment                                |
+| Option kind                         | Value passed to the schema                          |
+| ----------------------------------- | --------------------------------------------------- |
+| Omitted optional option             | `undefined`; use `v.optional()` to supply a default |
+| String, integer, number, or boolean | The option value                                    |
+| User, role, channel, or mentionable | Discord snowflake ID string                         |
+| Attachment                          | discord.js `Attachment` object                      |
 
-## Resolving the values
+## Resolving values
 
-Often you want the _thing_ an option points to, not the raw value. Add `resolve`
-to turn validated values into whatever your handler needs:
+Add a `resolve` function to turn validated values into domain objects, such as loading a database record by ID:
 
 ```ts fragment
 input: {
@@ -90,34 +88,33 @@ input: {
 },
 ```
 
-Now `ctx.input` holds `{ todo }` instead of `{ id }`. The resolver only runs when
-validation passes, and whatever it returns becomes the handler's input, so a
-missing todo can simply be `null`. Its second argument is the handler's context.
+With `resolve` configured, `ctx.input` contains `{ todo }` instead of `{ id }`. Hyperion calls `resolve` only after schema validation succeeds, passing the validated data as the first argument and the handler context as the second argument. Whatever `resolve` returns becomes the value in `ctx.input`, so a missing record can be returned as `null`.
 
-## Deferring
+## Deferring before validation
 
-Lookups can be slow, so Hyperion can defer before validating:
+If your schema or `resolve` function performs asynchronous work, set `defer` so Hyperion acknowledges the interaction before validating:
 
 ```ts fragment
-input: { schema, defer: true }, // a private reply, for any handler
-input: { schema, defer: "update" }, // the message, for select menus and modals
+input: { schema, defer: true }, // Calls deferReply() ephemerally, works on any handler
+input: { schema, defer: "update" }, // Calls deferUpdate(), works on select menus and modals
 ```
 
-Either way, finish with `editReply()`. See [responding](responding.md).
+When `defer` is set, respond with `editReply()` in `run()`. See [Responding](responding.md).
 
-## The order things happen
+## Execution order
 
-```
-guards → defer (optional) → validate → resolve → your handler
-```
+Hyperion runs input handling in this order:
+1. Guards execute.
+2. Hyperion defers the interaction if `defer` is configured.
+3. The schema validates the raw input.
+4. `resolve` runs if configured and validation passed.
+5. Your `run()` function executes.
 
-Guards run first and never see `ctx.input`, so a rejected user never triggers
-your lookups. If the schema or resolver _throws_ (rather than reporting issues),
-the user gets the generic error message.
+Because guards run first and do not receive `ctx.input`, rejected users never trigger database lookups in `resolve`. If a schema or resolver throws an exception rather than returning validation issues, Hyperion logs the error and sends a generic error reply.
 
-## Subcommands, modals, select menus, and context menus
+## Other handler types
 
-- Subcommands take `input` the same way.
-- Modal forms do too; see [modals](modals.md#validating-the-fields).
-- Select menus too; see [select menus](select-menus.md#checking-the-pick).
-- Context-menu commands have no options, so they don't take input.
+- Subcommands support `input` the same way as top-level slash commands.
+- Modals support `input` for form fields. See [Validating fields](modals.md#validating-fields).
+- Select menus support `input` for selected values. See [Validating selected values](select-menus.md#validating-selected-values).
+- Context-menu commands have no options and do not accept `input`.

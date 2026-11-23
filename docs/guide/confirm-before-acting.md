@@ -1,16 +1,10 @@
-# Asking before deleting something
+# Confirming destructive actions
 
-Some commands are hard to undo. By the end of this page, `/todo delete` will
-reply with a Delete button that only the person who asked can press, and nothing
-is deleted until they do.
-
-It uses [data in custom IDs](custom-ids.md) to carry the todo and its owner,
-and a [guard](guards.md) to check the clicker.
+This guide shows how to add a confirmation button to a `/todo delete` command so nothing is deleted until the original user clicks Delete. It combines [custom ID params](custom-ids.md) to store the todo ID and owner with the `paramOwner()` [guard](guards.md) to verify who clicked.
 
 ## Steps
 
-1. Describe what the button carries. It sits next to the button handler, so the
-   command can import it too:
+1. Define the params next to the button handler so the command can import them:
 
    ```ts fragment
    // src/buttons/delete-todo.ts
@@ -21,8 +15,7 @@ and a [guard](guards.md) to check the clicker.
    });
    ```
 
-2. Write the button handler in the same file. The template is the button
-   people see, and `paramOwner("owner")` turns everyone else away:
+2. Add the button handler in the same file. Set `builder` to the confirmation button template and attach `paramOwner("owner")` to reject other users:
 
    ```ts fragment
    export default defineButton({
@@ -46,43 +39,36 @@ and a [guard](guards.md) to check the clicker.
            const deleted = todos.delete({ id: params.todoId });
 
            await ctx.interaction.update({
-               content: deleted ? "Deleted." : "That todo was already gone.",
+               content: deleted ? "Deleted." : "That todo was already deleted.",
                components: [],
            });
        },
    });
    ```
 
-   The handler deletes by ID only after the guard has checked the owner. If
-   your todos can change hands, also check the stored owner before deleting:
-   the custom ID only tells you who the button was built for.
+   The handler deletes the record only after `paramOwner()` verifies the user. If todos can transfer ownership after the button is sent, also check the owner stored in your database before deleting.
 
-3. In the command, reply with a copy of the button, built for this todo and
-   this user. Making the reply ephemeral keeps the button out of everyone
-   else's sight, and ignoring it is the same as cancelling:
+3. In your `/todo delete` command, build a copy of the button with the todo ID and the requesting user's ID, and send it in an ephemeral reply:
 
    ```ts fragment
-   // In /todo delete's run()
+   // Inside /todo delete run()
    const button = ctx.client.buttons.build(deleteTodo, {
        todoId: id,
        owner: ctx.interaction.user.id,
    });
 
    await ctx.interaction.reply({
-       content: `Delete "${todo.title}"? This can't be undone.`,
+       content: `Delete "${todo.title}"? This cannot be undone.`,
        components: [new ActionRowBuilder().addComponents(button)],
        flags: MessageFlags.Ephemeral,
    });
    ```
 
-## Check it worked
+   Sending the confirmation ephemerally keeps the button private to the user, and dismissing the message cancels the deletion without needing a separate Cancel button.
 
-Run `/todo delete` and press Delete: the message changes to "Deleted." and the
-todo is gone. To check the guard, send the reply without
-`MessageFlags.Ephemeral` and have someone else press the button. They get "Only
-you can delete your todo." privately, and the todo stays.
+## Verifying it works
+
+Run `/todo delete` and click Delete. The message should update to "Deleted." and remove the todo from storage. To verify the guard, temporarily remove `flags: MessageFlags.Ephemeral` and ask another user to click the button. They should receive the ephemeral rejection "Only you can delete your todo.", and the todo should remain intact.
 
 > [!WARNING]
-> Change `keys` or their order after you've sent buttons, and the old buttons
-> decode wrongly. Give the new version a new `id` instead, as
-> [changing params later](custom-ids.md#changing-params-later) explains.
+> Do not add, remove, or reorder `keys` after sending buttons to Discord, because existing buttons will decode incorrectly. Use a new `id` route instead, as explained in [Changing params later](custom-ids.md#changing-params-later).

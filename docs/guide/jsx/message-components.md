@@ -1,7 +1,6 @@
 # Buttons and menus
 
-Buttons and select menus are what make a message do something. Put them in an
-`ActionRow`, then render the rows:
+Group interactive buttons and select menus inside `<ActionRow>` elements and render them with `renderComponents()`:
 
 ```tsx
 import { ActionRow, Button, renderComponents } from "@hyperion-js/jsx";
@@ -16,16 +15,11 @@ const components = renderComponents(
 );
 ```
 
-Send them with `interaction.reply({ components })`. A button has either a custom
-ID and a style, or a `url` for a link button. The styles are `primary`,
-`secondary`, `success`, and `danger`.
-
-The custom ID is how your bot recognises the click later.
+Send the rendered array with `interaction.reply({ components })`. Interactive buttons require a `customId` and a `style` of `primary`, `secondary`, `success`, or `danger`. Link buttons take a `url` instead of a `customId` and `style`.
 
 ## Select menus
 
-A string select menu lets people pick from choices you supply. Each option has a
-label to show and a value your bot receives:
+Use `<StringSelect>` when users pick from static options you define. Each `<StringSelect.Option>` has a visible `label` and a `value` sent back to your bot:
 
 ```tsx
 import { ActionRow, renderComponents, StringSelect } from "@hyperion-js/jsx";
@@ -49,16 +43,16 @@ const components = renderComponents(
 );
 ```
 
-For users, roles, or channels, there's a component per kind:
+For Discord entity pickers, use the dedicated select component for that entity type:
 
-| Component           | People pick     | Pre-select with                |
+| Component           | Selection type  | Pre-selection prop             |
 | ------------------- | --------------- | ------------------------------ |
 | `UserSelect`        | Users           | `defaultUsers`                 |
 | `RoleSelect`        | Roles           | `defaultRoles`                 |
 | `MentionableSelect` | Users and roles | `defaultUsers`, `defaultRoles` |
 | `ChannelSelect`     | Channels        | `defaultChannels`              |
 
-They take no options, and pre-selecting takes an array of IDs:
+Entity select menus do not take option children. Pass arrays of Discord IDs to pre-select defaults:
 
 ```tsx fragment
 import { ActionRow, ChannelSelect, renderComponents } from "@hyperion-js/jsx";
@@ -75,19 +69,13 @@ const components = renderComponents(
 );
 ```
 
-The same select components also work inside [modals](modals.md).
+These same select components also work inside [JSX modals](modals.md).
 
-## Before you send
+## Rules and limits
 
-- Interactive custom IDs must be unique within one render, and option values
-  unique within one menu.
-- Labels are plain text.
-- `disabled` only changes how a control looks. Check permissions again when you
-  handle the click.
-- A classic message holds up to five rows. For more room, with text and images
-  alongside your controls, see [layout messages](layout-messages.md).
+- Every interactive custom ID must be unique within a single render, and option values must be unique within a single string select menu.
+- Button and option labels accept plain text only.
+- Setting `disabled` only changes the UI state in Discord. Always verify permissions again when handling the interaction.
+- Standard messages hold at most five action rows. To combine text blocks, images, and controls in one layout, see [Layout messages](layout-messages.md).
 
-Using Hyperion? Handlers can keep these controls as
-[templates](../jsx-with-hyperion.md#buttons-and-menus-as-templates). The
-references cover [buttons](../../jsx-message-components.md) and
-[select menus](../../jsx-select-menus.md) in full.
+If you use `@hyperion-js/core`, handlers can store rendered buttons and menus as [templates](../jsx-with-hyperion.md#buttons-and-menus-as-templates). For full prop lists, see the [JSX message components reference](../../jsx-message-components.md) and [JSX select menus reference](../../jsx-select-menus.md).

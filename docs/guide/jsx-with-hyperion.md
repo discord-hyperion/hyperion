@@ -1,23 +1,16 @@
 # JSX with Hyperion
 
-`@hyperion-js/jsx` works fine on its own, but it fits Hyperion especially well.
-Hyperion handlers can keep a **template**, a ready-made button, menu, or form,
-and JSX is a comfortable way to write one. This page covers how the two fit
-together. New to the JSX package? Start with the [JSX guide](jsx.md).
+`@hyperion-js/jsx` works standalone with any discord.js bot, and it integrates directly with `@hyperion-js/core`. Hyperion component handlers can store a template builder on `builder`, which you can author with `@hyperion-js/jsx`. If you have not configured `@hyperion-js/jsx` yet, start with the [JSX guide](jsx.md).
 
-## Handlers as `.tsx` files
+## Writing handlers as `.tsx` files
 
-Hyperion discovers `.tsx` handlers just like `.ts` ones. Set up the JSX
-transform as described in the [JSX guide](jsx.md#setup), then name your handler
-files `.tsx`. There's no flag to turn on and no build step.
+Hyperion discovers `.tsx` handler files alongside `.ts` files in every handler directory. Once you configure the JSX transform in `tsconfig.json` as shown in [JSX setup](jsx.md#setup), rename any handler file to `.tsx` and write JSX directly inside it. No extra Hyperion flag or build step is required.
 
-Make sure your `tsconfig.json` includes your handler folders (`src/**/*.tsx`),
-not only your entry file. Otherwise your editor can't type them.
+Make sure `tsconfig.json` includes `src/**/*.tsx` so your editor and type checker cover your handler files.
 
 ## Buttons and menus as templates
 
-A button handler can carry the button's design as its `builder`. `renderButton()`
-is the JSX way to write one:
+Use `renderButton()` to define a button handler's `builder` template in JSX:
 
 ```tsx
 // src/buttons/refresh-profile.tsx
@@ -36,9 +29,9 @@ export default defineButton({
 });
 ```
 
-The button's custom ID is the handler's, so you only write it once.
+The button's `customId` becomes the handler's custom ID, so you only define it once.
 
-When a command needs the button, it asks the registry for a copy:
+Inside a command or another handler, call `build()` on the registry to get a copy of the template:
 
 ```ts fragment
 import { ActionRowBuilder } from "@discordjs/builders";
@@ -53,19 +46,13 @@ await ctx.interaction.reply({
 });
 ```
 
-`build()` gives you a fresh copy with the custom ID filled in, so you can change
-its label or disable it without touching the shared template.
+`build()` returns a fresh copy with the custom ID set, so you can change its label or disable it without modifying the shared template.
 
-Select menus work the same way, with a render function per kind:
-`renderStringSelect()`, `renderUserSelect()`, and so on. The
-[buttons](buttons.md) and [select menus](select-menus.md) pages cover routing
-and guards.
+Select menus work the same way using the matching render function for each menu type, such as `renderStringSelect()` or `renderUserSelect()`. See [Buttons](buttons.md) and [Select menus](select-menus.md) for routing and guards.
 
 ## Controls that carry data
 
-One handler can serve many buttons if each carries its own data in its custom
-ID. With a params handler, the template's custom ID is the route, and `build()`
-writes the values after it:
+When a handler uses [custom ID params](custom-ids.md), set the JSX template's `customId` to the params route ID. Calling `build()` then appends the encoded parameter values:
 
 ```tsx
 // src/buttons/close-ticket.tsx
@@ -88,6 +75,7 @@ export default defineButton({
     ),
     run: async ctx => {
         const [issues, params] = ctx.params;
+
         if (issues) return;
 
         await ctx.interaction.update({
@@ -98,20 +86,17 @@ export default defineButton({
 });
 ```
 
-A command builds one copy per ticket:
+In a command, build a copy for a specific ticket:
 
 ```ts fragment
 const button = ctx.client.buttons.build(closeTicket, { ticketId });
 ```
 
-When someone clicks, Hyperion reads the values back out of the custom ID,
-validates them, and hands them to your handler as `ctx.params`.
-[Data in custom IDs](custom-ids.md) explains the details, including how to check
-that the person clicking owns the ticket.
+When a user clicks the button, Hyperion decodes and validates the values and passes them to `run()` as `ctx.params`. See [Data in custom IDs](custom-ids.md) for ownership checks and versioning rules.
 
 ## Forms as templates
 
-A modal handler keeps its form the same way, with `renderModal()`:
+Define a modal handler's template with `renderModal()`:
 
 ```tsx
 // src/modals/create-todo.tsx
@@ -136,34 +121,24 @@ export default defineModal({
 });
 ```
 
-To open the form, show a copy of the template:
+Show a copy of the template from a command or component handler:
 
 ```ts fragment
 await ctx.interaction.showModal(ctx.client.modals.build("todo.create"));
 ```
 
-To pre-fill it for one person, render the view yourself with the same custom ID,
-as in [pre-filled forms](jsx/modals.md#pre-filled-forms), and show that instead.
-Either way, the shared template stays unchanged.
+To show a pre-filled form for one user, render your JSX component directly with props and the same `customId`, as shown in [Pre-filled forms](jsx/modals.md#pre-filled-forms), and pass that modal to `showModal()`. The handler's shared template remains unchanged.
 
-Rather than reading each field by hand, you can let [typed input](input.md)
-validate the submission, and use params (as with buttons above) when the form
-needs to remember something, like which ticket you're renaming. The core guide's
-[modals](modals.md) page covers all of it.
+You can also combine JSX modal templates with [typed input](input.md) and custom ID params. See [Modals](modals.md) for full details.
 
 ## Layout messages
 
-Buttons inside a [layout message](jsx/layout-messages.md) are routed to your
-handlers like any other. Use the same custom IDs, or `build()` copies, inside
-your `renderMessage()` view.
+Buttons and select menus inside a [layout message](jsx/layout-messages.md) route to your Hyperion handlers like any other component. Pass the same custom IDs, or call `build()`, inside your `renderMessage()` view.
 
-If a handler defers, edits its reply into a layout message, and then fails,
-Hyperion can't put its usual error text into the message (layout messages can't
-have `content`). It sends the error as a private follow-up instead, so your
-user still sees something.
+If a handler defers, edits its reply into a layout message, and then throws an error, Hyperion cannot edit error text into `content` because Discord layout messages forbid `content`. Hyperion sends the error message as an ephemeral follow-up instead.
 
-## Where next
+## Next steps
 
-- [Responding](responding.md): replying, deferring, and what happens on errors.
-- [Guards](guards.md): restrict who can click.
-- [Data in custom IDs](custom-ids.md): params, validation, and ownership checks.
+- [Responding](responding.md) explains deferring and error responses.
+- [Guards](guards.md) explains restricting access to handlers.
+- [Data in custom IDs](custom-ids.md) explains parameter encoding and ownership checks.

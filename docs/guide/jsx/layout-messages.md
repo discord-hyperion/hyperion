@@ -1,9 +1,6 @@
 # Layout messages
 
-An embed hangs a card under your message text. A **layout message** drops the
-plain message entirely and builds everything from pieces: text blocks, images,
-dividers, boxes with a coloured edge, and your buttons. (Discord calls this
-Components V2.)
+Layout messages, known in Discord's API as Components V2, replace plain message `content` and `embeds` with composable blocks such as text displays, containers, media galleries, dividers, and interactive controls. Render them with `renderMessage()`:
 
 ```tsx
 import {
@@ -26,7 +23,7 @@ const message = renderMessage(
         >
             <TextDisplay>
                 <H2>Your profile</H2>
-                You're all caught up.
+                You are all caught up.
                 <Subtext>Check back later for new tasks.</Subtext>
             </TextDisplay>
         </Section>
@@ -41,32 +38,22 @@ const message = renderMessage(
 );
 ```
 
-Send it with `await interaction.reply(message)`. `renderMessage()` returns the
-components together with the flag Discord needs, so there's nothing to remember.
-`{ ephemeral: true }` makes the reply private. Leave it out and the same result
-also works with `update()` and `editReply()`.
+Send the result directly with `await interaction.reply(message)`. `renderMessage()` returns both `components` and the `MessageFlags.IsComponentsV2` flag Discord requires. Pass `{ ephemeral: true }` for an ephemeral reply, or omit options when passing the result to `update()` or `editReply()`.
 
-## The pieces
+## Components
 
-- **`Container`**: a box around other pieces. `accent` colours its edge.
-  Containers sit at the top level and don't nest.
-- **`TextDisplay`**: a block of text, with the same
-  [formatting as embeds](embeds.md#formatting-text).
-- **`Section`**: one to three text displays with an `accessory` beside them,
-  either a `Thumbnail` or a `Button`.
-- **`MediaGallery`**: one to ten images or videos, as `MediaGallery.Item`
-  children.
-- **`Separator`**: space between pieces. It draws a divider line unless you pass
-  `divider={false}`, and `spacing="large"` adds more room.
-- **`ActionRow`**: your buttons and menus, at the top level or inside a container.
+- **`Container`.** Groups child components inside a box with an optional `accent` color bar. Containers belong at the top level and cannot nest inside another container.
+- **`TextDisplay`.** Renders Markdown text using the same [formatting components as embeds](embeds.md#formatting-text).
+- **`Section`.** Pairs one to three `TextDisplay` children with a side `accessory`, either a `Thumbnail` or a `Button`.
+- **`MediaGallery`.** Displays one to ten images or videos via `MediaGallery.Item` children.
+- **`Separator`.** Inserts vertical space and a divider line between blocks. Pass `divider={false}` to hide the line or `spacing="large"` for extra spacing.
+- **`ActionRow`.** Holds buttons or a select menu, either at the top level or inside a `Container`.
 
-Put a piece in the wrong place (a `Thumbnail` outside a section, say) and
-rendering throws a `JSXRenderError` that points right at it.
+Placing a component in an invalid parent, such as a `Thumbnail` outside a `Section`, throws a `JSXRenderError` pointing to the invalid element.
 
-## Images
+## Images and attachments
 
-Give each gallery item a URL, plus a short description (alt text) for people who
-can't see the image:
+Give each `MediaGallery.Item` a `url` and a `description` for alt text:
 
 ```tsx
 import { MediaGallery, renderMessage } from "@hyperion-js/jsx";
@@ -81,22 +68,12 @@ const message = renderMessage(
 );
 ```
 
-`Thumbnail` and `MediaGallery.Item` also take `spoiler`. To show a file you're
-uploading yourself, use an `attachment://filename` URL and pass the file in the
-reply's `files` option. The package doesn't upload it for you.
+Both `Thumbnail` and `MediaGallery.Item` accept a `spoiler` prop. To display an uploaded file, set `url` to `attachment://filename` and attach the file through the reply's `files` option. `@hyperion-js/jsx` does not upload files for you.
 
 ## Updating a layout message
 
-A message that starts as a layout message stays one for good. To change it,
-render the new version with `renderMessage()` and pass it to `update()` or
-`editReply()`. Leave out `ephemeral`, since a sent message can't change who sees
-it. And don't add `content` or `embeds`; put visible text in a `TextDisplay`
-instead.
+Once a message is sent as a layout message, it stays a layout message on every subsequent edit. Render the updated view with `renderMessage()` and pass it to `update()` or `editReply()`. Do not pass `ephemeral` when editing, because Discord cannot change a sent message's visibility. Do not pass `content` or `embeds`; put visible text inside `TextDisplay` components instead.
 
-Keep the whole message to 40 components, counting everything nested inside.
-Interactive custom IDs must be unique, as they are for any
-[buttons and menus](message-components.md).
+A layout message can contain at most 40 components total, including nested children. Interactive custom IDs must be unique across the message, just like standard [buttons and menus](message-components.md).
 
-Next up: [modals](modals.md). The [layout reference](../../jsx-layout.md) lists
-every prop and placement rule. Using Hyperion? See how
-[buttons in layout messages reach your handlers](../jsx-with-hyperion.md#layout-messages).
+Next, see [Modals](modals.md). For all props and placement rules, see the [JSX layout reference](../../jsx-layout.md). If you use `@hyperion-js/core`, see [Layout messages in JSX with Hyperion](../jsx-with-hyperion.md#layout-messages).

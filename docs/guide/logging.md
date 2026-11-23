@@ -1,57 +1,45 @@
 # Logging
 
-Hyperion logs what it's doing (loading handlers, deploying commands, running
-interactions) and gives you a logger that's already tagged with the right
-details.
+Hyperion logs lifecycle events such as loading handlers, deploying commands, and executing interactions. It also provides a scoped logger on every handler context.
 
-## Logging from a handler
+## Logging inside handlers
 
-Every handler gets `ctx.logger`:
+Every command, component, and event handler receives `ctx.logger`:
 
 ```ts fragment
-async run(ctx: CommandContext) {
+run: async ctx => {
     ctx.logger.debug({ step: "lookup" }, "Looking up results");
     await ctx.interaction.reply("Pong!");
-}
+},
 ```
 
-Each log line already includes the command (or button, menu, modal), the
-interaction ID, the server, and the user, so you can follow one interaction
-through the logs even when lots run at once. For messages that aren't about an
-interaction, use `client.logger`.
+Log entries written through `ctx.logger` automatically include the handler name or custom ID, `interactionId`, `guildId`, and `userId`. This lets you trace a single interaction across concurrent logs. For logs outside a handler, use `client.logger`.
 
-The logger is [Pino](https://getpino.io), so it works the way Pino's does: a
-method per level, with an optional object of extra fields first.
+Hyperion uses [Pino](https://getpino.io). Call level methods such as `debug`, `info`, `warn`, and `error`, passing an optional metadata object first and the log message second.
 
-## Configuring it
+## Configuration
 
-All of this is optional:
+Logging configuration is optional:
 
 ```ts fragment
 const client = await HyperionClient.create({
-    // …
+    // ...
     logging: {
-        level: "debug", // default: "info"
-        pretty: true, // coloured output instead of JSON
-        progress: true, // startup spinners
+        level: "debug", // Defaults to "info"
+        pretty: true, // Formatted terminal output instead of JSON
+        progress: true, // Startup progress spinners
     },
 });
 ```
 
-In a terminal you get coloured logs and spinners by default. In CI or when
-piping output, you get JSON and no spinners. `logging: false` turns everything off.
+In an interactive terminal, Hyperion enables pretty output and startup spinners by default. In CI or when stdout is piped, Hyperion outputs JSON and disables spinners. Pass `logging: false` to disable logging completely.
 
-To send logs somewhere else, pass `destination`: any object with a
-`write(line)` method.
+To direct log output to a custom stream, pass a `destination` object that implements a `write(line)` method.
 
-## Keep secrets out
+## Sensitive data
 
-Hyperion never logs tokens, message content, option values, selected values, or
-form fields, and keeps the data in custom IDs out of logs too. Do the same in
-your own log lines and error messages, since errors end up in the logs.
+Hyperion never logs bot tokens, message content, option values, selected menu values, modal field values, or custom ID parameter values. Avoid logging secrets or private user data in your own log calls and error messages, because thrown errors are written to the log.
 
-## Seeing more
+## Debug logs
 
-Set `level: "debug"` to see each guard pass, each handler start, and custom IDs
-that matched a route but couldn't be decoded. The full list of events lives in
-the [logging reference](../logging.md).
+Set `level: "debug"` to log individual guard checks, handler starts, and custom IDs that match a params route but fail to decode. For the complete list of log event names and fields, see the [logging reference](../logging.md).

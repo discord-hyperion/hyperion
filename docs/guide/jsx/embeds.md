@@ -1,7 +1,6 @@
 # Embeds and text
 
-An embed is the card Discord shows under a message: a title, some text, and a few
-fields. In JSX you write those parts as children of `<Embed>`:
+An embed is a structured card Discord displays below a message with a title, description, fields, and footer. With `@hyperion-js/jsx`, write each part as a child of `<Embed>` and call `renderEmbed()`:
 
 ```tsx
 import { Bold, Br, Embed, Link, renderEmbed } from "@hyperion-js/jsx";
@@ -25,25 +24,21 @@ const embed = renderEmbed(
 );
 ```
 
-Send it with `await interaction.reply({ embeds: [embed] })`. What you get back is
-a normal `EmbedBuilder`, so you can still call its methods before sending.
+Send the result with `await interaction.reply({ embeds: [embed] })`. Because `renderEmbed()` returns a standard `EmbedBuilder`, you can call any `EmbedBuilder` method on it before sending.
 
 ## Formatting text
 
-Plain text is escaped for you, so a username with a `*` in it won't turn the
-rest of the line bold. When you do want formatting, reach for a component:
+`@hyperion-js/jsx` escapes plain text automatically so special characters like `*` or `_` in usernames do not break Discord Markdown. Use formatting components when you want styled output:
 
 | Kind     | Components                                                                |
 | -------- | ------------------------------------------------------------------------- |
 | Inline   | `Bold`, `Italic`, `Underline`, `Strikethrough`, `Spoiler`, `Code`, `Link` |
 | Blocks   | `CodeBlock`                                                               |
-| Headings | `H1`, `H2`, `H3`, and `Subtext` for small grey text                       |
+| Headings | `H1`, `H2`, `H3`, and `Subtext` for small muted text                      |
 
-Headings each take their own line. They work in descriptions and field values,
-and also in [layout messages](layout-messages.md) and [modals](modals.md). Keep
-each on a single line, and don't put one inside an inline component.
+Heading components each occupy their own line. They work in embed descriptions, field values, [layout messages](layout-messages.md), and [modals](modals.md). Keep each heading on a single line and do not nest headings inside inline components.
 
-Got Markdown you wrote yourself, like a list? `Raw` passes it through untouched:
+If you already have formatted Markdown, such as a bulleted list, wrap it in `<Raw>` to bypass escaping:
 
 ```tsx
 import { Embed, Raw, renderEmbed } from "@hyperion-js/jsx";
@@ -57,13 +52,11 @@ const embed = renderEmbed(
 );
 ```
 
-Titles, author names, and footers are plain text only, so a formatting component
-there throws an error. Field names can use inline formatting, but not headings.
+Embed titles, author names, and footers accept plain text only, so placing formatting components inside them throws a `JSXRenderError`. Field names allow inline formatting components, but not headings.
 
 ## Reusing a view
 
-If you build the same kind of embed in several places, turn it into a function.
-Props carry the parts that change:
+Extract repeated embed layouts into functions that accept props:
 
 ```tsx
 import { Embed, renderEmbed } from "@hyperion-js/jsx";
@@ -80,18 +73,12 @@ const TodoCard = ({ title, owner }: Todo) => (
 const embed = renderEmbed(<TodoCard title="Review the change" owner="Alex" />);
 ```
 
-Use `.map()` to make a field for each item in a list, and `&&` to leave an
-optional part out. Every render creates a new embed, so changing one builder
-afterwards never touches another.
+Use `.map()` to render lists of fields and `&&` to include optional elements. Each call to `renderEmbed()` builds a new `EmbedBuilder`, so mutating one instance never affects another.
 
 ## Mentions and limits
 
-`UserMention`, `RoleMention`, and `ChannelMention` write the mention text for an
-ID. They don't decide who gets pinged; your reply does.
+`UserMention`, `RoleMention`, and `ChannelMention` format Discord mention strings from an ID. They do not control notifications; set `allowedMentions` on your reply to control who gets pinged.
 
-One thing `renderEmbed()` can't see: Discord counts the 6,000-character limit
-across every embed in a message. Each call only checks its own embed, so keep an
-eye on the total yourself.
+Discord enforces a 6,000-character combined limit across all embeds in a single message. `renderEmbed()` validates one embed at a time, so verify the combined character count yourself when sending multiple embeds together.
 
-Next up: [buttons and menus](message-components.md). The
-[embed reference](../../jsx.md) lists every prop.
+Next, see [Buttons and menus](message-components.md). For every embed prop and limit, see the [JSX reference](../../jsx.md).

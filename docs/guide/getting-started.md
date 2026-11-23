@@ -1,13 +1,10 @@
 # Getting started
 
-Let's get a bot answering `/ping`. You'll need Node.js 24.17 or newer, a Discord
-application with a bot token, and a server to test in.
+This guide walks you through creating a bot that responds to `/ping`. You need Node.js 24.17 or newer, a Discord application with a bot token, and a test server.
 
 ## Installing
 
-Hyperion is in beta and runs on prerelease versions of discord.js v15 and
-`@discordjs/builders`, so install the beta with the exact versions it was built
-against:
+Hyperion is in beta and targets prerelease versions of `discord.js` v15 and `@discordjs/builders`. Install the exact versions it was built against:
 
 ```npm
 npm install @hyperion-js/core@beta discord.js@15.0.0-dev.1792497873-5050a3b54 @discordjs/builders@2.0.0-dev.1792497873-5050a3b54
@@ -15,28 +12,21 @@ npm install @hyperion-js/core@beta discord.js@15.0.0-dev.1792497873-5050a3b54 @d
 
 ## Project layout
 
-Hyperion finds your code by folder. Everything lives under `src`, next to your
-entry file:
+Hyperion discovers handlers from folders under `src/`, next to your entry file. Start with this layout:
 
 ```files
 my-bot/
 ├── index.ts
 └── src/
-    ├── commands/
-    │   └── ping.ts
-    ├── buttons/
-    ├── select-menus/
-    ├── modals/
-    └── events/
+    └── commands/
+        └── ping.ts
 ```
 
-Every folder is optional, so only create the ones you use. Subfolders are fine
-too; they're just for organising.
+Hyperion loads `ping.ts` from `src/commands/` and deploys the command at startup.
 
 ## Your first command
 
-Each file default-exports one handler, made with a `define…()` function. A
-command gets a builder from `@discordjs/builders` and a `run()` function:
+Each handler file default-exports the result of a `define*()` function, such as `defineCommand()` or `defineButton()`. Create `src/commands/ping.ts`:
 
 ```ts
 // src/commands/ping.ts
@@ -53,10 +43,11 @@ export default defineCommand({
 });
 ```
 
-`ctx.interaction` is the regular discord.js interaction, so you reply the way
-you always have.
+`ctx.interaction` is the standard discord.js interaction object, so replying works the same way as in plain discord.js.
 
 ## Creating the client
+
+Create `index.ts` to initialize the client, deploy commands, and log in:
 
 ```ts
 // index.ts
@@ -74,34 +65,29 @@ const client = await HyperionClient.create({
     name: "MyBot",
     root: new URL("./", import.meta.url),
     discord: { intents: ["Guilds"] },
-    commands: { applicationId, token, guildIds: [guildId] },
+    commands: {
+        applicationId,
+        token,
+        guildIds: [guildId],
+    },
 });
 
 await client.login(token);
 ```
 
-`create()` loads every handler and deploys your commands before it returns, so
-mistakes show up at startup rather than when someone clicks something. Logging
-in is a separate step.
+`HyperionClient.create()` loads every handler, validates your configuration, and deploys your commands before it returns. Configuration errors fail immediately at startup instead of when a user triggers an interaction. Logging in to Discord is a separate step.
 
-Passing `guildIds` deploys to those servers only, which updates instantly and is
-perfect while you develop. Leave it out to deploy globally.
+Passing `guildIds` deploys commands only to those servers, where updates appear right away. Omit `guildIds` to deploy commands globally.
 
-> [!WARNING]
-> Deploying replaces _all_ commands in that scope, including ones you registered
-> some other way.
+> [!NOTE]
+> Hyperion does not load `.env` files for you. Load environment variables with Node's `--env-file` flag or a package like [`dotenv`](https://www.npmjs.com/package/dotenv).
 
-Hyperion doesn't read `.env` files for you. Set the variables however you
-normally start your bot.
+## Running the bot
 
-## Running it
+Run `index.ts` with a TypeScript runner such as `tsx`. Invite the bot to your test server, wait for the ready log, and run `/ping`.
 
-Run `index.ts` with a TypeScript runner such as `tsx`. There's no build step
-during development. Invite the bot to your test server, wait for the ready log,
-and type `/ping`. That's it!
+## Next steps
 
-## Where next
-
-- More command shapes, like `/ticket close`: [commands](commands.md).
-- Buttons and menus: [buttons](buttons.md) and [select menus](select-menus.md).
-- Only letting certain people run something: [guards](guards.md).
+- Learn about subcommands and context menus in [Commands](commands.md).
+- Add interactive controls in [Buttons](buttons.md) and [Select menus](select-menus.md).
+- Restrict who can use handlers in [Guards](guards.md).

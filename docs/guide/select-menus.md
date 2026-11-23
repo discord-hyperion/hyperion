@@ -1,13 +1,10 @@
 # Select menus
 
-Select menus work just like [buttons](buttons.md), with one extra option: which
-kind of menu the handler answers. If you need a refresher on the kinds
-themselves, see the discord.js guide on
-[select menus](https://discordjs.guide/legacy/interactive-components/select-menus).
+Select-menu handlers work like [button handlers](buttons.md), except they also require a `componentType` option to specify which kind of menu the handler accepts. See the discord.js guide on [select menus](https://discordjs.guide/legacy/interactive-components/select-menus) for an overview of Discord's menu types.
 
-## A string menu
+## Defining a string select menu
 
-Put handlers in `src/select-menus`:
+Place select-menu handlers in `src/select-menus/`:
 
 ```ts
 // src/select-menus/choose-colour.ts
@@ -32,25 +29,23 @@ export default defineSelectMenu({
 });
 ```
 
-A select-menu handler takes the same options as a button handler, plus two:
+Select-menu handlers accept these options:
 
-| Option          | What it's for                                                                |
-| --------------- | ---------------------------------------------------------------------------- |
-| `componentType` | The kind of menu. Required.                                                  |
-| `builder`       | The template. Its custom ID becomes the handler's.                           |
-| `customId`      | The custom ID to answer, when there's no template.                           |
-| `params`        | Data in the custom ID. See [data in custom IDs](custom-ids.md).              |
-| `input`         | A schema for the picked values. See [checking the pick](#checking-the-pick). |
-| `guards`        | Checks before `run()`. See [guards](guards.md).                              |
-| `run`           | Runs on each click.                                                          |
+| Option          | Purpose                                                                                                     |
+| --------------- | ----------------------------------------------------------------------------------------------------------- |
+| `componentType` | Required menu type from `ComponentType`.                                                                    |
+| `builder`       | Optional menu template. Its custom ID becomes the handler's custom ID.                                      |
+| `customId`      | Fixed custom ID to match when you do not provide a template.                                                |
+| `params`        | Typed parameter definition for dynamic custom IDs. See [Data in custom IDs](custom-ids.md).                 |
+| `input`         | Optional schema to validate selected values. See [Validating selected values](#validating-selected-values). |
+| `guards`        | Checks that run before `run()`. See [Guards](guards.md).                                                    |
+| `run`           | Function executed when a user makes a selection.                                                            |
 
-All five kinds share one registry, so custom IDs must be unique across them.
+All five select-menu types share one registry, so every handler must have a unique custom ID across all menu types.
 
-## The other kinds
+## User, role, mentionable, and channel menus
 
-For a user, role, mentionable, or channel menu, set `componentType` to that
-kind. It types `ctx.interaction` for the menu, so the picked users are right
-there:
+Set `componentType` to match the menu type you want to handle. Hyperion narrows `ctx.interaction` accordingly, giving you typed properties such as `ctx.interaction.users`:
 
 ```ts fragment
 export default defineSelectMenu({
@@ -60,6 +55,7 @@ export default defineSelectMenu({
         .setPlaceholder("Choose a user"),
     run: async ctx => {
         const names = ctx.interaction.users.map(user => user.username);
+
         await ctx.interaction.update({
             content: `Selected: ${names.join(", ")}`,
         });
@@ -69,7 +65,7 @@ export default defineSelectMenu({
 
 ## Sending a menu
 
-`build()` copies the template, the same as for buttons:
+Use `ctx.client.selectMenus.build()` to get a fresh copy of the handler's template:
 
 ```ts fragment
 await ctx.interaction.reply({
@@ -82,15 +78,13 @@ await ctx.interaction.reply({
 });
 ```
 
-## Checking the pick
+## Validating selected values
 
-Values come from the user's client, so an old message or a tampered request can
-send something your menu never offered. Give the handler `input` to check them
-first, the same way as [command input](input.md):
+Selected values come from the user's Discord client, so an old message or modified request can send values your menu does not currently offer. Pass `input` with a schema to validate `ctx.interaction.values` before your handler uses them, the same way as [typed input](input.md):
 
 ```ts fragment
 const input = defineInput({
-    // The schema gets the picked values, as strings.
+    // The schema receives the selected values as an array of strings.
     schema: v.pipe(v.array(v.picklist(["blue", "green"])), v.length(1)),
 });
 
@@ -103,7 +97,7 @@ export default defineSelectMenu({
 
         if (issues) {
             await ctx.interaction.reply({
-                content: "That colour isn't on the list.",
+                content: "That colour is not on the list.",
                 flags: MessageFlags.Ephemeral,
             });
 
@@ -115,14 +109,12 @@ export default defineSelectMenu({
 });
 ```
 
-For user, role, mentionable, and channel menus, the schema gets the picked IDs.
+For user, role, mentionable, and channel menus, the schema receives the selected Discord IDs as strings.
 
-## Menus with data
+## Carrying data in the custom ID
 
-A menu can carry data in its custom ID too, for example which ticket an
-"Assign to…" menu belongs to. The data arrives in `ctx.params`, separately from
-what the user picked. See [data in custom IDs](custom-ids.md).
+A select menu can carry data in its custom ID, such as the ticket ID for an "Assign to" menu. Decoded data arrives in `ctx.params`, separate from the values the user selected. See [Data in custom IDs](custom-ids.md).
 
 ## Guards
 
-Guards work exactly as for [buttons](buttons.md#guards).
+Guards on select menus work the same way as on [buttons](buttons.md#guards).

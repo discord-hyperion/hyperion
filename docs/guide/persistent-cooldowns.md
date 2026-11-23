@@ -1,18 +1,16 @@
 # Keeping cooldowns across restarts
 
-The built-in `cooldown()` guard forgets everything when your bot restarts. By
-the end of this page you'll have a cooldown guard that keeps its timers in
-SQLite, so a restart doesn't hand everyone a free use.
+The built-in `cooldown()` guard stores timestamps in memory, so restarting your bot clears every active cooldown. This guide builds a cooldown guard backed by SQLite so active cooldowns persist across restarts.
 
 ## Steps
 
-1. Install the storage package and its driver:
+1. Install `@hyperion-js/sqlite` and `better-sqlite3`:
 
    ```npm
    npm install @hyperion-js/sqlite@beta better-sqlite3
    ```
 
-2. Open a database and give cooldowns their own namespace:
+2. Open a database and create a key-value namespace for cooldowns:
 
    ```ts
    // src/database.ts
@@ -21,12 +19,11 @@ SQLite, so a restart doesn't hand everyone a free use.
 
    export const db = createDatabase({ path: "bot.db" });
 
-   // Each value is when the cooldown ends.
+   // Stores the Unix timestamp in milliseconds when each cooldown expires.
    export const cooldowns = db.kv("cooldowns", v.number());
    ```
 
-3. Write the guard. It's a function that takes a key and a duration, so each
-   handler picks what to rate-limit:
+3. Write the guard function taking a cooldown key and duration:
 
    ```ts fragment
    // src/guards/persistent-cooldown.ts
@@ -36,7 +33,7 @@ SQLite, so a restart doesn't hand everyone a free use.
    export const persistentCooldown = (key: string, durationMs: number) =>
        defineGuard<InteractionContext>({
            name: "persistent-cooldown",
-           description: "Slow down a little, and try again in a moment.",
+           description: "Please wait a moment before trying again.",
            run: () => {
                if (cooldowns.has(key)) return false;
 
@@ -47,10 +44,9 @@ SQLite, so a restart doesn't hand everyone a free use.
        });
    ```
 
-   The `ttl` makes the key expire on its own, so there's nothing to clean up.
+   Passing `ttl` expires the entry automatically, so you do not need manual cleanup.
 
-4. Use it as a factory in any handler's `guards`, keyed by the user (and the
-   command, so one cooldown doesn't block another):
+4. Attach the guard to a handler using a guard factory. Include both the action name and the user ID in the key so separate commands do not share a cooldown:
 
    ```ts fragment
    guards: [
@@ -67,16 +63,11 @@ SQLite, so a restart doesn't hand everyone a free use.
    });
    ```
 
-## Check it worked
+## Verifying it works
 
-Run the command, then run it again straight away: the second try gets the
-guard's description as a private reply. Restart the bot within the minute and
-try once more. It's still rejected, because the cooldown lives in `bot.db`.
+Run the command twice in a row. The second call should return the guard's description as an ephemeral reply. Restart the bot before the 60-second window expires and run the command again. The guard should still reject the request because the timestamp is stored in `bot.db`.
 
 > [!TIP]
-> Want to tell people how long is left? `cooldowns.get(key)` returns when the
-> cooldown ends, so a custom `onFail()` can reply with Discord's relative time,
-> `<t:${Math.ceil(end / 1000)}:R>`. See [custom rejection replies](guards.md#custom-rejection-replies).
+> To show users when they can run the command again, read the stored expiration timestamp with `cooldowns.get(key)` inside a custom `onFail()` handler and format it as a Discord relative timestamp, `<t:${Math.ceil(end / 1000)}:R>`. See [Custom rejection replies](guards.md#custom-rejection-replies).
 
-For how guards and factories work, see [guards](guards.md). For the storage side,
-see [quick values](storing-data.md#quick-values).
+For details on guards and factories, see [Guards](guards.md). For more on key-value storage, see [Key-value namespaces](storing-data.md#key-value-namespaces).
