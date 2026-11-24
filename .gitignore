@@ -28,3 +28,6 @@ apps/dev-bot/.examples-*/
 
 # cf deploy build output
 apps/docs-site-fumadocs/.cloudflare/
+
+# Local handoff plans from the improve skill
+plans/
