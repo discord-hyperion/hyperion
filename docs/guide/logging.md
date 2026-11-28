@@ -57,4 +57,4 @@ Hyperion never logs bot tokens, message content, option values, selected menu va
 
 ## Debug logs
 
-Set `level: "debug"` to log discovered handler file paths, skipped missing handler folders at startup, individual guard checks, handler starts, and custom IDs that match a params route but fail to decode. For the complete list of log events and fields, see the [logging reference](../logging.md).
+Set `level: "debug"` to log discovered handler file paths, skipped missing handler folders at startup, individual guard checks, handler starts, and custom IDs that match a params route but fail to decode.

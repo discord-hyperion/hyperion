@@ -61,5 +61,3 @@ Structural violations throw `JSXRenderError` with a `path` to the invalid elemen
 
 > [!WARNING]
 > The attached `cause` may include user-provided values from your props, so avoid logging `cause` verbatim when handling sensitive input.
-
-For every prop and validation rule, see the [JSX reference](../jsx.md).

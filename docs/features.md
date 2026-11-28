@@ -3,9 +3,9 @@
 The backlog lists only work that is still open. When a pull request ships or drops
 part of an item, it deletes that bullet in the same pull request; when the last
 bullet goes, the item moves to [Implemented](#implemented) as one line linking its
-reference doc. Reference docs describe what exists; this page never repeats them.
+guide page. The implementation is the source of truth; this page never repeats it.
 `scripts/check-docs.mjs` checks the shape: every planned item is unticked, and every
-implemented item links a reference doc.
+implemented item links a guide page.
 
 ## Planned
 
@@ -33,37 +33,32 @@ implemented item links a reference doc.
   - Publish symbol-level reference pages for `@hyperion-js/core` and `@hyperion-js/jsx`
     beside the guide, generated with TypeDoc.
   - Blocked until TypeDoc supports TypeScript 7; the inspected release allows only
-    5.x through 6.0.x. Recheck the upstream tracking issue before starting. See
-    [documentation site generators](research/documentation-site-generators.md#typedoc-is-complementary-with-a-ts7-blocker).
+    5.x through 6.0.x. Recheck the upstream tracking issue before starting.
   - Decide where the output lives; a separate API prefix on the guide site is the
     least integration. The guide stays the home for explanation.
 
 ## Implemented
 
-- Chat-input commands, subcommands, and deployment. See
-  [command registration](command-registration.md) and [command paths](command-paths.md).
-- Deployment that skips unchanged commands. See
-  [command registration](command-registration.md).
-- Subcommand groups. See [subcommand groups](subcommand-groups.md).
-- Context-menu commands with typed lookup. See
-  [context-menu commands](context-menu-commands.md).
-- Autocomplete routing. See [autocomplete](autocomplete.md).
+- Chat-input commands, subcommands, subcommand groups, context-menu commands,
+  and deployment that skips unchanged commands. See [commands](guide/commands.md).
+- Autocomplete routing. See [autocomplete](guide/autocomplete.md).
 - Button, select-menu, and modal handlers with templates and `build()`; a
   template's custom ID is its handler's. See
-  [buttons](buttons.md), [select menus](select-menus.md), and [modals](modals.md).
-- Typed custom-ID params. See [custom-ID params](custom-id-params.md).
+  [buttons](guide/buttons.md), [select menus](guide/select-menus.md), and
+  [modals](guide/modals.md).
+- Typed custom-ID params. See [custom IDs](guide/custom-ids.md).
 - Guards through `defineGuard()`, with built-in owner, server, permission,
-  cooldown, and param-owner guards. See [guards](guards.md).
+  cooldown, and param-owner guards. See [guards](guide/guards.md).
 - Typed input for commands, every modal control, and select menus, with async
-  resolvers. See [typed command input](input-validation.md),
-  [modal input validation](modal-input-validation.md), and
-  [select menus](select-menus.md#validate-the-selection).
-- Filesystem event handlers. See [event handlers](event-handlers.md).
-- Logging. See [logging](logging.md).
+  resolvers. See [typed input](guide/input.md).
+- Filesystem event handlers. See [events](guide/events.md).
+- Logging. See [logging](guide/logging.md).
 - `@hyperion-js/jsx`: embeds, text, buttons, all five select menus, modals with
-  selects and file uploads, and layout messages. See [JSX authoring](jsx.md),
-  [message components](jsx-message-components.md),
-  [select menus](jsx-select-menus.md), [modals](jsx-modals.md), and
-  [layout messages](jsx-layout.md).
-- `@hyperion-js/sqlite`: validated table helpers, `sql` queries, transactions, and
-  migrations over `better-sqlite3`. See [SQLite storage](sqlite.md).
+  selects and file uploads, and layout messages. See [JSX](guide/jsx.md),
+  [embeds](guide/jsx/embeds.md),
+  [message components](guide/jsx/message-components.md),
+  [modals](guide/jsx/modals.md), and
+  [layout messages](guide/jsx/layout-messages.md).
+- `@hyperion-js/sqlite`: validated table helpers, `sql` queries, transactions,
+  key-value namespaces, and migrations over `better-sqlite3`. See
+  [SQLite storage](guide/sqlite.md).

@@ -221,7 +221,7 @@ for (const file of files) {
 }
 
 // The backlog lists only open work: planned items stay unticked, and shipped
-// items move to Implemented as one line that links their reference doc.
+// items move to Implemented as one line that links their guide page.
 const backlog = path.join(root, "docs/features.md");
 
 if (existsSync(backlog)) {

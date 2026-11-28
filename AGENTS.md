@@ -15,52 +15,32 @@ context, not the current API.
   `pnpm start`, `pnpm dev`, and `pnpm start:debug`. Use isolated tests with fake
   credentials and mocked Discord requests. Ask the user to configure credentials.
 
-## Before changing a subsystem
+## Source of truth
+
+The implementation and tests are the source of truth for how Hyperion behaves.
+Infer subsystem behavior directly from the code rather than from prose docs.
 
 When you state how the code behaves today, in a design discussion or anywhere
 else, cite the `file:line` that shows it.
 
-Read the relevant reference before implementation or review:
-- Client lifecycle, registry discovery, or package boundaries:
-  [Architecture](docs/architecture.md).
-- JSX runtime, embed authoring, or TSX/JSX handlers: [JSX authoring](docs/jsx.md).
-- Event discovery, ordering, reloads, or shutdown draining: [Event handlers](docs/event-handlers.md).
-- Command loading, deployment, or execution:
-  [Command registration](docs/command-registration.md).
-- Command folders, parent definitions, subcommands, or future groups:
-  [Command paths](docs/command-paths.md) and
-  [parent-command decision](docs/adr/0001-explicit-parent-command-definitions.md).
-- Context-menu builders, generics, or typed lookup:
-  [Context-menu commands](docs/context-menu-commands.md).
-- Guard execution or ownership checks: [Guards](docs/guards.md).
-- Autocomplete routing, authorization, or response handling:
-  [Autocomplete](docs/autocomplete.md).
-- Component discovery, routing, state, or acknowledgment: the relevant
-  [button](docs/buttons.md), [select-menu](docs/select-menus.md), or
-  [modal](docs/modals.md) guide.
-- Writing or changing tests, fixtures, or shared test helpers:
-  [Test fixtures](docs/test-fixtures.md).
-- Logging, sensitive data handling, or startup indicators:
-  [Logging](docs/logging.md).
-- Domain terminology: [Glossary](docs/GLOSSARY.md). Feature scope and deferred
-  work: [Feature backlog](docs/features.md).
-- Storage, `@hyperion-js/sqlite`, or migrations: [SQLite storage](docs/sqlite.md).
-  Core stays database-free.
+Supporting docs that remain in `docs/`:
+- Canonical domain terminology: [Glossary](docs/GLOSSARY.md).
+- Open backlog: [Feature list](docs/features.md).
+- Historical design decisions: `docs/adr/`.
+- Operational contracts: [CI](docs/ci.md), [Releases](docs/releases.md), and
+  [Package development](docs/package-development.md).
 
 ## Documentation
 
-`docs/*.md` are reference docs for contributors and agents: precise and complete,
-and written as the current contract. Design history and rejected options belong in
-ADRs (`docs/adr/`) and git history.
-`docs/guide/` is the human-facing guide. When behavior changes, update the
-reference doc, then the matching guide page following
+`docs/guide/` is the human-facing guide published to the docs site. When
+user-facing behavior changes, update the matching guide page following
 [the writing style](docs/writing-style.md). The guide may omit details but must
-never contradict the reference docs.
+never contradict the implementation.
 
 A change that ships or drops backlog work updates
 [the feature list](docs/features.md) in the same pull request: delete the done
-bullets, and move a finished item to Implemented as one line linking its reference
-doc. The list holds only open work.
+bullets, and move a finished item to Implemented as one line linking its guide
+page. The list holds only open work.
 
 ## Tooling and conventions
 

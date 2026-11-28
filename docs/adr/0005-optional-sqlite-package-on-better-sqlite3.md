@@ -6,8 +6,7 @@ status: accepted
 
 Core stays database-free. Storage ships as a separate, optional package,
 `@hyperion-js/sqlite`, that doesn't depend on core, like `@hyperion-js/jsx`. It wraps
-`better-sqlite3` with table helpers over real rows. The contract lives in
-[SQLite storage](../sqlite.md).
+`better-sqlite3` with table helpers over real rows.
 
 ## Considered options
 

@@ -20,8 +20,9 @@ expressions, no `public`, formatting), so they are not repeated here.
 
 - kebab-case files and directories, PascalCase classes and types, camelCase
   functions and variables (including guard values like `ownerOnly`).
-- Command folder delimiters follow [command paths](docs/command-paths.md); event
-  folders use Discord's event-name casing ([event handlers](docs/event-handlers.md)).
+- Command folder delimiters (`(category)`, `[parent]`, `{group}`) follow
+  `packages/core/src/registries/parse-command-path.ts`; event folders use
+  Discord's event-name casing.
 
 ## Functions and types
 
@@ -73,7 +74,8 @@ if (!y) continue;
 
 ## Documentation
 
-- Behaviour changes update the reference doc (`docs/*.md`) and the matching guide
-  page (`docs/guide/`), following [the writing style](docs/writing-style.md). The
-  guide never contradicts the reference.
-- Examples import from `@hyperion-js/core` and `@hyperion-js/jsx`.
+- User-facing behavior changes update the matching guide page (`docs/guide/`),
+  following [the writing style](docs/writing-style.md). The guide never
+  contradicts the implementation.
+- Examples import from `@hyperion-js/core`, `@hyperion-js/jsx`, and
+  `@hyperion-js/sqlite`.

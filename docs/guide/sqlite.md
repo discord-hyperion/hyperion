@@ -158,5 +158,3 @@ const db = createDatabase({ path: ":memory:", migrations });
 // ...run assertions...
 db.close();
 ```
-
-For full behavior and error contracts, see the [SQLite storage reference](../sqlite.md).

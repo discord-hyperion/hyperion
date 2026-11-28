@@ -1,7 +1,6 @@
 # Documentation site prototype (Fumadocs)
 
-A throwaway Fumadocs build of `docs/guide`. See
-[documentation site generators](../../docs/research/documentation-site-generators.md).
+A Fumadocs build of `docs/guide`.
 It is private, not wired into CI or Turbo, and not a decision to publish.
 
 ```sh
