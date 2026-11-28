@@ -15,20 +15,6 @@ implemented item links a reference doc.
     `@discordjs/builders` has no builders for them yet). Core modal input already
     extracts them.
   - The layout-message `File` component, after attachment handling is designed.
-- [ ] `@hyperion-js/testing`, a public package for testing a bot's handlers.
-  - Publish the interaction fixtures (`tests/fixtures/interactions.ts`) behind a
-    bot-level API: load handlers from a root without login or deployment, then
-    `bot.command("todo create", { options })`, `bot.button(customId)`,
-    `bot.modal(id, { fields })`, and `bot.autocomplete(...)`, each going through
-    the dispatcher so guards, input, params, and acknowledgment run as in
-    production.
-  - Record responses in plain arrays (reply, defer, edits, follow-ups, update,
-    shown modal, unhandled) so any test runner works; the current fixtures use
-    `node:test` mocks.
-  - Make any Discord REST call from a handler throw instead of reaching Discord.
-  - Decide: separate package or a `@hyperion-js/core/testing` subpath; how much of
-    guilds, members, channels, and messages to fake; typed options once
-    generated types exist. Leave clocks to the runner's fake timers.
 - [ ] Integrated development workflow for generated types (deferred).
   - Generate declarations during setup and before development starts.
   - Watch handler additions, edits, renames, and deletions to keep autocomplete
