@@ -1,15 +1,11 @@
 # Writing style for the human guide
 
-Hyperion keeps two kinds of documentation:
-- **Reference docs** (`docs/*.md`): precise contracts for contributors and coding
-  agents. Dense is fine; completeness matters more than flow.
-- **The guide** (`docs/guide/`): direct technical documentation for developers
-  building bots. Readers use [the docs site](https://hyperion.favteo.com), so
-  write for how a page renders there while keeping it readable on GitHub.
+`docs/guide/` is direct technical documentation for developers building bots.
+Readers use [the docs site](https://hyperion.favteo.com), so write for how a
+page renders there while keeping it readable on GitHub.
 
-This page covers the guide. When a feature changes, update the reference doc
-first, then the matching guide page. The guide may leave details out; it must
-never contradict the reference docs.
+When user-facing behavior changes, update the matching guide page. The guide may
+leave details out; it must never contradict the implementation.
 
 ## Voice
 
@@ -95,7 +91,7 @@ after a click"), not the API's structure.
   it lands here.
 - State the cause in one or two sentences, then the fix as code or steps.
 - Only errors Hyperion or Discord actually produce. Copy the message from the
-  code, and link the owning guide or reference doc.
+  code, and link the owning guide page.
 
 **FAQ.** Adoption and architecture questions ("why / does it support / how does
 it fit"). Question-phrased `##` headings are the deliberate format on this page.
@@ -103,8 +99,8 @@ Keep each answer to one short direct paragraph with links to owning pages.
 
 ### Before you finish a page
 
-- Every behavior the page states matches the code and the reference doc. Never
-  describe behavior you haven't checked; find the real value or leave it out.
+- Every behavior the page states matches the implementation. Never describe
+  behavior you haven't checked; find the real value in the code or leave it out.
 - Primary examples compile (`pnpm check`); focused follow-up excerpts are tagged
   `fragment` on purpose.
 - The page has one home in the [duplication table](#avoid-duplication); other
@@ -165,12 +161,12 @@ than linking the glossary at the top of every page.
 
 ## What to leave out
 
-These belong in reference docs, ADRs, or git history, not the guide:
+These belong in code, ADRs, or git history, not the guide:
 - Implementation details (staging, atomic replacement, declaration merging).
 - Verification criteria, test plans, "in this PR", "existing", "now", "remains
   unchanged". The guide describes how things work, not how they changed.
 - Defensive disclaimers ("this is not a claim of…").
-- Exhaustive lists of log events or validation rules. Link the reference doc.
+- Exhaustive lists of log events or validation rules.
 
 ## Examples
 

@@ -86,4 +86,4 @@ When you need a single builder—for manual `ActionRowBuilder` composition or a 
 - Setting `disabled` only changes Discord's UI state. Always verify permissions again when handling the interaction.
 - Standard messages hold at most five action rows. To combine text blocks, images, and controls in one layout, see [Layout messages](layout-messages.md).
 
-If you use `@hyperion-js/core`, handlers can store rendered buttons and menus as [templates](with-hyperion.md#buttons-and-menus-as-templates). For full prop lists, see the [JSX message components reference](../../jsx-message-components.md) and [JSX select menus reference](../../jsx-select-menus.md).
+If you use `@hyperion-js/core`, handlers can store rendered buttons and menus as [templates](with-hyperion.md#buttons-and-menus-as-templates).

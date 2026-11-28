@@ -1,9 +1,43 @@
 # Hyperion
 
-Canonical terminology for Hyperion's commands, interactions, and execution checks.
-Usage and configuration examples belong in the feature guides.
+Canonical domain terminology across Hyperion's packages (`@hyperion-js/core`,
+`@hyperion-js/jsx`, and `@hyperion-js/sqlite`). Behavior and contracts live in
+the implementation; this glossary defines what each term means and which
+synonyms to avoid.
 
 ## Language
+
+### Client and registries
+
+**Hyperion client**:
+The Discord client extended with Hyperion's handler registries, interaction
+dispatcher, and logging.
+_Avoid_: Bot instance, app
+
+**Registry**:
+A client-owned store that discovers, validates, and indexes one kind of handler
+(`commands`, `buttons`, `selectMenus`, `modals`, or `events`).
+_Avoid_: Manager, loader, cache
+
+**Discovery**:
+Scanning a handler directory on disk to classify and load default-exported
+handler modules into a registry.
+_Avoid_: Registration, deployment
+
+**Deployment**:
+Publishing registered application commands to Discord's API for a guild or
+globally.
+_Avoid_: Discovery, registration
+
+**Interaction dispatcher**:
+The execution pipeline that routes an incoming Discord interaction to its
+matching handler, runs guards and input validation, and handles errors.
+_Avoid_: Router, event bus
+
+**Context**:
+The per-invocation object passed to a handler or guard, carrying the client,
+the interaction or event arguments, and any validated params or input.
+_Avoid_: State, session, request
 
 ### Commands
 
@@ -18,17 +52,18 @@ options. It can be a standalone action or a parent containing subcommands.
 _Avoid_: Context-menu command
 
 **Standalone command**:
-A top-level action invoked directly, such as `/ping`, without selecting a subcommand.
+A top-level action invoked directly, such as `/ping`, without selecting a
+subcommand.
 _Avoid_: Parent command
 
 **Parent command**:
-A top-level command that contains subcommands, such as `ticket` in `/ticket close`.
-It is not itself an independently executable action.
+A top-level command that contains subcommands, such as `ticket` in
+`/ticket close`. It is not itself an independently executable action.
 _Avoid_: Subcommand, subcommand group
 
 **Subcommand**:
-An executable action within a parent command, such as `close` in `/ticket close`.
-It has its own description and input options.
+An executable action within a parent command, such as `close` in
+`/ticket close`. It has its own description and input options.
 _Avoid_: Parent command, subcommand group
 
 **Subcommand group**:
@@ -40,6 +75,11 @@ _Avoid_: Category, parent command
 An organizational grouping of command definitions that contributes nothing to
 their invocation names.
 _Avoid_: Subcommand group, parent command
+
+**Command path**:
+The relative filesystem path under the commands directory whose `(category)`,
+`[parent]`, and `{group}` folder delimiters classify a command module.
+_Avoid_: Route, command tree
 
 **Parent definition**:
 The metadata and shared execution checks associated with a parent command. It
@@ -61,8 +101,8 @@ A context-menu command whose target is a selected user.
 _Avoid_: Message context-menu command
 
 **Message context-menu command**:
-A context-menu command whose target is a selected message, rather than text parsed
-from a newly sent message.
+A context-menu command whose target is a selected message, rather than text
+parsed from a newly sent message.
 _Avoid_: Message-content command, user context-menu command
 
 ### Command input
@@ -71,6 +111,11 @@ _Avoid_: Message-content command, user context-menu command
 A named parameter offered by a chat-input command or subcommand, with a Discord
 value type and an indication of whether the user must supply it.
 _Avoid_: Validated command input
+
+**Input schema**:
+A Standard Schema contract that validates raw command options, modal
+submissions, or select-menu selections before any input resolver runs.
+_Avoid_: Guard, validator function
 
 **Command input resolver**:
 An application-defined operation that receives validated command option values
@@ -95,8 +140,8 @@ event handlers.
 _Avoid_: Event handler, handler invocation
 
 **Event handler**:
-An application definition that responds to a selected client event. Several event
-handlers may respond independently to the same client event.
+An application definition that responds to a selected client event. Several
+event handlers may respond independently to the same client event.
 _Avoid_: Client event, component handler
 
 ### Components
@@ -121,8 +166,8 @@ A horizontal group of interactive controls within a message or form.
 _Avoid_: Handler group, command group
 
 **Select menu**:
-An interactive control for choosing one or more values, users, roles, mentionable
-entities, or channels.
+An interactive control for choosing one or more values, users, roles,
+mentionable entities, or channels.
 _Avoid_: Select-menu handler
 
 **Select option**:
@@ -130,9 +175,19 @@ A selectable entry in a string select menu, with a visible label and a value
 returned when selected.
 _Avoid_: Command option, selected value
 
+**Select-menu input resolver**:
+An application-defined operation that receives validated select-menu selections
+and returns the application values supplied to the select-menu handler.
+_Avoid_: Validator, guard
+
+**Validated select-menu input**:
+The application values supplied to one select-menu handler after the selection
+is validated and any application resolution have completed.
+_Avoid_: Raw selected values, choices
+
 **Modal**:
-A form presented in response to an interaction, with its submitted values delivered
-in a separate interaction.
+A form presented in response to an interaction, with its submitted values
+delivered in a separate interaction.
 _Avoid_: Modal handler
 
 **Modal input resolver**:
@@ -144,11 +199,6 @@ _Avoid_: Validator, guard
 The application values supplied to one modal handler after submission validation
 and any application resolution have completed.
 _Avoid_: Raw submitted values, form controls
-
-**Validated select-menu input**:
-The application values supplied to one select-menu handler after the selection is
-validated and any application resolution has completed.
-_Avoid_: Raw selected values, choices
 
 **Modal control**:
 A control inside a modal label that submits a value: a text input, select menu,
@@ -185,8 +235,8 @@ identify its associated interaction.
 _Avoid_: Message ID, command name
 
 **Custom-ID params**:
-The validated values a component handler declares in its custom ID, available only
-to that invocation.
+The validated values a component handler declares in its custom ID, available
+only to that invocation.
 _Avoid_: Payload, state
 
 **Route**:
@@ -205,7 +255,8 @@ A reusable function that describes part of a JSX view from supplied properties.
 _Avoid_: Component handler, interactive control
 
 **Rendering**:
-Evaluating a JSX view to produce the content supplied to Discord.
+Evaluating a JSX view to produce the Discord builder or message payload supplied
+to discord.js.
 _Avoid_: Sending, handler execution
 
 ### Execution
@@ -215,14 +266,42 @@ A single request to execute a command, component handler, or event handler.
 _Avoid_: Handler definition
 
 **Guard**:
-An execution check that permits or rejects an invocation before its handler runs.
+An execution check that permits or rejects an invocation before its handler
+runs.
 _Avoid_: Precondition, autocomplete filter
 
+**Guard factory**:
+A function invoked per invocation to produce a fresh guard, such as a guard with
+per-invocation state.
+_Avoid_: Guard, parameterized guard
+
 **Guard provider**:
-A guard, or a factory that supplies a guard for a particular invocation.
+A guard, or a guard factory that supplies a guard for a particular invocation.
 _Avoid_: Handler
 
 **Autocomplete**:
 A request for suggestions for a focused chat-input command option. It does not
 execute the command or validate the user's final selection.
 _Avoid_: Command invocation, input validation
+
+### Storage
+
+**Database**:
+An optional SQLite connection wrapper (`@hyperion-js/sqlite`) that owns
+migrations, table helpers, parameterized SQL queries, and key-value namespaces.
+_Avoid_: Core store, ORM
+
+**Table helper**:
+A schema-validated interface over one real SQLite table for typed row reads,
+writes, and filters.
+_Avoid_: Model, repository, KV store
+
+**Key-value namespace**:
+A scoped plain-JSON store with optional expiry, backed by `@hyperion-js/sqlite`'s
+internal `_hyperion_kv` table.
+_Avoid_: Table helper, cache
+
+**Migration**:
+A versioned, ordered schema change applied once to a SQLite database via
+SQLite's `user_version`.
+_Avoid_: Seed, sync

@@ -96,4 +96,4 @@ Modals accept the same select components used in messages (see [Select menus](me
 - Radio groups and checkboxes do not have JSX components yet because `@discordjs/builders` does not expose builders for them yet.
 - Re-check permissions when handling the modal submission.
 
-If you use `@hyperion-js/core`, a modal handler can store your JSX form as its [template](with-hyperion.md#forms-as-templates). For all modal props and constraints, see the [JSX modals reference](../../jsx-modals.md), or return to the [JSX guide](../jsx.md).
+If you use `@hyperion-js/core`, a modal handler can store your JSX form as its [template](with-hyperion.md#forms-as-templates), or return to the [JSX guide](../jsx.md).

@@ -95,4 +95,4 @@ Use `.map()` to render lists of fields and `&&` to include optional elements. Ea
 
 Discord enforces a 6,000-character combined limit across all embeds in a single message. `renderEmbed()` validates one embed at a time, so verify the combined length yourself when sending multiple embeds together.
 
-Next, see [Buttons and menus](message-components.md). For every embed prop and limit, see the [JSX reference](../../jsx.md).
+Next, see [Buttons and menus](message-components.md).

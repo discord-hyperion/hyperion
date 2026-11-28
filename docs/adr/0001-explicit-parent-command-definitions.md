@@ -13,5 +13,4 @@ restriction: structural typing still accepts populated builders, and fluent sett
 return the full builder type. Runtime checks therefore reject manual children before
 Hyperion composes the discovered leaves.
 
-Terminology is maintained in [GLOSSARY.md](../GLOSSARY.md); configuration and loading
-rules are documented in [command-paths.md](../command-paths.md).
+Terminology is maintained in [GLOSSARY.md](../GLOSSARY.md).

@@ -82,4 +82,4 @@ Once a message is sent as a layout message, it stays a layout message on every s
 
 A layout message can contain at most 40 components total, including nested children (`MediaGallery.Item` entries do not count toward this limit). Interactive `customId`s must be unique across the message, just like standard [buttons and menus](message-components.md).
 
-Next, see [Modals](modals.md). For all props and placement rules, see the [JSX layout reference](../../jsx-layout.md). If you use `@hyperion-js/core`, see [Layout messages in JSX with Hyperion](with-hyperion.md#layout-messages).
+Next, see [Modals](modals.md). If you use `@hyperion-js/core`, see [Layout messages in JSX with Hyperion](with-hyperion.md#layout-messages).

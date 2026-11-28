@@ -23,7 +23,6 @@ An optional resolver preserves library choice and provides invocation context fo
 lookups and operations using several validated fields. Applications whose schemas already perform the lookup can omit them.
 This adds a second place to obtain values, so examples should demonstrate either
 resolver-owned or schema-owned lookup without duplicating work. See
-[typed command input](../input-validation.md) for the pipeline and
 [the glossary](../GLOSSARY.md#command-input) for terminology.
 
 Per-option replacement and explicit source/destination key mappings were
